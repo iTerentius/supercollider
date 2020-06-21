@@ -184,7 +184,7 @@ Synth("PMCrotale", ["midi", rrand(48, 72), "tone", rrand(1, 6)]);
 {PlayBuf.ar(1, ~houston)}.play;
 {PlayBuf.ar(1, ~chooston)}.play;
 
-
+//C1 section 1.10
 
 [~houston.bufnum, ~houston.numChannels, ~houston.path, ~houston.numFrames];
 [~chooston.bufnum, ~chooston.numChannels, ~chooston.path, ~chooston.numFrames];
@@ -211,11 +211,46 @@ Synth("PMCrotale", ["midi", rrand(48, 72), "tone", rrand(1, 6)]);
 }.play;
 )
 
-Env.perc.test.plot;
-Env.triangle.test.plot;
-Env.linen.test.plot;
-Env.sine.test.plot;
-Env.asr.test.plot;
-Env.adsr.test.plot;
+(
+~kbus1 = Bus.control;
+~kbus2 = Bus.control;
+{
+	var speed, direction;
+	speed = In.kr(~kbus1, 1) * 0.2 + 1;
+	direction = In.kr(~kbus2);
+	PlayBuf.ar(1, ~chooston, (speed * direction), loop: 1);
+}.play;
+)
 
-E
+(
+{Out.kr(~kbus1, LFNoise0.kr(12))}.play;
+{Out.kr(~kbus2, LFClipNoise.kr(1/4))}.play;
+)
+
+(
+{
+	var speed, direction;
+	speed = In.kr(~kbus1, 1) * 0.2 + 1;
+	direction = In.kr(~kbus2);
+	Out.ar(1, PlayBuf.ar(1, ~houston, (speed * direction), loop: 1));
+}.play;
+)
+
+~kbus3 = Bus.control;
+~kbus4 = Bus.control;
+
+{Out.kr(~kbus3, LFNoise2.kr(3).scope("out3") * 100)}.play;
+{Out.kr(~kbus4, LFPulse.kr(1/3).scope("out4") * 200)}.play;
+{Out.ar(0, SinOsc.kr(In.kr(~kbus3) + In.kr(~kbus4) + 440).scope("left"))}.play;
+{Out.ar(1, SinOsc.ar(In.kr(~kbus3) + In.kr(~kbus4) + 880).scope("right"))}.play;
+
+~kbus3 = Bus.control;
+~kbus4 = Bus.control;
+{Out.kr(~kbus3, SinOsc.kr(3).range(340, 540)) }.play;
+{Out.kr(~kbus4, LFPulse.kr(6).range(240, 640))}.play;
+SynthDef("another", { arg freq = 440; Out.ar(0, SinOsc.ar(freq, 0, 0.3)) }).add
+
+x = Synth("another");
+x.map(\freq, ~kbus3)
+x.map(\freq, ~kbus4)
+
