@@ -74,3 +74,39 @@ Pbind(
 	\amp, 0.707;
 ).play;
 )
+
+(
+Pbind(
+	\note, Pseq([0, 2, 3, 5, 7, 8, 11, 12], inf),
+	\dur, Pgeom(0.1, 1.1, inf);,
+	\amp, 0.707;
+).play;
+)
+
+(
+Pbind(
+	\note, Pseq([0, Pn(2,3), 3, Pn(5,3), 7, Pn(8,3), 11, 12], 1),
+	\dur, 0.15;
+).play;
+)
+
+// More Pattern Tricks
+
+// Chords
+
+(
+Pbind(
+	\note, Pseq([[0,3,7], [2,5,8], [3,7,10], [5,8,12]], 3),
+	\dur, 0.15
+).play;
+)
+
+// Strum
+(
+Pbind(
+	\note, Pseq([[-7, 3, 7, 10], [0,3,5,8]], 2),
+	\dur, 1,
+	\legato, 0.4,
+	\strum, 0.4
+).play;
+)
