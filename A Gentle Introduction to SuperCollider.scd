@@ -13,11 +13,11 @@ Pbind(\degree, Pseq([0,1,2,3,4,5,6,7], inf),\dur, 0.2, \amp, 0.8).play;
 SynthDef(\test, {
 	|freq=440, phase=0, amp=1, add=0|
 	var sinewave, env, envgen;
-	env = Env([0.1, 1, 0.1], [0.1, 0.25, 0.8], \exp);
+	env = Env.perc([0,1,0]*amp/2, [1, 1]);
 	envgen = EnvGen.ar(env, 0);
-	sinewave = SinOsc.ar(freq, phase, amp, add, mul: envgen/2);
+	sinewave = SinOsc.ar(freq, phase, amp, add);
 
-	Out.ar([0,1], sinewave);
+	Out.ar([0,1], sinewave + envgen);
 }).add;
 )
 
@@ -103,10 +103,55 @@ Pbind(
 
 // Strum
 (
-Pbind(
+p = Pbind(
+	\instrument, \test,
 	\note, Pseq([[-7, 3, 7, 10], [0,3,5,8]], 2),
 	\dur, 1,
 	\legato, 0.4,
 	\strum, 0.4
-).play;
+);
 )
+
+~player = p.play;
+
+~player.stop;
+
+
+// Nesting and proper indentation
+(
+SynthDef(\test2, {
+	|freq=440, phase=0, amp=1, add=0|
+	CombC.ar(
+		SinOsc.ar(
+			(
+				LFNoise1.ar(3, 24,
+					LFSaw.ar([5, 5.123], 0, 3, 80)
+				) -12
+			)*freq,
+			0, LFPulse.kr(0.5)
+		),
+		1, 0.3, 2)
+}).add;
+)
+
+(
+~scale = Scale.harmonicMinor;
+~degree = Pseq([0,1,2,3,4,5,6,7], 1);
+Pbind(
+	\instrument, \test,
+	\scale, ~scale,
+	\degree, rand(~degree),
+).play;
+
+)
+
+
+// Transpose & Tempo Clock
+(
+Pbind(
+	\note, Pser([0, 2, 3, 5, 7, 8, 11, 12], inf),
+	\ctranspose, -12, // transpose an octave above (= 12 semitones)
+	\dur, 0.8;
+).play(TempoClock(120/60));
+)
+

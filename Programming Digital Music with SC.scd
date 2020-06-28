@@ -205,3 +205,36 @@ freq.do{
 	clock[j].sched(dur[j].sum+2, {synth[j].set(\amp, 0); synth[j].free});
 };
 )
+
+// Samples
+
+b = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01-44_1.aiff");
+
+(
+SynthDef(\looper,
+	{
+		|bufnum=0, start=0, end=0, tpose=0, mode=1|
+		var srBuffer, srSample, dir, rate, dur, startPos, endPos, pointer, output;
+		srBuffer = BufSampleRate.ir(bufnum);
+		srSample = SampleRate.ir;
+		dir = Select.kr(mode.sign < 0, [1, -1]);
+		rate = (srBuffer/srSample)*(2**(tpose/12))*dir;
+		dur = abs(end-start)/(2**(tpose/12));
+		startPos = Select.kr(dir.sign < 0, [end*srBuffer, start*srBuffer]);
+		endPos = Select.kr(dir.sign < 0, [end*srBuffer, start*srBuffer]);
+		pointer = Phasor.ar(1/dur, rate, startPos, endPos);
+		output = BufRd.ar(1, bufnum, pointer, 1, 4);
+		Out.ar(0, output);
+}).add;
+)
+
+y = Synth(\looper, [\bufnum, b.bufnum]);
+
+y
+
+y.set(\start, 0, \end, 2, \tpose, 0, \mode, 1);
+
+y.free; b.close; b.free;
+
+// the above doesn't play;
+
