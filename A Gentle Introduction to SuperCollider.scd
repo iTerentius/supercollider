@@ -1,3 +1,6 @@
+s.boot;
+ServerMeter(s, 16, 16);
+
 ~myFreqs = [415, 220, 440, 880, 220, 990];
 ~myDurs = [0.1, 0.2, 0.2, 0.5, 0.2, 0.1];
 
@@ -166,7 +169,8 @@ Pbind(
 // Rest (and be added anywhere
 
 Pbind(
-	\ctranspose, -24,
+	\ctrans
+	pose, -24,
 	\degree, Pwhite(0,10),
 	\dur, Pseq([0.1, 0.1, 0.03, 0.6, Rest(0.3), 0.25], inf);
 		).play(~t);
@@ -312,3 +316,102 @@ s.stopRecording; x.free;
 {Saw.ar}.plot;
 
 {Pulse.ar}.scope;
+
+{SinOsc.ar(freq: LFNoise0.kr(10).range(50, 500), mul: 0.2)}.scope;
+
+a = [1,2,3,4,5,6,7];
+
+a.linlin(1, 7, 0, 127).round(1);
+
+a.linexp(1, 7, 0.01, 127).round(1);
+
+x = {arg freq = 440, amp = 0.1; SinOsc.ar(freq, 0, amp)}.play;
+x.set(\freq, 778);
+x.set(\amp, 0.5);
+x.set(\freq, 920, \amp, 0.2);
+x.free;
+
+{Out.ar(7, SinOsc.ar(440, 0, 0.1))}.play;
+
+// start the effect
+f = {Out.ar(0, BPF.ar(in: In.ar([3,3]), freq: MouseY.kr([100, 80], 5000), rq: 0.1))}.play;
+// start the source
+n = {Out.ar(3, Splay.ar(WhiteNoise.ar(0.1)))}.play;
+
+
+//The Bus Object
+
+~bus = Bus.audio(s, 2);
+(
+r = {Out.ar(0, FreeVerb.ar(In.ar(~bus, 2), mix: MouseX.kr(1, 0.01), room: 0.9, mul: 0.5))}.play;
+
+b = {Out.ar(~bus, SinOsc.ar([MouseY.kr(1).range(30,300), MouseX.kr(2).range(20,100)], mul: LFPulse.ar(Line.kr(1, 2, 0.1))))}.play;
+)
+
+r.set(\mix, 0.8);
+
+r.free; b.free;
+
+//Panning
+
+p = {Pan2.ar(in: In.ar(30) * In.ar(~bus, 2), pos: SinOsc.kr(2), level: 0.1)}.play;
+
+
+(
+x = {
+	var lfn = LFNoise2.kr(1);
+	var saw = Saw.ar(
+		freq: MouseX.kr(10,300),
+		mul: LFPulse.kr(
+			freq: LFNoise1.kr(1).range(1, 10),
+			width: 0.1));
+	var bpf = BPF.ar(in: saw, freq: lfn.range(MouseY.kr(100, 200)), rq: 0.01, mul: 20);
+	Pan2.ar(in: bpf, pos: lfn);
+	Out.ar(30, saw * In.ar(~bus, 2));
+};
+)
+
+x.play;
+
+
+s.prepareForRecord;
+s.record;
+
+
+
+s.stopRecording
+x.free; r.free; b.free;
+
+
+// Playing Samples
+
+~busRate = Bus.control(s, 1);
+
+~rate = Pseq([-0.8, -0.5, -0.3, 0, 0.3, 0.5, 0.8], inf);
+
+~h1 = Buffer.read(s, "/home/hypostatic/GD/Cult of Montu/_Ideas/Terry/_samples/Hoarder/hoarder/01-rats.wav");
+
+(
+{
+	var rate, trigger, frames;
+	frames = ~h1.numFrames;
+
+	rate = MouseX.kr(1, MouseY.kr(2)).range(-0.08, 1.01);
+
+	trigger = Impulse.kr(rate);
+	Out.ar(0, Splay.ar(
+		DelayC.ar(
+			[PlayBuf.ar(
+				2, ~h1, rate, trigger, frames * Line.kr(0, 1, 120)) * EnvGen.kr(Env.linen(0.01, 0.96, 0.01), trigger) * rate])
+	)
+	);
+}.play;
+)
+
+~h1s.play;
+
+~h1s.free;
+
+~h1s.set(\rate, -0.5);
+
+
