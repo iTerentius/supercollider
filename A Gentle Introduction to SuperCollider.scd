@@ -396,7 +396,7 @@ x.free; r.free; b.free;
 	var rate, trigger, frames;
 	frames = ~h1.numFrames;
 
-	rate = MouseX.kr(1, MouseY.kr(2)).range(-0.08, 1.01);
+	rate = MouseX.kr(1, MouseY.kr(2)).range(-1.01, 1.01);
 
 	trigger = Impulse.kr(rate);
 	Out.ar(0, Splay.ar(
