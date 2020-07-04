@@ -70,7 +70,7 @@ exprand(1, 1000.0)
 	Blip.ar(
 		TRand.kr(
 			40, 500,
-			Impulse.kr(Line.kr(1, 20, 60), Line.ar(50, 1000))),
+			Impulse.kr(Line.kr([1,1], 20, 60), Line.ar(50, 1000))),
 		TRand.kr(
 			1, 10,
 			Impulse.kr(Line.kr(1, 40, 60))),
@@ -83,7 +83,7 @@ exprand(1, 1000.0)
 }.play
 )
 
-{Impulse.ar([500,50], phase: 10, mul: 0, add: 0)}.play
+{Impulse.ar([500,50], phase: 10, mul: 1, add: 0)}.play
 
 (
 {
@@ -110,7 +110,7 @@ p.free
 
 (
 {
-	r = Impulse.kr(10);
+	r = Impulse.kr(MouseX.kr(1,30));
 	c = TRand.kr([100, 100], 5000, r);
 	m = TRand.kr(100, 5000, r);
 	PMOsc.ar(c, m, 12) * 0.3
@@ -121,11 +121,12 @@ p.free
 {
 	var rate = 4, carrier, modRatio, line, env;
 	rate = Line.kr(start: 1, end: 20);
-	// carrier = LFNoise0.kr(freq: rate) * 300 + 100;
-	modRatio = MouseX.kr(minval: 1, maxval: 2.0);
+	carrier = LFNoise0.kr(freq: rate) * 100 + 100;
+	modRatio = MouseX.kr(minval: 1, maxval: 2.0) * rate;
 	line = Line.kr(start: 1, end: 20);
-	env = Linen.kr(attackTime: 1/rate, decay: 0);
-	PMOsc.ar(carfreq: [carrier, carrier], modfreq: carrier*modRatio, pmindex: line, mul: env) * 0.3
+	env = Linen.kr(
+		attackTime: 1/rate, decay: 0);
+	PMOsc.ar(carfreq: [carrier, carrier], modfreq: modRatio, pmindex: line, mul: env) * 0.3
 }.play
 )
 
@@ -176,15 +177,23 @@ SynthDef("PMCrotale", {
 }).add;
 )
 
-Synth("PMCrotale", ["midi", rrand(48, 72), "tone", rrand(1, 6)]);
+Pbind(
+	\instrument, \PMCrotale,
+	\midi, rrand(48, 72).round(1),
+	\tone, rrand(1, 6),
+)
+
+
+
 
 ~houston = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01-44_1.aiff");
 ~chooston = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav");
 
+
 {PlayBuf.ar(1, ~houston)}.play;
 {PlayBuf.ar(1, ~chooston)}.play;
 
-//C1 section 1.10
+
 
 [~houston.bufnum, ~houston.numChannels, ~houston.path, ~houston.numFrames];
 [~chooston.bufnum, ~chooston.numChannels, ~chooston.path, ~chooston.numFrames];
@@ -192,38 +201,35 @@ Synth("PMCrotale", ["midi", rrand(48, 72), "tone", rrand(1, 6)]);
 (
 {
 	var rate, trigger, frames;
-	frames = ~houston.numFrames;
+	frames = ~h1.numFrames;
 
 	rate = [1, 1.01];
 
 	trigger = Impulse.kr(rate);
-	PlayBuf.ar(1, ~houston, 1, trigger, frames * Line.kr(0, 1, 60)) * EnvGen.kr(Env.linen(0.01, 0.96, 0.01), trigger) * rate;
+	PlayBuf.ar(1, ~h1, 1, trigger, frames * Line.kr(0, 1, 60)) * EnvGen.kr(Env.linen(0.01, 0.96, 0.01), trigger) * rate;
 }.play;
 )
 
+// Fucked Up Samples
+
+~sRoot = "/home/hypostatic/music/supercollider/";
+
+~h1 = Buffer.read(s, ~sRoot +/+ "/_samples/Hoarder/hoarder/01-rats.wav");
+~h2 = Buffer.read(s, ~sRoot +/+ "/_samples/Hoarder/hoarder/02-we-got-hurt.wav");
 
 (
-{
-	var speed, direction;
-	speed = LFNoise0.kr([1,11]) * 0.2 + 1;
-	direction = LFClipNoise.kr(2/3);
-	PlayBuf.ar(1, ~houston, (speed * direction), loop: 1);
-}.play;
-)
-
-(
-~kbus1 = Bus.control;
-~kbus2 = Bus.control;
+~kbus1 = Bus.control(s, 1);
+~kbus2 = Bus.control(s, 1);
 {
 	var speed, direction;
 	speed = In.kr(~kbus1, 1) * 0.2 + 1;
 	direction = In.kr(~kbus2);
-	PlayBuf.ar(1, ~chooston, (speed * direction), loop: 1);
+	Out.ar(0, PlayBuf.ar(2, ~h2, (speed * direction), loop: 1));
 }.play;
 )
 
 (
-{Out.kr(~kbus1, LFNoise0.kr(12))}.play;
+{Out.kr(~kbus1, LFPulse.kr(In.kr(1)))}.play;
 {Out.kr(~kbus2, LFClipNoise.kr(1/4))}.play;
 )
 
@@ -232,25 +238,6 @@ Synth("PMCrotale", ["midi", rrand(48, 72), "tone", rrand(1, 6)]);
 	var speed, direction;
 	speed = In.kr(~kbus1, 1) * 0.2 + 1;
 	direction = In.kr(~kbus2);
-	Out.ar(1, PlayBuf.ar(1, ~houston, (speed * direction), loop: 1));
+	Out.ar(1, PlayBuf.ar(2, ~h1, (speed * direction), loop: 1));
 }.play;
 )
-
-~kbus3 = Bus.control;
-~kbus4 = Bus.control;
-
-{Out.kr(~kbus3, LFNoise2.kr(3).scope("out3") * 100)}.play;
-{Out.kr(~kbus4, LFPulse.kr(1/3).scope("out4") * 200)}.play;
-{Out.ar(0, SinOsc.kr(In.kr(~kbus3) + In.kr(~kbus4) + 440).scope("left"))}.play;
-{Out.ar(1, SinOsc.ar(In.kr(~kbus3) + In.kr(~kbus4) + 880).scope("right"))}.play;
-
-~kbus3 = Bus.control;
-~kbus4 = Bus.control;
-{Out.kr(~kbus3, SinOsc.kr(3).range(340, 540)) }.play;
-{Out.kr(~kbus4, LFPulse.kr(6).range(240, 640))}.play;
-SynthDef("another", { arg freq = 440; Out.ar(0, SinOsc.ar(freq, 0, 0.3)) }).add
-
-x = Synth("another");
-x.map(\freq, ~kbus3)
-x.map(\freq, ~kbus4)
-

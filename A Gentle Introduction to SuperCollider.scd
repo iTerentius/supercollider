@@ -385,33 +385,37 @@ x.free; r.free; b.free;
 
 // Playing Samples
 
-~busRate = Bus.control(s, 1);
+~kbus1 = Bus.control(s, 1);
+~kbus2 = Bus.control(s, 1);
+~mrate = {Out.kr(~kbus1, Impulse.kr(1))}.play;
 
 ~rate = Pseq([-0.8, -0.5, -0.3, 0, 0.3, 0.5, 0.8], inf);
 
-~h1 = Buffer.read(s, "/home/hypostatic/GD/Cult of Montu/_Ideas/Terry/_samples/Hoarder/hoarder/01-rats.wav");
+~h1 = Buffer.read(s, thisProcess.nowExecutingPath.dirname +/+ "/_samples/Hoarder/hoarder/01-rats.wav");
 
 (
-{
-	var rate, trigger, frames;
-	frames = ~h1.numFrames;
-
-	rate = MouseX.kr(1, MouseY.kr(2)).range(-1.01, 1.01);
-
-	trigger = Impulse.kr(rate);
-	Out.ar(0, Splay.ar(
-		DelayC.ar(
-			[PlayBuf.ar(
-				2, ~h1, rate, trigger, frames * Line.kr(0, 1, 120)) * EnvGen.kr(Env.linen(0.01, 0.96, 0.01), trigger) * rate])
-	)
+SynthDef(\hrats, {
+	arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15, loop=1;
+	var sig, env;
+	sig = Mix.ar(
+		PlayBuf.ar(2,
+			rate: In.kr(~mrate),
+			bufnum: buf,
+			trigger: Impulse.kr(1),
+			startPos: BufDur.kr(buf)*pos*41000 * rate,
+			loop: loop,
+			rate: BufRateScale.ir(buf),
+			startPos: Line.kr(0,1, 120) * EnvGen.kr(Env.linen(0.01, 0.96, 0.01)),
+			doneAction:0,
+		)
 	);
-}.play;
+	env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:2);
+	sig = sig * env;
+	sig = sig * amp;
+	Out.ar(0, Pan2.ar(sig,pan));
+}).add;
 )
 
-~h1s.play;
-
-~h1s.free;
-
-~h1s.set(\rate, -0.5);
-
-
+~mine = {Synth(\hrats, [\rate, ~mrate, \buf, ~h1, \loop, 1])}.play;
+~mine.play;
+~mine.free;
