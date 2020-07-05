@@ -12,11 +12,11 @@ StageLimiter.activate;
 )
 
 (
-SynthDef(\fsamp, { arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=3, loop = 1;
-	var speed, direction;
+SynthDef(\fsamp, { arg out = 0, in = nil, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=3, loop = 1;
+	var speed, direction, input;
 	speed = In.kr(~kbus1, 1) * rate * 0.2 + 1;
 	direction = In.kr(~kbus2);
-	Out.ar(out, Delay2.ar(PlayBuf.ar(2, buf, (speed * direction), startPos: pos, loop: loop, doneAction:2)));
+	Out.ar(out, Pan2.ar(PlayBuf.ar(2, buf, (speed * direction), startPos: pos, loop: loop, doneAction:2) * SinOsc.ar(LFNoise0.kr(12, mul: 100)) ));
 }).add;
 )
 
@@ -29,7 +29,7 @@ SynthDef(\fsamp, { arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, 
 s.prepareForRecord;
 
 (
-t = TempoClock(15/60);
+t = TempoClock(40/60);
 // s.record;
 Pbind(
 	\instrument, \fsamp,
@@ -42,7 +42,7 @@ Pbind(
 
 Pbind(
 	\instrument, \fsamp,
-	\out, 1,
+	\out, 55,
 	\buf, ~h1,
 	\rate, Prand([1, -0.8, 2, 0.5, 1], inf),
 	\pos, Pn(Pseries(0, 10, ~h1.numFrames)),

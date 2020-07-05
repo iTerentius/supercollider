@@ -210,57 +210,69 @@ Pbind(
 }.play;
 )
 
-// Fucked Up Samples
 (
-
-StageLimiter.activate;
-~sRoot = "/home/hypostatic/music/supercollider/";
-
-~h1 = Buffer.read(s, ~sRoot +/+ "/_samples/Hoarder/hoarder/01-rats.wav");
-~h2 = Buffer.read(s, ~sRoot +/+ "/_samples/Hoarder/hoarder/20-I-dont-like.wav");
-
-~kbus1 = Bus.control(s, 1);
-~kbus2 = Bus.control(s, 1);
+{
+	Out.ar(0,
+		Pan2.ar(PlayBuf.ar(1, ~houston, loop: 1) *
+			SinOsc.ar(LFNoise0.kr(12, mul: 500, add: 600)), 0.5)
+	)
+}.play
 )
 
 (
-SynthDef(\fsamp, { arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=3, loop = 1;
-	var speed, direction;
-	speed = In.kr(~kbus1, 1) * rate * 0.2 + 1;
-	direction = In.kr(~kbus2);
-	Out.ar(out, Delay2.ar(PlayBuf.ar(2, buf, (speed * direction), startPos: pos, loop: loop, doneAction:2)));
-}).add;
+{
+	var source, delay;
+	source = PlayBuf.ar(1, ~chooston, loop: 1);
+	delay = AllpassC(source, 2, [0.65, 1.15], 10);
+	Out.ar(0,
+		Pan2.ar(source) + delay
+	)
+}.play;
 )
+
+// Page 30 F1.11
+~delay = Bus.audio(s, 2);
+~mod = Bus.audio(s, 2);
+~gate = Bus.audio(s, 2);
+~k5 = Bus.control;
+
+~controlSyn = {Out.kr(~k5, LFNoise0.kr(4))}.play;
+
+~delaySyn = {Out.ar(0, AllpassC.ar(In.ar(~delay, 2), 2, [0.65, 1.15], 10))}.play(~controlSyn, addAction: \addAfter);
+
+~modSyn = {Out.ar(~delay, In.ar(~mod, 2) * SinOsc.ar(In.kr(~k5) * 500 + 1100))}.play(~delaySyn, addAction: \addBefore);
+
+~gateSyn = {Out.ar([0, ~mod], In.ar(~gate, 2) * max(0, In.kr(~k5)))}.play(~modSyn, addAction: \addBefore);
+
+~pbGroup = Group.before(~controlSyn);
+
+{Out.ar(~gate, Pan2.ar(PlayBuf.ar(1, ~houston, loop: 1), 0.5))}.play(~pbGroup);
+
+{Out.ar(~gate, Pan2.ar(PlayBuf.ar(1, ~chooston, loop: 1), -0.5))}.play(~pbGroup);
+
+s.plotTree;
+
+//Page 35 Additive Synthesis (with my modifications for code simplification)
+
+{LFNoise1.ar(5000).range(0, 5000)}.plot;
 
 (
-~speed = {Out.kr(~kbus1, MouseX.kr(-0.8, 0.8))}.play;
-~direction = {Out.kr(~kbus2, LFClipNoise.kr(1))}.play;
+a ={
+	var ampCont;
+	ampCont = max(0, LFNoise1.kr(12));
+};
+
+{
+	var fund = 200;
+	Mix.ar(Pan2.ar(
+		[
+			SinOsc.ar([fund, fund], mul: a),
+			SinOsc.ar(fund*2, mul: a) * 1/2,
+			SinOsc.ar(fund*3, mul: a) * 1/3,
+			SinOsc.ar(fund*4, mul: a) * 1/4,
+			SinOsc.ar(fund*5, mul: a) * 1/5,
+			SinOsc.ar(fund*6, mul: a) * 1/6
+		]
+		))* 0.5;
+}.play;
 )
-
-
-s.prepareForRecord;
-
-(
-t = TempoClock(15/60);
-// s.record;
-Pbind(
-	\instrument, \fsamp,
-	\out, 0,
-	\buf, ~h2,
-	\rate, Pseq([1, -0.8, 2, 0.5, 1], inf),
-	\pos, Pn(Pseries(0,10, ~h2.numFrames)),
-	\loop, 0
-).play(t);
-
-Pbind(
-	\instrument, \fsamp,
-	\out, 1,
-	\buf, ~h1,
-	\rate, Prand([1, -0.8, 2, 0.5, 1], inf),
-	\pos, Pn(Pseries(0, 10, ~h1.numFrames)),
-	\loop, 0
-).play(t);
-)
-
-~h1.numFrames;
-s.stopRecording;
