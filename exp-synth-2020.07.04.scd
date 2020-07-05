@@ -5,7 +5,7 @@
 ~kb1 = Bus.control(s, 1);
 ~ab1 = Bus.audio(s, 2);
 ~freq = {Out.kr(~kb1, LFNoise2.kr(Rand(1,10)))}.play;
-~delay = {Out.ar([0,1], AllpassC.ar(In.ar(~ab1), In.kr(~kb1)) * 0.5)}.play;
+~delay = {Out.ar([0,1], Delay1.ar(In.ar(~ab1), In.kr(~kb1)) * 0.5)}.play;
 )
 
 (

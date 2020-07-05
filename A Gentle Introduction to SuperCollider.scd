@@ -387,26 +387,23 @@ x.free; r.free; b.free;
 
 ~kbus1 = Bus.control(s, 1);
 ~kbus2 = Bus.control(s, 1);
-~mrate = {Out.kr(~kbus1, Impulse.kr(1))}.play;
+~mrate = {Out.kr(~kbus1, Impulse.kr(Line.kr(-1, 1)))}.play;
 
 ~rate = Pseq([-0.8, -0.5, -0.3, 0, 0.3, 0.5, 0.8], inf);
 
 ~h1 = Buffer.read(s, thisProcess.nowExecutingPath.dirname +/+ "/_samples/Hoarder/hoarder/01-rats.wav");
 
-(
-SynthDef(\hrats, {
+
+SynthDef("hrats", {
 	arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15, loop=1;
 	var sig, env;
 	sig = Mix.ar(
 		PlayBuf.ar(2,
-			rate: In.kr(~mrate),
+			rate: LFNoise0.kr(rate),
 			bufnum: buf,
 			trigger: Impulse.kr(1),
-			startPos: BufDur.kr(buf)*pos*41000 * rate,
-			loop: loop,
-			rate: BufRateScale.ir(buf),
-			startPos: Line.kr(0,1, 120) * EnvGen.kr(Env.linen(0.01, 0.96, 0.01)),
-			doneAction:0,
+			startPos: BufDur.kr(buf)*pos*41000 * rate * LFNoise0.kr(rate),
+			loop: 1,
 		)
 	);
 	env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:2);
@@ -414,8 +411,8 @@ SynthDef(\hrats, {
 	sig = sig * amp;
 	Out.ar(0, Pan2.ar(sig,pan));
 }).add;
-)
 
-~mine = {Synth(\hrats, [\rate, ~mrate, \buf, ~h1, \loop, 1])}.play;
+
+~mine = {Synth("hrats", [\rate, ~mrate, \buf, ~h1, \loop, 1])};
 ~mine.play;
 ~mine.free;

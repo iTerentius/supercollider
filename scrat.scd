@@ -276,3 +276,22 @@ a ={
 		))* 0.5;
 }.play;
 )
+
+// Page 37 with better code simp F1.16
+
+Array.fill(20, {arg cnt; cnt + 1*110});
+
+(
+{
+	Pan2.ar(Mix.ar(
+		Array.fill(12,
+			{arg count;
+				var harm;
+				count.postln;
+				harm = count * 110;
+				SinOsc.ar(harm,
+					mul: max([0,0], SinOsc.kr(count+1/4))
+				)*1/(count+1)
+		})
+)*0.7 , pos: LFNoise0.kr(10))}.play
+)

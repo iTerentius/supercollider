@@ -29,7 +29,7 @@ SynthDef(\fsamp, { arg out = 0, in = nil, buf = 0, rate = 1, amp = 0.5, pan = 0,
 s.prepareForRecord;
 
 (
-t = TempoClock(40/60);
+~t = TempoClock(40/60);
 // s.record;
 Pbind(
 	\instrument, \fsamp,
@@ -38,7 +38,7 @@ Pbind(
 	\rate, Pseq([1, -0.8, 2, 0.5, 1], inf),
 	\pos, Pn(Pseries(0,10, ~h2.numFrames)),
 	\loop, 0
-).play(t);
+).play(~t);
 
 Pbind(
 	\instrument, \fsamp,
@@ -47,8 +47,26 @@ Pbind(
 	\rate, Prand([1, -0.8, 2, 0.5, 1], inf),
 	\pos, Pn(Pseries(0, 10, ~h1.numFrames)),
 	\loop, 0
-).play(t);
+).play(~t);
 )
 
 ~h1.numFrames;
 s.stopRecording;
+
+
+Array.fill(20, {arg cnt; cnt + 1*110});
+
+(
+{
+	Pan2.ar(Mix.ar(
+		Array.fill(12,
+			{arg count;
+				var harm;
+				count.postln;
+				harm = count * 110;
+				SinOsc.ar(harm,
+					mul: max([0,0], SinOsc.kr(count+1/4))
+				)*1/(count+1)
+		})
+)*0.7 , pos: LFNoise0.kr(10))}.play(~t);
+)
