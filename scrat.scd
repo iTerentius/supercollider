@@ -277,21 +277,55 @@ a ={
 }.play;
 )
 
-// Page 37 with better code simp F1.16
+// Page 37 with better code simp F1.16 **Look**
 
 Array.fill(20, {arg cnt; cnt + 1*110});
 
 (
-{
+{ | fund=20 |
 	Pan2.ar(Mix.ar(
 		Array.fill(12,
 			{arg count;
 				var harm;
 				count.postln;
-				harm = count * 110;
-				SinOsc.ar(harm,
-					mul: max([0,0], SinOsc.kr(count+1/4))
-				)*1/(count+1)
+				harm = count * fund / Line.kr(-1, 2.0, 4) * 1/MouseY.kr(1, -1) * 05;
+				SinOscFB.ar(harm,
+					mul: max([0,0], LFNoise2.kr(count+1/MouseX.kr(1,3)))
+				)*5/(count+1)
 		})
 )*0.7 , pos: LFNoise0.kr(10))}.play
 )
+
+// Page 38 F1.18 Bells
+Array.fill(3, {Array.fill(10, {rand(1000)})});
+
+
+s.prepareForRecord;
+(
+
+// s.record;
+
+{
+var scale, specs, freqs, amps, rings,
+numRes = 5, bells = 20, pan;
+scale = [60, 62, 64, 67, 69].midicps;
+Mix.fill(bells, {
+	freqs = Array.fill(numRes, {rrand(1, 15)*(scale.choose)});
+	amps = Array.fill(numRes, {rrand(0.3, 0.9)});
+	rings = Array.fill(numRes, {rrand(1.0, 4.0)});
+	specs = [freqs, amps * 2, rings].round(0.01);
+	// specs.postln;
+		pan = (LFNoise1.kr(rrand(3, MouseX.kr(1, 6)))*2).softclip;
+	Pan2.ar(
+		Klank.ar(`specs,
+			Dust.ar(1/6, 0.03)),
+		pan)
+});
+}.play;
+)
+
+s.stopRecording;
+
+
+(
+Synt

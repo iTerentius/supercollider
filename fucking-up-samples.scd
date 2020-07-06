@@ -1,6 +1,6 @@
 // Fucked Up Samples
 (
-
+~t = TempoClock(40/60);
 StageLimiter.activate;
 ~sRoot = "/home/hypostatic/music/supercollider/";
 
@@ -29,8 +29,7 @@ SynthDef(\fsamp, { arg out = 0, in = nil, buf = 0, rate = 1, amp = 0.5, pan = 0,
 s.prepareForRecord;
 
 (
-~t = TempoClock(40/60);
-// s.record;
+s.record;
 Pbind(
 	\instrument, \fsamp,
 	\out, 0,
@@ -42,7 +41,7 @@ Pbind(
 
 Pbind(
 	\instrument, \fsamp,
-	\out, 55,
+	\out, 0,
 	\buf, ~h1,
 	\rate, Prand([1, -0.8, 2, 0.5, 1], inf),
 	\pos, Pn(Pseries(0, 10, ~h1.numFrames)),
@@ -68,5 +67,5 @@ Array.fill(20, {arg cnt; cnt + 1*110});
 					mul: max([0,0], SinOsc.kr(count+1/4))
 				)*1/(count+1)
 		})
-)*0.7 , pos: LFNoise0.kr(10))}.play(~t);
+)*0.7 , pos: LFNoise0.kr(10))}.play;
 )
