@@ -16,7 +16,9 @@ SynthDef(\fsamp, { arg out = 0, in = nil, buf = 0, rate = 1, amp = 0.5, pan = 0,
 	var speed, direction, input;
 	speed = In.kr(~kbus1, 1) * rate * 0.2 + 1;
 	direction = In.kr(~kbus2);
-	Out.ar(out, Pan2.ar(PlayBuf.ar(2, buf, (speed * direction), startPos: pos, loop: loop, doneAction:2) * SinOsc.ar(LFNoise0.kr(12, mul: 100)) ));
+	Out.ar(out,
+		PlayBuf.ar(2, buf, (speed * direction), startPos: pos, loop: loop, doneAction:2)
+			* SinOsc.ar(LFNoise0.kr(12, mul: 50)) );
 }).add;
 )
 
@@ -29,19 +31,19 @@ SynthDef(\fsamp, { arg out = 0, in = nil, buf = 0, rate = 1, amp = 0.5, pan = 0,
 s.prepareForRecord;
 
 (
-s.record;
+// s.record;
 Pbind(
 	\instrument, \fsamp,
-	\out, 0,
+	\out, 4,
 	\buf, ~h2,
 	\rate, Pseq([1, -0.8, 2, 0.5, 1], inf),
-	\pos, Pn(Pseries(0,10, ~h2.numFrames)),
+	\pos , Pn(Pseries(0,10, ~h2.numFrames)),
 	\loop, 0
 ).play(~t);
 
 Pbind(
 	\instrument, \fsamp,
-	\out, 0,
+	\out, 6,
 	\buf, ~h1,
 	\rate, Prand([1, -0.8, 2, 0.5, 1], inf),
 	\pos, Pn(Pseries(0, 10, ~h1.numFrames)),
