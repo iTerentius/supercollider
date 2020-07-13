@@ -1,5 +1,7 @@
 
 s.reboot;
+
+p = ProxySpace.push(s);
 s.prepareForRecord;
 s.record;
 
@@ -17,17 +19,18 @@ var sig, env;
 
 	env = EnvGen.kr(Env([0.1, 0.5, 0.1, 0.5, 0.1], [0, 0.25, 0.5, 0.75, 1], \sine), levelScale:0.5);
 	// env = EnvGen.kr(Env.linen(0.01, 0.5, 2, 0.5, \welch));
-	sig = SinOscFB.ar(freqs.midicps -24 ! 2, Rand(0, 5), mul: In.kr(cbus1)/2 * env);
+	sig = LFSaw.ar(freqs.midicps -24 ! 2, Rand(0, 5), mul: In.kr(cbus1)/2 * env);
 	Out.ar([out, cbus1], sig * env);
 
 }).add;
-
+)
+(
 ~cbus1 = Bus.control(s, 1);
 ~cmod1 = {
 	var env;
 	env = EnvGen.kr(Env.asr(0.05, 1, 1), gate: SinOsc.kr(rrand(1, 10)));
 	Out.kr(~cbus1, LFPulse.kr(Rand(1,4), 0.5, mul: env))
-}.play;
+};
 
 ~s1 = {SinOsc.ar([100, 200], mul: In.kr(~cbus1)/2)};
 )
@@ -47,9 +50,9 @@ y = Pbind(
 
 y.play;
 y.free;
-~s1.free;
-~cmod1.free;
-~cbus1.free;
+~s1.stop;
+~cmod1.stop;
+~cbus1.stop;
 
 s.stopRecording;
 /////// Testing
