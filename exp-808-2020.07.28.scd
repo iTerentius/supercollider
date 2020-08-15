@@ -67,17 +67,6 @@ SynthDef(\bplay,
 }).add;
 )
 
-~out.play(out:0);
-~out.free;
-
-~ob1 = Bus.audio(s, 2);
-~ob1.play;
-~ob3 = Bus.audio(s, 2);
-~ob3.play;
-~ob5 = Bus.audio(s, 2);
-~ob7 = Bus.audio(s, 2);
-
-p.fadeTime = 2;
 (
 ~b = Pbind(
 	\instrument, \bplay,
@@ -94,8 +83,8 @@ p.fadeTime = 2;
 ~sn = Pbind(
 	// \out, 2,
 	\instrument, \bplay,
-	\buf, d["Snare Drums"][5],
-	\dur, Pbjorklund2(Pseq([1,2,3,1], inf), 4)/4,
+	\buf, d["Snare Drums"][4],
+	\dur, Pbjorklund2(Pseq([1,2,3,1,5], inf), 8)/4,
 	\amp, Pwhite(0.1, 0.3, inf));
 )
 
@@ -126,9 +115,9 @@ s.stopRecording;
 (
 SynthDef(\bass, { | out = 0, freq = 110, mul = 1 |
 	var sig, env;
-	env = EnvGen.kr(Env.pairs([[0.5, 0.9, 0.25, 0.9, 0.5], [0.1, 0.5, 0.6, 0.8]], \step), doneAction: Done.freeSelf);
-	sig = LFSaw.ar((SinOsc.ar(freq) * LFPulse.kr(Rand(1,4)).range(60, 220))!2, modfreq: freq, pmindex: Line.kr(0, 20), mul: env * 0.2).dup;
-	Out.ar(out, sig * 0.3, mul: mul * ~b.ar.reciprocal);
+	env = EnvGen.ar(Env.pairs([[0.5, 0.9, 0.25, 0.9, 2], [0.1, 0.5, 0.6, 0.8, 1]], \exp), doneAction: Done.freeSelf);
+	sig = LFSaw.ar((SinOsc.ar(freq) * LFPulse.kr(Rand(1,4)).range(60, 220))!2, modfreq: freq, pmindex: Rand(0, 20), mul: env * 0.2).dup;
+	Out.ar(out, sig * 0.3 * mul);
 }).add;
 )
 
@@ -140,7 +129,8 @@ SynthDef(\bass, { | out = 0, freq = 110, mul = 1 |
 	\octave, Pseq([1,1,3,4], inf),
 	\degree, Pseq([-7, -3, 0, 4, 5, 7], inf),
 	\dur, Pseq([0.25, 0.5, 3, 0.25], inf),
-	\add, ~b.ar);
+	\mul, Pseq([0.25, 0.5, 1, 2], inf),
+)
 )
 
 
