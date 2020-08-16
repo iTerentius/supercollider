@@ -111,7 +111,8 @@ SynthDef(\bplay,
 	\instrument, \bplay,
 	// \out, 3,
 	\buf, d["Bass Drums"][1],
-	\dur, Pbjorklund2(Pseq([2,4,2,Pwhite(1, 4)], inf), 16)/4,
+	// \dur, Pbjorklund2(Pseq([2,4,2,Pwhite(1, 4)], inf), 16)/4,
+	\dur, 1,
 	\amp, Pwhite(0.3, 0.6, inf));
 )
 
@@ -121,6 +122,7 @@ SynthDef(\bplay,
 
 (
 r = ProxyRecorder(p);
+
 
 r.add([~b, ~x, ~z]);
 )

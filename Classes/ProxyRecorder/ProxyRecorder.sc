@@ -48,7 +48,7 @@ ProxyRecorder {
 	}
 
 	record { |paused=false|
-		nodes.do(_.record(paused))
+		nodes.do(_.record(paused, proxyspace.clock, 1))
 	}
 
 	stop {
