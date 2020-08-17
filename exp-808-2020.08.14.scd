@@ -6,7 +6,7 @@
 s.options.numBuffers = 1024 * 16;
 //increase the memory available to the server
 s.options.memSize = 8192 * 64;
-s.options.numOutputBusChannels = 16;
+s.options.numOutputBusChannels = 2;
 //boot the server
 s.reboot;
 //display the oscilloscope
@@ -16,7 +16,7 @@ p=ProxySpace.push(s);
 //start tempo clock
 p.makeTempoClock;
 //give proxyspace a tempo
-p.clock.tempo = 2;
+p.clock.tempo = 1;
 Task({
 	3.wait;
 	d = Dictionary.new;
@@ -44,25 +44,40 @@ p.clock.tempo = 1;
 
 
 (
-SynthDef(\iter, { | out = 0, amp = 0.5, pan = 0, freq=40, w=1 |
+SynthDef(\iter, { | out = 0, amp = 0.5, pan = 0, freq=40, w=1, gate=1, dur=1 |
 	var temp, sum, env, aug;
 	sum = 0;
 	env = EnvGen.kr(
-		Env.perc(0.01, 1, 1, -2),
-		doneAction: 2
+		Env.adsr(), gate, doneAction:2
 	);
-	w = w * Rand(0, 1);
-	10.do{
-		temp = LFPulse.ar(
-			freq * {Rand(0.99, 1.02)}!2,
-			{Rand(0.0, 1.0)}!2,
-			{ExpRand(0.005,0.05)}!2
+	20.do{ | count |
+		temp = SinOsc.ar(
+			freq.midicps *
+			(count + 1) * LFNoise2.kr({Rand(0.05, 0.2)}!2).range(0.98, 1.02)
 		);
 		sum = sum + temp;
 	};
-	aug = VarSaw.ar(freq, width: w);
+	aug = VarSaw.ar(freq.midicps, width: LFNoise1.kr(1), iphase: {Rand(0.0, 1.0)});
 	sum = sum * 0.01 * env + aug;
-	Out.ar(out, Splay.ar(sum * amp));
+	Out.ar(out, Splay.ar(DelayC.ar(sum, dur) * amp));
+}).add;
+
+SynthDef(\iter2, { | out = 0, amp = 0.5, pan = 0, freq=40, w=1, gate=1, dur=1 |
+	var temp, sum, env, aug;
+	sum = 0;
+	env = EnvGen.kr(
+		Env.perc(), gate, doneAction:2
+	);
+	20.do{ | count |
+		temp = VarSaw.ar(
+			freq.midicps *
+			(count + 1) * Line.kr({Rand(0.05, 0.2)}!2).range(0.80, 1.02)
+		);
+		sum = sum + temp;
+	};
+	aug = LFTri.ar(freq.midicps, width: SinOsc.kr(1), iphase: {Rand(0.0, 1.0)});
+	sum = sum * 0.01 * env + aug;
+	Out.ar(out, Splay.ar(DelayC.ar(sum, dur) * amp));
 }).add;
 
 SynthDef(\bplay,
@@ -72,7 +87,7 @@ SynthDef(\bplay,
 		env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:2);
 		sig = sig * env;
 		sig = sig * amp;
-		Out.ar(out!2,Pan2.ar(sig.dup,pan));
+		Out.ar(out,Pan2.ar(sig.dup,pan));
 }).add;
 )
 
@@ -80,51 +95,64 @@ SynthDef(\bplay,
 ~z= Pbind(
 	\instrument, \iter,
 	\scale, Scale.minor,
-	\octave, Pseq([-1,1,3,4], inf),
-	\degree, Pseq([-7, -7, -4, 0, -4, -3, 0], inf),
-	\dur, Pseq([0.25, Rest(3), 0.5, 0.25, 1], inf),
+	\octave, 3,
+	\degree, Pseq([0,3,-3,2,0,2], inf),
+	\dur, Pseq([0.25, Rest(2.75), 0.5, 0.25, 1.25], inf),
 	\w, Pwhite(0.3, 1, inf),
-	\amp, 0.1);
+	\gate, 0,
+	\amp, 0.1)
+
 )
 ~z.play;
 ~z.free;
 
 (
 ~x= Pbind(
-	\instrument, \iter,
+	\instrument, \iter2,
 	\scale, Scale.minor,
-	\octave, Pseq([-1,2,3,5], inf),
-	\degree, Pseq([7, -3, 4, 0, 5, 7, 0], inf),
-	\dur, Prand([0.25, 0.5, 0.25, 1, Rest(2)], inf),
+	\octave, 2.3,
+	\degree, Pseq([0,-2,-3,0,-3], inf),
+	\dur, Pseq([0.25, 1], inf),
 	\w, Pwhite(0.3, 1, inf),
 	\amp, 0.08);
 )
 ~x.play;
-~x.stop;
+~x.stop(fadeTime:3);
 
 
 
+(
+~h = Pbind(
+	\instrument, \bplay,
+	// \out, 3,
+	\buf, d["Hats"][6],
+	\dur, Pbjorklund2(Pseq([5,2,3,4,5], inf), 8)/4);
+)
+
+// ~h.play(out:6);
+~h.play;
+~h.stop;
 
 
 (
 ~b = Pbind(
 	\instrument, \bplay,
 	// \out, 3,
-	\buf, d["Bass Drums"][1],
-	// \dur, Pbjorklund2(Pseq([2,4,2,Pwhite(1, 4)], inf), 16)/4,
-	\dur, 1,
-	\amp, Pwhite(0.3, 0.6, inf));
+	\buf, d["Bass Drums"][3],
+	\dur, Pbjorklund2(Pseq([1,3,5,1,1], inf), 8)/4,
+	// \dur, 1,
+	\amp, Pwhite(0.5, 0.707, inf));
 )
 
 ~b.play;
 ~b.free;
-~b.stop;
+~b.stop(fadeTime: 3);
 
 (
 r = ProxyRecorder(p);
 
 
-r.add([~b, ~x, ~z]);
+r.add([~b, ~x, ~z, ~h]);
 )
 
 r.record;
