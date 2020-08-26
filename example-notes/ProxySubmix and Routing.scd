@@ -38,14 +38,6 @@ Task({
 )
 
 (
-SynthDef(\a, { | out=0, freq=100, time=5, dur=1 |
-	var sig, env = 1;
-	// env = EnvGen.kr(Env.perc(), doneAction: 2);
-	sig = SinOsc.ar(freq * LFNoise0.kr(time));
-	sig = sig * env;
-	Out.ar(out, Splay.ar(sig *  0.2));
-}).add;
-
 SynthDef(\bplay,
 	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
 		var sig,env=1 ;
@@ -55,65 +47,47 @@ SynthDef(\bplay,
 		sig = sig * amp;
 		Out.ar(out,Pan2.ar(sig.dup,pan));
 }).add;
-
-
-SynthDef(\delay, { | in, out=0 |
-	Out.ar(out,  DelayC.ar(In.ar(in)));
-}).add;
 )
 
-/* Notes: OoE here that sort of works is ~out (Bus) then Source (with play or doesn't work), then FX (~delay).
-Pbind play when defined puts them in the default group at the head so fx keep workiing (but I'm getting both)
-NEXT: Try Pbind out to another Proxy set in correct group order to see if that allows for muting of source (or mixing)*/
+m = ProxySubmix(\del);
+m.ar(2);
 
-~out = Bus.audio(s, 2);
+p.envir.put(\del, m);
 
-~fxgroup.play;
+~del = { DelayC.ar(m.ar) };
+~del.play;
 
-~a.play;
-~a = \a;
+m.addMix(~h, postVol: true);
+m.addMix(~b, postVol: true);
 
-
-(
-~delay = { | in, out=0 |
-	Out.ar(out,  DelayC.ar(In.ar(in)));
-};
-)
-~delay.set(\group, ~fxgroup);
-~delay.set(\in, ~out);
-~delay.play;
-~delay.free;
-
+NdefGui(m, 8); // gets these params automagically:
 
 (
 ~h = Pbind(
 	\instrument, \bplay,
-	\out, ~out,
-	\addAction, \addToHead,
+	// \out, ~out,
+	// \addAction, \addToHead,
 	\buf, d["Hats"][2],
-	\dur, 0.25).play;
+	\dur, Pseq([0.25, 0.5], inf),
+)
 )
 
-~h.play;
-~h.stop;
-~h.free;
-~delay.map(\in, ~h);
+// ~h.play;
+// ~h.stop;
+// ~h.free;
 (
 ~b = Pbind(
 	\instrument, \bplay,
-	\out, ~out,
+	// \out, ~out,
 	\buf, d["Bass Drums"][2],
 	\dur, Pseq([0.5, 1, 0.5, 1], inf),
 	\amp, 0.6
 ).play;
 )
 
-~b.play;
-~b.stop;
-
-~a = \a;
-~a.play;
-
+// ~b.play;
+// ~b.stop;
+// ~b.free;
 
 
 

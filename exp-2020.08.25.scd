@@ -23,7 +23,7 @@ Task({
 
 s.prepareForRecord;
 s.record;
-s.stopRecord;
+s.stopRecording;
 
 (
 SynthDef(\bplay,
@@ -55,7 +55,7 @@ Ndef(\synth2, { LFSaw.ar(Rand(1,10)).dup * 0.2}).play;
 
 Ndef(\synth2).stop;
 Ndef(\synth1).stop;
-Ndef(\fx).stop;
+Ndef(\fx).stop(fadeTime: 3);
 Ndef(\fuck).stop(fadeTime: 3);
 Ndef(\bplay).stop(fadeTime: 2);
 
@@ -93,7 +93,7 @@ Ndef(\bplay)[10] = \set -> Pbind(
 ~bb = Pbind(
 	\instrument, \bplay,
 	\buf, d["Bass Drums"][3],
-	\dur, Pseq([0.5, 1, 0.5, 1], inf),
+	\dur, Pseq([0.25, 1, 0.5, 1], inf),
 	\amp, 0.5
 ).play;
 )
