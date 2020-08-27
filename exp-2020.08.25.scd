@@ -70,23 +70,14 @@ Ndef(\bplay,
 });
 )
 
-/*(
-~b = Pbind(
-	\type, \set,
-	\id, Pfunc({ Ndef(\bplay).nodeID}),
-	\args, #[\buf, \amp],
-	\buf, d["Bass Drums"][2],
-	\dur, Pseq([0.5, 1, 0.5, 1], inf),
-	\amp, 0.3
-).play;
-)*/
+Ndef(\bplay).play;
 
 (
-Ndef(\bplay)[10] = \set -> Pbind(
+Ndef(\bplay)[1] = \set -> Pbind(
     \buf, d["Bass Drums"][1],
     \dur, Pseq([0.5, 1, 0.5, 1], inf),
     \amp, 0.3
-).play;
+);
 )
 
 (
