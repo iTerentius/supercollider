@@ -63,12 +63,14 @@ Ndef(\bplay).stop(fadeTime: 2);
 Ndef(\bplay,
 	{ | buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15 |
 		var sig,env=1 ;
-		sig = Mix.ar(PlayBuf.ar(2,buf,BufRateScale.ir(buf) * rate,1,BufDur.kr(buf)*pos*44100,doneAction:2));
+		sig = Mix.ar(PlayBuf.ar(2,buf,BufRateScale.ir(buf) * rate,1,BufDur.kr(buf)*pos*44100,doneAction:0));
 		env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:0);
 		sig = sig * env;
 		sig = sig * amp;
 });
 )
+
+Ndef(\bplay).play;
 
 /*(
 ~b = Pbind(
@@ -86,7 +88,7 @@ Ndef(\bplay)[10] = \set -> Pbind(
     \buf, d["Bass Drums"][1],
     \dur, Pseq([0.5, 1, 0.5, 1], inf),
     \amp, 0.3
-).play;
+);
 )
 
 (
