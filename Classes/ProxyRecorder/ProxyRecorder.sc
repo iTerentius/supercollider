@@ -3,6 +3,8 @@ ProxyRecorder {
 	var <proxyspace, <nodes;
 	var <>folder;
 	var <>headerFormat = "aiff", <>sampleFormat = "float";
+/*	var dateTime  = Date.getDate.format("%Y%m%d-%Hh%m");
+	dateTime.postln;*/
 
 	*new { |proxyspace, subfolder = nil |
 		^super.newCopyArgs(proxyspace).init(subfolder)
@@ -12,7 +14,7 @@ ProxyRecorder {
 		nodes  = ();
 		if(subfolder != nil,
 			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.name +/+ subfolder },
-			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.name }
+			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.name  }
 		);
 
 		File.mkdir(folder);
