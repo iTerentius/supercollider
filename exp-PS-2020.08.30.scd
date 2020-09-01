@@ -44,15 +44,16 @@ p.quant = 1;
 )
 
 (
-SynthDef(\a, { | out=0, freq=100, time=5, dur=1 |
+SynthDef(\a, { | out=0, freq=100, time=5, dur=1, gate = 1 |
 	var sig, env = 1;
-	env = EnvGen.kr(Env.perc(), doneAction: 2);
-	sig = LFPulse.ar(freq/2 * LFNoise0.kr(time), width: Rand(0, 1));
-	sig = sig * env;
-	Out.ar(out, Splay.ar(sig *  0.2));
+	env = EnvGen.kr(Env.asr(0.1, 0.5, curve: \sine), gate:gate, doneAction: 2);
+	sig = LFPulse.ar(freq * 0.5);
+	sig = sig * LFPulse.ar(Line.kr(1,freq));
+	Out.ar(out, Splay.ar(sig *  0.2 * env));
 }).add;
+)
 
-
+(
 SynthDef(\s1, {
 	var freq = \freq.kr(220);
 	var cutoff = \cutoff.kr(100);
@@ -60,12 +61,12 @@ SynthDef(\s1, {
 	var res = \res.kr(0.5).linlin(0, 1, 1, 0.001);
 	var aeg = Env.asr.ar(doneAction:Done.freeSelf, gate:\gate.kr(1));
 	var sig = RLPF.ar(LFSaw.ar(freq), aeg.linlin(0, 1, cutoff * LFPulse.kr(fvel, width: 1), cutoff * fvel), res);
-	sig = (sig * aeg) * \amp.kr(0.3);
+	sig = (sig * aeg * LFPulse.ar(\freq.kr + \cutoff.kr) * \amp.kr(0.3));
 	sig = Splay.ar(sig * 2);
 	Out.ar(\out.kr(0), sig);
 }).add;
-
-
+)
+(
 SynthDef(\bplay,
 	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
 		var sig,env=1 ;
@@ -75,7 +76,6 @@ SynthDef(\bplay,
 		sig = sig * amp;
 		Out.ar(out,Pan2.ar(sig.dup,pan));
 }).add;
-
 )
 
 // monitor - output to speakers
@@ -89,12 +89,11 @@ SynthDef(\bplay,
 		\instrument, \s1,
 		\out, Pfunc(~s1.bus.index ),
 		\group, Pfunc(~s1.group ),
-		\degree, Ppatlace([Pseq([0, -1, -7, -1], inf), Pseq([-1, 1, -2, 2], inf)], inf),
+		\degree, Ppatlace([Pseq([0, -1, -3, -7], inf), Pseq([-1, 1, -2, 2], inf)], inf),
 		\legato, 0.1,
 	\cutoff, Pwhite(30, 100, inf),
-	// \fvel, Rand(1, 8);
-		\dur, Pseq([0.25, 0.5, Rest(1)], inf);
-	)
+	\dur, Pseq([1, 0.5], inf),
+);
 )
 
 ~s1p.play;
@@ -106,8 +105,8 @@ SynthDef(\bplay,
 	\out, Pfunc(~bplay.bus.index),
 	\group, Pfunc(~bplay.group ),
 	\buf, d["Hats"][2],
-		\dur, Pseq([0.25, 0.25, 0.5, 0.77, 0.25], inf),
-		// \dur, 0.5,
+	// \dur, Pseq([0.25, 0.25, 0.5, 0.77, 0.25], inf),
+	\dur, 0.5,
 		\amp, 0.2);
 )
 
@@ -121,7 +120,7 @@ SynthDef(\bplay,
 	\out, Pfunc(~bplay.bus.index),
 	\group, Pfunc(~bplay.group),
 	\buf, d["Bass Drums"][10],
-	\dur, Pseq([1, 0.5, 0.5, 0.25], inf),
+	\dur, Pseq([1, 0.5, 0.5, 0.25, Rest(2)], inf),
 	\amp, 0.5);
 )
 
@@ -130,7 +129,7 @@ SynthDef(\bplay,
 ~b.stop(fadeTime:4);
 ~b.release;
 
-~a = { |freq=110, amp=0.5| Out.ar(0, SinOsc.ar(freq * Line.kr(freq, 1) * Saw.kr(freq), mul: 0.08).dup, gate: 0) };
+~a = { |freq=110, amp=0.5| Out.ar(0, SinOsc.ar(freq * Line.kr(freq, 1) * Saw.kr(freq), mul: 0.08).dup, gate: 1) };
 ~a = \a;
 
 (
@@ -138,12 +137,13 @@ SynthDef(\bplay,
 	\instrument, \a,
 	\out, Pfunc(~a.bus.index),
 	\group, Pfunc(~a.group),
-	\degree, Pseq([0, 3], inf),
+	\degree, Pseq([0, -2, -4], inf),
 	\dur, Pwhite(0.25, 1, inf).round);
 )
 
 ~ap.play;
 ~ap.stop(fadeTime: 4);
+~ap.release;
 ~a.play;
 
 ~a.release;
@@ -155,7 +155,7 @@ p.release;
 
 // route the ndef through a delay - output to speakers
 ~delay.play;
-~delay[0] = \mix -> {~s1.ar};
+~delay[0] = \mix -> {~s1p.ar};
 ~delay[1] = \mix -> {~hh.ar};
 ~delay[2] = \mix -> {~b.ar};
 ~delay[3] = \mix -> {~a.ar};
@@ -188,7 +188,7 @@ p.release;
 
 // route the dry signal, delay, and pitchshift through reverb - output to speakers
 ~verb.play(vol:0.5);
-~verb[0] = \mix -> {~s1.ar};
+~verb[0] = \mix -> {~s1p.ar};
 ~verb[1] = \mix -> {~delay.ar};
 ~verb[2] = \mix -> {~ps.ar};
 ~verb[3] = \mix -> {~ap.ar};
