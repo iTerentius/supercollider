@@ -46,21 +46,21 @@ p.quant = 1;
 (
 SynthDef(\a, { | out=0, freq=100, time=5, dur=1, gate = 1 |
 	var sig, env = 1;
-	env = EnvGen.kr(Env.asr(0.1, 0.5, curve: \sine), gate:gate, doneAction: 2);
+	var eg = Env([0.1, 0.5, 0, 0.9], [0.5, 0, 0.5, 0], curve: \sine);
+	env = EnvGen.kr(eg, gate:gate, doneAction: 2);
 	sig = LFPulse.ar(freq * 0.5);
 	sig = sig * LFPulse.ar(Line.kr(1,freq));
 	Out.ar(out, Splay.ar(sig *  0.2 * env));
 }).add;
 )
-
 (
 SynthDef(\s1, {
 	var freq = \freq.kr(220);
 	var cutoff = \cutoff.kr(100);
 	var fvel = \fvel.kr(8);
-	var res = \res.kr(0.5).linlin(0, 1, 1, 0.001);
+	var res = \res.kr(0.5).linlin(0.1, 1, 1, 0.001);
 	var aeg = Env.asr.ar(doneAction:Done.freeSelf, gate:\gate.kr(1));
-	var sig = RLPF.ar(LFSaw.ar(freq), aeg.linlin(0, 1, cutoff * LFPulse.kr(fvel, width: 1), cutoff * fvel), res);
+	var sig = RLPF.ar(LFPulse.ar(freq), aeg.linlin(0, 1, cutoff * LFNoise0.kr(fvel, width: 1) * 0.2, cutoff * fvel), res);
 	sig = (sig * aeg * LFPulse.ar(\freq.kr + \cutoff.kr) * \amp.kr(0.3));
 	sig = Splay.ar(sig * 2);
 	Out.ar(\out.kr(0), sig);
@@ -89,10 +89,10 @@ SynthDef(\bplay,
 		\instrument, \s1,
 		\out, Pfunc(~s1.bus.index ),
 		\group, Pfunc(~s1.group ),
-		\degree, Ppatlace([Pseq([0, -1, -3, -7], inf), Pseq([-1, 1, -2, 2], inf)], inf),
+		\degree, Ppatlace([Pseq([0, -2], inf), Pseq([-12, -4, -4], inf)], inf),
 		\legato, 0.1,
 	\cutoff, Pwhite(30, 100, inf),
-	\dur, Pseq([1, 0.5], inf),
+	\dur, Pseq([0.25, 0.5, 1, Rest(5)], inf),
 );
 )
 
@@ -131,19 +131,24 @@ SynthDef(\bplay,
 
 ~a = { |freq=110, amp=0.5| Out.ar(0, SinOsc.ar(freq * Line.kr(freq, 1) * Saw.kr(freq), mul: 0.08).dup, gate: 1) };
 ~a = \a;
+~a.set(\gate, 1);
+~a.stop;
+~a.free;
 
 (
 ~ap = Pbind(
 	\instrument, \a,
 	\out, Pfunc(~a.bus.index),
 	\group, Pfunc(~a.group),
-	\degree, Pseq([0, -2, -4], inf),
-	\dur, Pwhite(0.25, 1, inf).round);
+	\degree, Pseq([-12, -2, -4], inf),
+	\dur, Pseq([0.25, 0.5, 1, 0.25, Rest(4)], inf),
+	\time, Pseq([{5.rand}], inf));
 )
 
 ~ap.play;
 ~ap.stop(fadeTime: 4);
 ~ap.release;
+~ap.free;
 ~a.play;
 
 ~a.release;
@@ -166,7 +171,7 @@ p.release;
 ~delay.filter(10, {|in|
 	var sig;
 	var fb = LocalIn.ar(2);
-	fb = DelayC.ar(fb.reverse * LFNoise2.kr(~s1p.kr * 10), 1, [3/8, 5/8]);
+	fb = DelayC.ar(fb.reverse * LFNoise2.kr(~a.kr * 10), 1, [3/8, 5/8]);
 	sig = fb * 0.7 + in;
 	LocalOut.ar(sig);
 	sig;
@@ -181,7 +186,7 @@ p.release;
 ~ps.set(\mix0, 0.8);
 (
 ~ps.filter(10, {|in|
-	PitchShift.ar(in * LFNoise2(3), 2, 2, 0.01, 0.01)
+	PitchShift.ar(in * LFNoise2(~sp1.kr), 2, 2, 0.01, 0.01)
 })
 )
 ~ps.stop(fadeTime:3);
@@ -192,6 +197,7 @@ p.release;
 ~verb[1] = \mix -> {~delay.ar};
 ~verb[2] = \mix -> {~ps.ar};
 ~verb[3] = \mix -> {~ap.ar};
+~verb[3] = \mix -> nil;
 ~verb.filter(10, {|in| GVerb.ar(in, 10, 5, 1, 1) } );
 // adjust mix
 ~verb.set(\mix0, 0.5, \mix1, 1, \mix2, 1);
