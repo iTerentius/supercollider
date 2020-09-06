@@ -19,7 +19,7 @@ p.clock.tempo = 80/60;
 Task({
 	3.wait;
 	d = Dictionary.new;
-	d.add(\foldernames -> PathName("/home/hypostatic/music/samples/808s_by_SHD/Classic").entries);
+	d.add(\foldernames -> PathName("/home/hypostatic/Music/samples/808s_by_SHD/Classic").entries);
 	for (0, d[\foldernames].size-1,
 		{arg i; d.add(d[\foldernames][i].folderName -> d[\foldernames][i].entries.collect({
 			arg sf;
@@ -79,8 +79,8 @@ SynthDef(\bplay,
 )
 
 // monitor - output to speakers
-~s1.play(vol: 1);
-~bplay.play(vol: 1);
+~s1.play;
+~bplay.play;
 ~a.play;
 
 // play the synthdef routed through the ndef
