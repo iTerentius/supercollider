@@ -13,8 +13,8 @@ ProxyRecorder {
 	init { | subfolder = nil |
 		nodes  = ();
 		if(subfolder != nil,
-			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.name +/+ subfolder },
-			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.name  }
+			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.title +/+ subfolder },
+			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.title  }
 		);
 
 		File.mkdir(folder);
