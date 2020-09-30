@@ -14,5 +14,8 @@ a = Synth(\t1);
 a.free;
 
 
+pb = Pbind
+
+
 )
 {Pan2.ar(SinOsc.ar(300) + SinOsc.kr(MouseX.kr(0, 2000))) * 0.2 }.play;

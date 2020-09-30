@@ -52,7 +52,7 @@ SynthDef(\bplay,
 		sig = sig * env;
 		sig = sig * amp;
 		Out.ar(out,Pan2.ar(sig.dup,pan));
-}).add;q
+}).add
 )
 (
 SynthDef(\iter, { | freq = 40, amp=0.5, gate = 1 |
@@ -73,18 +73,19 @@ SynthDef(\iter, { | freq = 40, amp=0.5, gate = 1 |
 )
 
 (
-SynthDef(\t1, { |freq = 110, ffreq=1, dur = 1 |
+SynthDef(\t1, { |out = 0, freq = 110, ffreq=1, dur = 1, gate = 1 |
 	var temp= 0, sum = 0, e1;
-	e1 = EnvGen.kr(Env.perc(releaseTime: dur, doneAction:2));
-	sum = Blip.ar(freq/12, ffreq) + SinOsc.kr(ffreq) * e1 * 0.5;
-	Out.ar(0, sum!2);
+	e1 = EnvGen.kr(Env.perc(releaseTime: dur), doneAction:2);
+	sum = Blip.ar(freq/6, ffreq) + SinOsc.kr(ffreq.pow(Pseq(l, inf).asStream)) * 0.5;
+	sum = sum - LFPulse.kr(Pseq(l, inf).asStream);
+	Out.ar(out, sum!2 * e1 * 0.3);
 }).add;
 )
 
-
+// START FIRST!!!
 ~bplay.play;
 l  = [5, 6, 5, 5, 6, 5, 5, 6, 5, 6, 5, 5, 6, 5, 6, 5, 6, 5, 5, 6, 5, 7];
-
+~bplay.release;
 
 (
 r = ProxyRecorder(p);
@@ -99,10 +100,26 @@ r = ProxyRecorder(p);
 ~b.play;
 ~delay.play;
 ~ps.play;
+~pt1.play;
 ~verb.play;
 
 
-r.add([~ip, ~hh, ~b, ~dust, ~delay, ~ps, ~verb]);
+r.add([~ip, ~hh, ~b, ~pt1, ~dust, ~delay, ~ps, ~verb]);
+
+)
+
+(
+~dust.stop;
+~iterstop;
+~iterlfok1.stop;
+~itergate.stop;
+~ip.stop;
+~hh.stop;
+~b.stop;
+~delay.stop;
+~ps.stop;
+~pt1.stop;
+~verb.stop;
 )
 
 r.record;
@@ -118,17 +135,22 @@ r.stop;
 	\amp, Pseq(l, inf) * 0.01,
 	\out, Pfunc(~bplay.bus.index),
 	\group, Pfunc(~bplay.group),
+);
 )
-)
+~pt1.play;
+~pt1.stop;
 
 ~dust.play;
 
 (
 ~dust = { | freq = 110 |
 	var sig, evn;
-	sig = Pan2.ar(SinOsc.ar(freq / Pseq(l, inf).asStream * ~itergate.kr * 0.1));
+	sig = SinOsc.ar(freq) + (LFPulse.kr(30) + Dust2.kr(Pseq(l, inf).asStream));
+	Out.ar(0, Pan2.ar(sig) * 0.1);
 };
 )
+
+~dust.set(\freq, Pseq(l, inf).asStream * 100);
 
 ~dust.stop(fadeTime:10);
 ~dust.release(fadeTime:10);
@@ -138,13 +160,13 @@ r.stop;
 ~iter.release;
 
 ~iterlfok1.play;
-~iterlfok1 = {SinOsc.kr(Line.kr(30, ~bplay.kr ))};
+~iterlfok1 = {SinOsc.kr(~bplay.kr)};
 ~iterlfok1.stop;
 
-~itergate.play;
+~itergate.play(fadeTime:10);
 ~itergate = { LFPulse.ar(LFNoise0.kr(1).range(11, 110))!2 /* + Pbjorklund2(Pseq(l, inf).asStream, 22,inf).asStream/8 + Pseq(l * 100, inf).asStream **/ * 0.5 };
 ~itergate.release(fadeTime: 10);
-~itergate.stop;
+~itergate.stop(fadeTime:4);
 
 ~ip.play;
 (
@@ -195,7 +217,7 @@ r.stop;
 
 ~b.play;
 ~b.stop(fadeTime:4);
-~b.release;
+~b.release(fadeTime:4);
 
 
 p.release(fadeTime:10);
@@ -207,7 +229,7 @@ p.release(fadeTime:10);
 ~delay[2] = \mix -> {~b.ar};
 ~delay[3] = \mix -> {~ip.ar};
 ~delay[4] = \mix -> {~dust.ar};
-~delay[5] = \mix -> {~bplay.ar};
+~delay[5] = \mix -> {~pt1.ar};
 ~delay.set(\mix1, 0.25, \mix2, 0.5);
 (
 ~delay.filter(10, {|in|
@@ -228,7 +250,7 @@ p.release(fadeTime:10);
 ~ps.set(\mix0, 0.8);
 (
 ~ps.filter(10, {|in|
-	PitchShift.ar(in * LFNoise2(~hh.kr.reverse), 2, 2, 0.01, 0.01)
+	PitchShift.ar(in * LFNoise2(~bplay.kr.reverse), 2, 2, 0.01, 0.01)
 })
 )
 ~ps.stop(fadeTime:3);
@@ -240,7 +262,7 @@ p.release(fadeTime:10);
 ~verb[3] = \mix -> {~pt1.ar};
 ~verb.filter(10, {|in| GVerb.ar(in.reverse, 10, 5, 1, 1) } );
 // adjust mix
-~verb.set(\mix0, 0.5, \mix1, 0.5, \mix2, 0.5);
+~verb.set(\mix0, 0.2, \mix1, 0.2, \mix2, 0.2, \mix3, 0.2);
 );
 // adjust wet/dry
 ~verb.set(\wet10, 0.9)
