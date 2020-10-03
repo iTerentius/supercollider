@@ -70,6 +70,6 @@ trigger= Trig1.ar(abs(source- Delay1.ar(source)), 0.001); //0.001 is duration of
 s.prepareForRecord;
 s.record;
 s.stopRecording;
-~rec = {SinOsc.ar(EnvGen.ar(Env([63,63,60,55,60, 0],0.5!5, mul:0.001,curve:\step),Impulse.kr(0.55)).midicps)!2}.play
+~rec = {Saw.ar(EnvGen.ar(Env([63,63,60,55,60, 0],0.125!5, mul:0.001,curve:\step),Impulse.kr(0.25)).midicps)!2 * 0.2}.play
 
 //the Impulse's rate acts like a beats per second here, and the envelope timings are in beats (0.125 per transition)
