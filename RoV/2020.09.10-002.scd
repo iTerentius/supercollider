@@ -19,7 +19,8 @@ p.clock.tempo = 80/60;
 Task({
 	3.wait;
 	d = Dictionary.new;
-	d.add(\foldernames -> PathName("/home/hypostatic/Music/samples/808s_by_SHD/Classic").entries);
+	// d.add(\foldernames -> PathName("/home/hypostatic/Music/samples/808s_by_SHD/Classic").entries); // Linux
+	d.add(\foldernames -> PathName("/Users/isaactlinder/Music/supercollider/_samples/808s_by_SHD/").entries); //Mac
 	for (0, d[\foldernames].size-1,
 		{arg i; d.add(d[\foldernames][i].folderName -> d[\foldernames][i].entries.collect({
 			arg sf;
@@ -38,7 +39,7 @@ Task({
 )
 
 (
-p.clock.tempo = 45/60;
+p.clock.tempo = 120/60;
 p.fadeTime = 3;
 p.quant = 1;
 )
