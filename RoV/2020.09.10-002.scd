@@ -59,7 +59,7 @@ SynthDef(\iter, { | freq = 40, amp=0.5, gate = 1 |
 	var temp;
 	var env = 1;
 	var sum = 0;
-	env = EnvGen.kr(Env.linen([0, 1, 0, 1, 0.5], [0.1, 0.25, 0.5, 0.75, 1]), gate: gate, doneAction:2);
+	env = EnvGen.kr(Env.linen([0, 1, 0, 1, 0.5], [0.1, 0.25, 0.5, 0.75, 1]), doneAction:2);
 	10.do{
 		temp = VarSaw.ar(
 			freq * 1-env * {Rand(0.99, 1.02)  * 1}!2,
@@ -73,12 +73,22 @@ SynthDef(\iter, { | freq = 40, amp=0.5, gate = 1 |
 )
 
 (
-SynthDef(\t1, { |out = 0, freq = 110, ffreq=1, dur = 1, gate = 1 |
-	var temp= 0, sum = 0, e1;
-	e1 = EnvGen.kr(Env.perc(releaseTime: dur), doneAction:2);
-	sum = Blip.ar(freq/6, ffreq) + SinOsc.kr(ffreq.pow(Pseq(l, inf).asStream)) * 0.5;
-	sum = sum - LFPulse.kr(Pseq(l, inf).asStream);
-	Out.ar(out, sum!2 * e1 * 0.3);
+SynthDef(\t1, { |out = 0, freq = 110, ffreq=1, dur = 1, gate = 1, amp = 0.5 |
+	var temp= 0, sum = 0, e1, l  = [5, 6, 5, 5, 6, 5, 5, 6, 5, 6, 5, 5, 6, 5, 6, 5, 6, 5, 5, 6, 5, 7];
+	e1 = EnvGen.kr(Env.perc(releaseTime: dur * 2), doneAction:2);
+	sum = VarSaw.ar(freq, SinOsc.kr(20)) + SinOsc.kr(Pseq(l * 0.1, inf).asStream);
+	sum = sum + LFPulse.kr(Pseq(l, inf).asStream, width: 1);
+	Out.ar(out, Splay.ar(sum) * e1 * amp);
+}).add;
+)
+
+(
+SynthDef(\a1, { |out = 0, freq = 110, ffreq=1, dur = 1, gate = 1, amp = 1 |
+	var temp= 0, sum = 0, e1, l  = [5, 6, 5, 5, 6, 5, 5, 6, 5, 6, 5, 5, 6, 5, 6, 5, 6, 5, 5, 6, 5, 7];
+	e1 = EnvGen.kr(Env.perc(releaseTime: dur * 2), doneAction:2);
+	sum = SinOsc.ar(freq) * LFNoise2.kr(Pseq(l, inf).asStream) * 2;
+	sum = sum + LFPulse.kr(freq + Pseq(l, inf).asStream, mul:SinOsc.kr(Rand(40,80)));
+	Out.ar(out, Splay.ar(sum) * e1 * amp);
 }).add;
 )
 
@@ -100,11 +110,12 @@ r = ProxyRecorder(p);
 ~b.play;
 ~delay.play;
 ~ps.play;
+~pa.play;
 ~pt1.play;
 ~verb.play;
 
 
-r.add([~ip, ~hh, ~b, ~pt1, ~dust, ~delay, ~ps, ~verb]);
+r.add([~ip, ~hh, ~b, ~pt1, ~pa, ~dust, ~delay, ~ps, ~verb]);
 
 )
 
@@ -119,6 +130,7 @@ r.add([~ip, ~hh, ~b, ~pt1, ~dust, ~delay, ~ps, ~verb]);
 ~delay.stop;
 ~ps.stop;
 ~pt1.stop;
+~pa.stop;
 ~verb.stop;
 )
 
@@ -126,15 +138,31 @@ r.record;
 r.stop;
 
 (
+~pa = Pbind(
+	\instrument, \a1,
+	\dur, Pseq([0.25, 0.5, 0.25, Rest(0.5)], inf),
+	\scale, Scale.phrygian,
+	\degree, Pseq(l, inf),
+	\octave, Pwhite(3,5).round(),
+	\amp, 0.3,
+);
+)
+
+~pa.play(faceTime:5);
+~pa.stop(fadeTime:3);
+
+(
 ~pt1 = Pbind(
 	\instrument, \t1,
 	\degree, Pseq(l, inf),
-	\scale, Scale.minor,
+	\octave, Pseq([2, Rest(2)],inf),
+	\scale, Scale.phrygian,
 	\ffreq, Pseq(l, inf),
 	\dur, Pseq(l, inf)/Pseq(l, inf) * 4,
-	\amp, Pseq(l, inf) * 0.01,
-	\out, Pfunc(~bplay.bus.index),
-	\group, Pfunc(~bplay.group),
+	\legato, Pseq(l, inf) * 0.1,
+	// \out, Pfunc(~bplay.bus.index),
+	// \group, Pfunc(~bplay.group),
+	\amp, 0.3,
 );
 )
 ~pt1.play;
@@ -145,8 +173,8 @@ r.stop;
 (
 ~dust = { | freq = 110 |
 	var sig, evn;
-	sig = SinOsc.ar(freq) + (LFPulse.kr(30) + Dust2.kr(Pseq(l, inf).asStream));
-	Out.ar(0, Pan2.ar(sig) * 0.1);
+	sig = VarSaw.ar(LFPar.kr(LFPulse.kr(Pseq(l**2, inf).asStream, 0.2, 0.5, 0.5),0.2, 1, 0.5)) * (LFPulse.kr(LFPulse.kr(0.2, 0, 0.5, 8, 10),0,0.5,4));
+	Out.ar(0, Pan2.ar(sig) * 0.2);
 };
 )
 
@@ -168,18 +196,29 @@ r.stop;
 ~itergate.release(fadeTime: 10);
 ~itergate.stop(fadeTime:4);
 
-~ip.play;
+~rec.play;
+
+(
+~rec = {
+	var sig = 0, temp;
+	sig = LFPulse.ar(EnvGen.ar(Env([45, 60, 55, 63, 0],0.125!5,curve:\step),LFPulse.kr(Rand(0, 1).round(0.25)).midicps))!2 * 0.1;
+};
+)
+~rec.free;
+
+/*~ip.play;
 (
 ~ip = Pbind(
 	\instrument, \iter,
-	\freq, Pseq(l, inf).pow(2),
+	\degree, Pseq(l, inf),
+	\scale, Scale.phrygian,
 	\dur, Pseq(l, inf)/Pseq(l, inf) * 4,
 	\amp, Pseq(l, inf) * 0.01,
 	\gate, ~itergate.kr,
 );
 )
 ~ip.stop;
-~ip.release(fadeTime:5);
+~ip.release(fadeTime:5);*/
 ~iter.free;
 
 // monitor - output to speakers
@@ -191,9 +230,9 @@ r.stop;
 	\instrument, \bplay,
 	\out, Pfunc(~bplay.bus.index),
 	\group, Pfunc(~bplay.group ),
-	\buf, d["Hats"][3],
-	// \dur, Pseq([0.25, 0.25, 0.5, 0.77, 0.25], inf),
-	\dur,Pbjorklund2(Pseq(l, inf).asStream,12,inf)/16,
+	\buf, d["Hats"][1],
+	\dur, Pseq([0.25, 0.25, 0.5, 0.77, 0.25], inf),
+	// \dur,Pbjorklund2(Pseq(l, inf).asStream,12,inf)/8,
 	\amp, Pseq(l * 0.025, inf)
 );
 
@@ -201,9 +240,9 @@ r.stop;
 	\instrument, \bplay,
 	\out, Pfunc(~bplay.bus.index),
 	\group, Pfunc(~bplay.group),
-	\buf, d["Bass Drums"][1],
-	\dur, Pbjorklund2(Pseq(l, inf), l.size, inf)/ Pseq(l, inf) + Pseq(l, inf)/4,
-	\amp, Pseq(l * 0.05, inf)
+	\buf, d["Bass Drums"][6],
+	\dur, Pbjorklund2(Pseq(l, inf), l.size, inf)/ Pseq(l, inf) + Pseq(l, inf),
+	\amp, Pseq(l * 0.1, inf)
 );
 )
 
@@ -262,10 +301,10 @@ p.release(fadeTime:10);
 ~verb[3] = \mix -> {~pt1.ar};
 ~verb.filter(10, {|in| GVerb.ar(in.reverse, 10, 5, 1, 1) } );
 // adjust mix
-~verb.set(\mix0, 0.2, \mix1, 0.2, \mix2, 0.2, \mix3, 0.2);
+~verb.set(\mix0, 0.3, \mix1, 0.2, \mix2, 0.3, \mix3, 0.3);
 );
 // adjust wet/dry
-~verb.set(\wet10, 0.9)
+~verb.set(\wet10, 1.0)
 ~verb.free;
 ~verb.stop(fadeTime:10);
 
