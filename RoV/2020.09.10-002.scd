@@ -19,8 +19,7 @@ p.clock.tempo = 80/60;
 Task({
 	3.wait;
 	d = Dictionary.new;
-	// d.add(\foldernames -> PathName("/home/hypostatic/Music/samples/808s_by_SHD/Classic").entries); // Linux
-	d.add(\foldernames -> PathName("/Users/isaactlinder/Music/supercollider/_samples/808s_by_SHD/").entries); //Mac
+	d.add(\foldernames -> PathName("/home/hypostatic/Music/samples/808s_by_SHD/Classic").entries);
 	for (0, d[\foldernames].size-1,
 		{arg i; d.add(d[\foldernames][i].folderName -> d[\foldernames][i].entries.collect({
 			arg sf;
@@ -39,7 +38,7 @@ Task({
 )
 
 (
-p.clock.tempo = 120/60;
+p.clock.tempo = 45/60;
 p.fadeTime = 3;
 p.quant = 1;
 )
@@ -61,14 +60,14 @@ SynthDef(\iter, { | freq = 40, amp=0.5, gate = 1 |
 	var env = 1;
 	var sum = 0;
 	env = EnvGen.kr(Env.linen([0, 1, 0, 1, 0.5], [0.1, 0.25, 0.5, 0.75, 1]), doneAction:2);
-	10.do{
+
 		temp = VarSaw.ar(
-			freq * 1-env * {Rand(0.99, 1.02)  * 1}!2,
+			freq * env * {Rand(0.99, 1.02)  * 1}!2,
 			Impulse.kr(freq * 10) * {Rand(0.99, 1.02)}!2,
 			LFPulse.kr(CombC.kr(Dust2.kr(freq), freq.midicps))!2
 			);
 			sum = sum + temp * 0.3;
-	};
+
 	Out.ar(0, Pan2.ar(sum * amp));
 }).add;
 )
@@ -174,7 +173,7 @@ r.stop;
 (
 ~dust = { | freq = 110 |
 	var sig, evn;
-	sig = VarSaw.ar(LFPar.kr(LFPulse.kr(Pseq(l**2, inf).asStream, 0.2, 0.5, 0.5),0.2, 1, 0.5)) * (LFPulse.kr(LFPulse.kr(0.2, 0, 0.5, 8, 10),0,0.5,4));
+	sig = SinOsc.ar(LFPar.kr(LFPulse.kr(Pseq(l**2, inf).asStream, 0.2, 0.5, 0.5),0.2, 1, 0.5)) * (LFPulse.kr(LFPulse.kr(0.2, 0, 0.5, 8, 10),0,0.5,4));
 	Out.ar(0, Pan2.ar(sig) * 0.2);
 };
 )
