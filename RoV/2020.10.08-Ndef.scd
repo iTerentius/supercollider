@@ -55,36 +55,8 @@ SynthDef(\bplay,
 }).add
 )
 
-//
-// (
-// ~dust.play;
-// ~rec.play;
-// ~hh.play;
-// ~b.play;
-// )
-//
-// (
-// r = ProxyRecorder(p);
-//
-// r.add([~hh, ~b, ~rec, ~dust]);
-//
-// )
-//
-// (
-// ~dust.stop;
-// ~rec.stop;
-// ~hh.stop;
-// ~b.stop;
-// )
-//
-// r.record;
-// r.stop;
-//
-// p.prepareForRecord;
-
-
 (
-~lead = { | out = 0, freq = 48, relTime = 2 |
+Ndef(\lead, { | out = 0, freq = 48, relTime = 2 |
 	var sig = 0, temp, env, curv;
 	out.postln;
 	// curv = [\step, \sin, \wel].scramble;
@@ -93,21 +65,25 @@ SynthDef(\bplay,
 		temp = LFPulse.ar(freq + Rand(0, i), LFPulse.kr(Rand(0, i).round(rrand(0.125, i))).midicps)!2 / 8;
 		sig = sig + temp * env * 0.9;
 		Out.ar(out, sig * 1/16);
-	};
-};
-
-~lead[1] = \xset -> Pbind(
-	/*	\type, \midi,
-		\midiout, m,
-		\midicmd, \noteOn,
-		\chan, 0,*/
+	}
+}
+)
+)
+(
+Pdef(\leadPd,
+	Pbind(
 	\dur, Pseq([0.125, 0.5, 1, 2, 0.25, 0.125, 0.125, 0.5, Rest(4), Rest(2), Rest(1)].scramble, inf),
 	\degree, Pseq(Scale.hijaz.degrees.mirror.scramble -5, inf),
 	\octave, Pwhite(2, 4, inf).round(1),
 	\relTime, Pseq([1, 2, 3, 0.5], inf),
-);
-
 )
+)
+)
+
+Ndef(\lead).play;
+Ndef(\lead)[1] = \xset -> Pdef(\leadPd).play;
+
+
 
 (
 Pbind(
