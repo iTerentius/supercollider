@@ -81,22 +81,8 @@ Pdef(\leadPd,
 )
 
 Ndef(\lead).play;
-Ndef(\lead)[1] = \xset -> Pdef(\leadPd).play;
+Ndef(\lead)[1] = \xset -> Pdef(\leadPd);
 
-
-
-(
-Pbind(
-		\type, \midi,
-		\midiout, m,
-		\midicmd, \noteOn,
-		\chan, 0,
-	\dur, Pseq([0.125, 0.5, 1, 2, 0.25, 0.125, 0.125, 0.5, Rest(4), Rest(2), Rest(1)].scramble, inf),
-	\degree, Pseq(Scale.hijaz.degrees.mirror.scramble -5, inf),
-	\octave, Pwhite(2, 4, inf).round(1),
-	\relTime, Pseq([1, 2, 3, 0.5], inf),
-).play;
-)
 
 m = MIDIOut.newByName("Virtual Raw MIDI 0-0", "VirMIDI 0-0");
 m = MIDIOut(0);
@@ -105,46 +91,42 @@ m.noteOn(0, 60, 30);
 m.noteOff(0, 60);
 
 r.link.sendMsg("/tempo/raw", 80);
-r.add([~lead, ~dust, ~hh, ~b]);
+r.add([\lead, \dust, \hh, \b]);
 r.record;
 r.stop;
 
 
-~lead.set(\out, 2);
-~lead.get(\out);
-~lead.asCompileString;
-~lead.play;
-~lead.stop(fadeTime: 4);
-~lead.end(fadeTime:5);
-~lead.free;
+Ndef(\lead).set(\out, 0);
+Ndef(\lead).get(\out);
 
-~dust.play;
+Ndef(\lead).stop(fadeTime: 4);
+Ndef(\lead).end(fadeTime:5);
+Ndef(\lead).free;
 
-~dust.asCompileString;
+Ndef(\dust).play;
 
 (
-~dust = { | out = 0, freq = 110 |
+Ndef(\dust, { | out = 0, freq = 110 |
 	var sig, env;
 	env = EnvGen.kr(Env.asr(), doneAction: 2);
 	sig = SinOsc.ar(LFPar.kr(LFPulse.kr(1, 0.2, 0.5, 0.5),0.2, 1, 0.5) * freq * 3) * (LFPulse.kr(LFPulse.kr(1, 0, 0.5, 8, 10),0,0.5,4));
 	Out.ar(out, Pan2.ar(sig) * 0.09 * env);
 };
 )
+)
 
-~dust.set(\out, 4);
-~dust.get(\out);
-
-~dust.xset(\freq, Pseq(Scale.hijaz.degrees, inf).asStream);
-~dust.xset(\freq, 110);
-~dust.set(\gate, ~lead);
+Ndef(\dust).xset(\freq, Pseq(Scale.hijaz.degrees, inf).asStream);
+Ndef(\dust).xset(\freq, 110);
+Ndef(\dust).set(\gate, Ndef(\lead));
 
 
-~dust.stop(fadeTime:10);
-~dust.end(fadeTime:10);
-~dust.release(fadeTime:10);
+Ndef(\dust).stop(fadeTime:10);
+Ndef(\dust).end(fadeTime:10);
+Ndef(\dust).release(fadeTime:10);
 
 (
-~hh = Pbind(
+Pdef(\hh,
+	Pbind(
 /*	\type, \midi,
 	\midiout, m,
 	\midicmd, \noteOn,
@@ -156,8 +138,11 @@ r.stop;
 	// \dur,Pbjorklund2(Pseq(l, inf).asStream,12,inf)/8,
 	\amp, 0.025,
 );
-
-~b = Pbind(
+)
+)
+(
+Pdef(\b,
+	Pbind(
 	\instrument, \bplay,
 	\out, 8,
 	\buf, d["Bass Drums"][5],
@@ -165,9 +150,10 @@ r.stop;
 	\amp, 0.2
 );
 )
+)
 
 
-~hh.play;
+Ndef(\hh,).play;
 ~hh.get(\out);
 ~hh.stop(fadeTime:4);
 ~hh.release(fadeTime:4);
