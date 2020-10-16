@@ -5,7 +5,8 @@
 s.options.numBuffers = 1024 * 16;
 //increase the memory available to the server
 s.options.memSize = 8192 * 256;
-s.options.numOutputBusChannels = 16;
+s.options.numOutputBusChannels = 18;
+s.options.numInputBusChannels = 0;
 //boot the server
 s.reboot;
 //display the oscilloscope

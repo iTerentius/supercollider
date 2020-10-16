@@ -13,16 +13,18 @@ Reaper {
 
 	add { |proxies|
 		var name, num, cmdName, cmdArm, out = 0;
-		link.sendMsg("/action/40035"); //Select all
+		link.sendMsg("/action/40296"); //Select all
 		link.sendMsg("/action/40697"); //Delete all
 
 		proxies.do{ |proxy, i|
 			out = out + 2;
-			proxy.set(\out, out);
+			out.postln;
+			Ndef(proxy).play;
+			Ndef(proxy).set(\out, out);
 			name = proxy.asCompileString;
 			name.postln;
-			num = i + out;
-			num.postln;
+			num = i + 1;
+			// num.postln;
 			cmdName = "/track/"++num++"/name";
 			cmdArm = "/track/"++num++"/recarm";
 			cmdArm.postln;
