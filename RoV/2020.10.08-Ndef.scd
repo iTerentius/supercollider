@@ -19,34 +19,39 @@ Ndef(\lead, { | out, freq = 48, relTime = 2 |
 }
 )
 )
+
 (
-Pdef(\lead,
+Pdef(\leadmidi, Pbind(
+	\type, \midi,
+	\midiout, m,
+	\midicmd, \noteOn,
+	\chan, 0,
+)<> PtimeClutch(Pdef(\leadseq)));
+)
+
+(
+Pdef(\leadseq,
 	Pbind(
-	/*\out, Pfunc({ Ndef(\lead).bus.index }),*/
-
-	\dur, Pseq([0.125, 0.5, 1, 2, 0.25, 0.125, 0.125, 0.5, Rest(4), Rest(2), Rest(1)].scramble, inf),
-	\degree, Pseq(Scale.hijaz.degrees.mirror.scramble -5, inf),
-	\octave, Pwhite(2, 4, inf).round(1),
-	\relTime, Pseq([1, 2, 3, 0.5], inf),
-)
-)
+		\dur, Pseq([0.125, 0.5, 1, 2, 0.25, 0.125, 0.125, 0.5, Rest(4), Rest(2), Rest(1)].scramble, inf),
+		\degree, Pseq(Scale.hijaz.degrees.mirror.scramble -5, inf),
+		\octave, Pwhite(2, 4, inf).round(1),
+		\relTime, Pseq([1, 2, 3, 0.5], inf),
+	))
 )
 
-Pdef(\lead).play;
+Pdef(\leadseq).play;
 
 Ndef(\lead).play;
-Ndef(\lead)[1] = \xset -> Pdef(\lead);
-Ndef(\lead).set(\out, 2);
+Ndef(\lead)[1] = \xset -> Pdef(\leadseq);
+Ndef(\lead).set(\out, 0);
 Ndef(\lead).get(\out);
+Ndef(\lead).stop(fadeTime:10);
 
-m = MIDIOut.newByName("Virtual Raw MIDI 0-0", "VirMIDI 0-0");
-m = MIDIOut(0);
-m.latency(0);
-m.noteOn(0, 60, 30);
-m.noteOff(0, 60);
-
-r.link.sendMsg("/tempo/raw", 80);
-r.add([\lead, \dust, \hh, \b]);
+(
+TempoClock.default.tempo = 2;
+r.link.sendMsg("/tempo/raw", 120);
+r.add([\lead, \dust, \hh, \b, \leadmidi, \hhmidi, \bmidi]);
+)
 r.record;
 r.stop;
 
@@ -61,7 +66,7 @@ Ndef(\lead).free;
 Ndef(\dust).play;
 
 (
-Ndef(\dust, { | out, freq = 110 |
+Ndef(\dust, { | out = 0, freq = 110 |
 	var sig, env;
 	env = EnvGen.kr(Env.asr(), doneAction: 2);
 	sig = SinOsc.ar(LFPar.kr(LFPulse.kr(1, 0.2, 0.5, 0.5),0.2, 1, 0.5) * freq * 3) * (LFPulse.kr(LFPulse.kr(1, 0, 0.5, 8, 10),0,0.5,4));
@@ -73,7 +78,7 @@ Ndef(\dust, { | out, freq = 110 |
 Ndef(\dust)[1] = \xset -> Pbind(\freq, Pseq(Scale.hijaz.degrees, inf));
 Ndef(\dust).xset(\freq, 110);
 Ndef(\dust).set(\gate, Ndef(\lead));
-Ndef(\dust).set(\out, 4);
+Ndef(\dust).set(\out, 2);
 Ndef(\dust).get(\out);
 
 
@@ -82,11 +87,12 @@ Ndef(\dust).end(fadeTime:10);
 Ndef(\dust).clear(fadeTime:10);
 Ndef(\dust).release(fadeTime:10);
 
+Pdef.defaultQuant = -1;
 
 (
 SynthDef(\bplay,
 	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
-		var sig,env=1 ;
+		var sig,env=1;
 		sig = Mix.ar(PlayBuf.ar(2,buf,BufRateScale.ir(buf) * rate,1,BufDur.kr(buf)*pos*44100,doneAction:2));
 		env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:0);
 		sig = sig * env;
@@ -100,32 +106,113 @@ Ndef(\hh)[1] = \xset -> Pdef(\hh);
 Ndef(\hh).get(\out);
 
 (
-Pdef(\hh,
+Ndef(\hh).play;
+Pdef(\hhmidi,
+	Pbind(
+		\type, \midi,
+		\midiout, m,
+		\midicmd, \noteOn,
+		\chan, 1,
+));
+
+Pdef(\hhsynth,
 	Pbind(
 		\instrument, \bplay,
-		\out,6,
+		\out, Pfunc(Ndef(\hh).bus.index),
+		\group, Pfunc(Ndef(\hh).group),
+		\out,2,
 		\buf, d["Hats"][1],
-		\dur, Pseq([0.25, 0.25, 0.5, 0.77, 0.25].scramble, inf),
+));
+
+Pdef(\hhseq,
+	Pbind(
+
+		// \dur, Pseq([0.25, 0.25, 0.5, 0.77, 0.25].scramble, inf),
 		// \dur,Pbjorklund2(Pseq(l, inf).asStream,12,inf)/8,
+		\dur, 0.25,
 		\amp, 0.025,
-	))
+	));
 )
-Pdef(\hh).play;
+(
+
+Pdef(\hh,
+	Ppar([
+		Pdef(\hhmidi),
+		Pdef(\hhsynth),
+	])
+	<> PtimeClutch(Pdef(\hhseq))
+);
+)
+
+
+
+
+Pdef(\hh).play(quant: -1);
 Pdef(\hh).stop;
 
 (
-Pdef(\b,
+Pdef(\bmidi,
 	Pbind(
+		\type, \midi,
+		\midiout, m,
+		\midicmd, \noteOn,
+		\chan, 2,
+));
+
+Pdef(\bsynth,
+	Pbind(
+		\out, Pfunc(Ndef(\hh).bus.index),
+		\group, Pfunc(Ndef(\hh).group),
 		\instrument, \bplay,
-		\out, 8,
 		\buf, d["Bass Drums"][5],
-		\dur, Pseq([0.25, 0.25, 0.5, 0.77, 0.25].scramble, inf),
+));
+
+Pdef(\bseq,
+	Pbind(
+		\dur, 0.5,
 		\amp, 0.2
-))
+));
+)
+(
+
+Pdef(\b,
+	Ppar([
+		Pdef(\bmidi),
+		Pdef(\bsynth),
+	])
+	<> Pdef(\bseq)
+)
 )
 
-Pdef(\b).play;
+TempoClock.default.tempo = 2;
+
+Pdef(\b).play(quant: -1);
 Pdef(\b).stop;
+
+~ndefr = NdefRecorder.new('test');
+~ndefr.add([\hh, \b]);
+
+~ndefr.record;
+~ndefr.stop;
+
+s.waitForBoot
+s.prepareForRecord(numChannels:8);
+s.record(numChannels:8);
+
+(
+fork {
+	t = TempoClock.default;
+	s.sync;
+	thisThread.clock.timeToNextBeat(-1).wait;
+	s.record(numChannels:8);
+};
+)
+
+
+s.stopRecording;
+
+r.record;
+r.stop;
 
 Ndef(\b).play;
 Ndef(\b)[0] = Pdef(\b);

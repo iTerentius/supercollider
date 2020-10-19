@@ -17,11 +17,12 @@ Reaper {
 		link.sendMsg("/action/40697"); //Delete all
 
 		proxies.do{ |proxy, i|
+			name = proxy.asCompileString;
 			out = out + 2;
 			out.postln;
 			Ndef(proxy).play;
+			// Ndef(proxy).stop;
 			Ndef(proxy).set(\out, out);
-			name = proxy.asCompileString;
 			name.postln;
 			num = i + 1;
 			// num.postln;
@@ -38,8 +39,11 @@ Reaper {
 
 
 	record {
+		var t = TempoClock.default;
+		t.sched(4, {
 		link.sendMsg("/action/40042"); //Restart
 		link.sendMsg("/record", 1);
+		});
 	}
 
 	stop {
@@ -49,5 +53,4 @@ Reaper {
 	}
 
 }
-
 
