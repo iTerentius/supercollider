@@ -1,48 +1,10 @@
-//Boilerplate code for basic live coding functionality
-
-(
-//increase number of buffers the server has access to for loading samples
-s.options.numBuffers = 1024 * 16;
-//increase the memory available to the server
-s.options.memSize = 8192 * 256;
-s.options.numOutputBusChannels = 16;
-b = NetAddr.new("192.168.1.132", 7772);
-//boot the server
-s.reboot;
-//display the oscilloscope
-// s.scope;
-//start proxyspace
-p=ProxySpace.push(s);
-//start tempo clock
-p.makeTempoClock;
-//give proxyspace a tempo
-p.clock.tempo = 80/60;
-Task({
-	3.wait;
-	d = Dictionary.new;
-	d.add(\foldernames -> PathName("/home/hypostatic/Music/samples/808s_by_SHD/Classic").entries);
-	for (0, d[\foldernames].size-1,
-		{arg i; d.add(d[\foldernames][i].folderName -> d[\foldernames][i].entries.collect({
-			arg sf;
-			Buffer.read(s,sf.fullPath);
-		});
-	)});
-	// ("SynthDefs.scd").loadRelative;
-	//loads snippets from setup folder
-	//("Snippets.scd").loadRelative;
-	//wait, because otherwise it won't work for some reason
-	3.wait;
-	//activate StageLimiter - Part of the BatLib quark
-	// StageLimiter.activate;
-	MIDIClient.init;
-	"Setup done!".postln;
-}).start;
-)
-
 
 p.clock.tempo = 45/60;
 p.fadeTime = 3;
 p.quant = 1;
+
+
+
 
 b.sendMsg("/tempo/raw", 60);
 b.sendMsg("/track/1/recarm", 1).postln;
@@ -50,8 +12,9 @@ b.sendMsg("/track/2/recarm", 1);
 b.sendMsg("/track/3/recarm", 1);
 b.sendMsg("/track/4/recarm", 1);
 b.sendMsg("/time", 0);
-b.sendMsg("/restart", 1);
+r.link.sendMsg("/action/40042"); //Restart
 b.sendMsg("/record", 1);
+b.sendMsg("/stop", 1);
 
 b.sendMsg("/action/40035"); //Select all
 b.sendMsg("/action/40697"); //Delete all
@@ -134,6 +97,10 @@ SynthDef(\bplay,
 };
 
 ~lead[1] = \xset -> Pbind(
+	/*	\type, \midi,
+		\midiout, m,
+		\midicmd, \noteOn,
+		\chan, 0,*/
 	\dur, Pseq([0.125, 0.5, 1, 2, 0.25, 0.125, 0.125, 0.5, Rest(4), Rest(2), Rest(1)].scramble, inf),
 	\degree, Pseq(Scale.hijaz.degrees.mirror.scramble -5, inf),
 	\octave, Pwhite(2, 4, inf).round(1),
@@ -142,10 +109,34 @@ SynthDef(\bplay,
 
 )
 
+(
+Pbind(
+		\type, \midi,
+		\midiout, m,
+		\midicmd, \noteOn,
+		\chan, 0,
+	\dur, Pseq([0.125, 0.5, 1, 2, 0.25, 0.125, 0.125, 0.5, Rest(4), Rest(2), Rest(1)].scramble, inf),
+	\degree, Pseq(Scale.hijaz.degrees.mirror.scramble -5, inf),
+	\octave, Pwhite(2, 4, inf).round(1),
+	\relTime, Pseq([1, 2, 3, 0.5], inf),
+).play;
+)
+
+m = MIDIOut.newByName("Virtual Raw MIDI 0-0", "VirMIDI 0-0");
 m = MIDIOut(0);
-m.connect(1);
+m.latency(0);
+m.noteOn(0, 60, 30);
+m.noteOff(0, 60);
+
+r.link.sendMsg("/tempo/raw", 80);
+r.add([~lead, ~dust, ~hh, ~b]);
+r.record;
+r.stop;
+
 
 ~lead.set(\out, 2);
+~lead.get(\out);
+~lead.asCompileString;
 ~lead.play;
 ~lead.stop(fadeTime: 4);
 ~lead.end(fadeTime:5);
@@ -153,8 +144,10 @@ m.connect(1);
 
 ~dust.play;
 
+~dust.asCompileString;
+
 (
-~dust = { | out = 4, freq = 110 |
+~dust = { | out = 0, freq = 110 |
 	var sig, env;
 	env = EnvGen.kr(Env.asr(), doneAction: 2);
 	sig = SinOsc.ar(LFPar.kr(LFPulse.kr(1, 0.2, 0.5, 0.5),0.2, 1, 0.5) * freq * 3) * (LFPulse.kr(LFPulse.kr(1, 0, 0.5, 8, 10),0,0.5,4));
@@ -162,9 +155,12 @@ m.connect(1);
 };
 )
 
+~dust.set(\out, 4);
+~dust.get(\out);
+
 ~dust.xset(\freq, Pseq(Scale.hijaz.degrees, inf).asStream);
 ~dust.xset(\freq, 110);
-~dust.set(\gate, ~rec);
+~dust.set(\gate, ~lead);
 
 
 ~dust.stop(fadeTime:10);
@@ -173,8 +169,12 @@ m.connect(1);
 
 (
 ~hh = Pbind(
+/*	\type, \midi,
+	\midiout, m,
+	\midicmd, \noteOn,
+	\chan, 0,*/
 	\instrument, \bplay,
-	\out, 5
+	\out, 6,
 	\buf, d["Hats"][1],
 	\dur, Pseq([0.25, 0.25, 0.5, 0.77, 0.25].scramble, inf),
 	// \dur,Pbjorklund2(Pseq(l, inf).asStream,12,inf)/8,
@@ -183,7 +183,7 @@ m.connect(1);
 
 ~b = Pbind(
 	\instrument, \bplay,
-	\out, 6
+	\out, 8,
 	\buf, d["Bass Drums"][5],
 	\dur, Pseq([0.25, 0.25, 0.5, 0.77, 0.25].scramble, inf),
 	\amp, 0.2
@@ -192,10 +192,12 @@ m.connect(1);
 
 
 ~hh.play;
+~hh.get(\out);
 ~hh.stop(fadeTime:4);
 ~hh.release(fadeTime:4);
 
 
 ~b.play;
+~b.get(\out);
 ~b.stop(fadeTime:4);
 ~b.release(fadeTime:4);
