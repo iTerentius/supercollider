@@ -1,53 +1,57 @@
 (
-~startMIDIRec = {
-	var dict = ();
-	dict.data = [];
-	dict.startTime = nil;
-	dict.responders = [\noteOn, \noteOff, \polytouch, \cc, \program, \touch, \bend].collect{|msgType|
-		MIDIFunc({|...args|
-			var time = Date.getDate.rawSeconds;
-			var val, ctlNum, chan, src;
-			[msgType, time].postln;
-			// handle arguments for different msgTypes
-			[\noteOn, \noteOff, \control, \polytouch ].includes(msgType).if({
-				# val, ctlNum, chan, src = args;
-				args.postln;
-			},{
-				# val, chan, src = args;
-			});
+~startMIDIRec = { | channels |
+	inputs = List.new(channels.size);
+	channels.do{ | channel, i |
+		inputs.add(Dictionary());
+		inputs[i].data = [];
+		inputs[i].startTime = nil;
+		inputs[i].responders = [\noteOn, \noteOff, \polytouch, \cc, \program, \touch, \bend].collect{|msgType|
+			MIDIFunc({|...args|
+				if( chan == channel) {
+					var time = Date.getDate.rawSeconds;
+					var val, ctlNum, chan, src;
+					[msgType, time].postln;
+					// handle arguments for different msgTypes
+					[\noteOn, \noteOff, \control, \polytouch ].includes(msgType).if({
+						# val, ctlNum, chan, src = args;
+						args.postln;
+					},{
+						# val, chan, src = args;
+					});
 
-			dict.startTime.isNil.if({
-				dict.startTime = time;
-			});
+					inputs[i].startTime.isNil.if({
+						inputs[i].startTime = time;
+					});
 
-			dict.data = dict.data.add(
-				// [ time, type, channel, val1, val2 ]
-				ctlNum.notNil.if({
-					[ time - dict.startTime, msgType, chan, ctlNum, val ]
-				}, {
-					[ time - dict.startTime, msgType, chan, val]
-				})
+					inputs[i].data = inputs[i].data.add(
+						// [ time, type, channel, val1, val2 ]
+						ctlNum.notNil.if({
+							[ time - dict.startTime, msgType, chan, ctlNum, val ]
+						}, {
+							[ time - dict.startTime, msgType, chan, val]
+						})
+					);
+				}, msgType: (msgType == \cc).if({\control}, {msgType});
+			})
+		}
+		inputs[i].writeData = {
+			var filePath = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.title +_+ chan +_+"MIDI-%.mid".format(Date.getDate.stamp);
+
+			var mFile = SimpleMIDIFile( filePath );
+
+
+			inputs[i].responders.do(_.free);
+			mFile.init1( 1, 120, "4/4" );
+			mFile.timeMode = \seconds;
+			mFile.addAllMIDIEvents(
+				inputs[i].data.collect{|row| [0] ++ row }, true
 			);
-		}, msgType: (msgType == \cc).if({\control}, {msgType});
-		)
-	};
-	dict.writeData = {
-		var filePath =Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.title ++ "MIDI-%.mid".format(Date.getDate.stamp);
-		var mFile = SimpleMIDIFile( filePath );
-		fil
-
-		dict.responders.do(_.free);
-		mFile.init1( 1, 120, "4/4" );
-		mFile.timeMode = \seconds;
-		mFile.addAllMIDIEvents(
-			dict.data.collect{|row| [0] ++ row }, true
-		);
-		mFile.adjustEndOfTrack;
-		mFile.write(filePath);
-		dict.midiFile = mFile;
-		mFile
-	};
-	dict
+			mFile.adjustEndOfTrack;
+			mFile.write(filePath);
+			inputs[i].midiFile = mFile;
+			mFile
+		};
+		inputs[i]
 };
 )
 
