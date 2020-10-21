@@ -10,6 +10,11 @@ SynthDef(\bplay,
 }).add;
 )
 
+t = SimpleMIDIFile( "~/Desktop/midifiletest.mid" ); // create empty file
+t.init1( 3, 120, "4/4" );    // init for type 1 (multitrack); 3 tracks, 120bpm, 4/4 measures
+t.timeMode = \seconds;  // change from default to something useful
+
+
 Ndef(\hh).play;
 Ndef(\hh)[1] = \xset -> Pdef(\hh);
 Ndef(\hh).get(\out);
@@ -22,6 +27,7 @@ Pdef(\hhmidi,
 		\midiout, m,
 		\midicmd, \noteOn,
 		\chan, 1,
+		\out, Pfunc({ ~midiRecordnig.addNote(noteNumber: \midinote, velo: 127, startTime: TempoClock.default.seconds, dur: \dur, channel: \chan, track: \chan, sort: true)})
 ));
 
 Pdef(\hhsynth,
@@ -87,7 +93,11 @@ Pdef(\b,
 	<> PtimeClutch(Pdef(\bseq))
 )
 )
-
+(
+~midiRecording = SimpleMIDIFile("~/Desktop/testinghh.mid");
+~midiRecording.init1(2, TempoClock.default.tempo * 60, "4/4");
+~midiRecording.timeMode = \seconds;
+)
 Pdef(\hh).play(quant: -1);
 Pdef(\hh).stop;
 
@@ -100,11 +110,20 @@ Pdef(\b).stop;
 Ndef(\b)[10] = \filter -> { | in | DelayC.ar(in, 6, 5) };
 Ndef(\b).set(\wet10, 0.5);
 
-TempoClock.default.tempo = 1;
+TempoClock.default.tempo = 2;
+
+
+x = List(3);
+x[1].add(Dictionary());
 
 (
+~midi = MidiRecorder([1,2]);
 ~ndefr = NdefRecorder.new('test');
 ~ndefr.add([\hh, \b]);
 )
+
 ~ndefr.record;
+(
 ~ndefr.stop;
+~midi.write;
+)

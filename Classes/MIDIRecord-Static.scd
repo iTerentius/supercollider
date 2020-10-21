@@ -1,5 +1,6 @@
 (
 ~startMIDIRec = { | channels |
+	var inputs;
 	inputs = List.new(channels.size);
 	channels.do{ | channel, i |
 		inputs.add(Dictionary());
