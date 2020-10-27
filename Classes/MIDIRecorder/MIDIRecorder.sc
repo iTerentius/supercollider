@@ -1,4 +1,4 @@
-MidiRecorder {
+MidiRecorder : MIDIOut {
 	var dict, <channels, inputs, folder;
 	*new { | channels, subfolder = nil |
 		^super.newCopyArgs().init(channels, subfolder)
@@ -51,7 +51,7 @@ MidiRecorder {
 			var mFile = SimpleMIDIFile( filePath );
 
 			inputs[i].responders.do(_.free);
-			mFile.init1( 1, 120, "4/4" );
+			mFile.init1( inputs.size, TempoClock.default.tempo * 60, "4/4" );
 			mFile.timeMode = \seconds;
 			mFile.addAllMIDIEvents(
 				inputs[i].data.collect{|row| [0] ++ row }, true

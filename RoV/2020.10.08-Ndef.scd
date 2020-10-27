@@ -113,6 +113,7 @@ Pdef(\hhmidi,
 		\midiout, m,
 		\midicmd, \noteOn,
 		\chan, 1,
+		\recordTarget, ~mr,
 ));
 
 Pdef(\hhsynth,
@@ -120,17 +121,17 @@ Pdef(\hhsynth,
 		\instrument, \bplay,
 		\out, Pfunc(Ndef(\hh).bus.index),
 		\group, Pfunc(Ndef(\hh).group),
-		\out,2,
 		\buf, d["Hats"][1],
 ));
 
 Pdef(\hhseq,
 	Pbind(
 
-		// \dur, Pseq([0.25, 0.25, 0.5, 0.77, 0.25].scramble, inf),
+		// \dur, Pseq([0.25, 0.25, 0.5, 0.75, 0.25].scramble, inf),
 		// \dur,Pbjorklund2(Pseq(l, inf).asStream,12,inf)/8,
-		\dur, 0.25,
-		\amp, 0.025,
+		// \dur, 0.125,
+		\midinote, 60,
+		\dur, Pbjorklund2(Pseq([3, 5, 7, 9, 11], inf), Pseq([12, 4, 6, 7], inf)),
 	));
 )
 (
@@ -157,6 +158,7 @@ Pdef(\bmidi,
 		\midiout, m,
 		\midicmd, \noteOn,
 		\chan, 2,
+		\callback, ~midif,
 ));
 
 Pdef(\bsynth,
@@ -173,6 +175,7 @@ Pdef(\bseq,
 		\amp, 0.2
 ));
 )
+
 (
 
 Pdef(\b,
