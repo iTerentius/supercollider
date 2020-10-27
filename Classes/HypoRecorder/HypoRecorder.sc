@@ -1,10 +1,10 @@
 HypoRecorder {
 
 	var <>nodes;
-	var <>midi;
+	var <>midiTracks;
 	var <>smf;
 	var <>folder;
-	var <>mclock;
+	var <>recClock;
 	var <>headerFormat = "aiff", <>sampleFormat = "float";
 
 	*new { |subfolder = nil |
@@ -46,10 +46,11 @@ HypoRecorder {
 		nodes = nil;
 	}
 
-	add { |proxies, midis |
-		midi = midis;
+	add { |proxies, midis = 2, clock |
+		midiTracks = midis;
+		if(clock.isNil, { recClock = TempoClock.default }, { recClock = clock });
 		this.prepareNodes(proxies);
-		{ this.open(proxies, midis) }.defer(0.5);
+		{ this.open(proxies) }.defer(0.5);
 	}
 
 	prepareNodes { |proxies|
@@ -63,7 +64,7 @@ HypoRecorder {
 		}
 	}
 
-	open { |proxies, midis = 2, mclock|
+	open { |proxies |
 		var dateTime  = Date.getDate.format("%Y%m%d-%Hh%m");
 		proxies.do{ |proxy, i|
 			var fileName  = ("%/%-%.%").format(
@@ -73,14 +74,12 @@ HypoRecorder {
 			nodes[i].open(fileName, headerFormat, sampleFormat);
 		};
 		smf = SimpleMIDIFile(folder +/+ dateTime ++ "midi.mid");
-		smf.init1(midi, TempoClock.default.tempo * 60, "4/4");
-		smf.timeMode = \seconds;
 	}
 
-	record { |paused=false, mclock=nil |
-		if(mclock.isNil, { mclock = TempoClock.default });
-		smf.init1(midi, mclock.tempo * 60, "4/4");
-		nodes.do(_.record(paused, mclock, -1));
+	record { |paused=false |
+		smf.init1(midiTracks, recClock.tempo * 60, "4/4");
+		smf.timeMode = \seconds;
+		nodes.do(_.record(paused, recClock, -1));
 	}
 
 	stop {

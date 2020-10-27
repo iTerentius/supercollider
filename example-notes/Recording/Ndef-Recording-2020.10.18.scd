@@ -11,10 +11,10 @@ SynthDef(\bplay,
 )
 
 ~rec = HypoRecorder('test');
-~rec.add([\hh, \b, \lead], 4);
-
 ~recClock = TempoClock.new(TempoClock.default.tempo);
-~rec.record(false, mclock: ~recClock);
+~rec.add([\hh, \b], 3, ~recClock);
+
+~rec.record();
 ~rec.stop;
 
 (
@@ -158,6 +158,4 @@ Pdef(\leadmidi).play;
 Ndef(\b)[10] = \filter -> { | in | DelayC.ar(in, 6, 5) };
 Ndef(\b).set(\wet10, 0.5);
 
-TempoClock.default.tempo;
-thisThread.clock.tempo;
 
