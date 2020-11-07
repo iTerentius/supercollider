@@ -37,10 +37,22 @@ Task({
 	// StageLimiter.activate;
 	MIDIClient.init;
 	5.wait;
-	// m = MIDIOut.newByName("Virtual Raw MIDI 0-0", "VirMIDI 0-0");
+	 //m = MIDIOut.newByName("Virtual Raw MIDI 0-0", "VirMIDI 0-0");
 	m = MIDIOut(0, MIDIClient.destinations[0].uid);
 	// m.latency(0);
 	"Setup done!".postln;
 }).start;
+
+
+SynthDef(\bplay,
+	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
+		var sig,env=1 ;
+		sig = Mix.ar(PlayBuf.ar(2,buf,BufRateScale.ir(buf) * rate,1,BufDur.kr(buf)*pos*44100,doneAction:2));
+		env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:0);
+		sig = sig * env;
+		sig = sig * amp;
+		Out.ar(out,Pan2.ar(sig.dup,pan));
+}).add;
+
 )
 

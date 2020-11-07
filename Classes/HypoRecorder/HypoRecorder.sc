@@ -5,6 +5,7 @@ HypoRecorder {
 	var <>smf;
 	var <>folder;
 	var <>recClock;
+	var <>startSeconds;
 	var <>headerFormat = "aiff", <>sampleFormat = "float";
 
 	*new { |subfolder = nil |
@@ -13,6 +14,7 @@ HypoRecorder {
 
 	init { | subfolder = nil |
 		nodes = ();
+		recClock = nil;
 		if(subfolder != nil,
 			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.title +/+ subfolder },
 			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.title  }
@@ -23,22 +25,20 @@ HypoRecorder {
 		Event.addEventType(
 			\midi,
 			Event.eventTypes[\midi].addFunc({
-				if (~recordTarget.notNil) {
-					~recordTarget.addNote(
+				var mnote;
+				if (~recordTarget.smf.notNil) {
+					~recordTarget.smf.addNote(
 						noteNumber: ~midinote,
 						velo: ~amp.range(0, 127),
-						startTime: ~mclock.beats,
+						startTime: thisThread.clock.beats - ~recordTarget.startSeconds,
 						dur: ~dur,
 						channel: ~chan,
 						track: ~chan,
 					);
-					~recordTarget.midiEvents.dopostln;
 				}
 			}),
 			() // if you want some recording-related properties to have default values, pass them here
 		);
-
-
 	}
 
 	free {
@@ -46,7 +46,7 @@ HypoRecorder {
 		nodes = nil;
 	}
 
-	add { |proxies, midis = 2, clock |
+	add { |proxies, midis = 2, clock = nil |
 		midiTracks = midis;
 		if(clock.isNil, { recClock = TempoClock.default }, { recClock = clock });
 		this.prepareNodes(proxies);
@@ -77,6 +77,8 @@ HypoRecorder {
 	}
 
 	record { |paused=false |
+		startSeconds = recClock.beats;
+		"statSeconds: " ++ startSeconds.postln;
 		smf.init1(midiTracks, recClock.tempo * 60, "4/4");
 		smf.timeMode = \seconds;
 		nodes.do(_.record(paused, recClock, -1));

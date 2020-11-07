@@ -11,7 +11,7 @@ Reaper {
 	}
 
 
-	add { |proxies|
+	add { |proxies, midis |
 		var name, num, cmdName, cmdArm, out = 0;
 		link.sendMsg("/action/40296"); //Select all
 		link.sendMsg("/action/40697"); //Delete all
@@ -39,11 +39,12 @@ Reaper {
 
 
 	record {
-		var t = TempoClock.default;
-		t.sched(4, {
+		var t = MIDIClockOut("Virtual Raw MIDI 0-1", "VirMIDI 0-1", tempoClock: TempoClock.default);
+
 		link.sendMsg("/action/40042"); //Restart
+		link.sendMsg("/pause/", 1);
 		link.sendMsg("/record", 1);
-		});
+
 	}
 
 	stop {

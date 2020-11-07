@@ -26,7 +26,7 @@ Ndef(\lead, { | out, freq = 48, relTime = 2 |
 	8.do{ | i |
 		temp = LFPulse.ar(freq + Rand(0, i), LFPulse.kr(Rand(0, i).round(rrand(0.125, i))).midicps)!2 / 8;
 		sig = sig + temp * env * 0.9;
-		Out.ar(out, sig * 0.05);
+		Out.ar(out, sig * 0.04);
 	}
 })
 )
@@ -39,14 +39,12 @@ Pdef(\leadmidi, Pbind(
 	\midiout, m,
 	\midicmd, \noteOn,
 	\chan, 0,
-	\recordTarget, ~rec,
 ));
 
 Pdef(\leadsynth,
 	Pbind(
 		\out, Pfunc(Ndef(\lead).bus.index),
-		\group, Pfunc(Ndef(\lead).group),
-		\buf, d["Hats"][1],
+		\group, Pfunc(Ndef(\lead).group)
 ));
 
 Pdef(\leadseq,
@@ -55,8 +53,6 @@ Pdef(\leadseq,
 		\degree, Pseq(Scale.hijaz.degrees.mirror.scramble -5, inf),
 		\octave, Pwhite(2, 4, inf).round(1),
 		\relTime, Pseq([1, 2, 3, 0.5], inf),
-		\out, Pfunc(Ndef(\lead).bus.index),
-		\group, Pfunc(Ndef(\lead).group),
 	))
 )
 
@@ -70,11 +66,11 @@ Pdef(\lead,
 );
 )
 
-Ndef(\lead);
+Ndef(\lead).set(source: Pdef(\lead));
+(
+// Pdef(\lead).play(quant: -1);
 Ndef(\lead)[1] = \xset -> Pdef(\lead);
-Pdef(\leadseq).play;
-Pdef(\lead).play(quant: -1);
-
+)
 
 (
 Ndef(\hh).set(\out, 2);
@@ -84,16 +80,16 @@ Pdef(\hhmidi,
 		\type, \midi,
 		\midiout, m,
 		\midicmd, \noteOn,
-		\chan, 2,
+		\chan, 1,
 		\recordTarget, ~rec,
+		\out, 2
 ));
 
 
 Pdef(\hhsynth,
 	Pbind(
 		\instrument, \bplay,
-		\out, Pfunc(Ndef(\hh).bus.index),
-		\group, Pfunc(Ndef(\hh).group),
+		\out, 2,
 		\buf, d["Hats"][1],
 ));
 
@@ -101,7 +97,33 @@ Pdef(\hhseq,
 	Pbind(
 		\dur, Pbjorklund2(Pseq([3, 5, 7, 9, 11], inf), Pseq([12, 4, 6, 7], inf)),
 	));
+
+Ndef(\b).set(\out, 4);
+Ndef(\b).play;
+Pdef(\bmidi,
+	Pbind(
+		\type, \midi,
+		\midiout, m,
+		\midicmd, \noteOn,
+		\chan, 2,
+		\recordTarget, ~rec,
+));
+
+Pdef(\bsynth,
+	Pbind(
+		\out, 4,
+		\instrument, \bplay,
+		\buf, d["Bass Drums"][5],
+));
+
+Pdef(\bseq,
+	Pbind(
+		// \dur, 0.125,
+		\dur, Pbjorklund2(Pseq([1, 2, 5, 7], inf), Pseq([6, 5, 7, 12], inf)),
+		\amp, 0.4
+));
 )
+
 (
 
 Pdef(\hh,
@@ -111,36 +133,6 @@ Pdef(\hh,
 	])
 	<> PtimeClutch(Pdef(\hhseq))
 );
-)
-
-(
-Ndef(\b).set(\out, 4);
-Ndef(\b).play;
-Pdef(\bmidi,
-	Pbind(
-		\type, \midi,
-		\midiout, m,
-		\midicmd, \noteOn,
-		\chan, 3,
-		\recordTarget, ~rec,
-));
-
-Pdef(\bsynth,
-	Pbind(
-		\out, Pfunc(Ndef(\b).bus.index),
-		\group, Pfunc(Ndef(\b).group),
-		\instrument, \bplay,
-		\buf, d["Bass Drums"][5],
-));
-
-Pdef(\bseq,
-	Pbind(
-		// \dur, 0.125,
-		\dur, 1,
-		\amp, 0.4
-));
-)
-(
 
 Pdef(\b,
 	Ppar([
@@ -150,9 +142,6 @@ Pdef(\b,
 	<> PtimeClutch(Pdef(\bseq))
 )
 )
-
-
-
 
 Pdef(\hh).play(quant: -1);
 Pdef(\hh).stop;
