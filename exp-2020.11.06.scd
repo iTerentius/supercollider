@@ -1,6 +1,6 @@
 TempoClock.default.tempo = 130/60;
 
-Tempo.bpm = 140;
+Tempo.bpm = 60;
 
 (TempoClock.default.tempo * 60).postln;
 

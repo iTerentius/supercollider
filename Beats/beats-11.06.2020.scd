@@ -56,16 +56,16 @@ Pdef(\bmidi,
 
 Pdef(\bsynth,
 	Pbind(
-		\out, Pfunc(Ndef(\hh).bus.index),
-		\group, Pfunc(Ndef(\hh).group),
+		\out, Pfunc(Ndef(\b).bus.index),
+		\group, Pfunc(Ndef(\b).group),
 		\instrument, \bplay,
 		\buf, d["Bass Drums"][5],
 ));
 
 Pdef(\bseq,
 	Pbind(
-		// \dur, Pshuf([0.125, 0.25, 0.5, 1], inf),
-		\dur, Pshuf([0.5, 0.25, 1], inf),
+		\dur, Pn(Pshuf([0.125, 0.25, 0.5, 1], 16), inf),
+		// \dur, Pshuf([0.5, 0.25, 1], inf),
 		// \dur, 1,
 		\amp, 0.5
 ));
