@@ -23,18 +23,20 @@ HypoRecorder {
 		File.mkdir(folder);
 
 		Event.addEventType(
-			\midi,
-			Event.eventTypes[\midi].addFunc({
+			\note,
+			Event.eventTypes[\note].addFunc({
 				var mnote;
-				if (~recordTarget.smf.notNil) {
-					~recordTarget.smf.addNote(
-						noteNumber: ~midinote,
-						velo: ~amp.range(0, 127),
-						startTime: thisThread.clock.beats - ~recordTarget.startSeconds,
-						dur: ~dur,
-						channel: ~chan,
-						track: ~chan,
-					);
+				if (~recordTarget.notNil) {
+					if( ~recordTarget.smf.notNil){
+						~recordTarget.smf.addNote(
+							noteNumber: ~midinote,
+							velo: ~amp.range(0, 127),
+							startTime: thisThread.clock.beats - ~recordTarget.startSeconds,
+							dur: ~dur,
+							channel: ~chan,
+							track: ~chan,
+						);
+					}
 				}
 			}),
 			() // if you want some recording-related properties to have default values, pass them here
@@ -49,6 +51,7 @@ HypoRecorder {
 	add { |proxies, midis = 2, clock = nil |
 		midiTracks = midis;
 		if(clock.isNil, { recClock = TempoClock.default }, { recClock = clock });
+		recClock.beats.postln;
 		this.prepareNodes(proxies);
 		{ this.open(proxies) }.defer(0.5);
 	}
@@ -77,6 +80,7 @@ HypoRecorder {
 	}
 
 	record { |paused=false |
+		recClock.postln;
 		startSeconds = recClock.beats;
 		"statSeconds: " ++ startSeconds.postln;
 		smf.init1(midiTracks, recClock.tempo * 60, "4/4");

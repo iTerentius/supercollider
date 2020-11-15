@@ -4,7 +4,7 @@ Tempo.bpm = 130;
 Tempo.bpm
 
 (
-~ndefrec = NdefRecorder();
+~ndefrec = NdefRecorder('take3');
 ~ndefrec.add([\a1, \a2, \a4, \b1, \delay, \pitch, \hh, \b]);
 )
 
@@ -31,17 +31,18 @@ Ndef(\a2, { |freq=110, pan=0, gate=1, dur=1, octave=0, root=0, amp=0.5|
 	var gate2 = gate * Pulse.kr(2);
 	var sig = LFPulse.ar(freq* dur) + LFTri.kr(SinOsc.kr(dur), gate, LFPulse.kr(freq, 0, 2));
 	// sig = RLPF.ar(sig, 600, 0.75);
-	Pan2.ar(sig * env * 0.5);
+	Pan2.ar(sig * env * 0.2);
 }).play(out: 0);
 )
 Ndef(\a2).stop(fadeTime:3);
-
+Ndef(\a2)[1] = \xset -> Pdef(\a1play);
 
 Ndef(\a1).xset(\freq, 150);
 
 Ndef(\a1).fadeTime = 0;
 Ndef(\a1)[2] = \xset -> Pdef(\a1play).quant_(-1);
-Ndef(\a1)[2] = \xset -> Pdef(\a1).quant_(-1);
+Ndef(\a2)[2] = \xset -> Pdef(\a1src).quant_(-1);
+Ndef(\a2)[2] = \xset -> nil;
 
 Ndef(\a2)[1] = \xset -> Pdef(\a1src);
 
@@ -56,12 +57,13 @@ Ndef(\a1).set(\pan, Ndef(\a1));
 Ndef(\pitch).play;
 Ndef(\pitch)[1] = \mix -> {Ndef(\a1)};
 Ndef(\pitch)[2] = \mix -> {Ndef(\b)};
+Ndef(\pitch)[3] = \mix -> {Ndef(\a4)};
 Ndef(\pitch)[2] = nil;
-Ndef(\pitch).set(\mix, 0.9);
+Ndef(\pitch).set(\mix, 0.5);
 Ndef(\pitch)[999] = \filter -> { | in, pd=0.3, td=0.5 | PitchShift.ar(in, pitchDispersion: pd, timeDispersion: td) };
 Ndef(\pitch)[2].set(\mix, 0.3);
 Ndef(\a1).set(\wet999, 1);
-Ndef(\pitch).free(fadeTime:2);
+Ndef(\pitch).stop(fadeTime:2);
 
 Ndef(\lfo, { Impulse.kr(10 * LFNoise0.kr(1, 100, 10), add: SinOsc.kr(Ndef(\a1).get(\dur).range(0, 1), 0, 10, 3)) });
 Ndef(\lfo).release;
@@ -75,14 +77,14 @@ Ndef(\a1).unmap(\gate, Ndef(\lfo));
 Ndef(\lfo).clear;
 Ndef(\a1).play;
 
-Ndef(\b1, { |carfreq=100, freq=10| SinOsc.ar(carfreq + freq!2, 2, LFSaw.kr(SinOsc.kr(10000, 0, 200, 10), 0, 0.3, 0),0) * 0.7}).play;
+Ndef(\b1, { |carfreq=1, freq=10| SinOsc.ar(carfreq + freq!2, 2, LFSaw.kr(SinOsc.kr(10000, 0, 200, 10), 0, 0.3, 0),0) * 0.7}).play;
 Ndef(\b1).stop(fadeTime: 3);
 
 
 Ndef(\delay, { |in| DelayC.ar(LocalIn.ar, 0.2, 5, 0.3) * 0.3 }).play;
 Ndef(\delay).stop(fadeTime: 4);
 Ndef(\delay)[1] = \mix -> {Ndef(\hh).ar};
-Ndef(\delay)[2] = \mix -> {Ndef(\b1).ar};
+Ndef(\delay)[2] = \mix -> {Ndef(\b).ar};
 Ndef(\delay)[3] = \mix -> {Ndef(\pitch).ar};
 Ndef(\delay)[99] = \filter -> {DelayC.ar(LocalIn.ar,1, 5, 0.1)};
 Ndef(\delay).release(fadeTime: 4);

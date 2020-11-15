@@ -13,8 +13,8 @@ NdefRecorder {
 	init { | subfolder = nil |
 		nodes  = ();
 		if(subfolder != nil,
-			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.title +/+ subfolder },
-			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.title  }
+			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Date.getDate.format("%Y%m%d-%Hh%m") +/+ subfolder },
+			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Date.getDate.format("%Y%m%d-%Hh%m")  }
 		);
 
 		File.mkdir(folder);
