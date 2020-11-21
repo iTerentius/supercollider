@@ -16,31 +16,28 @@ HypoRecorder {
 		nodes = ();
 		recClock = nil;
 		if(subfolder != nil,
-			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.title +/+ subfolder },
-			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Document.current.title  }
+			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Date.getDate.format("%Y%m%d-%Hh%m") +/+ subfolder },
+			{folder = Platform.userAppSupportDir +/+ "Recordings" +/+ Date.getDate.format("%Y%m%d-%Hh%m")  }
 		);
 
 		File.mkdir(folder);
-
-		Event.addEventType(
-			\note,
+		Event.addEventType( \note,
 			Event.eventTypes[\note].addFunc({
-				var mnote;
-				if (~recordTarget.notNil) {
+			if (~recordTarget.notNil) {
 					if( ~recordTarget.smf.notNil){
 						~recordTarget.smf.addNote(
 							noteNumber: ~midinote,
 							velo: ~amp.range(0, 127),
-							startTime: thisThread.clock.beats - ~recordTarget.startSeconds,
+							startTime: thisThread.clock.beats,
 							dur: ~dur,
 							channel: ~chan,
 							track: ~chan,
-						);
+						)
 					}
-				}
-			}),
-			() // if you want some recording-related properties to have default values, pass them here
-		);
+				};
+				// currentEnvironment.play;
+			});
+		)
 	}
 
 	free {
@@ -86,10 +83,13 @@ HypoRecorder {
 		smf.init1(midiTracks, recClock.tempo * 60, "4/4");
 		smf.timeMode = \seconds;
 		nodes.do(_.record(paused, recClock, -1));
+		History.clear.end;
+		History.start;
 	}
 
 	stop {
-		this.close
+		this.close;
+		History.document;
 	}
 
 	close {

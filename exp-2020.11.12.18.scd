@@ -18,20 +18,27 @@ s.record;
 Ndef(\a1, { |freq=220, pan=0, gate=1, dur=1, octave=0, amp=0.5|
 	var env = EnvGen.kr(Env.asr(0.05, releaseTime: Rand(1, 2.0), curve: \sin), gate: gate, doneAction: 2);
 	var sig = Mix.fill(8, { | i |
-		SinOscFB.ar((freq/2 *gate) * Pulse.kr(dur * gate) * LFPulse.kr(i**2, 0, Pulse.kr(1+i), dur, i.abs, i.cubed), dur/gate);
+		SinOsc.ar((freq.cpsmidi * gate / dur) * LFNoise0.kr(dur) * LFPulse.kr(i*dur, 0, Impulse.kr(1+i), dur, i.abs, i.cubed), dur/gate);
 	});
 	// sig = RLPF.ar(sig, 600, 0.75);
-	Pan2.ar(sig * env * 0.07);
+	Pan2.ar(sig * env * 0.05);
 }).play(out: 0);
 )
 
 (
+Pdef(\ax, Pbind(\dur, Pgeom(0.125, 2, 5), \root, Pseries(0, 1, 6)));
+Pdef(\ay, Pchain(Pbind(\degree, Prand([0, 5, 5], inf), \legato, Pseq([0.3, 2.2], inf)), Pdef(\ax)));
+Pdef(\az, Pchain(Pbind(\degree, Pseq([0, -2, 5, -7, 8, 9], 1)), Pn(Pdef(\ay))));
+Pdef(\a1play, Psym(Pseq([\ax, \ay, Prand([\ax, \ay]), \az, \ay], inf)));
+)
+
+(
 Ndef(\a2, { |freq=110, pan=0, gate=1, dur=1, octave=0, root=0, amp=0.5|
-	var env = EnvGen.kr(Env.asr(0.05, releaseTime: dur, curve: \sin), gate: gate, doneAction: 2);
+	var env = EnvGen.kr(Env.asr(0.05, releaseTime: 1-dur, curve: \sin), gate: gate, doneAction: 2);
 	var gate2 = gate * Pulse.kr(2);
-	var sig = LFPulse.ar(freq* dur) + LFTri.kr(SinOsc.kr(dur), gate, LFPulse.kr(freq, 0, 2));
+	var sig = LFPulse.ar(freq.cpsmidi) * LFTri.kr(SinOsc.kr(10, 0, 10, 300), gate, LFPulse.kr(freq, 0, 2));
 	// sig = RLPF.ar(sig, 600, 0.75);
-	Pan2.ar(sig * env * 0.2);
+	Pan2.ar(sig * env * 0.02);
 }).play(out: 0);
 )
 Ndef(\a2).stop(fadeTime:3);
@@ -42,8 +49,9 @@ Ndef(\a1).xset(\freq, 150);
 
 Ndef(\a1).fadeTime = 0;
 Ndef(\a1)[2] = \xset -> Pdef(\a1play).quant_(-1);
-Ndef(\a2)[2] = \xset -> Pdef(\a1src).quant_(-1);
+Ndef(\a2)[2] = \xset -> Pdef(\a1play).quant_(-1);
 Ndef(\a2)[2] = \xset -> nil;
+Ndef(\a2).set(\freq, 55);
 
 Ndef(\a2)[1] = \xset -> Pdef(\a1src);
 
@@ -64,9 +72,11 @@ Ndef(\pitch)[999] = \filter -> { | in, pd=0.3, td=0.5 | PitchShift.ar(in, pitchD
 )
 Ndef(\pitch).stop(fadeTime:2);
 
-Ndef(\lfo, { SinOsc.kr(1, add: LFSaw.kr(1, Ndef(\a1).get(\dur), 0, 1, 300)) });
+Ndef(\lfo, { LFPulse.kr(1, 1, 10, LFSaw.kr(2, 1, 10, 100).range(0, 1))});
 Ndef(\lfo).release;
 Ndef(\a1).xmap(\gate, Ndef(\lfo));
+Ndef(\a1).unmap(\freq, Ndef(\lfo));
+Ndef(\a2).xmap(\gate, Ndef(\lfo));
 Ndef(\b1).xmap(\octave, Ndef(\lfo));
 Ndef(\b1).xmap(\carfreq, Ndef(\lfo));
 Ndef(\a1).unmap(\gate, Ndef(\lfo));
@@ -76,7 +86,7 @@ Ndef(\a1).unmap(\gate, Ndef(\lfo));
 Ndef(\lfo).clear;
 
 
-Ndef(\b1, { |carfreq=1, freq=10| SinOsc.ar(carfreq + freq!2, 2, LFSaw.kr(SinOsc.kr(10000, 0, 200, 10), 0, 0.3, 0),0) * 0.9}).play;
+Ndef(\b1, { |carfreq=1, freq=10| SinOsc.ar(carfreq + freq!2, 2, LFSaw.kr(SinOsc.kr(10000, 0, 200, 10), 0, 0.3, 0),0) * 1}).play;
 Ndef(\b1).stop(fadeTime: 3);
 
 (
@@ -88,15 +98,6 @@ Ndef(\delay)[3] = \mix -> {Ndef(\pitch).ar};
 )
 Ndef(\delay)[99] = \filter -> {DelayC.ar(LocalIn.ar,1, 5, 0.1)};
 Ndef(\delay).release(fadeTime: 4);
-
-
-
-(
-Pdef(\ax, Pbind(\dur, Pgeom(0.125, 2, 5), \root, Pseries(0, 1, 6)));
-Pdef(\ay, Pchain(Pbind(\degree, Prand([0, 5, 5], inf), \legato, Pseq([0.3, 2.2], inf)), Pdef(\ax)));
-Pdef(\az, Pchain(Pbind(\degree, Pseq([0, -2, 5, -7, 8, 9], 1)), Pn(Pdef(\ay))));
-Pdef(\a1play, Psym(Pseq([\ax, \ay, Prand([\ax, \ay]), \az, \ay], inf)));
-)
 
 
 (

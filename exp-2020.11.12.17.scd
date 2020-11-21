@@ -4,24 +4,22 @@ Tempo.bpm = 130;
 Tempo.bpm
 
 (
-~hr = HypoRecorder('take4');
-~hr.add([\a1, \a2, \a4, \b1, \delay, \pitch, \hh, \b], 2);
+~hr = HypoRecorder('take5');
+~hr.add([\a1, \a2, \a4, \b1, \delay, \pitch, \hh, \b, \ax, \ay, \az, \a1play, \a1src], 8);
 )
 
 ~hr.record;
-~hr.stop;
 
-s.prepareForRecord;
-s.record;
+~hr.stop;
 
 (
 Ndef(\a1, { |freq=220, pan=0, gate=1, dur=1, octave=0, amp=0.5|
-	var env = EnvGen.kr(Env.asr(0.05, releaseTime: Rand(1, 2.0), curve: \sin), gate: gate, doneAction: 2);
+	var env = EnvGen.kr(Env.asr(0.05, releaseTime: Rand(1, dur), curve: \sine), gate: gate, doneAction: 2);
 	var sig = Mix.fill(8, { | i |
-		SinOscFB.ar((freq/2 *gate) * Pulse.kr(dur * gate) * LFPulse.kr(i**2, 0, Pulse.kr(1+i), dur, i.abs, i.cubed), dur/gate);
+		LFTri.ar(freq/dur, 0, gate + LFSaw.kr(i.squared + freq.cpsmidi, 0, dur + 1**2, i, i**2), dur/gate) * 0.01;
 	});
 	// sig = RLPF.ar(sig, 600, 0.75);
-	Pan2.ar(sig * env * 0.07);
+	Pan2.ar(sig * env);
 }).play(out: 0);
 )
 
@@ -29,20 +27,20 @@ Ndef(\a1, { |freq=220, pan=0, gate=1, dur=1, octave=0, amp=0.5|
 Ndef(\a2, { |freq=110, pan=0, gate=1, dur=1, octave=0, root=0, amp=0.5|
 	var env = EnvGen.kr(Env.asr(0.05, releaseTime: dur, curve: \sin), gate: gate, doneAction: 2);
 	var gate2 = gate * Pulse.kr(2);
-	var sig = LFPulse.ar(freq* dur) + LFTri.kr(SinOsc.kr(dur), gate, LFPulse.kr(freq, 0, 2));
+	var sig = LFPulse.ar(freq * gate) + LFTri.kr(SinOsc.kr(dur), gate, LFPulse.kr(freq.cpsmidi, 0, 2));
 	// sig = RLPF.ar(sig, 600, 0.75);
 	Pan2.ar(sig * env * 0.2);
 }).play(out: 0);
 )
-Ndef(\a2).stop(fadeTime:3);
+Ndef(\a2).stop;
 
-Ndef(\a2)[1] = \xset -> Pdef(\a1play);
+Ndef(\a2)[1] = \xset -> Pdef(\a1play).play(quant: -1);
 
 Ndef(\a1).xset(\freq, 150);
 
 Ndef(\a1).fadeTime = 0;
 Ndef(\a1)[2] = \xset -> Pdef(\a1play).quant_(-1);
-Ndef(\a2)[2] = \xset -> Pdef(\a1src).quant_(-1);
+Ndef(\a2)[2] = \xset -> Pdef(\a1play).quant_(-1);
 Ndef(\a2)[2] = \xset -> nil;
 
 Ndef(\a2)[1] = \xset -> Pdef(\a1src);
@@ -64,7 +62,7 @@ Ndef(\pitch)[999] = \filter -> { | in, pd=0.3, td=0.5 | PitchShift.ar(in, pitchD
 )
 Ndef(\pitch).stop(fadeTime:2);
 
-Ndef(\lfo, { SinOsc.kr(1, add: LFSaw.kr(1, Ndef(\a1).get(\dur), 0, 1, 300)) });
+Ndef(\lfo, { LFNoise0.kr(0.5, add: LFSaw.kr(1, Ndef(\a1).get(\gate) * Ndef(\a1).get(\dur), 0, 1, 3)) });
 Ndef(\lfo).release;
 Ndef(\a1).xmap(\gate, Ndef(\lfo));
 Ndef(\b1).xmap(\octave, Ndef(\lfo));
@@ -92,10 +90,10 @@ Ndef(\delay).release(fadeTime: 4);
 
 
 (
-Pdef(\ax, Pbind(\dur, Pgeom(0.125, 2, 5), \root, Pseries(0, 1, 6)));
-Pdef(\ay, Pchain(Pbind(\degree, Prand([0, 5, 5], inf), \legato, Pseq([0.3, 2.2], inf)), Pdef(\ax)));
-Pdef(\az, Pchain(Pbind(\degree, Pseq([0, -2, 5, -7, 8, 9], 1)), Pn(Pdef(\ay))));
-Pdef(\a1play, Psym(Pseq([\ax, \ay, Prand([\ax, \ay]), \az, \ay], inf)));
+Pdef(\ax, Pbind(\dur, Pgeom(0.125, 1, 2, 5, Rest(7)), \root, Pseries(0, 1, 6)), \recordTarget, ~hr, \chan, 2);
+Pdef(\ay, Pchain(Pbind(\degree, Prand([0, 0.25, 5, Rest(3)], inf), \legato, Pseq([0.3, 2.2], inf), \recordTarget, ~hr, \chan, 3), Pdef(\ax)));
+Pdef(\az, Pchain(Pbind(\degree, Pseq([0, -2, 5, -7, 8, 9, Rest(2)], 1), \recordTarget, ~hr, \chan, 4), Pn(Pdef(\ay))));
+Pdef(\a1play, Psym(Pseq([\ax, \ay, Prand([\ax, \ay]), \az, \ay, Rest(16)], inf)), \recordTarget, ~hr, \chan, 2);
 )
 
 
@@ -109,6 +107,8 @@ Pdef(\a1src,
 		// \dur, Pseq([Pseq([0.125, 0.25, 0.5, 0.75, 1], 3), Pseq([Rest(2), Rest(4)], 8)], inf),
 		\dur, Pseq([0.125, 0.25, Rest(0.5), 0.5, 0.25, Rest(3)], inf),
 		// \amp, Pwhite(0.2, 0.3, inf),
+		\recordTarget, ~hr,
+		\chan, 5,
 ));
 )
 

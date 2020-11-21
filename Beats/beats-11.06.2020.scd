@@ -1,5 +1,5 @@
-Ndef(\hh).play;
 (
+Ndef(\hh).play;
 Pdef(\hh,
 	Pbind(
 		\instrument, \bplay,
@@ -7,21 +7,19 @@ Pdef(\hh,
 		\group, Pfunc(Ndef(\hh).group),
 		\buf, d["Hats"][1],
 		\dur, Pseq([0.125, 0.125, 0.5, 0.75, 0.25].scramble, inf),
-		\dur,Pbjorklund2(Pseq(l, inf).asStream,12,inf)/8,
+		// \dur,Pbjorklund2(Pseq(l, inf).asStream,12,inf)/8,
 		// \dur, 0.125,
 		\midinote, 60,
-		// \dur, Pbjorklund2(3, 5, inf),
-		/*\recordTarget, ~hr,
-		\chan, 0,*/
+		// \dur, Pbjorklund2(3, 5, inf)/4,
+		\recordTarget, ~hr,
+		\chan, 0,
+		\amp, 0.3
 ));
 )
 
 Pdef(\hh).play(quant: -1);
 Pdef(\hh).stop;
 
-
-
-Ndef(\b).release;
 (
 Ndef(\b).play;
 Pdef(\b,
@@ -32,15 +30,17 @@ Pdef(\b,
 		\buf, d["Bass Drums"][5],
 		\dur, Pn(Pshuf([0.125, 0.25, 0.5, 1], 4), inf),
 		// \dur, Pshuf([0.5, 0.25, 1], inf),
-		// \dur, 0.5,
-		\amp, 0.3,
+		\dur, 0.125,
+		\midinote, 60,
+		\amp, 0.2,
 		// \recordTarget, ~hr,
 		// \chan, 1,
+		\amp, 0.3,
 ));
 )
-
 Pdef(\b).play(quant: -1);
 Pdef(\b).stop(fadeTime: 10);
+
 
 ~hr = HypoRecorder('test1');
 ~hr.add([\hh, \b], 2);
