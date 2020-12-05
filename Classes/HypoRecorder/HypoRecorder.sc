@@ -23,20 +23,20 @@ HypoRecorder {
 		File.mkdir(folder);
 		Event.addEventType( \note,
 			Event.eventTypes[\note].addFunc({
-			if (~recordTarget.notNil) {
-					if( ~recordTarget.smf.notNil){
-						~recordTarget.smf.addNote(
-							noteNumber: ~midinote,
+			if (~midirec.notNil && ~midirec.smf.notNil, {
+					if( ~midirec.smf.notNil){
+						~midirec.smf.addNote(
+							noteNumber: ~midinote.value,
 							velo: ~amp.range(0, 127),
-							startTime: thisThread.clock.beats,
+							startTime: ~midirec.recClock.beats,
 							dur: ~dur,
 							channel: ~chan,
 							track: ~chan,
 						)
-					}
-				};
-				// currentEnvironment.play;
-			});
+					};
+				}, { currentEnvironment.play; })
+
+		})
 		)
 	}
 
@@ -68,7 +68,7 @@ HypoRecorder {
 		var dateTime  = Date.getDate.format("%Y%m%d-%Hh%m");
 		proxies.do{ |proxy, i|
 			var fileName  = ("%/%-%.%").format(
-				folder, dateTime, proxy.asCompileString, headerFormat
+				folder, dateTime, proxy.asString, headerFormat
 			);
 
 			nodes[i].open(fileName, headerFormat, sampleFormat);

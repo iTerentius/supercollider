@@ -7,6 +7,7 @@ s.options.numBuffers = 1024 * 16;
 s.options.memSize = 8192 * 256;
 s.options.numOutputBusChannels = 18;
 s.options.numInputBusChannels = 0;
+/*s.latency = 0.5;*/
 //boot the server
 s.reboot;
 //display the oscilloscope
@@ -17,7 +18,8 @@ s.reboot;
 //p.makeTempoClock;
 //give proxyspace a tempo
 //p.clock.tempo = 80/60;
-r = Reaper.new("127.0.0.1", 7772);
+// r = Reaper.new("127.0.0.1", 7772);
+
 Task({
 	3.wait;
 	d = Dictionary.new;
@@ -37,9 +39,9 @@ Task({
 	// StageLimiter.activate;
 	MIDIClient.init;
 	5.wait;
-	 //m = MIDIOut.newByName("Virtual Raw MIDI 0-0", "VirMIDI 0-0");
+	// m = MIDIOut.newByName("Virtual Raw MIDI 0-0", "VirMIDI 0-0");
 	m = MIDIOut(0, MIDIClient.destinations[0].uid);
-	// m.latency(0);
+	m.latency(0);
 	3.wait;
 	"Setup done!".postln;
 }).start;
@@ -51,7 +53,7 @@ SynthDef(\bplay,
 		env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:0);
 		sig = sig * env;
 		sig = sig * amp;
-		Out.ar(out,Pan2.ar(sig.dup,pan));
+		OffsetOut.ar(out,Pan2.ar(sig.dup,pan));
 	}).add;
 
 
