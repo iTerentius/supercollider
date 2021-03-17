@@ -6,7 +6,7 @@ TempoClock.default.tempo = 130/60;
 Ndef(\a1, { |freq=110, pan=0, gate=1, dur=1, octave=0, amp=0.5|
 	var env = EnvGen.kr(Env.asr(0.01, releaseTime: Rand(1, 2.0), curve: \sin), gate: gate, doneAction: 2);
 	var sig = Mix.fill(8, { | i |
-		LFPulse.ar(freq/amp + i + gate * LFSaw.kr(i.squared +i, Impulse.kr(1*i), dur, i.abs, i.cubed), dur);
+		LFPulse.ar(freq/amp + i + gate * LFPar.kr(i.squared +i, Impulse.kr(1*i), dur, i.abs, i.cubed), dur);
 	});
 	// sig = RHPF.ar(sig, 300, 0.75);
 	Pan2.ar(sig * env * 0.05, pos: pan);

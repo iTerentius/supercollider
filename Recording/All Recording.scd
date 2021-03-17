@@ -1,8 +1,6 @@
-(
-~hr = HypoRecorder();
-~hr.add([\il, \r1], 1);
-)
 
+~hr = HypoRecorder();
+~hr.add([\r1, \il, \hh, \b], 3);
 ~hr.record;
 ~hr.stop;
 
