@@ -27,21 +27,21 @@ x = s.plotTree;
 
 
 Task({
-	// 3.wait;
-	// d = Dictionary.new;
-	// d.add(\foldernames -> PathName("/home/hypostatic/Music/samples/808s_by_SHD/Classic").entries);
-	// for (0, d[\foldernames].size-1,
-	// {arg i; d.add(d[\foldernames][i].folderName -> d[\foldernames][i].entries.collect({
-	// arg sf;
-	// Buffer.read(s,sf.fullPath);
-// });
-// )});
-	// ("SynthDefs.scd").loadRelative;
-	//loads snippets from setup folder
-	//("Snippets.scd").loadRelative;
-	//wait, because otherwise it won't work for some reason
-	// 3.wait;
-	//activate StageLimiter - Part of the BatLib quark
+	3.wait;
+	d = Dictionary.new;
+	d.add(\foldernames -> PathName("/home/hypostatic/Music/samples/808s_by_SHD/Classic").entries);
+	for (0, d[\foldernames].size-1,
+		{arg i; d.add(d[\foldernames][i].folderName -> d[\foldernames][i].entries.collect({
+			arg sf;
+			Buffer.read(s,sf.fullPath);
+			});
+		)});
+	/*("SynthDefs.scd").loadRelative;
+	loads snippets from setup folder
+	("Snippets.scd").loadRelative;*/
+	// wait, because otherwise it won't work for some reason
+	3.wait;
+	// activate StageLimiter - Part of the BatLib quark
 	// StageLimiter.activate;
 	MIDIClient.init;
 	5.wait;
@@ -50,11 +50,11 @@ Task({
 	m = MIDIOut(0, MIDIClient.destinations[0].uid);
 	// m = MIDIOut(MIDIEndPoint("MPK Mini Mk II", "MPK Mini Mk II MIDI 1");
 		m.latency(0);
-	// 3.wait;
+	3.wait;
 	"Setup done!".postln;
 }).start;
 
-/*SynthDef(\bplay,
+SynthDef(\bplay,
 	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
 		var sig,env=1 ;
 		sig = Mix.ar(PlayBuf.ar(2 ,buf,BufRateScale.ir(buf) * rate,1,BufDur.kr(buf)*pos*44100,doneAction:2));
@@ -62,8 +62,9 @@ Task({
 		sig = sig * env;
 		sig = sig * amp;
 		OffsetOut.ar(out,Pan2.ar(sig.dup,pan));
-	}).add;*/
+	}).add;
 
 
 )
+
 

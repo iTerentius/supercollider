@@ -1,5 +1,8 @@
 TempoClock.default.tempo = 130/60;
 
+~mix = NdefMixer(s);
+~mix.parent.alwaysOnTop_(true);
+
 // Tempo.bpm = 140;
 
 (
@@ -10,7 +13,7 @@ Ndef(\a1, { |freq=110, pan=0, gate=1, dur=1, octave=0, amp=0.5|
 	});
 	// sig = RHPF.ar(sig, 300, 0.75);
 	Pan2.ar(sig * env * 0.05, pos: pan);
-}).play(out: 0);
+}).play(fadeTime: 3, out: 0);
 )
 
 Ndef(\a1)[1] = \xset -> Pdef(\a1play);
@@ -18,7 +21,7 @@ Ndef(\a1)[1] = \xset -> Pdef(\a1);
 
 Ndef(\a1).gui;
 Ndef(\a1).stop(fadeTime: 3);
-Ndef(\a1).free;
+Ndef(\a1).free(fadeTime: 10);
 
 Ndef(\pan, { SinOsc.kr(1) });
 Ndef(\pan).stop;
@@ -43,7 +46,7 @@ Nedf(\lfo).release;
 Ndef(\a1).play;
 
 Ndef(\b1, { |carfreq=100, freq=10| SinOsc.ar(carfreq + freq!2, 2, LFSaw.kr(SinOsc.kr(10000, 0, 200, 10), 0, 0.3, 0),0) * 0.7}).play;
-Ndef(\b1).stop(fadeTime: 3);
+Ndef(\b1).release(fadeTime: 3);
 
 
 Ndef(\delay, { |in| DelayN.ar(LocalIn.ar, 0.2, 1, 0.3) * 0.2 }).play;
