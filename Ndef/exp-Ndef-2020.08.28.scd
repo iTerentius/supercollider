@@ -103,7 +103,7 @@ Pdef(\hh).release;
 Pdef(\b,
 	Pbind(
 	\instrument, \bplay,
-	\out, Pfunc({ Ndef(\bplay).bus.index }),ac
+	\out, Pfunc({ Ndef(\bplay).bus.index }),
 	\group, Pfunc({ Ndef(\bplay).group }),
 	\buf, d["Bass Drums"][1],
 	\dur, Pseq([0.25, 0.5, 0.5 ,0.5], inf)),
