@@ -5,6 +5,7 @@
 4. /set Pdef to Ndef
 */
 
+
 (
 Ndef(\lead, { | out, freq = 48, relTime = 2 |
 	var sig = 0, temp, env, curv;
@@ -122,7 +123,7 @@ Pdef(\hhsynth,
 		\instrument, \bplay,
 		\out, Pfunc(Ndef(\hh).bus.index),
 		\group, Pfunc(Ndef(\hh).group),
-		\buf, d["Hats"][1],
+		\buf, d["Hats"][6],
 ));
 
 Pdef(\hhseq,
@@ -132,7 +133,7 @@ Pdef(\hhseq,
 		// \dur,Pbjorklund2(Pseq(l, inf).asStream,12,inf)/8,
 		// \dur, 0.125,
 		\midinote, 60,
-		\dur, Pbjorklund2(Pseq([3, 5, 7, 9, 11], inf), Pseq([12, 4, 6, 7], inf))/4,
+		\dur, Pbjorklund2(Pseq([3, 5, 7, 9, 11], inf), Pseq([12, 4, 6, 7], inf))/2,
 	));
 )
 (
@@ -167,13 +168,13 @@ Pdef(\bsynth,
 		\out, Pfunc(Ndef(\hh).bus.index),
 		\group, Pfunc(Ndef(\hh).group),
 		\instrument, \bplay,
-		\buf, d["Bass Drums"][5],
+		\buf, d["Bass Drums"][4],
 ));
 
 Pdef(\bseq,
 	Pbind(
 		\dur, Pbjorklund2(Prand([3, 5, 7, 9, 11], inf), Prand([12, 4, 6, 7], inf)),
-		\amp, 0.2
+		\amp, 0.1
 ));
 )
 
@@ -188,7 +189,7 @@ Pdef(\b,
 )
 )
 
-TempoClock.default.tempo = 2;
+TempoClock.default.tempo = 0.75;
 
 Pdef(\b).play(quant: -1);
 Pdef(\b).stop;

@@ -36,7 +36,7 @@ a.set(\freqs, [333, 444, 555, 666].rand)
 SynthDef(\warble, { | out=0, freq = 110, gate=1, amp=0.3 |
 	var e;
 	e = EnvGen.ar(Env.perc, gate, doneAction: 2);
-	Out.ar(0, Splay.ar(SinOsc.ar([freq * WhiteNoise.kr(1), freq + PinkNoise.kr(1.5)])) * e * amp);
+	Out.ar(0, Splay.ar(SinOsc.ar([freq * PinkNoise.kr(1), freq + PinkNoise.kr(1.5)])) * e * amp);
 }).add;
 )
 (
@@ -45,7 +45,7 @@ Pdef(\w, {
 		\instrument, \warble,
 		\scale, Scale.major,
 		\degree, Pseq([0,1,2,3,4,5,6,7],inf),
-		\dur, Pbjorklund2(3, 7, inf),
+		\dur, Pbjorklund2(3, 7, inf)/8,
 		\amp, 0.3,
 )};
 )
@@ -94,3 +94,20 @@ var signal = MidEQ.ar(WhiteNoise.ar(0.4), MouseX.kr(40,20000,1), MouseY.kr(0.01,
 BPF.ar(signal, MouseX.kr(40,20000,1), MouseY.kr(0.01,1)) !2
 }.play;
 )
+
+
+// resonant filter
+{ Resonz.ar(WhiteNoise.ar(0.5), MouseX.kr(40,20000,1), 0.1)!2 }.play
+// a short impulse won't resonate
+{ Resonz.ar(Dust.ar(0.5), 2000, 0.1) }.play
+// for that we use Ringz
+{ Ringz.ar(Dust.ar(2, 0.6), MouseX.kr(200,6000,1), 2) }.play
+// X is frequency and Y is ring time
+{ Ringz.ar(Impulse.ar(4, 0, 0.3), MouseX.kr(200,6000,1), MouseY.kr(0.04,6,1)) }.play
+{ Ringz.ar(Impulse.ar(LFNoise2.ar(2).range(0.5, 4), 0, 0.3), LFNoise2.ar(2).range(0.04,6,1)) }.play
+LFNoise2.ar(0.1).range(200,30\
+{ Mix.fill(10, {Ringz.ar(Impulse.ar(LFNoise2.ar(rrand(0.1, 1)).range(0.5, 1), 0, 0.1),
+oise2.ar(0.1).range(200,12000), LFNoise2.ar(2).range(0.04,6,1)) })}.play
+LFN\
+{ Formlet.ar(Impulse.ar(4, 0.9), MouseX.kr(300,2000), 0.006, 0.1) }.play;
+{ Formlet.ar(LFNoise0.ar(4, 0.2), MouseX.kr(300,2000), 0.006, 0.1) }.play;

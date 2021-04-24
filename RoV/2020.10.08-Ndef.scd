@@ -187,7 +187,7 @@ Pdef(\b,
 )
 )
 
-TempoClock.default.tempo = 2;
+TempoClock.default.tempo = 0.5;
 
 Pdef(\b).play(quant: -1);
 Pdef(\b).stop;
