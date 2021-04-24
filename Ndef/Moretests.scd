@@ -2,11 +2,11 @@
 Synth Def may work better. */
 Ndef(\s1).play;
 (
-Ndef(\s1, { | freq=110, freqmod=1, out=0, gate=1, amp=1 |
+Ndef(\s1, { | freq=110, freqmod=1, out=0, gate=1, amp=1, noise=4 |
 	var e, s, f;
 	f = Array.fill(5, { | i | i + freq + 10 });
 	e = EnvGen.kr(Env.adsr(releaseTime: gate/2), gate, doneAction: 2);
-	s = LFSaw.ar(f*Pulse.kr(10).range(0, 10) * LFPulse.kr([0.5, 0.01, 2]/freqmod, 0.5).range(1, 10))* e;
+	s = LFSaw.ar(f/2+Pulse.kr(LFNoise0.kr(noise)).range(0, 10) * LFPulse.kr([0.5, 0.01, 2]/freqmod, 0.5).range(1, 10))* e;
 	s = Splay.ar(s * e);
 	Out.ar(out, s * amp *0.5);
 });
@@ -24,10 +24,10 @@ Pdef(\s1, {
 		\out, {Ndef(\s1).out.bus},
 		\group, {Ndef(\s1).group},
 		// \dur, Pseq([0.5, Rest(1), 1, 2], inf),
-		\dur, Pwhite(0, 1, inf),
+		\dur, Pwhite(0, 1, inf)/Pbjorklund2(3, 5, inf),
 		\amp, Pseq([0.2, 0.3, 0.5], inf),
-		\legato, Pseq([0.2, 1, 0.23], inf),
-		\freqmod, Pseq([10, 3, 5, 7], inf),
+		\legato, Prand([0.2, 1, 0.23], inf),
+		\freqmod, Pbrown(0.25, 4, inf),
 	)
 })
 )
@@ -36,15 +36,16 @@ Pdef(\s1).play;
 
 (
 // Can't run two Pdefs... gives server errors - apparently they conflict
-Pdef(\s2, {
+Pdef(\s1, {
 	Pbind(
 		// \instrument, \s1,
 		\out, {Ndef(\s1).out.bus},
 		\group, {Ndef(\s1).group},
 		\octave, 1,
+		\freq, Pwhite(55, 2200, inf),
 		// \degree, Scale.minor,
 		// \dur, Pseq([1, 2, 4], inf),
-		\dur, Pwhite(0, 1, inf),
+		\dur, Pwhite(0, 3, inf),
 		\amp, Pseq([0.2, 0.3, 0.5], inf),
 		\legato, Pseq([0.2, 1, 0.23], inf),
 		// \freqmod, Pseq([100, 3, 5, 7], inf),
@@ -60,7 +61,10 @@ Ndef(\freqmod, { LFSaw.kr(1)}).play;
 Ndef(\s1).map(\freqmod, Ndef(\freqmod).ar);
 
 Ndef(\s1)[1] = \xset -> Pdef(\s1);
-Ndef(\s1)[2] = \xset -> Pdef(\s2);
+Ndef(\s1)[1] = \xset -> Pdef(\s2);
+
+Ndef(\noise, { SinOsc.kr(1) }).play;
+Ndef(\s1).xset(\noise, Ndef(\noise));
 
 l = LinkClock();
 
