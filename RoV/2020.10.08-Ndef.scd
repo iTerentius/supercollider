@@ -151,6 +151,8 @@ Pdef(\hh,
 Pdef(\hh).play(quant: -1);
 Pdef(\hh).stop;
 
+
+
 (
 Pdef(\bmidi,
 	Pbind(
@@ -171,7 +173,7 @@ Pdef(\bsynth,
 
 Pdef(\bseq,
 	Pbind(
-		\dur, 0.5,
+		\dur, Pbjorklund2(3,7,inf)/2,
 		\amp, 0.2
 ));
 )
