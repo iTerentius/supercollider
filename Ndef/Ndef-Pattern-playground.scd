@@ -21,12 +21,13 @@ Pdef(\s1, {
 	Pbind(
 		// \instrument, \s1,
 		// \octave, Pxrand([3, 5], inf),
+		\octave, 6,
 		\degree, Prand((0..7), inf),
 		\scale, Scale.minor,
 		\out, {Ndef(\s1).out.bus},
 		\group, {Ndef(\s1).group},
 		// \dur, Pseq([0.5, Rest(1), 1, 2], inf),
-		\dur, Pwhite(0, 2, inf)/Pbjorklund2(3, 5, inf),
+		\dur, Pwhite(0, 2, inf)/Pbjorklund2(3, 5, inf)/4,
 		\amp, Pseq([0.2, 0.3, 0.5], inf),
 		\legato, Pxrand([0.2, 1, 0.23], inf),
 		\freqmod, Pbrown(0.25, 4, inf),
@@ -35,6 +36,8 @@ Pdef(\s1, {
 )
 
 Pdef(\s1).play;
+Pdef(\s1).stop;
+Ndef(\s1).clear;
 
 (
 // Can't run two Pdefs... gives server errors - apparently they conflict
@@ -43,7 +46,7 @@ Pdef(\s1, {
 		// \instrument, \s1,
 		\out, {Ndef(\s1).out.bus},
 		\group, {Ndef(\s1).group},
-		\octave, 1,
+		\octave, 5,
 		\freq, Pstutter(2, Pseq([55, 2200],inf), inf),
 		// \degree, Scale.minor,
 		// \dur, Pseq([1, 2, 4], inf),

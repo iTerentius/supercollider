@@ -51,7 +51,7 @@ Pdef(\p425, {
 			\atk, Pwhite(0.0, 1.0, 7),
 			\ampl, Pseries(1, 2, 15),
 			\dur, 0.5,
-			\pan, Pseq([0.5, -0.5], 6),
+			\pan, Pseq([0.5, -0.5], 6)/2,
 			\phase, Pwhite(0,0.5, 3),
 		),
 		Pbind(
