@@ -37,7 +37,7 @@ Pdef(\s1, {
 
 Pdef(\s1).play;
 Pdef(\s1).stop;
-Ndef(\s1).clear;
+Ndef(\s1).source = nil;
 
 (
 // Can't run two Pdefs... gives server errors - apparently they conflict

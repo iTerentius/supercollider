@@ -19,20 +19,21 @@ Ndef(\t425, {
 		\freq.kr(110) * \ratio.kr(2),
 		mul:\freq.kr(110) * \ratio.kr(2) * \index.kr(1) /2
 	);
-	sig = SinOsc.ar(\freq.kr(110) + mod + TRand.kr(1, 4));
+	sig = SinOsc.ar(\freq.kr(110) + mod * TRand.kr(1, 4));
 	sig = sig + (VarSaw.ar(\index.kr * Rand(0.1, 3), \phase.kr(1)*Rand(0.001,1)) * Impulse.kr(\index.kr));
-	sig = sig * amp + PinkNoise.kr(LFPulse.kr(\phase.kr * \index.kr));
+	sig = sig * amp;
 	sig = Splay.ar([sig, sig**2], center: \pan.kr(-1));
 	// Why does this only work?
-	Out.ar(\out.ar(0), sig * 0.2);
+	Out.ar(\out.ar(0), sig * 0.1);
 });
 )
 // Keep at least the Role Pdef nearby as every change to the Ndef means it needs to be executed again.
 // FIND OUT HOW TO CAUSE CHANGES WIHTOUT DOING THIS!
 
 Ndef(\t425).play;
+Ndef(\t425)[0].stop;
 Ndef(\425).fadeTime = 3;
-Ndef(\t425).stop; // This doesn't seem to work - because of the Out on the Ndef?
+Ndef(\t425).release; // This doesn't seem to work - because of the Out on the Ndef?
 Ndef(\t425)[1] = \xset -> Pdef(\p425).quant_(-1);
 Ndef(\t425)[1] = \xset -> nil;
 
@@ -50,7 +51,7 @@ Pdef(\p425, {
 			// \freq, Pwhite(55, 440, inf),
 			\atk, Pwhite(0.0, 1.0, 7),
 			\ampl, Pseries(1, 2, 15),
-			\dur, 0.5,
+			\dur, Pbjorklund2(5, 12, 12)/32,
 			\pan, Pseq([0.5, -0.5], 6)/2,
 			\phase, Pwhite(0,0.5, 3),
 		),
@@ -65,13 +66,13 @@ Pdef(\p425, {
 			\atk, Pseq((0.01..1), 10),
 			// \freq, Pwhite(55, 440, inf),
 			\ampl, Pxrand([3, 8], 7),
-			\dur, Pseq([2, Rest(1)], 15)/42,
+			\dur, Pseq([2, Rest(4)], 15)/Pwhite(2,64, 16),
 		),
 	], inf)
 });
 )
 
-
+Pdef(\p425).stop;
 
 
 Ndef(\index, { SinOsc.kr(1).range(1,4) });
@@ -79,5 +80,10 @@ Ndef(\t425).xmap(\index, Ndef(\index));
 
 Ndef(\delay).play;
 Ndef(\delay).stop;
-Ndef(\delay, { | in | CombC.ar(in, 5, 2) });
+Ndef(\t425)[999] = \filter -> { |in| DelayC.ar(in * Dust.ar(10 + in), 3, 1) };
+Ndef(\t425).set(\wet999, 0.5);
 Ndef(\delay) <<>.in Ndef(\t425);
+
+Ndef(\rev).play;
+Ndef(\425)[1000] = \filter -> {|in| GVerb.ar(in, 10) };
+Ndef(\rev) <<>.in Ndef(\425);

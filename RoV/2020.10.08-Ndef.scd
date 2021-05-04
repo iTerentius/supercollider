@@ -91,13 +91,13 @@ Pdef.defaultQuant = -1;
 
 (
 SynthDef(\bplay,
-	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
+	{arg buf = 0, rate = 1, amp = 0.5, pan = 0, pos = 0, rel=15;
 		var sig,env=1;
 		sig = Mix.ar(PlayBuf.ar(2,buf,BufRateScale.ir(buf) * rate,1,BufDur.kr(buf)*pos*44100,doneAction:2));
 		env = EnvGen.ar(Env.linen(0.0,rel,0),doneAction:0);
 		sig = sig * env;
 		sig = sig * amp;
-		Out.ar(out,Pan2.ar(sig.dup,pan));
+		Out.ar(\out.kr(0),Pan2.ar(sig.dup,pan));
 }).add;
 )
 
@@ -131,7 +131,7 @@ Pdef(\hhseq,
 		// \dur,Pbjorklund2(Pseq(l, inf).asStream,12,inf)/8,
 		// \dur, 0.125,
 		\midinote, 60,
-		\dur, Pbjorklund2(Pseq([3, 5, 7, 9, 11], inf), Pseq([12, 4, 6, 7], inf)),
+		\dur, Pbjorklund2(Pseq([3, 5, 7, 9, 11], inf), Pseq([12, 4, 6, 7], inf))/4,
 	));
 )
 (
@@ -168,13 +168,14 @@ Pdef(\bsynth,
 		\out, Pfunc(Ndef(\hh).bus.index),
 		\group, Pfunc(Ndef(\hh).group),
 		\instrument, \bplay,
-		\buf, d["Bass Drums"][5],
+		\buf, d["Bass Drums"][4],
+		\amp, Pwhite(0.1, 0.3, inf),
 ));
 
 Pdef(\bseq,
 	Pbind(
-		\dur, Pbjorklund2(3,7,inf)/2,
-		\amp, 0.2
+		\dur, Pbjorklund2(3,7,inf)/4,
+		// \amp, 0.2
 ));
 )
 
