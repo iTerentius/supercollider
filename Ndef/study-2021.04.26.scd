@@ -22,16 +22,16 @@ Ndef(\t425, {
 	sig = SinOsc.ar(\freq.kr(110) + mod * TRand.kr(1, 4));
 	sig = sig + (VarSaw.ar(\index.kr * Rand(0.1, 3), \phase.kr(1)*Rand(0.001,1)) * Impulse.kr(\index.kr));
 	sig = sig * amp;
-	sig = Splay.ar([sig, sig**2], center: \pan.kr(-1));
+	sig = Splay.ar([sig, sig+0.5], center: \pan.kr(-1));
 	// Why does this only work?
-	Out.ar(\out.ar(0), sig * 0.1);
+	Out.ar(\out.ar(0), sig!2 * 0.1);
 });
 )
 // Keep at least the Role Pdef nearby as every change to the Ndef means it needs to be executed again.
 // FIND OUT HOW TO CAUSE CHANGES WIHTOUT DOING THIS!
 
 Ndef(\t425).play;
-Ndef(\t425)[0].stop;
+Ndef(\t425).clear;
 Ndef(\425).fadeTime = 3;
 Ndef(\t425).release; // This doesn't seem to work - because of the Out on the Ndef?
 Ndef(\t425)[1] = \xset -> Pdef(\p425).quant_(-1);
@@ -51,7 +51,8 @@ Pdef(\p425, {
 			// \freq, Pwhite(55, 440, inf),
 			\atk, Pwhite(0.0, 1.0, 7),
 			\ampl, Pseries(1, 2, 15),
-			\dur, Pbjorklund2(5, 12, 12)/32,
+			// \dur, Pbjorklund2(5, 12, 12)/8,
+			\dur, Pseq([0.25, 0.25, 0.25, 5, Rest(4)], inf)/32,
 			\pan, Pseq([0.5, -0.5], 6)/2,
 			\phase, Pwhite(0,0.5, 3),
 		),
@@ -68,6 +69,19 @@ Pdef(\p425, {
 			\ampl, Pxrand([3, 8], 7),
 			\dur, Pseq([2, Rest(4)], 15)/Pwhite(2,64, 16),
 		),
+		Pbind(
+			\out, Pfunc(Ndef(\t425).bus.index),
+			\group, Pfunc(Ndef(\t425).group),
+			\octave, Pseq([1,2], 10),
+			\scale, Scale.minor,
+			\ratio, Pseq([1,2,4], 3),
+			\degree, Prand((0..7), 6),
+			\index, Pseq([2, 3, 1], 10),
+			\atk, Pseq((0.01..1), 10),
+			// \freq, Pwhite(55, 440, inf),
+			\ampl, Pxrand([3, 8], 7),
+			\dur, Pseq([2, Rest(4)], 15),
+		),
 	], inf)
 });
 )
@@ -75,7 +89,7 @@ Pdef(\p425, {
 Pdef(\p425).stop;
 
 
-Ndef(\index, { SinOsc.kr(1).range(1,4) });
+Ndef(\index, { SinOsc.kr(5).range(1,4) });
 Ndef(\t425).xmap(\index, Ndef(\index));
 
 Ndef(\delay).play;
@@ -87,3 +101,4 @@ Ndef(\delay) <<>.in Ndef(\t425);
 Ndef(\rev).play;
 Ndef(\425)[1000] = \filter -> {|in| GVerb.ar(in, 10) };
 Ndef(\rev) <<>.in Ndef(\425);
+Ndef(\rev) <<>.in Ndef(\synth);

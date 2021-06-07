@@ -132,6 +132,7 @@ Pdef(\hhseq,
 		// \dur, 0.125,
 		\midinote, 60,
 		\dur, Pbjorklund2(Pseq([3, 5, 7, 9, 11], inf), Pseq([12, 4, 6, 7], inf))/4,
+		\amp, 0.1,
 	));
 )
 (
@@ -169,13 +170,13 @@ Pdef(\bsynth,
 		\group, Pfunc(Ndef(\hh).group),
 		\instrument, \bplay,
 		\buf, d["Bass Drums"][4],
-		\amp, Pwhite(0.1, 0.3, inf),
+		\amp, Pwhite(0.1, 0.2, inf),
 ));
 
 Pdef(\bseq,
 	Pbind(
 		\dur, Pbjorklund2(3,7,inf)/4,
-		// \amp, 0.2
+		\amp, 0.2
 ));
 )
 
