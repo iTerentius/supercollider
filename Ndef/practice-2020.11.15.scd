@@ -1,9 +1,9 @@
 (
 Ndef(\synth, { | out=0, freq=440, dur=1, gate=1, amp=0.6 |
 	var sig, ef1;
-	ef1 = EnvGen.kr(Env([220, 120, 60, 0], [0.5, 0.5, 0.75, 0.78, 1], \sine), gate: gate, doneAction: 2);
-	sig = LFTri.ar(SinOsc.kr(freq) *LFPulse.kr(10 * freq) * ef1);
-	sig = RHPF.ar(sig, 40);
+	ef1 = EnvGen.kr(Env([220, 120, 60, 0], [0.5, 0.5, 0.75, 0.78, 1], \sqr), gate: gate, doneAction: 2);
+	sig = LFTri.ar(SinOsc.kr(freq) + LFPulse.kr(\synthlfo.kr * freq) * ef1);
+	sig = RHPF.ar(sig, 100);
 	Out.ar(\out.ar(0), sig!2 * ef1 * 0.01 * amp);
 });
 )
@@ -16,8 +16,9 @@ Ndef(\synth1, { | freq=440, dur=1, gate = 1 |
 	e = EnvGen.kr(Env.circle, gate);
 	sig = SinOsc.ar(freq * e);
 	Out.ar(\out.ar(0), sig!2 * 0.2);
-}).play;
+});
 )
+Ndef(\synth1).play;
 Ndef(\synth1).stop;
 
 Ndef(\synth1)[1] = \xset -> Pdef(\s1).quant_(-1);
@@ -25,6 +26,7 @@ Ndef(\synth)[1] = \xset -> Pdef(\s1).quant_(1);
 
 
 Ndef(\synthlfo, { LFPulse.kr(2, width:2) });
+
 
 Ndef(\synth).xmap(\amp, Ndef(\synthlfo));
 
@@ -47,7 +49,7 @@ Ndef(\synth)[10] = \filter -> { |in| DelayC.ar(in * Dust.ar(100 + in), 1, 1) };
 Ndef(\synth).set(\wet10, 0.5);
 
 (
-Ndef(\drone, { | out=0, freq=440, dur=1, gate=1, amp=0.6 |
+Ndef(\drone, { | out=0, freq=440, dur=1, amp=0.6 |
 	var sig;
 	sig = SinOsc.ar([freq, freq*0.1] + Ndef(\synth1).kr + Ndef(\synthlfo).kr);
 	sig = sig * 0.1;
@@ -55,7 +57,7 @@ Ndef(\drone, { | out=0, freq=440, dur=1, gate=1, amp=0.6 |
 });
 )
 
-Ndef(\drone).play;
+Ndef(\drone).release;
 
 
 
