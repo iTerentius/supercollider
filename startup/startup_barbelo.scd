@@ -1,0 +1,1 @@
+/Users/isaaclinder/Library/Application Support/SuperCollider/startup.scd
