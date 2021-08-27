@@ -1,14 +1,14 @@
 (
 var busses = ~dirt.orbits.collect { |x| x.dryBus };
 
-SynthDef(\readorb, { |out, amp = 1, n = 0, obus = 0, mix = 0.5| // number
+SynthDef(\readorb, { |out, amp = 1, n = 0, obus = 0 | // number
 	var bus, sound;
 
 	bus = Select.kr(n, busses);
 	sound = InFeedback.ar(bus, ~dirt.numChannels);
 	//sound = CombL.ar(sound, 0.2, 0.03, 1);
 	Out.ar(out,
-		sound * (amp * 2.5) * mix;
+		sound * (amp * 2.5);
 	)
 }).add;
 );
@@ -22,3 +22,12 @@ d2 $ sound "readorb:0 blip"
   # bandf "{90 200 1450 9000}/3" # bandq "10"
 d1 $ sound "can*2" # pan "0" # up "{1 2 3 4}/4"
 */
+
+(
+SynthDef(\bass, { | out = 0, freq = 110, mul = 1 |
+	var sig, env;
+	env = EnvGen.ar(Env.pairs([[0.5, 0.9, 0.25, 0.9, 2], [0.1, 0.5, 0.6, 0.8, 1]], \exp), doneAction: Done.freeSelf);
+	sig = LFSaw.ar((SinOsc.ar(freq) * LFPulse.kr(Rand(1,4)).range(60, 220))!2, modfreq: freq, pmindex: Rand(0, 20), mul: env * 0.2).dup;
+	Out.ar(out, sig * mul);
+}).add;
+)
