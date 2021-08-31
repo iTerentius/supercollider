@@ -1,14 +1,19 @@
 (
-~root = "~/Music/supercollider/_samples/*".pathMatch;
+~root = "~/Music/supercollider/_samples/*";
 
-~recursive = do(~root, { |i|
-	var path, is_folder;
+~recursive = { |folder|
+	var path, folders, is_folder;
 
-	path = PathName(i);
+	folder.inspect;
+	path = PathName(folder);
 	is_folder = path.isFolder;
-	if(is_folder) ~recursive, {
+	folders = path.pathMatch;
+	if(is_folder == true,
+		{
+			folders.do { | i | ~recursive.value(i)} },
+		{ i.postln; }
+	)
+};
 
-});
-
-
+~recursive.value("~/Music/supercollider/_samples/*");
 )
