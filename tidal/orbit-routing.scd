@@ -25,12 +25,12 @@ d1 $ sound "can*2" # pan "0" # up "{1 2 3 4}/4"
 */
 
 (
-SynthDef(\bass, { | out = 0, freq = 110, mul =  1, fmod = 1, pmindex = 1, sustain=1,speed=1,begin=0,end=1,pan,accelerate,offset,clamp=1|
+
 	var sig, env, line, vol;
 	line = Line.ar(begin,end,sustain/speed,doneAction: Done.freeSelf);
 	env = Env.pairs([[0.5, 0.9, 0.25, 0.9, 2], [0.1, 0.5, 0.6, 0.8, 1]], \exp, doneAction: Done.freeSelf);
 	vol = IEnvGen.ar(env, line);
-	sig = LFSaw.ar((SinOsc.ar(freq) * LFPulse.kr(Rand(1,4)).range(60, 220))!2, modfreq: freq, pmindex: pmindex, mul: vol).dup;
+
 	Out.ar(out, sig * mul);
 }).add;
 )
