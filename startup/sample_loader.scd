@@ -1,19 +1,22 @@
 (
-~root = "~/Music/supercollider/_samples/*";
-
-~recursive = { |folder|
+f = { |folder|
 	var path, folders, is_folder;
-
-	folder.inspect;
+	"running".postln;
+	// folder.inspect;
 	path = PathName(folder);
+	// path.postln;
 	is_folder = path.isFolder;
-	folders = path.pathMatch;
+	// is_folder.postln;
+	folders = path ++ "/*".pathMatch;
+	folder.postln;
 	if(is_folder == true,
 		{
-			folders.do { | i | ~recursive.value(i)} },
-		{ i.postln; }
+			// folders.postln;
+			folders.do { | i | f.value(i)}; },
+		{ "file".postln; }
 	)
 };
-
-~recursive.value("~/Music/supercollider/_samples/*");
 )
+f.value("~/Music/supercollider/_samples/*");
+
+~f.value;
