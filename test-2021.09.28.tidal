@@ -1,8 +1,9 @@
 let ct = (range 0 8 (cF 1 "13"))
 
 d4
-  -- $ slow 2
-  -- $ mask (slow 2 "t(3,5)")
+  $ slow 2
+  $ superimpose (fast 4) 
+  $ mask (slow 2 "t(3,5)")
   $ "[[Bass_Drums:5 Bass_Drums:3] [Snare_Drums ~/3] Snare_Drums, <Hats:3*4 Hats:2*2>?]"
   # n (run 12)
   # crush ct
