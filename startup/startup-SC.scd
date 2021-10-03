@@ -103,7 +103,7 @@ s.waitForBoot {
 	~dirt.loadSoundFiles("~/Music/supercollider/_samples/**/**/*");
 	// ~dirt.start(57120, 0 ! 12);   // start listening on port 57120, create two busses each sending audio to channel 0
 	// s.sync; // optionally: wait for samples to be read
-	~dirt.start(57120, [0, 2, 4, 6, 8, 10, 12, 14, 16]);
+	~dirt.start(57120, [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]);
 
 	// optional, needed for convenient access from sclang:
 	(
@@ -111,7 +111,13 @@ s.waitForBoot {
 		~d4 = ~dirt.orbits[3]; ~d5 = ~dirt.orbits[4]; ~d6 = ~dirt.orbits[5];
 		~d7 = ~dirt.orbits[6]; ~d8 = ~dirt.orbits[7]; ~d9 = ~dirt.orbits[8];
 		~d10 = ~dirt.orbits[9]; ~d11 = ~dirt.orbits[10]; ~d12 = ~dirt.orbits[11];
+		~d13 = ~dirt.orbits[12]; ~d14 = ~dirt.orbits[13]; ~d15 = ~dirt.orbits[14];
+		~d16 = ~dirt.orbits[15]; ~d17 = ~dirt.orbits[16]; ~d18 = ~dirt.orbits[17];
+		~d20 = ~dirt.orbits[19]; ~d21 = ~dirt.orbits[20]; ~d22 = ~dirt.orbits[21];
+		~d23 = ~dirt.orbits[22]; ~d24 = ~dirt.orbits[23];
+		~busses = ~dirt.orbits.do { |x| x.dryBus };
 	);
+
 
 	MIDIClient.init;
 	5.wait;
@@ -151,6 +157,11 @@ s.waitForBoot {
 		~cc.free;
 	};
 
+	~clean = SuperClean(2, s);
+	~clean.loadSoundFiles("~/Music/supercollider/_samples/Hoarder/hoarder");
+    s.sync;
+    ~clean.start([0]);
+    SuperClean.default = ~clean;
 
 	s.latency = 0.3; // increase this if you get "late" messages
 
@@ -160,12 +171,12 @@ s.waitForBoot {
 	q = s.meter;
 	v = Stethoscope();
 	w = FreqScope();
-	x = s.plotTree;
+	// x = s.plotTree;
 
 	m.latency(0);
 	"Setup done!".postln;
+
 };
 
 )
-
-
+~
