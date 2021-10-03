@@ -13,6 +13,16 @@ SynthDef(\readorb, { |out, amp = 1, n = 0, obus = 0 | // number
 }).add;
 );
 
+(
+SynthDef(\t1002, {
+	arg out = 0, amp = 0.5, gate = 1, pan = 0, freq = 200;
+	var sig, env;
+	env = EnvGen.kr(Env.perc, 1);
+	sig = SinOsc.ar(freq + LFPulse.ar(freq: 2, phase: 0, mul: 1, add: 0 )) * env;
+	Out.ar(out, Pan2.ar(sig, pan, amp));
+}).add;
+)
+
 /*
 // in tidal, e.g.:
 d1 $ sound "can bd hh*5 bd" # pan "0" # up "{1 2 3 4}/4"
@@ -58,6 +68,8 @@ SynthDef(\bass8, {
 }).add;
 
 )
+
+
 
 ~clean.loadSoundFiles("~/Music/supercollider/_samples/808s_by_SHD/Classic/Bass_Drums");
 
