@@ -1,6 +1,16 @@
 let ct = (range 0 8 (cF 1 "13"))
     md = sine
 
+d1 $ every 4 (slow 3) $ chop 8 $ n (run 100) # s "<dishes ~ >" # cut 1
+    -- # speed sine
+    -- # crush (sine + 10)
+
+d2 $ jux rev $ every 4 (slow 3) $ chop 4 $ n (run 8) # s "< ~!2 hoarder>" # cut 2
+    -- # speed sine
+    # crush (sine + 10)
+    # octer 1 # octersub sine
+    # room 1
+
 d4
   $ slow 2
   $ superimpose (fast 4)
@@ -13,3 +23,15 @@ d4
   # gain 1.2
 
   d4 silence
+
+
+d5
+    $ mask (slow 2 (iter 4 "t t f"))
+    $ chunk 4 (fast 3)
+    $ off "<0.25 0.5>" (|+ 12)
+    $ struct (iter 4 "<t(5,8)>")
+    $ n (scale "minPent" "0 .. -14")
+    # s "t1002"
+    -- # squiz 4
+
+    d2 silence
