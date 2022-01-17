@@ -76,9 +76,9 @@ SynthDef(\bass8, {
 (
 Pdef(0,
 	Pbind(*[
-		type: \cln, // This line turns SuperClean on.
+		type: \cln, // This line tur:ns SuperClean on.
 		snd: \Bass_Drums, // This line plays the first sample in the mmd folder.
-		dur: Pwrand([1/12,1/3],[9,1].normalizeSum,inf),
+		dur: Pwrand([1/8,1/3],[9,1].normalizeSum,inf),
 		hpf: Pseq([100, 500, 1000], inf),
 
 	])

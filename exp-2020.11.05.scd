@@ -19,6 +19,8 @@ Ndef(\a1, { |freq=110, pan=0, gate=1, dur=1 |
 }).play(out: 0);
 )
 
+Ndef(\a1).clear;
+
 Ndef(\a1).gui;
 Ndef(\a1).stop(fadeTime: 3);
 Ndef(\a1).free;
