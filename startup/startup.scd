@@ -29,7 +29,7 @@ x = s.plotTree;
 Task({
 	3.wait;
 	d = Dictionary.new;
-	d.add(\foldernames -> PathName("/home/hypostatic/Music/samples/808s_by_SHD/Classic").entries);
+	d.add(\foldernames -> PathName("~/Music/_samples/808s_by_SHD/Classic").entries);
 	for (0, d[\foldernames].size-1,
 		{arg i; d.add(d[\foldernames][i].folderName -> d[\foldernames][i].entries.collect({
 			arg sf;
