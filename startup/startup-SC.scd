@@ -101,7 +101,9 @@ s.waitForBoot {
 	~dirt.loadSoundFiles("~/Music/supercollider/_samples/**");
 	~dirt.loadSoundFiles("~/Music/supercollider/_samples/**/*");
 	~dirt.loadSoundFiles("~/Music/supercollider/_samples/**/**/*");
-	// ~dirt.start(57120, 0 ! 12);   // start listening on port 57120, create two busses each sending audio to channel 0
+	~dirt.loadSoundFiles("~/Music//supercollider_samples/**/**/**/*");
+                // ~dirt.loadSoundFiles("/home/hypostatic/Music/samples/808s_by_SHD/*/*");
+                // ~dirt.loadSoundFiles("/home/hypostatic/Music/supercollider/_samples/Hoarder/*");// ~dirt.start(57120, 0 ! 12);   // start listening on port 57120, create two busses each sending audio to channel 0
 	// s.sync; // optionally: wait for samples to be read
 	~dirt.start(57120, [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]);
 
@@ -157,11 +159,11 @@ s.waitForBoot {
 		~cc.free;
 	};
 
-	~clean = SuperClean(2, s);
+	/*~clean = SuperClean(2, s);
 	~clean.loadSoundFiles("~/Music/supercollider/_samples/Hoarder/hoarder");
     s.sync;
     ~clean.start([0]);
-    SuperClean.default = ~clean;
+    SuperClean.default = ~clean;*/
 
 	s.latency = 0.3; // increase this if you get "late" messages
 
@@ -173,10 +175,19 @@ s.waitForBoot {
 	w = FreqScope();
 	// x = s.plotTree;
 
+	// scnvim
+	// if (\SCNvim.asClass.notNil) {
+	// 		Server.default.doWhenBooted {
+	// 				\SCNvim.asClass.updateStatusLine(1, \SCNvim.asClass.port);
+	// 		}
+	// }
+
 	m.latency(0);
 	"Setup done!".postln;
+
+
 
 };
 
 )
-~
+
