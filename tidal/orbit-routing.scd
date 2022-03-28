@@ -14,10 +14,10 @@ SynthDef(\readorb, { |out, amp = 1, n = 0, obus = 0 | // number
 
 (
 SynthDef(\t1002, {
-	arg out = 0, amp = 0.2, gate = 1, pan = 0, freq = 200;
+	arg out = 0, amp = 0.2, gate = 1, pan = 0, freq = 200, ph = 0;
 	var sig, env;
 	env = EnvGen.kr(Env.perc, 1);
-	sig = SinOsc.ar(freq + LFPulse.ar(freq: 2, phase: 0, mul: 1, add: 0 )) * env;
+	sig = SinOsc.ar(freq + LFPulse.ar(freq: 2, phase: ph, mul: 1, add: 0 )) * env * ph;
 	Out.ar(out, Pan2.ar(sig, pan, amp));
 }).add;
 )
@@ -70,14 +70,14 @@ SynthDef(\bass8, {
 
 
 
-~clean.loadSoundFiles("~/Music/supercollider/_samples/808s_by_SHD/Classic/Bass_Drums");
+~clean.loadSoundFiles("~/Music/supercollider/_samples/808s_by_SHD/Classic/**");
 
 
 (
 Pdef(0,
 	Pbind(*[
 		type: \cln, // This line tur:ns SuperClean on.
-		snd: \Bass_Drums, // This line plays the first sample in the mmd folder.
+		snd: \Snare_Drums, // This line plays the first sample in the mmd folder.
 		dur: Pwrand([1/8,1/3],[9,1].normalizeSum,inf),
 		hpf: Pseq([100, 500, 1000], inf),
 
