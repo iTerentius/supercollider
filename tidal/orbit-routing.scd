@@ -1,3 +1,7 @@
+s.prepareForRecord(numChannels:16);
+s.record;
+s.stopRecording;
+
 (
 var busses = ~dirt.orbits.collect { |x| x.dryBus };
 
