@@ -14,7 +14,7 @@ SynthDef(\readorb, { |out, amp = 1, n = 0, obus = 0 | // number
 		sound * (amp * 2.5);
 	)
 }).add;
-);
+)
 
 (
 SynthDef(\t1002, {
