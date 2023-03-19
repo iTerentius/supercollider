@@ -2,7 +2,6 @@ s.prepareForRecord(numChannels:16);
 s.record;
 s.stopRecording;
 
-(
 var busses = ~dirt.orbits.collect { |x| x.dryBus };
 
 SynthDef(\readorb, { |out, amp = 1, n = 0, obus = 0 | // number
@@ -23,7 +22,7 @@ SynthDef(\t1002, {
 	env = EnvGen.kr(Env.perc, 1);
 	sig = SinOsc.ar(freq + LFPulse.ar(freq: 2, phase: ph, mul: 1, add: 0 )) * env * ph;
 	Out.ar(out, Pan2.ar(sig, pan, amp));
-}).add;
+}).add;:w
 )
 
 /*
@@ -35,6 +34,8 @@ d2 $ sound "readorb:0 blip"
   # bandf "{90 200 1450 9000}/3" # bandq "10"
 d1 $ sound "can*2" # pan "0" # up "{1 2 3 4}/4"
 */
+
+(type: \composite, types: [\note, \midi], midiout: m, degree: 0, dur: 3).play;
 
 (
 
