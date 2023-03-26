@@ -23,7 +23,7 @@ rel = release
 pos = position to start playback from 0 to 1
 
 */
-(
+
 SynthDef(\vplaym,
 	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, atk=0.01, rel=1, pos=0;
 		var sig, env;
@@ -493,6 +493,7 @@ d1 $ sound "can*2" # pan "0" # up "{1 2 3 4}/4"
 */
 
 
+<<<<<<< HEAD
 SynthDef(\bass, { arg out = 0, amp = 0.1, gate = 1, pan = 0, freq = 200, begin = 0, end = 1, sustain = 1, speed = 1, mul = 1;
 	var sig, env, line, vol;
 	line = Line.ar(begin,end,sustain/speed,doneAction: Done.freeSelf);
@@ -540,3 +541,12 @@ SynthDef(\bass8, {
 )
 
 
+=======
+
+
+
+
+
+
+
+>>>>>>> 2b81599 (fix)
