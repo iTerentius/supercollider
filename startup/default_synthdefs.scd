@@ -33,7 +33,7 @@ SynthDef(\vplaym,
 		sig = sig * amp;
 		Out.ar(out,sig);
 }).add;
-)
+
 /*
 
 vplay: enveloped stereo buffer player
@@ -88,7 +88,7 @@ SynthDef(\wtabl,
 		Out.ar(out,sig);
 }).add;
 
-(
+
 //SynthDef based on an overdriven DFM1 - this is very CPU intensive
 //Using resonance values of >1 only will sound the freq value and detune it.
 //good for stabs, but is buggy
@@ -100,10 +100,10 @@ SynthDef(\dfm1, {
 	sig = sig*env;
 	Out.ar(out,Splay.ar([sig]));
 }).add;
-);
+
+
 
 /*
-
 bplay: basic stereo buffer player
 This is the bread and butter of my SynthDef library
 Designed for simple repeated playback of stereo buffers inside of a pattern
@@ -128,6 +128,8 @@ SynthDef(\bplay,
 		sig = sig * amp;
 		Out.ar(out,Pan2.ar(sig,pan));
 }).add;
+
+
 
 /*
 
@@ -192,6 +194,7 @@ rel = release (mostly here to prevent runaway PlayBufs)
 dur = duration, in beats, that you would like your sample scaled to. For example a sample played over 8 beats would have a dur of 8 specified. Note that this repitches the sample in order to scale it to the correct beat, so it could end up at a _very_ different pitch
 
 */
+
 SynthDef(\lplay,
 	{arg out = 0, buf = 0, amp = 0.5, pan = 0, rel=15, dur = 8;
 		var sig,env ;
@@ -230,7 +233,7 @@ out = channels out
 
 */
 
-(
+
 SynthDef(\bpfsaw, {
 	arg atk=2, sus=0, rel=3, ts=1, c1=1, c2=(-1), freq=500, detune=0.02, pan=0, cfhzmin=0.1, cfhzmax=0.3, cfmin=500, cfmax=2000, rqmin=0.1, rqmax=0.2, lsf=200, ldb=0, amp=1, out=0;
 	var sig, env;
@@ -248,7 +251,7 @@ SynthDef(\bpfsaw, {
 	sig = sig*env*amp;
 	Out.ar(out,sig);
 }).add;
-);
+
 
 /*
 
@@ -274,7 +277,7 @@ amp = volume
 
 */
 
-(
+
 SynthDef(\henon,
 	{arg freq=440,a=1.3,b=0.3,x0=0.30501993062401,x1=0.20938865431933,atk=0.01,sus=1,rel=1,ts=1,out=0,pan=0,amp=0.3;
 		var sig,env;
@@ -284,7 +287,7 @@ SynthDef(\henon,
 		sig = sig*env;
 		Out.ar(out,Pan2.ar(sig,pan));
 }).add;
-);
+
 
 /*
 
@@ -310,7 +313,7 @@ amp = volume
 
 */
 
-(
+
 SynthDef(\henonc,
 	{arg freq=440,a=1.3,b=0.3,x0=0.30501993062401,x1=0.20938865431933,atk=0.01,sus=1,rel=1,ts=1,out=0,pan=0,amp=0.3;
 		var sig,env;
@@ -318,7 +321,7 @@ SynthDef(\henonc,
 		sig = LeakDC.ar(sig);
 		Out.ar(out,Pan2.ar(sig,pan));
 }).add;
-);
+
 
 /*
 
@@ -343,14 +346,14 @@ amp = volume
 
 */
 
-(
+
 SynthDef(\warp1,
 	{arg buf=0, channels=2, pos=0, rate=1, size=0.2, env= -1, olap=8, rand=0, interp=4, poslag=0, ratelag=0, out=0, sizelag=0, pan=0, amp=0.5;
 		var sig;
 		sig = Warp1.ar(2,buf,Lag.kr(pos,poslag),Lag.kr(rate,ratelag),Lag.kr(size,sizelag),env,olap,rand,interp,1);
 		Out.ar(out,Pan2.ar(sig,pan,amp));
 }).add;
-);
+
 
 
 /*
@@ -376,7 +379,7 @@ out = channels out
 
 */
 
-(
+
 SynthDef(\bpfbuf, {
 	arg atk=0, sus=0, rel=3, c1=1, c2=(-1),
 	buf=0, rate=1, pos=0, freq=440, rq = 1,
@@ -389,7 +392,7 @@ SynthDef(\bpfbuf, {
 	sig = Pan2.ar(sig,pan,amp);
 	Out.ar(out,sig);
 }).add;
-);
+
 
 /*
 
@@ -407,7 +410,7 @@ pan = panning in stereo
 
 */
 
-(
+
 SynthDef(\sinfb, {
 	arg freq = 440, atk = 0.01, sus = 0, rel = 1, fb = 0, amp = 0.3, out = 0, pan=0;
 	var sig, env;
@@ -416,7 +419,7 @@ SynthDef(\sinfb, {
 	sig = sig*env;
 	Out.ar(out,Pan2.ar(sig,pan,amp));
 }).add;
-);
+
 
 /*
 
@@ -444,6 +447,7 @@ SynthDef(\ring1,
 		Out.ar(out,Pan2.ar(sig.tanh,pan) * amp)
 	};
 ).add;
+
 SynthDef(\ring2,
 	{
 		arg f = 9000, a = 2, d = 0.1, amp = 1, pan = 2, out = 0;
@@ -499,7 +503,7 @@ SynthDef(\bass, { arg out = 0, amp = 0.1, gate = 1, pan = 0, freq = 200, begin =
 }).add;
 
 
-(
+
 
 SynthDef(\bass8, {
 	arg out = 0, amp = 0.1, gate = 1, pan = 0, freq = 200;
@@ -536,5 +540,3 @@ SynthDef(\bass8, {
 )
 
 
-
-)
