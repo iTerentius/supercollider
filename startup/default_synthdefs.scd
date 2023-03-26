@@ -23,7 +23,7 @@ rel = release
 pos = position to start playback from 0 to 1
 
 */
-
+(
 SynthDef(\vplaym,
 	{arg out = 0, buf = 0, rate = 1, amp = 0.5, pan = 0, atk=0.01, rel=1, pos=0;
 		var sig, env;
