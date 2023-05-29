@@ -2,11 +2,11 @@
 (
 ~t = TempoClock(40/60);
 StageLimiter.activate;
-~sRoot = "/home/hypostatic/music/supercollider/";
+~sRoot = "~/Music/supercollider/";
 
 ~h1 = Buffer.read(s, ~sRoot +/+ "/_samples/Hoarder/hoarder/01-rats.wav");
 ~h2 = Buffer.read(s, ~sRoot +/+ "/_samples/Hoarder/hoarder/20-I-dont-like.wav");
-
+.
 ~kbus1 = Bus.control(s, 1);
 ~kbus2 = Bus.control(s, 1);
 )
@@ -21,8 +21,6 @@ SynthDef(\fsamp, { arg out = 0, in = nil, buf = 0, rate = 1, amp = 0.5, pan = 0,
 			* SinOsc.ar(LFNoise0.kr(12, mul: 50)) );
 }).add;
 )
-
-(
 ~speed = {Out.kr(~kbus1, MouseX.kr(-0.8, 0.8))}.play;
 ~direction = {Out.kr(~kbus2, LFClipNoise.kr(1))}.play;
 )
