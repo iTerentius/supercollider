@@ -40,7 +40,7 @@ Pdef(\leadseq,
 	))
 )
 
-Pdef(\leadseq).stop;
+Pdef(\leadseq).play;
 
 Ndef(\lead).play;
 Ndef(\lead)[1] = \xset -> Pdef(\leadseq);
