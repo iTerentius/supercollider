@@ -33,7 +33,7 @@ SynthDef(\s1, { | freq = 440, gate = 1, atk = 0.01, sus = 0, rel = 1, fb = 0, am
 	\octave, 4,
 	\dur, Pseq([0.25, Rest(1), 2, Rest(2), 3], inf),
 	// \gate, Pseq([0,1,0,1],inf);
-);
+).play;
 )
 
 p.stop;

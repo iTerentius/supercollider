@@ -100,11 +100,16 @@ s.waitForBoot {
 		~cc.free;
 	};
 
-	// ~clean = SuperClean(2, s);
-	// ~clean.loadSoundFiles("~/Music/supercollider/_samples/Hoarder/hoarder");
-    // s.sync;
-    // ~clean.start([0]);
-    // SuperClean.default = ~clean;
+	~clean = SuperClean(2, s);
+	~clean.loadSoundFiles("~/Music/supercollider/_samples/Hoarder/hoarder");
+	~clean.loadSoundFiles("~/Music/supercollider/_samples/*");
+	~clean.loadSoundFiles("~/Music/supercollider/_samples/**");
+	~clean.loadSoundFiles("~/Music/supercollider/_samples/**/*");
+	~clean.loadSoundFiles("~/Music/supercollider/_samples/**/**/*");
+	s.sync; // Wait for samples to be read.
+	~clean.start([0,0,0]); // First 8 out looks like [0,2,4,6]
+	SuperClean.default = ~clean; // Make the clean key sequenceable inside of SuperCollider.
+	"[ SuperClean up + running ]".postln;
 
 	// s.latency = 0.3; // increase this if you get "late" messages
 
@@ -115,6 +120,7 @@ s.waitForBoot {
 	// v = Stethoscope();
 	// w = FreqScope();
 	// x = s.plotTree;
+
 	~dirtbusses = ~dirt.orbits.collect { |x| x.dryBus };
 
 	SynthDef(\readorb, { |out, amp = 1, n = 0, obus = 0 | // number
