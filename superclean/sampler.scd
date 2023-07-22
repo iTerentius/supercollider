@@ -6,10 +6,10 @@ Pdef(0,
 			Pbind(*[
 				type: \cln,
 				snd: \Field,
-				num: Pbrown(0, 12),
+				num: Pbrown(0, 12),¸
 				dur: Pseq([0.25, 0.5, 1, 2], inf),
 				rel: 2,
-				// amp: Pexprand(1.0, 8.0),
+				amp: Pexprand(6.0, 1.0),
 				pan: Pdup(Pwhite(0, 28), Pwrand([Pwhite(0.0, 0.333), Pwhite(0.666, 1.0)], [1, 1.5].normalizeSum, inf)),
 				lpf: Pwrand([625, 1250, 2500, 5000, 10000, 20000], (1 .. 6).normalizeSum, inf),
 				spd: Pwhite(1/2, 1, inf),
@@ -24,5 +24,5 @@ Pdef(0,
 			]), 1, inf,
 		)
 	)
-).play
+).stop
 )

@@ -31,11 +31,14 @@ SynthDef(\test, {
 
 (
 SynthDef(\t1002, {
-	arg out = 0, amp = 0.2, gate = 1, pan = 0, freq = 200, ph = 0;
+	// arg out = 0, amp = 0.2, gate = 1, pan = 0, freq = 200, ph = 0;
+	// | out, amp=0.2, sustain=1, freq=440, speed=1, begin=0, end=1, pan, accelerate, offset, noise=0, ph=0 |
+	arg out = 0, amp = 0.6, gate = 1, pan = 0, freq = 200, offset, noise=0, ph=1;
 	var sig, env;
-	env = EnvGen.kr(Env.perc, 1);
-	sig = SinOsc.ar(freq + LFPulse.ar(freq: 2, phase: ph, mul: 1, add: 0 )) * env * ph;
-	Out.ar(out, Pan2.ar(sig, pan, amp));
+	env = EnvGen.kr(Env.circle([0.1, 0.25, 0.5], [0.25, 0.75]), 1);
+	sig = SinOsc.ar(freq + LFPulse.ar(freq: freq * 2, phase: ph, mul: amp, add: ph )) * env * ph;
+	// sig = sig + LFNoise0.kr(noise + freq);
+	Out.ar(out, Pan2.ar(sig, pan, amp * 3));
 }).add;
 );
 
