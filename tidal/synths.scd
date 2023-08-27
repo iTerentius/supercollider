@@ -32,13 +32,26 @@ SynthDef(\test, {
 (
 SynthDef(\t1002, {
 	// arg out = 0, amp = 0.2, gate = 1, pan = 0, freq = 200, ph = 0;
-	// | out, amp=0.2, sustain=1, freq=440, speed=1, begin=0, end=1, pan, accelerate, offset, noise=0, ph=0 |
+	// |out,sustain=1,freq=440,speed=1,begin=0,end=1,pan,accelerate,offset,clamp=1,ph=0, noise=0|
 	arg out = 0, amp = 0.6, gate = 1, pan = 0, freq = 200, offset, noise=0, ph=1;
 	var sig, env;
 	env = EnvGen.kr(Env.circle([0.1, 0.25, 0.5], [0.25, 0.75]), 1);
-	sig = SinOsc.ar(freq + LFPulse.ar(freq: freq * 2, phase: ph, mul: amp, add: ph )) * env * ph;
+	sig = SinOsc.ar(freq + LFPulse.ar(freq: freq * 2, phase: ph, add: ph )) * env * ph * 3;
 	// sig = sig + LFNoise0.kr(noise + freq);
-	Out.ar(out, Pan2.ar(sig, pan, amp * 3));
+	Out.ar(out, Pan2.ar(sig, pan));
+}).add;
+);
+
+(
+SynthDef(\ks_string, { 
+	arg out = 0, sustain=1, amp = 0.6, begin=0,end=1, gate = 1, pan = 0, freq = 200, offset, rand=0, delayTime=0;
+    var x, y, env;
+    env = Env.new(#[1, 1, 0],#[2, 0.001]);
+    // A simple exciter x, with some randomness.
+    x = Decay.ar(Impulse.ar(0, 0, rand), 0.1+rand, WhiteNoise.ar); 
+     x = CombL.ar(x, 0.05, freq, delayTime, EnvGen.ar(env, doneAction:2)); 
+    x = Pan2.ar(x, pan);
+    Out.ar(out, LeakDC.ar(x));
 }).add;
 );
 
@@ -87,3 +100,44 @@ SynthDef(\bass8, {
 }).add;
 
 );
+
+// cello like sound
+(
+	SynthDef(\cello, {
+		arg 
+		out = 0, 
+		sustain=0.5, 
+		amp = 0.6, 
+		begin=0,end=1, 
+		gate = 1, 
+		pan = 0, 
+		freq = 200, 
+		offset, 
+		rand=0, 
+		delayTime=0, 
+		rq=0.1, 
+		atk=0.01, 
+		dcy=0.1, 
+		rls=0.4, 
+		aux=0, 
+		auxsend=0.1, 
+		dur=2;
+		// |
+		// freq=440, amp=1.0, out=0, pan=0.0, rq=0.1,
+		// atk=0.01, dcy=0.1, sustain=0.5, rls=0.4, 
+		// gate=1, dur=2,
+		// aux=0, auxsend=0.1
+		// |
+		var sig, env,width;
+		env = EnvGen.ar(Env.adsr(atk, dcy, sustain, rls), gate, doneAction:2);
+		width = LFNoise2.kr(1).range(0.001, 0.01);
+		sig = VarSaw.ar(freq+ SinOsc.ar(6,mul:Line.kr(0.0, 1, dur,doneAction:2)), width:width);
+		sig = RLPF.ar(sig, freq*1, rq);
+		sig = Decimator.ar(sig, 22050,2);
+		sig = sig *env* amp;
+		Out.ar(out, Pan2.ar(sig, pan));
+		// Out.ar(aux, sig*auxsend);
+	}).add;
+)
+
+Pdef(\x, Pbind(\note, Pseq([0, 3, 5, 7], inf))).play;

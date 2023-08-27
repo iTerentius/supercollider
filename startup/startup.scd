@@ -113,9 +113,9 @@ s.waitForBoot {
 
 	// s.latency = 0.3; // increase this if you get "late" messages
 
-	// // create a synchronized clock
-	// l = LinkClock(1).latency_(Server.default.latency);
-
+	// create a synchronized clock
+	l = LinkClock(1).latency_(Server.default.latency);
+	
 	// q = s.meter;
 	// v = Stethoscope();
 	// w = FreqScope();
