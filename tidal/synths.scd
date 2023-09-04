@@ -140,4 +140,4 @@ SynthDef(\bass8, {
 	}).add;
 )
 
-Pdef(\x, Pbind(\note, Pseq([0, 3, 5, 7], inf))).play;
+// Pdef(\bass8, Pbind(\note, Pseq([0, 3, 5, 7], inf))).stop;

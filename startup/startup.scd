@@ -66,8 +66,8 @@ s.waitForBoot {
 	5.wait;
 	// m = MIDIOut.newByName("Virtual Raw MIDI 0-0", "VirMIDI 0-0");
 	// m = MIDIOut.newByName("MPK Mini Mk II", "MPK Mini Mk II MIDI 1");
-	m = MIDIOut(0, MIDIClient.destinations[0].uid);
-	// m = MIDIOut(MIDIEndPoint("MPK Mini Mk II", "MPK Mini Mk II MIDI 1");
+	// m = MIDIOut(0, MIDIClient.destinations[0].uid);
+	m = MIDIOut.newByName("IAC Driver", "Bus 1");
 
 	~dirt.soundLibrary.addMIDI(\midi, m);
 
@@ -100,16 +100,16 @@ s.waitForBoot {
 		~cc.free;
 	};
 
-	~clean = SuperClean(2, s);
-	~clean.loadSoundFiles("~/Music/supercollider/_samples/Hoarder/hoarder");
-	~clean.loadSoundFiles("~/Music/supercollider/_samples/*");
-	~clean.loadSoundFiles("~/Music/supercollider/_samples/**");
-	~clean.loadSoundFiles("~/Music/supercollider/_samples/**/*");
-	~clean.loadSoundFiles("~/Music/supercollider/_samples/**/**/*");
-	s.sync; // Wait for samples to be read.
-	~clean.start([0,0,0]); // First 8 out looks like [0,2,4,6]
-	SuperClean.default = ~clean; // Make the clean key sequenceable inside of SuperCollider.
-	"[ SuperClean up + running ]".postln;
+	// ~clean = SuperClean(2, s);
+	// ~clean.loadSoundFiles("~/Music/supercollider/_samples/Hoarder/hoarder");
+	// ~clean.loadSoundFiles("~/Music/supercollider/_samples/*");
+	// ~clean.loadSoundFiles("~/Music/supercollider/_samples/**");
+	// ~clean.loadSoundFiles("~/Music/supercollider/_samples/**/*");
+	// ~clean.loadSoundFiles("~/Music/supercollider/_samples/**/**/*");
+	// s.sync; // Wait for samples to be read.
+	// ~clean.start([0,0,0]); // First 8 out looks like [0,2,4,6]
+	// SuperClean.default = ~clean; // Make the clean key sequenceable inside of SuperCollider.
+	// "[ SuperClean up + running ]".postln;
 
 	// s.latency = 0.3; // increase this if you get "late" messages
 
