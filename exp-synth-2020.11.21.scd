@@ -43,6 +43,7 @@ SynthDef(\i1, { | out=0, freq=220, gate=1 |
 
 (
 Ndef(\i1).play;
+
 Pdef(\i1,
 	Pbind(
 		\type, \composite,
@@ -70,6 +71,7 @@ Pdef(\i1).clear;
 
 (
 Ndef(\hh).play;
+
 Pdef(\hh,
 	Pbind(
 		\type, \composite,
