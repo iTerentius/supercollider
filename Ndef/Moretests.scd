@@ -29,7 +29,8 @@ Pdef(\s1, {
 		\legato, Prand([0.2, 1, 0.23], inf),
 		\freqmod, Pbrown(0.25, 4, inf),
 	)
-})
+});
+
 )
 
 Pdef(\s1).play;

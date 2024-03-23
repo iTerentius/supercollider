@@ -15,6 +15,17 @@ SynthDef(\test, {
 }).add;
 );
 
+(
+SynthDef(\s1, { 
+  | out, sustain=1, freq=110, speed=1, begin=0, end=1, pan, accelerate, offest, freqmod=1, gate=1, noise=4 |
+	var e, f, s;
+	f = Array.fill(5, { | i | i + freqmod/freq * 10});
+	e = EnvGen.kr(Env.adsr(releaseTime: gate/2), gate, doneAction: 2);
+	s = Pulse.ar(f/2*Pulse.kr(LFNoise0.kr(noise)).range(0, 10) * LFPulse.kr([0.5, 0.01, 2]/freqmod, 0.5).range(1, 10))* e;
+	s = Splay.ar(s * e );
+	Out.ar(out, s *0.5);
+}).add;
+);
 // (
 // var busses = ~dirt.orbits.collect { |x| x.dryBus };
 
