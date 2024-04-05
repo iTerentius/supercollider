@@ -55,7 +55,7 @@ SynthDef(\t1002, {
 
 (
 SynthDef(\ks_string, { 
-	arg out = 0, sustain=1, amp = 0.6, begin=0,end=1, gate = 1, pan = 0, freq = 200, offset, rand=0, delayTime=0;
+	arg out = 0, sustain=1, amp = 0.6, begin=0,end=1, gate = 1, pan = 0, freq = 200, offset, rand=0.01, delayTime=0.5;
     var x, y, env;
     env = Env.new(#[1, 1, 0],#[2, 0.001]);
     // A simple exciter x, with some randomness.
