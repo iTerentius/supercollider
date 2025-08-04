@@ -1,0 +1,50 @@
+let fund = pF "fund" 40
+let maxPartial = pF "maxPartial" 4
+
+let ph = pF "ph" (saw * 20)
+d1
+    $ slow 2
+    $ n "c4 e4 g4 c5"
+    # s "t1002"
+    # amp 0.1
+    -- # ph (saw * 20)
+    # tsdelay "{0 0.25 0.5 0.75 1}" # xsdelay "3 124 3 12 62 2"
+
+d1 silence
+
+-- d1 $ sound "arpy" # orbit 0 -- Send arpy sound to orbit 0
+
+-- let myCustomFX = pF "myCustomFX"
+
+-- d3 
+--     $ sound "arpy" 
+--     # orbit 0 
+--     -- # delaytime 0.3 
+--     -- # feedback 0.7 
+
+-- let delayTime = pF "delayTime" 0.3
+
+-- d2 $ myFX 1 # delayTime 0.5 # orbit 0
+
+d2 
+    $ sound "Cat-Water" 
+    # n "{1 5 3 7}" 
+    # amp 1.2
+    # tsdelay "{0 0.25 0.5 0.75 1}" 
+    # xsdelay "{3 124 3 12 62 2}"
+
+d2 silence
+
+d3 $ stack [
+    s "<Bass_Drums:1*16 Bass_Drums:2*2 Bass_Drums:2*2 Bass_Drums:1>",
+    s "Hats(5,8)" |+ n (run 20)
+    # tsdelay "{0 0.25 0.5 0.75 1}" 
+    # xsdelay "<3 124 3 12 62 2>"
+    # crush 4 # pan sine
+]
+
+d3 silence
+
+d1 silence
+
+hush        

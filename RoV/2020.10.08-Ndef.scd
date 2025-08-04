@@ -21,15 +21,6 @@ Ndef(\lead, { | out, freq = 48, relTime = 2 |
 )
 
 (
-Pdef(\leadmidi, Pbind(
-	\type, \midi,
-	\midiout, m,
-	\midicmd, \noteOn,
-	\chan, 0,
-)<> PtimeClutch(Pdef(\leadseq)));
-)
-
-(
 Pdef(\leadseq,
 	Pbind(
 		\dur, Pseq([0.125, 0.5, 1, 2, 0.25, 0.125, 0.125, 0.5, Rest(4), Rest(2), Rest(1)].scramble, inf),

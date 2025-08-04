@@ -151,3 +151,6 @@ Ndef(\verb).set(\mix0, 0.5, \mix1, 1, \mix2, 1);
 // adjust wet/dry
 Ndef(\verb).set(\wet10, 0.5)
 Ndef(\verb).free;
+
+Ndef(\p1, { |freq=110| Saw.ar(freq!2 * LFPulse.kr(4)) });
+Ndef(\p1).play;

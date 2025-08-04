@@ -152,3 +152,38 @@ SynthDef(\bass8, {
 )
 
 // Pdef(\x, Pbind(\note, Pseq([0, 3, 5, 7], inf))).play;
+
+(
+SynthDef(\myFX, { |out, inBus, mix = 1.0, feedback = 0.5, delayTime = 0.1 |
+  var signal = In.ar(inBus, 2); // Get stereo audio from the specified input bus
+  var delayedSignal = DelayC.ar(signal, 0.2, delayTime); // Example: simple delay
+  var processedSignal = (signal * (1 - mix)) + (delayedSignal * mix); // Mix wet/dry
+  Out.ar(out, processedSignal); // Output the processed signal
+}).add;
+);
+
+(
+
+var numChannels =  ~dirt.numChannels;
+
+// SynthDef for spectral delay effect that is in the startup file
+SynthDef("spectral-delay" ++ numChannels, { |out, tsdelay, xsdelay = 1, sustain|
+
+    var signal, delayTime, delays, freqs, filtered;
+    var size = 16;
+    var maxDelayTime = 0.2;
+
+    signal = In.ar(out, numChannels);
+    delayTime = tsdelay * maxDelayTime;
+    filtered = (1..size).sum { |i|
+        var filterFreq = i.linexp(1, size, 40, 17000);
+        var sig = BPF.ar(signal, filterFreq, 0.005);
+        // the delay pattern is determined from xsdelay by bitwise-and:
+        DelayN.ar(sig, maxDelayTime, i & xsdelay * (1/size) * delayTime )
+    };
+    signal = signal * 0.2 + (filtered * 4); // this controls wet/dry
+    ReplaceOut.ar(out, signal)
+
+}).add;
+)
+
