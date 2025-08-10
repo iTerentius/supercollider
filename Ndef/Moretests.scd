@@ -25,8 +25,7 @@ Pdef(\s1, {
 		\group, {Ndef(\s1).group},
 		// \dur, Pseq([0.5, Rest(1), 1, 2], inf),
 		\dur, Pwhite(0, 1, inf)/Pbjorklund2(3, 5, inf),
-		\amp, Pseq([0.2, 0.3, 0.5], inf),
-		\legato, Prand([0.2, 1, 0.23], inf),
+		\amp, Pseq([0.2, 0.3, 0.5], inf), \legato, Prand([0.2, 1, 0.23], inf),
 		\freqmod, Pbrown(0.25, 4, inf),
 	)
 });

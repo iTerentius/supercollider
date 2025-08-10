@@ -7,7 +7,7 @@ SynthDef(\trigTest2, { |out, trig=0, freq=440|
 
 (
 SynthDef(\test, {
-    | out, sustain=1, freq=440, speed=1, begin=0, end=1, pan, accelerate, offset, noise=0 |
+    | out, sustain=0.5, freq=440, speed=1, begin=0, end=1, pan, accelerate, offset, noise=0 |
     var env    = Line.ar(1, 0, sustain, doneAction: Done.freeSelf);
 	var osc    = SinOsc.ar(freq) * LFNoise0.kr(noise);
     var output = osc * env;
@@ -149,7 +149,7 @@ SynthDef(\bass8, {
 		Out.ar(out, Pan2.ar(sig, pan));
 		// Out.ar(aux, sig*auxsend);
 	}).add;
-)
+);
 
 // Pdef(\x, Pbind(\note, Pseq([0, 3, 5, 7], inf))).play;
 
@@ -163,27 +163,39 @@ SynthDef(\myFX, { |out, inBus, mix = 1.0, feedback = 0.5, delayTime = 0.1 |
 );
 
 (
+	// SynthDef for spectral delay effect that is in the startup file
+	SynthDef("spectral-delay" ++ ~dirt.numChannels, { |out, tsdelay, xsdelay = 1, sustain|
+		
+		var signal, delayTime, delays, freqs, filtered;
+		var size = 16;
+		var maxDelayTime = 0.2;
 
-var numChannels =  ~dirt.numChannels;
+		signal = In.ar(out, ~dirt.numChannels);
+		delayTime = tsdelay * maxDelayTime;
+		filtered = (1..size).sum { |i|
+			var filterFreq = i.linexp(1, size, 40, 17000);
+			var sig = BPF.ar(signal, filterFreq, 0.005);
+			// the delay pattern is determined from xsdelay by bitwise-and:
+			DelayN.ar(sig, maxDelayTime, i & xsdelay * (1/size) * delayTime )
+		};
+		signal = signal * 0.2 + (filtered * 4); // this controls wet/dry
+		ReplaceOut.ar(out, signal)
 
-// SynthDef for spectral delay effect that is in the startup file
-SynthDef("spectral-delay" ++ numChannels, { |out, tsdelay, xsdelay = 1, sustain|
+	}).add;
+);
 
-    var signal, delayTime, delays, freqs, filtered;
-    var size = 16;
-    var maxDelayTime = 0.2;
+(
+SynthDef("grains" ++ ~dirt.numChannels, { | out, sustain, pan=0, amp=0.6, grate=1, gdur=0.1, ggrains=20 |
+    var trig, pos, env, grain, signal;
 
-    signal = In.ar(out, numChannels);
-    delayTime = tsdelay * maxDelayTime;
-    filtered = (1..size).sum { |i|
-        var filterFreq = i.linexp(1, size, 40, 17000);
-        var sig = BPF.ar(signal, filterFreq, 0.005);
-        // the delay pattern is determined from xsdelay by bitwise-and:
-        DelayN.ar(sig, maxDelayTime, i & xsdelay * (1/size) * delayTime )
-    };
-    signal = signal * 0.2 + (filtered * 4); // this controls wet/dry
+    signal = In.ar(out, ~dirt.numChannels);
+    trig = Impulse.kr(ggrains * grate);
+    pos = LFNoise1.kr(1).range(0, BufDur.kr(Buffer.alloc(s, 44100, 1)));
+    env = EnvGen.kr(Env.perc(0.01, gdur), doneAction: 2);
+    grain = TGrains.ar(2, trig, Buffer.alloc(s, 44100, 1), grate, pos, gdur, pan, env * amp);
+    //grain = LFNoise1.ar(100);
+    signal = signal * 0.2 + ( grain * 2);
     ReplaceOut.ar(out, signal)
-
 }).add;
-)
+);
 
