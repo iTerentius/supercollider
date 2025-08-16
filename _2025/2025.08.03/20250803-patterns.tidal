@@ -2,9 +2,10 @@
 let ph = pF "ph" 1
 
 d1
-    $ n "c4 e4 g4 c5"
+    $ n "c2 e2 g1 c2"
     # s "simpSine"
     # amp 0.5
+    # asend 1 # orbit 4 # ret 1
     -- # ph 1
     -- # tsdelay "0 0.25 0.5 0.75 1" # xsdelay "3 124 3 12 62 2"
     -- # grains 30
@@ -28,15 +29,15 @@ d1 silence
 d2 
     $ sound "Cat-Water" 
     # n "{1 5 3 7}" 
-    # amp 0.6
-    # tsdelay "{0 0.25 0.5 0.75 1}" 
-    # xsdelay "{3 124 3 12 62 2}"
+    # amp 0.5
+    -- # tsdelay "{0 0.25 0.5 0.75 1}" 
+    -- # xsdelay "{3 124 3 12 62 2}"
 
 d2 silence
 
 d3 $ stack [
     s "<Bass_Drums:1*16 Bass_Drums:2*2 Bass_Drums:2*2 Bass_Drums:1>",
-    s "Hats(5,8)" |+ n (run 20)
+    s "Hats(5,8)" |+ n (run 20) 
     -- # tsdelay "{0 0.25 0.5 0.75 1}" 
     -- # xsdelay "<3 124 3 12 62 2>"
     -- # crush 4 # pan sine
@@ -44,19 +45,17 @@ d3 $ stack [
 
 d3 $ stack [
     s "<Bass_Drums:2*2 ~ Bass_Drums:2*2 Bass_Drums:1>",
-    s "Hats*4"<F11>
-    # n (run 20),
+    s "Hats*4" # n (run 20)
     -- # fx "fx_granulateInput"
     -- # tsdelay "{0 0.25 0.5 0.75 1}"
     -- # xsdelay "<3 124 3 12 62 2>"
     -- # crush 4 # pan sine
 ]
 
-let grains = pF "ggrains"
-    grate = pF "grate"
-    gdur = pF "gdur"
-
-d4 $ sound "hoarder:2*4" 
+d4 $ sound "hoarder:4" 
+    -- # asend 1
+    -- # ret 0
+    # orbit 1
   -- # grains 2 # grate 1 # gdur 0.99
   -- # amp 1.2
     -- # tsdelay "{0 0.25 0.5 0.75 1}" 
@@ -68,3 +67,31 @@ d3 silence
 d4 silence
 
 hush        
+
+
+let asend = pF "asend"
+
+d1 $ sound "bd sn"   # orbit 0 # asend 1 
+
+d2 $ sound "cp*2"    # orbit 1 # asend 0.7
+
+d3 $ sound "hh*4"    # orbit 2 # asend 0.8
+
+
+d1 $ sound "bd sn" 
+    -- # orbit 2 
+    -- # asend 1
+
+d9 $ s "~" # orbit 0 # asend 1 #auxret 1
+
+d9 $ s "~" # orbit 0 # auxret 0.8
+
+d9 silence
+
+-- Read orbit 0 and crush it (pre-FX bus)
+d7 $ s "orb_bitcrush"      # orb 0 # sr 1000 # bits 6 # mix 1 # gain 1
+
+-- Or read *post* orbit FX (after that orbit’s global chain)
+d7 $ s "orb_bitcrush_post" # orb 0 # sr 800  # bits 8 # mix 0.8
+
+

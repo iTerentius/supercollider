@@ -18,10 +18,10 @@ s.reboot;
 //give proxyspace a tempo
 //p.clock.tempo = 80/60;
 // r = Reaper.new("127.0.0.1", 7772);
-q = s.meter;
-v = Stethoscope();
-w = FreqScope();
-x = s.plotTree;
+// q = s.meter;
+// v = Stethoscope();
+// w = FreqScope();
+// x = s.plotTree;
 
 
 
@@ -64,48 +64,44 @@ s.waitForBoot {
 	);
 
 	// Add SC FX (this sets up the properties so that you can use the #fx method in tidal)
-	~dirt.addModule('spectral-delay', { |dirtEvent|
-    dirtEvent.sendSynth('spectral-delay' ++ ~dirt.numChannels,
-        // OPTIONAL
-        // passing this array of parameters could be left out,
-        // but it makes it clear what happens
-        [
-            xsdelay: ~xsdelay,
-            tsdelay: ~tsdelay,
-            sustain: ~sustain,
-            out: ~out
-        ]
-    )
-	}, { ~tsdelay.notNil or: { ~xsdelay.notNil } }); // play synth only if at least one of the two was given
+// 	~dirt.addModule('spectral-delay', { |dirtEvent|
+//     dirtEvent.sendSynth('spectral-delay' ++ ~dirt.numChannels,
+//         // OPTIONAL
+//         // passing this array of parameters could be left out,
+//         // but it makes it clear what happens
+//         [
+//             xsdelay: ~xsdelay,
+//             tsdelay: ~tsdelay,
+//             sustain: ~sustain,
+//             out: ~out
+//         ]
+//     )
+// 	}, { ~tsdelay.notNil or: { ~xsdelay.notNil } }); // play synth only if at least one of the two was given
 
-  ~dirt.addModule('grains', { |dirtEvent|
-      //Synth(\fx_granulateInput, [
-      //    \out, dirtEvent[\out],
-      //    \rate, dirtEvent[\rate] ? 1,
-      //    \dur, dirtEvent[\dur] ? 0.1,
-      //    \pan, dirtEvent[\pan] ? 0,
-      //    \amp, dirtEvent[\amp] ? 0.5,
-      //    \grains, dirtEvent[\grains] ? 20
-      //]);
-      dirtEvent.sendSynth('grains' ++ ~dirt.numChannels,
-        [
-          grate: ~grate,
-          gdur: ~gdur,
-          ggrains: ~ggrains,
-          sustain: ~sustain,
-          out: ~out
-        ]
-      )
-  }, {~ggrains.notNil});	
+//   ~dirt.addModule('grains', { |dirtEvent|
+//       //Synth(\fx_granulateInput, [
+//       //    \out, dirtEvent[\out],
+//       //    \rate, dirtEvent[\rate] ? 1,
+//       //    \dur, dirtEvent[\dur] ? 0.1,
+//       //    \pan, dirtEvent[\pan] ? 0,
+//       //    \amp, dirtEvent[\amp] ? 0.5,
+//       //    \grains, dirtEvent[\grains] ? 20
+//       //]);
+//       dirtEvent.sendSynth('grains' ++ ~dirt.numChannels,
+//         [
+//           grate: ~grate,
+//           gdur: ~gdur,
+//           ggrains: ~ggrains,
+//           sustain: ~sustain,
+//           out: ~out
+//         ]
+//       )
+//   }, {~ggrains.notNil});	
 
-	// Initialize the SuperDirtMixer
-	// ~mixer = SuperDirtMixer(~dirt);
 
-	// // You can adjust parameters before you use the ui
-	// ~mixer.setMasterBus(0);
-
-	// // When you added your settings in you startup file, then you should be able to use the ui at any time in any differtent SuperCollider file.
-	// ~mixer.gui;
+  // HOT SWAP FX BUS ON ALL ORBITS
+  
+//   "aux_send_return.scd".loadRelative;
 
 
 	MIDIClient.init;
@@ -168,6 +164,7 @@ s.waitForBoot {
 	// w = FreqScope();
 	// x = s.plotTree;
 
+	// ORBIT FX ROUTING SYNTHDEF
 	~dirtbusses = ~dirt.orbits.collect { |x| x.dryBus };
 
 	SynthDef(\readorb, { |out, amp = 1, n = 0, obus = 0 | // number
