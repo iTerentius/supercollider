@@ -1,1 +1,0 @@
-/home/hypostatic/.config/SuperCollider/startup.scd

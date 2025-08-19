@@ -4,8 +4,8 @@ let ph = pF "ph" 1
 d1
     $ n "c2 e2 g1 c2"
     # s "simpSine"
-    # amp 0.5
-    # asend 1 # orbit 4 # ret 1
+    # amp 0.7
+    # orbit 1
     -- # ph 1
     -- # tsdelay "0 0.25 0.5 0.75 1" # xsdelay "3 124 3 12 62 2"
     -- # grains 30
@@ -26,10 +26,18 @@ d1 silence
 
 -- d2 $ myFX 1 # delayTime 0.5 # orbit 0
 
+let orb  = pI "orb"
+    sr   = pF "sr"
+    bits = pF "bits"
+    mix  = pF "mix"   -- 0=dry, 1=wet (XFade style)
+    time = pF "time"
+    fb   = pF "fb"
+
+
 d2 
-    $ sound "Cat-Water" 
-    # n "{1 5 3 7}" 
+    $ sound "Cat-Water" # n "{1 5 3 7}" 
     # amp 0.5
+    # orbit 0
     -- # tsdelay "{0 0.25 0.5 0.75 1}" 
     -- # xsdelay "{3 124 3 12 62 2}"
 
@@ -52,10 +60,11 @@ d3 $ stack [
     -- # crush 4 # pan sine
 ]
 
-d4 $ sound "hoarder:4" 
+d4 $ sound "hoarder"
+    # n (irand 20 )
     -- # asend 1
     -- # ret 0
-    # orbit 1
+    # orbit 0
   -- # grains 2 # grate 1 # gdur 0.99
   -- # amp 1.2
     -- # tsdelay "{0 0.25 0.5 0.75 1}" 

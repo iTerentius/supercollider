@@ -101,7 +101,7 @@ names = if(i.notNil) { names.insert(i + 1, \bitgrit) } { names.add(\bitgrit) };
 ~dirt.orderModules(names);
 
 // Sanity print
-("Module order:\n" ++ names).postln;
+("Module order:\n" ++ names).Gpostln;
 )
 
 // 2) Define the effect itself for all possible channel counts
@@ -130,7 +130,7 @@ SynthDef("bitgrit" ++ n, { |out=0, sustain=1, grit=0.0, rate=8000|
 ~dirt.orbits[0].effect = \myFX;
 
 ~setAuxFx.(\fx_hall_bus,   [\roomBus, ~ctl[\auxroom], \dampBus, ~ctl[\auxdamp]]);
-~setAuxFx.(\fx_chorus_bus, [\rateBus, ~ctl[\auxrate], \depthBus, ~ctl[\auxdepth]]);
+~setAuxFx.(\fx_chorus_bus, [\rateBus, ~ctl[\auxrate], \depthBus, ~ctl[\auxdepGth]]);
 ~setAuxFx.(\fx_tape_bus,   [\timeBus, ~ctl[\auxtime], \fbBus,   ~ctl[\auxfb], \wowBus, ~ctl[\auxwow]]);
 
 ~setAuxFx.(\fx_crunch_bus);
@@ -191,12 +191,12 @@ SynthDef(\orb_bitcrush_post, { |out=0, orb=0, sr=1200, bits=8, mix=1, amp=1, sus
 
     Out.ar(out, XFade2.ar(src, wet, (mix*2-1)) * amp * env);
 }).add;
-
+)
 s.sync;
 
 // Register so Tidal can trigger them:
 [\orb_bitcrush, \orb_bitcrush_post].do { |nm| ~dirt.soundLibrary.addSynth(nm) };
-)
+
 (
 // capture orbit dry buses once (pre global FX)
 ~orbDryB = ~dirt.orbits.collect(_.dryBus);
@@ -223,7 +223,8 @@ SynthDef(\orb_pingpong, { |out=0, orb=0, n=0, time=0.25, fb=0.45, mix=1, amp=1, 
     LocalOut.ar([dl, dr]);
     Out.ar(out, Limiter.ar(outSig * amp * env, 0.98));
 }).add;
-
+)
+0.1.wait;
 s.sync;
 ~dirt.soundLibrary.addSynth(\orb_pingpong); // makes s "orb_pingpong" available
-)
+
