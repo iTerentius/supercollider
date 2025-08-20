@@ -7,7 +7,9 @@ Notes:
 You can add the keys in for args instead of in the args section
 */
 
-{SinOsc.ar(110!2)}.play;
+~sy ={SinOsc.ar(110!2)};
+~sy.play;
+~sy.free;
 
 
 (

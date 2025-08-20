@@ -33,7 +33,7 @@ let orb  = pI "orb"
     time = pF "time"
     fb   = pF "fb"
 
-
+once $ s "recstart"
 d2 
     $ sound "Cat-Water" # n "{1 5 3 7}" 
     # amp 0.5

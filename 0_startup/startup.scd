@@ -55,9 +55,9 @@ s.waitForBoot {
     // --- bring up SuperDirtMixer (assumes ~dirt is running; see file below)
     // "superdirt-mixer.scd".loadRelative;
     // --- SC Meters
-    "_includes/sc-meters.scd".loadRelative;
+    "_includes/sc-gui-meters.scd".loadRelative;
     // --- OSC Record on start of Synth - end on all stopped.
-    "_includes/record-on-start.scd".loadRelative;
+    "_includes/manual-record-on-beat.scd".loadRelative;
   
     "Setup done!".postln;
 };
