@@ -1,119 +1,178 @@
-(
 // ======================================================================
-// 16‑channel “record everything” — bar‑aligned, explicit bus capture
+// MIX + Stereo Stems Recorder for SuperDirt + Tidal (merged, clean)
+// - MIX → ch 0/1
+// - Stereo orbits → 2/3, 4/5, … up to ~numOrbits
+// - Trigger from Tidal: once $ s "recstart" / "recstop" / "recsplit"
+// - Uses silent sample sets (so Dirt never errors) + universal OSC hook
+// - No Dirt modules, no extra synths → no doubling/lag
 // ======================================================================
 
 s.notify(true);
 
-// ---------- settings ----------
+// ---------------- SETTINGS ----------------
+~numOrbits = 16;  // number of stereo orbits to capture
+
 ~recConfig = (
-    chans: 16,
-    header: 'wav',
+    chans: 2 + (2 * ~numOrbits),    // 2 (mix) + 2*orbits
+    header: 'wav',                  // 'wav' or 'caf'
     sampleFmt: 'int24',
     basePath: Platform.userHomeDir +/+ "Music/recordings"
 );
-File.mkdir(~recConfig[\basePath]);  // ensure folder exists
+File.mkdir(~recConfig[\basePath]);
 
-// ---------- clock resolver (works across Dirt variants) ----------
-~recClock = {
-    var clk = nil;
+// ---------------- ROUTE ORBITS (reserve 0/1 for the mix) ----------------
+// Each orbit outputs to its own stereo pair starting at bus 2
+~routeOrbitsToPairs = {
     if(~dirt.notNil) {
-        try { clk = ~dirt.tempoClock } { };
-        if(clk.isNil) { try { clk = ~dirt.clock } { } };
-        if(clk.isNil and: { ~dirt.orbits.notNil and: { ~dirt.orbits.size > 0 } }) {
-            try { clk = ~dirt.orbits[0].clock } { };
+        ~dirt.orbits.size.do { |i|
+            if(i < ~numOrbits) {
+                ~dirt.orbits[i].outBus = 2 + (2 * i);  // orbit i → 2+2*i (L), 3+2*i (R)
+            };
         };
+        ("[rec] Orbits routed: mix 0/1, orbits start at 2/3 (count=" ++ ~numOrbits ++ ").").postln;
+    } {
+        AppClock.sched(0.5, { ~routeOrbitsToPairs.(); nil });
     };
-    if(clk.isKindOf(TempoClock).not) { clk = TempoClock.default };
-    clk
 };
+~routeOrbitsToPairs.();
 
-// ---------- path helper ----------
+// ---------------- RECORDER CORE ----------------
+~recState = ~recState ? \idle; // \idle | \recording
+
 ~recNewFilePath = {
     var stamp = Date.getDate.stamp.replace($:, $_);
-    ~recConfig[\basePath] +/+ ("sc_rec_" ++ stamp ++ ".wav")
+    ~recConfig[\basePath] +/+ ("mix+orbits_" ++ stamp ++ ".wav")
 };
 
-// ---------- bar‑aligned record controls (explicit bus/width) ----------
-~recStartOnBar = { |barsAhead=1, prepLead=0.05, chans, header, sampleFmt|
-    var clk = ~recClock.();
-    var tBar = clk.nextTimeOnGrid(barsAhead);
-    var path = ~recNewFilePath.();
-    var nCh = chans ? ~recConfig[\chans];
-    var fmtH = header ? ~recConfig[\header];
-    var fmtS = sampleFmt ? ~recConfig[\sampleFmt];
+~recStart = {
+    var path, nCh, fmtH, fmtS;
+    if(~recState == \recording) { "[rec] already recording".postln; ^nil };
 
-    // sanity: warn if the server was booted with fewer output busses
+    path = ~recNewFilePath.();
+    nCh  = ~recConfig[\chans];
+    fmtH = ~recConfig[\header];
+    fmtS = ~recConfig[\sampleFmt];
+
     if(s.options.numOutputBusChannels < nCh) {
-        ("[rec] WARN: server has only % output busses; "
-        ++ nCh ++ "‑ch file will include % real channels and % silent."
-        ).format(s.options.numOutputBusChannels, s.options.numOutputBusChannels, nCh - s.options.numOutputBusChannels).postln;
+        ("[rec] WARN: server has % output busses; writing " ++ nCh
+         ++ "ch (extra channels silent).").format(s.options.numOutputBusChannels).postln;
     };
 
-    // prepare slightly before the bar (non‑blocking)
-    clk.schedAbs(tBar - prepLead, {
-        ("[rec] prepare " ++ nCh ++ "ch → " ++ path).postln;
-        // prepare the file with the target width
-        s.prepareForRecord(path, nCh, fmtH, fmtS);
-        nil
-    });
-
-    // start exactly on the bar — record explicitly from bus 0 with width nCh
-    clk.schedAbs(tBar, {
-        s.record(bus: 0, numChannels: nCh);
-        "[rec] RECORDING (on bar, bus 0, " ++ nCh ++ "ch)".postln;
-        nil
-    });
-
-    "[rec] armed — will start on the next bar".postln;
+    ("[rec] prepare " ++ nCh ++ "ch → " ++ path).postln;
+    s.prepareForRecord(path, nCh, fmtH, fmtS);
+    s.record(bus: 0, numChannels: nCh);  // capture from bus 0
+    ~recState = \recording;
+    ("[rec] RECORDING — bus 0 → " ++ nCh ++ "ch").postln;
 };
 
-~recStopOnBar = { |barsAhead=1|
-    var clk = ~recClock.();
-    var tBar = clk.nextTimeOnGrid(barsAhead);
-    clk.schedAbs(tBar, {
-        s.stopRecording;
-        "[rec] stopped (on bar)".postln;
-        nil
-    });
+~recStop = {
+    if(~recState != \recording) { "WARNING: Not Recording".postln; ^nil };
+    s.stopRecording;
+    ~recState = \idle;
+    "[rec] stopped.".postln;
 };
 
-~recSplitOnBars = { |stopIn=1, startIn=2, prepLead=0.05|
-    ~recStopOnBar.(stopIn);
-    ~recStartOnBar.(startIn, prepLead);
-};
+~recSplit = { ~recStop.(); ~recStart.() };
 
-// ---------- shorthands ----------
-~recNextBar   = { ~recStartOnBar.(1) };
-~stopNextBar  = { ~recStopOnBar.(1) };
-~splitNextBar = { ~recSplitOnBars.(1, 2) };
-
-// ---------- optional: Tidal OSC triggers (bar‑aligned) ----------
-SynthDef(\recstart, { var t=Impulse.kr(1); SendReply.kr(t, '/rec/start', []); FreeSelf.kr(t); OffsetOut.ar(0, Silent.ar(2)) }).add;
-SynthDef(\recstop,  { var t=Impulse.kr(1); SendReply.kr(t, '/rec/stop',  []); FreeSelf.kr(t); OffsetOut.ar(0, Silent.ar(2)) }).add;
-SynthDef(\recsplit, { var t=Impulse.kr(1); SendReply.kr(t, '/rec/split', []); FreeSelf.kr(t); OffsetOut.ar(0, Silent.ar(2)) }).add;
-
-s.sync;
-OSCdef(\recStartReply, { ~recNextBar.()   }, '/rec/start');
-OSCdef(\recStopReply,  { ~stopNextBar.()  }, '/rec/stop');
-OSCdef(\recSplitReply, { ~splitNextBar.() }, '/rec/split');
-
-// ---------- self‑test (preinstalled def; no sync inside schedAbs) ----------
-SynthDef(\_recBeep, { |out=0|
-    var sig = SinOsc.ar(440) * Env.perc(0.005, 0.2).ar(doneAction:2);
+// ---------------- SELF-TEST (optional) ----------------
+SynthDef(\recBeep, { |out=0, freq=440|
+    var sig = SinOsc.ar(freq) * Env.perc(0.005, 0.2).ar(doneAction:2);
     OffsetOut.ar(out, sig!2);
 }).add;
 s.sync;
 
-~recSelfTestOnBar = {
-    var clk = ~recClock.();
-    var t  = clk.nextTimeOnGrid(1) + 0.1;
-    ~recNextBar.();                           // start next bar
-    clk.schedAbs(t, { Synth(\_recBeep) });    // make a short ping after downbeat on out 0/1
-    ~recStopOnBar.(2);                        // stop one bar later
+~recSelfTest = {
+    ~recStart.();
+    fork {
+        0.15.wait;  Synth(\recBeep, [\out, 0, \freq, 440]);           // mix 0/1
+        0.35.wait;  Synth(\recBeep, [\out, 2 + (2 * 0), \freq, 220]); // orbit0 2/3
+        0.60.wait;  ~recStop.();
+    };
+    "[rec] self-test fired (check ch 0/1 and 2/3)".postln;
 };
 
-("[rec] Loaded. Output busses available: " ++ s.options.numOutputBusChannels
- ++ "  | recording: bus 0 → " ++ ~recConfig[\chans] ++ " channels").postln;
-)
+// ---------------- SILENT CUE SETS (so Tidal never errors) ----------------
+// Creates tiny silent stereo files for recstart/recstop/recsplit and loads them.
+~installSilentCueSets = {
+    var base = Platform.userHomeDir +/+ "Music/superdirt/cues";
+    var sets = [ \recstart, \recstop, \recsplit ];
+    var sr = 44100;
+    var frames = (sr * 0.01).asInteger.max(8); // ~10 ms
+    File.mkdir(base);
+
+    sets.do { |nm|
+        var folder = base +/+ nm.asString;
+        var wav = folder +/+ "0.wav";
+        File.mkdir(folder);
+        if(File.exists(wav).not) {
+            var sf = SoundFile.new;
+            if(sf.openWrite(wav, "WAV", "int16", 2, sr)) {
+                sf.writeData(FloatArray.fill(frames * 2, 0.0));  // stereo zeros
+                sf.close;
+                ("[rec] wrote silent cue file: " ++ wav).postln;
+            }{
+                ("[rec] ERROR: couldn't open " ++ wav ++ " for write").warn;
+            };
+        };
+    };
+
+    // IMPORTANT: point Dirt at the parent with "/*" so it registers subfolders as sets
+    if(~dirt.notNil) { ~dirt.loadSoundFiles(base +/+ "/*") };
+    "[rec] Silent cue *sets* installed and loaded (recstart/recstop/recsplit)".postln;
+};
+~installSilentCueSets.();
+
+// ---------------- UNIVERSAL OSC HOOK (address‑agnostic) ----------------
+// Watches all incoming Tidal events on sclang port and triggers recorder
+
+// Clear any old hooks from previous attempts
+[ \tidalRecHook_any, \tidalRecHook_play2d, \tidalRecHook_playd, \tidalRecHook_play2, \tidalRecHook_play ].do { |k|
+    var d = OSCdef(k); if(d.notNil) { d.free };
+};
+
+// Helper: extract 'sound' name from flat key/value arg list
+~recExtractSoundName = { |msg|
+    var name = nil, i = 0, n = msg.size, key, val, ks;
+    // msg is [key0, val0, key1, val1, ...]
+    while({ i < (n - 1) }, {
+        key = msg[i]; val = msg[i+1];
+        if(key.notNil) {
+            ks = key.asString.toLower;
+            if((ks == "s") or: { ks == "sound" }) {
+                name = val.asString.toLower;
+                i = n; // break
+            } {
+                i = i + 2;
+            };
+        } {
+            i = i + 2;
+        };
+    });
+    name
+};
+
+// Listen on the language port so we see the same packets Dirt sees
+OSCdef(
+    \tidalRecHook_any,
+    { |msg, time, addr, recvPort, path|
+        var nm = ~recExtractSoundName.(msg);
+        if(nm.notNil) {
+            switch(nm,
+                "recstart", { { ~recStart.() }.defer; },
+                "recstop",  { { ~recStop.()  }.defer; },
+                "recsplit", { { ~recSplit.() }.defer; },
+                { }
+            );
+        };
+    },
+    nil,                    // match all addresses
+    recvPort: NetAddr.langPort
+);
+"[rec] OSC hook active (listening for recstart/recstop/recsplit)".postln;
+
+// ---------------- BOOT MESSAGE ----------------
+("[rec] Loaded: mix 0/1 + " ++ ~numOrbits ++ " stereo orbits → "
+ ++ ~recConfig[\chans] ++ "‑ch file").postln;
+
+// ======================================================================
 

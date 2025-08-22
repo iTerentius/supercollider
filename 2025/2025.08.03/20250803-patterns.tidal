@@ -33,11 +33,10 @@ let orb  = pI "orb"
     time = pF "time"
     fb   = pF "fb"
 
-once $ s "recstart"
 d2 
     $ sound "Cat-Water" # n "{1 5 3 7}" 
     # amp 0.5
-    # orbit 0
+    # orbit 1
     -- # tsdelay "{0 0.25 0.5 0.75 1}" 
     -- # xsdelay "{3 124 3 12 62 2}"
 
@@ -75,7 +74,11 @@ d3 silence
 
 d4 silence
 
-hush        
+hush
+
+setbpm 120
+
+d1 $ s "Hats"
 
 
 let asend = pF "asend"

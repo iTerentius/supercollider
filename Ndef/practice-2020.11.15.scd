@@ -21,7 +21,7 @@ Ndef(\synth1, { | freq=440, dur=1, gate = 1 |
 Ndef(\synth1).play;
 Ndef(\synth1).stop;
 
-Ndef(\synth1)[1] = \xset -> Pdef(\s1).quant_(-1);
+Ndef(\synth)[1] = \xset -> Pdef(\s1).quant_(-1);
 Ndef(\synth)[1] = \xset -> Pdef(\s1).quant_(1);
 
 
@@ -43,7 +43,7 @@ Pdef(\s1,
 );
 )
 
-
+Pdef(\s).play;
 
 Ndef(\synth)[10] = \filter -> { |in| DelayC.ar(in * Dust.ar(100 + in), 1, 1) };
 Ndef(\synth).set(\wet10, 0.5);
@@ -51,7 +51,7 @@ Ndef(\synth).set(\wet10, 0.5);
 (
 Ndef(\drone, { | out=0, freq=440, dur=1, amp=0.6 |
 	var sig;
-	sig = SinOsc.ar([freq, freq*0.1] + Ndef(\synth1).kr + Ndef(\synthlfo).kr);
+	sig = SinOsc.ar([freq, freq*0.1] + Ndef(\synth).kr + Ndef(\synthlfo).kr);
 	sig = sig * 0.1;
 	Out.ar(\out.ar(0), sig!2);
 });

@@ -45,7 +45,7 @@ TempoClock.default.clear;
 
 ~recStart.();
 ~recStop.();
-~recSplit.();
-~recSelfTest.(); // makes a test file with some sine pings
-~recSelfTestOnBar.();
+
+~recSelfTest.();
+
 

@@ -40,7 +40,7 @@ s.waitForBoot {
     ~dirt.orbits.do { |o, i| ("d" ++ (i + 1)).asSymbol.envirPut(o) };
 
     // create a synchronized clock
-    l = LinkClock(1).latency_(Server.default.latency);
+    // l = LinkClock(1).latency_(Server.default.latency);
 
     // --- collect each orbit’s dry bus (you already had this)
     ~dirtbusses = ~dirt.orbits.collect { |x| x.dryBus };
@@ -56,8 +56,10 @@ s.waitForBoot {
     // "superdirt-mixer.scd".loadRelative;
     // --- SC Meters
     "_includes/sc-gui-meters.scd".loadRelative;
-    // --- OSC Record on start of Synth - end on all stopped.
-    "_includes/manual-record-on-beat.scd".loadRelative;
+    // ---Quantized recording function
+    "_includes/quant-recording.scd".loadRelative;
+    // -- Tidal & SC sync setup
+    // "_includes/sc-tidal-sync.scd".loadRelative;
   
     "Setup done!".postln;
 };
