@@ -12,6 +12,20 @@ d1
 
 d1 silence
 
+-- d1 $ sound "arpy" # orbit 0 -- Send arpy sound to orbit 0
+
+-- let myCustomFX = pF "myCustomFX"
+
+-- d3 
+--     $ sound "arpy" 
+--     # orbit 0 
+--     -- # delaytime 0.3 
+--     -- # feedback 0.7 
+
+-- let delayTime = pF "delayTime" 0.3
+
+-- d2 $ myFX 1 # delayTime 0.5 # orbit 0
+
 let orb  = pI "orb"
     sr   = pF "sr"
     bits = pF "bits"
@@ -30,8 +44,7 @@ d2 silence
 
 d3 $ stack [
     s "<Bass_Drums:1*16 Bass_Drums:2*2 Bass_Drums:2*2 Bass_Drums:1>",
-    s "Hats(5,8)" |+ n (run 20)
-    # orbit 0
+    s "Hats(5,8)" |+ n (run 20) 
     -- # tsdelay "{0 0.25 0.5 0.75 1}" 
     -- # xsdelay "<3 124 3 12 62 2>"
     -- # crush 4 # pan sine
@@ -46,12 +59,7 @@ d3 $ stack [
     -- # crush 4 # pan sine
 ]
 
-d3 silence
-
-let omute = pF "omute"
-    oid = pI "oid"
-
-d4 $ sound "hoarder" 
+d4 $ sound "hoarder"
     # n (irand 20 )
     -- # asend 1
     -- # ret 0
@@ -62,30 +70,40 @@ d4 $ sound "hoarder"
     -- # xsdelay "{3 124 3 12 62 2}"
     --
 
+d3 silence
 
 d4 silence
 
 hush
 
+setbpm 120
+
+d1 $ s "Hats"
+
+
+let asend = pF "asend"
+
+d1 $ sound "bd sn"   # orbit 0 # asend 1 
+
+d2 $ sound "cp*2"    # orbit 1 # asend 0.7
+
+d3 $ sound "hh*4"    # orbit 2 # asend 0.8
+
+
+d1 $ sound "bd sn" 
+    -- # orbit 2 
+    -- # asend 1
+
+d9 $ s "~" # orbit 0 # asend 1 #auxret 1
+
+d9 $ s "~" # orbit 0 # auxret 0.8
+
+d9 silence
+
 -- Read orbit 0 and crush it (pre-FX bus)
 d7 $ s "orb_bitcrush"      # orb 0 # sr 1000 # bits 6 # mix 1 # gain 1
 
 -- Or read *post* orbit FX (after that orbit’s global chain)
-d7 $ s "fx_chop_bus" # orb "[0, 1, 2, 3]" # sr 800  # bits 8 # mix 0.8
-
-d7 silence
-
--- dry on orbit 0
-d1 $ sound "bd sn" # orbit 0
-
--- your read-orbit FX return (e.g. ping-pong) still reading orb 0
-d7 $ s "orb_pingpong" # orb 0 # mix 1 # time 0.3 # fb 0.55 # legato 4
-
--- FX-only ON (mute orbit 0 dry at its own outBus)
-once $ s "ctrl_gate" # oid 1 # omute 1     -- FX-only
-
-once $ s "ctrl_gate" # oid 0 # omute 0     -- dry
-
-once $ s "ctrl_gate" # oid 0 # omute 0.4   -- 60% dry (fades if set)
+d7 $ s "orb_bitcrush_post" # orb 0 # sr 800  # bits 8 # mix 0.8
 
 

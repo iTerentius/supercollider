@@ -29,9 +29,6 @@ s.waitForBoot {
     ~dirt.loadSoundFiles("~/Music/supercollider/_samples/**/**/*");
     s.sync; // wait for sample scan to finish
 
-    // --- your synthdefs that reference ~dirt.numChannels can safely load now
-    ("/Users/isaaclinder/Music/supercollider/tidal/synths.scd").load;
-
     // --- start Dirt; send orbits to stereo bus pairs (0,2,4,…,24)
     ~dirt.start(57120, [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]);
     s.sync;
@@ -52,16 +49,25 @@ s.waitForBoot {
         Out.ar(out, sound * (amp * 2.5));
     }).add;
 
+    MIDIClient.init;
+  	5.wait;
+    m = MIDIOut(0, MIDIClient.destinations[0].uid);
+	// m = MIDIOut(MIDIEndPoint("MPK Mini Mk II", "MPK Mini Mk II MIDI 1");
+		m.latency(0);
+
     // --- bring up SuperDirtMixer (assumes ~dirt is running; see file below)
-    // "superdirt-mixer.scd".loadRelative;
+    // "_includes/superdirt-mixer.scd".loadRelative;
     // --- SC Meters
     "_includes/sc-gui-meters.scd".loadRelative;
     // ---Quantized recording function
     "_includes/quant-recording.scd".loadRelative;
     // -- Tidal & SC sync setup
     // "_includes/sc-tidal-sync.scd".loadRelative;
-  
+    // --- your synthdefs that reference ~dirt.numChannels can safely load now
+    "_synthdefs/synths_common.scd".loadRelative;
+    "_includes/tidal-dry-bus.scd".loadRelative;
     "Setup done!".postln;
 };
 )
+
 
