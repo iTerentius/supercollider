@@ -15,4 +15,16 @@
 // once $ s "ctrl_gate" # oid 0 # omute 1     -- FX-only
 // once $ s "ctrl_gate" # oid 0 # omute 0     -- dry
 // once $ s "ctrl_gate" # oid 0 # omute 0.4   -- 60% dry (fades if set)
+~startDeviceLearn.();
+~startLearn.();
+~finishLearn.();
 
+~lcxl[\ledOff] = 1;
+~refreshLeds.();
+
+~onVel = 15; ~refreshLeds.();
+
+~testLeds.();
+
+~recStart.();
+~recStop.();

@@ -1,0 +1,87 @@
+var o, p;
+o = [
+	Event.prNew,  Array.prNew(16),  Array.prNew(8),  Event.prNew,  
+	Array.prNew(12),  Event.prNew,  Array.prNew(12),  Event.prNew,  
+	Array.prNew(12),  Event.prNew,  Array.prNew(12),  Event.prNew,  
+	Array.prNew(12),  Event.prNew,  Array.prNew(12),  Event.prNew,  
+	Array.prNew(12),  Event.prNew,  Array.prNew(12),  "APC40 mkII"
+];
+p = [
+	// Event
+	0, [ array: o[1],  size: 4,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	1, [ 'map',  o[2],  nil,  nil,  
+		nil,  nil,  nil,  nil,  
+		'srcUid',  762601288,  'chan',  0,  
+		'device',  o[19],  nil,  nil ],  
+	// Array
+	2, [ o[3],  o[5],  o[7],  o[9],  
+		o[11],  o[13],  o[15],  o[17] ],  
+	// Event
+	3, [ array: o[4],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	4, [ nil,  nil,  nil,  nil,  
+		'num',  50,  nil,  nil,  
+		'chan',  0,  'kind',  'note' ],  
+	// Event
+	5, [ array: o[6],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	6, [ nil,  nil,  nil,  nil,  
+		'num',  50,  nil,  nil,  
+		'chan',  1,  'kind',  'note' ],  
+	// Event
+	7, [ array: o[8],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	8, [ nil,  nil,  nil,  nil,  
+		'num',  50,  nil,  nil,  
+		'chan',  2,  'kind',  'note' ],  
+	// Event
+	9, [ array: o[10],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	10, [ nil,  nil,  nil,  nil,  
+		'num',  50,  nil,  nil,  
+		'chan',  3,  'kind',  'note' ],  
+	// Event
+	11, [ array: o[12],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	12, [ nil,  nil,  nil,  nil,  
+		'num',  50,  nil,  nil,  
+		'chan',  4,  'kind',  'note' ],  
+	// Event
+	13, [ array: o[14],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	14, [ nil,  nil,  nil,  nil,  
+		'num',  50,  nil,  nil,  
+		'chan',  5,  'kind',  'note' ],  
+	// Event
+	15, [ array: o[16],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	16, [ nil,  nil,  nil,  nil,  
+		'num',  50,  nil,  nil,  
+		'chan',  6,  'kind',  'note' ],  
+	// Event
+	17, [ array: o[18],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	18, [ nil,  nil,  nil,  nil,  
+		'num',  50,  nil,  nil,  
+		'chan',  7,  'kind',  'note' ]
+];
+prUnarchive(o,p);

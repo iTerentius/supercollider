@@ -30,7 +30,7 @@ s.waitForBoot {
     s.sync; // wait for sample scan to finish
 
     // --- start Dirt; send orbits to stereo bus pairs (0,2,4,…,24)
-    ~dirt.start(57120, [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24]);
+    ~dirt.start(57120, [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32]);
     s.sync;
 
     // optional convenient aliases: ~d1, ~d2, … for however many orbits actually exist
@@ -49,12 +49,9 @@ s.waitForBoot {
         Out.ar(out, sound * (amp * 2.5));
     }).add;
 
-    MIDIClient.init;
-  	5.wait;
-    m = MIDIOut(0, MIDIClient.destinations[0].uid);
-	// m = MIDIOut(MIDIEndPoint("MPK Mini Mk II", "MPK Mini Mk II MIDI 1");
-		m.latency(0);
-
+    "_includes/midi-setup.scd".loadRelative;
+    "_includes/_midi-ctrl/lcxl-control.scd".loadRelative;
+    "_includes/_midi-ctrl/apc40mk2-control.scd".loadRelative;
     // --- bring up SuperDirtMixer (assumes ~dirt is running; see file below)
     // "_includes/superdirt-mixer.scd".loadRelative;
     // --- SC Meters
@@ -66,6 +63,18 @@ s.waitForBoot {
     // --- your synthdefs that reference ~dirt.numChannels can safely load now
     "_synthdefs/synths_common.scd".loadRelative;
     "_includes/tidal-dry-bus.scd".loadRelative;
+
+    // Defer side-effects until everything is loaded:
+    AppClock.sched(0.2, {
+        if(File.exists(~lcxlMapPath.())) {
+            ~loadMap.();
+        }{
+            ~pp.("loadMap", (info: "no file", path: ~lcxlMapPath.()));
+            // optionally auto-prompt first-run
+            // ~pp.("hint", (a: "Run ~startDeviceLearn.() then ~startLearn.() once"));
+        };
+        nil
+    });
     "Setup done!".postln;
 };
 )
