@@ -49,9 +49,21 @@ s.waitForBoot {
         Out.ar(out, sound * (amp * 2.5));
     }).add;
 
+
+    // Map path MUST be a String when used with File.exists
+    ~lcxlMapPath = {
+        var base = if(thisProcess.nowExecutingPath.notNil) {
+            PathName(thisProcess.nowExecutingPath).pathOnly   // String
+        }{
+            Platform.userHomeDir                              // String
+        };
+        (base +/+ "_includes/_midi-ctrl/lcxl-track-mute.map").asString
+    };
+
+
     "_includes/midi-setup.scd".loadRelative;
     "_includes/_midi-ctrl/lcxl-control.scd".loadRelative;
-    "_includes/_midi-ctrl/apc40mk2-control.scd".loadRelative;
+    // "_includes/_midi-ctrl/apc40mk2-control.scd".loadRelative;
     // --- bring up SuperDirtMixer (assumes ~dirt is running; see file below)
     // "_includes/superdirt-mixer.scd".loadRelative;
     // --- SC Meters
@@ -64,17 +76,14 @@ s.waitForBoot {
     "_synthdefs/synths_common.scd".loadRelative;
     "_includes/tidal-dry-bus.scd".loadRelative;
 
-    // Defer side-effects until everything is loaded:
     AppClock.sched(0.2, {
-        if(File.exists(~lcxlMapPath.())) {
-            ~loadMap.();
-        }{
-            ~pp.("loadMap", (info: "no file", path: ~lcxlMapPath.()));
-            // optionally auto-prompt first-run
-            // ~pp.("hint", (a: "Run ~startDeviceLearn.() then ~startLearn.() once"));
+        var p = ~lcxlMapPath.().asString;
+        if(File.exists(p)) { ~loadMap.() } {
+            ~pp.("loadMap", (info:"no file", path:p));
         };
-        nil
+        nil  // <- this 'nil' stops rescheduling
     });
+
     "Setup done!".postln;
 };
 )
