@@ -1,0 +1,173 @@
+var o, p;
+o = [
+	Event.prNew,  Array.prNew(20),  "Launch Control XL",  IdentityDictionary.prNew,  
+	Array.prNew(32),  Array.prNew(8),  Event.prNew,  Array.prNew(12),  
+	Event.prNew,  Array.prNew(12),  Event.prNew,  Array.prNew(12),  
+	Event.prNew,  Array.prNew(12),  Event.prNew,  Array.prNew(12),  
+	Event.prNew,  Array.prNew(12),  Event.prNew,  Array.prNew(12),  
+	Event.prNew,  Array.prNew(12),  Array.prNew(8),  Event.prNew,  
+	Array.prNew(12),  Event.prNew,  Array.prNew(12),  Event.prNew,  
+	Array.prNew(12),  Event.prNew,  Array.prNew(12),  Event.prNew,  
+	Array.prNew(12),  Event.prNew,  Array.prNew(12),  Event.prNew,  
+	Array.prNew(12),  Event.prNew,  Array.prNew(12)
+];
+p = [
+	// Event
+	0, [ array: o[1],  size: 4,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	1, [ 'device',  o[2],  nil,  nil,  
+		nil,  nil,  nil,  nil,  
+		'bankSize',  8,  'maps',  o[3],  
+		'bankCount',  8,  nil,  nil,  
+		nil,  nil,  nil,  nil ],  
+	// IdentityDictionary
+	3, [ array: o[4],  size: 2,  
+		proto: nil,  parent: nil,  
+		know: false ],  
+	// Array
+	4, [ 1,  o[5],  nil,  nil,  
+		nil,  nil,  nil,  nil,  
+		nil,  nil,  nil,  nil,  
+		nil,  nil,  nil,  nil,  
+		nil,  nil,  0,  o[22],  
+		nil,  nil,  nil,  nil,  
+		nil,  nil,  nil,  nil,  
+		nil,  nil,  nil,  nil ],  
+	// Array
+	5, [ o[6],  o[8],  o[10],  o[12],  
+		o[14],  o[16],  o[18],  o[20] ],  
+	// Event
+	6, [ array: o[7],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	7, [ nil,  nil,  nil,  nil,  
+		'num',  73,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	8, [ array: o[9],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	9, [ nil,  nil,  nil,  nil,  
+		'num',  74,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	10, [ array: o[11],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	11, [ nil,  nil,  nil,  nil,  
+		'num',  75,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	12, [ array: o[13],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	13, [ nil,  nil,  nil,  nil,  
+		'num',  76,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	14, [ array: o[15],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	15, [ nil,  nil,  nil,  nil,  
+		'num',  89,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	16, [ array: o[17],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	17, [ nil,  nil,  nil,  nil,  
+		'num',  90,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	18, [ array: o[19],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	19, [ nil,  nil,  nil,  nil,  
+		'num',  91,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	20, [ array: o[21],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	21, [ nil,  nil,  nil,  nil,  
+		'num',  92,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Array
+	22, [ o[23],  o[25],  o[27],  o[29],  
+		o[31],  o[33],  o[35],  o[37] ],  
+	// Event
+	23, [ array: o[24],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	24, [ nil,  nil,  nil,  nil,  
+		'num',  73,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	25, [ array: o[26],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	26, [ nil,  nil,  nil,  nil,  
+		'num',  74,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	27, [ array: o[28],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	28, [ nil,  nil,  nil,  nil,  
+		'num',  75,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	29, [ array: o[30],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	30, [ nil,  nil,  nil,  nil,  
+		'num',  76,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	31, [ array: o[32],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	32, [ nil,  nil,  nil,  nil,  
+		'num',  89,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	33, [ array: o[34],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	34, [ nil,  nil,  nil,  nil,  
+		'num',  90,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	35, [ array: o[36],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	36, [ nil,  nil,  nil,  nil,  
+		'num',  91,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ],  
+	// Event
+	37, [ array: o[38],  size: 3,  
+		proto: nil,  parent: nil,  
+		know: true ],  
+	// Array
+	38, [ nil,  nil,  nil,  nil,  
+		'num',  92,  nil,  nil,  
+		'chan',  8,  'kind',  'note' ]
+];
+prUnarchive(o,p);

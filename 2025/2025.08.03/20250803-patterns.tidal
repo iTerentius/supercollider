@@ -2,8 +2,10 @@
 let ph = pF "ph" 1
 
 d1
-    $ n "c2 e2 g1 c2"
-    # s "simpSine"
+    $ struct "t(3,8) t(7,8)"
+    -- $ chop "<3, 5, 7, 9>" $ slow 2
+    $ n "c3 e3 g4 ~ e2_"
+    # s "sineTest"
     # amp 0.7
     # orbit 1
     -- # ph 1
@@ -29,9 +31,9 @@ d2
 d2 silence
 
 d3 $ stack [
-    s "<Bass_Drums:1*16 Bass_Drums:2*2 Bass_Drums:2*2 Bass_Drums:1>",
-    s "Hats(5,8)" |+ n (run 20)
-    # orbit 0
+    s "<Bass_Drums:1*16 Bass_Drums:2*2 Bass_Drums:2*2 Bass_Drums:1>" # orbit 3,
+    s "Hats(5,8)" |+ n (run 20) # orbit 2
+    # orbit 2
     -- # tsdelay "{0 0.25 0.5 0.75 1}" 
     -- # xsdelay "<3 124 3 12 62 2>"
     -- # crush 4 # pan sine
@@ -64,6 +66,7 @@ d4 $ sound "hoarder"
 
 
 d4 silence
+
 
 hush
 

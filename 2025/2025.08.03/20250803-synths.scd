@@ -2,9 +2,10 @@
 SynthDef.new(\sineTest, {
 	arg out = 0, amp = 0.6, gate = 1, pan = 0, freq = 200, offset, noise=0, ph=1, noiseHz=2;
 	var sig;
-	freq = LFNoise0.kr(noiseHz).exprange(200,1000);
-	amp = LFNoise1.kr(12).exprange(0.02,1);
-	sig = SinOsc.ar(freq) *amp;
+	// freq = LFNoise0.kr(noiseHz).exprange(200,1000);
+	// amp = LFNoise1.kr(12).exprange(0.02,1);
+	sig = LFPulse.ar(freq) * SinOsc.ar();
+  this = LFP
 	Out.ar(0, Pan2.ar(sig, pan, amp));
 }).add
 )
@@ -35,7 +36,7 @@ SynthDef(\fx_crunch_bus, { |inBus, outBus|
     var q = 12;                              // fewer steps = harsher
     var crushed = (held * q).round / q;
     Out.ar(outBus, crushed * 0.9);
-}).add;
+}).add; Mix
 
 // 3) CHOP GATE — on/off at ~3 Hz
 SynthDef(\fx_chop_bus, { |inBus, outBus|
@@ -50,6 +51,7 @@ SynthDef(\fx_pitchUp_bus, { |inBus, outBus|
     Out.ar(outBus, PitchShift.ar(sig, 0.2, 2.0, 0.0, 0.0));
 }).add;
 
+Lag.ar()
 // 5) “TELEPHONE” BANDLIMIT — thin & nasally
 SynthDef(\fx_phone_bus, { |inBus, outBus|
     var n = ~dirt.numChannels, sig = In.ar(inBus, n);
