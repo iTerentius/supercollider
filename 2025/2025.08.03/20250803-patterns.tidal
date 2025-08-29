@@ -48,6 +48,15 @@ d3 $ stack [
     -- # crush 4 # pan sine
 ]
 
+d3 $ stack [
+    s "<Bass_Drums:2*2 ~ Bass_Drums:2*2 Bass_Drops:2>",
+    s "Hats*4" # n (run 20)
+    -- # fx "fx_granulateInput"
+    -- # tsdelay "{0 0.25 0.5 0.75 1}"
+    -- # xsdelay "<3 124 3 12 62 2>"
+    -- # crush 4 # pan sine
+]
+
 d3 silence
 
 let omute = pF "omute"
@@ -70,8 +79,9 @@ d4 silence
 
 hush
 
--- Read orbit 0 and crush it (pre-FX bus)
-d7 $ s "orb_bitcrush"      # orb 0 # sr 1000 # bits 6 # mix 1 # gain 1
+d1 
+
+-- Read orbit 0 and crush it (pre-FX bus) d7 $ s "orb_bitcrush"      # orb 0 # sr 1000 # bits 6 # mix 1 # gain 1
 
 -- Or read *post* orbit FX (after that orbit’s global chain)
 d7 $ s "fx_chop_bus" # orb "[0, 1, 2, 3]" # sr 800  # bits 8 # mix 0.8

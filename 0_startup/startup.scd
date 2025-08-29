@@ -60,9 +60,10 @@ s.waitForBoot {
         (base +/+ "_includes/_midi-ctrl/lcxl-track-mute.map").asString
     };
 
-
+    "_includes/sample_loader.scd".loadRelative;
     "_includes/midi-setup.scd".loadRelative;
     "_includes/_midi-ctrl/lcxl-control.scd".loadRelative;
+    "_includes/_midi-ctrl/lcxl-sc-cc-router.scd".loadRelative;
     // "_includes/_midi-ctrl/apc40mk2-control.scd".loadRelative;
     // --- bring up SuperDirtMixer (assumes ~dirt is running; see file below)
     // "_includes/superdirt-mixer.scd".loadRelative;
