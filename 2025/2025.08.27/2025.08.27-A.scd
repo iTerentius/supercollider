@@ -32,8 +32,8 @@
 Ndef(\track)[\mel] = Pdef(\melody);
 
 
-~ccBind.(\t1r1, \track, \amp, ControlSpec(0, 1, \lin));
- 
+// ~ccBind.(\t1r1, \track, \amp, ControlSpec(0, 1, \lin));
+
 Ndef(\track).set(\amp, \t1r1);
 
 Ndef(\track).play;
@@ -58,16 +58,16 @@ Pdef(\melody, Pbind(
 //     }
 // });
 
-( 
-// --- FX send (wet only) ---
-    Ndef(\instVerbSend, { |from = \track|
-        var src, sendAmt, wet;
-        src     = Ndef.ar(from);          // tap the instrument’s proxy bus (pre-fader)
-        sendAmt = \send.kr(0.0).lag(0.1); // 0..1 send amount, lightly smoothed
-        wet     = FreeVerb.ar(src * sendAmt, 0.4, 0.8, 0.2);
-        wet                               // this Ndef outputs ONLY wet
-    }).play;  // make the send audible
- )
+// ( 
+// // --- FX send (wet only) ---
+//     Ndef(\instVerbSend, { |from = \track|
+//         var src, sendAmt, wet;
+//         src     = Ndef.ar(from);          // tap the instrument’s proxy bus (pre-fader)
+//         sendAmt = \send.kr(0.0).lag(0.1); // 0..1 send amount, lightly smoothed
+//         wet     = FreeVerb.ar(src * sendAmt, 0.4, 0.8, 0.2);
+//         wet                               // this Ndef outputs ONLY wet
+//     }).play;  // make the send audible
+//  )
 
 Ndef(\instVerbSend).set(\from, \trackl);
 Ndef(\instVerbSend).set(\send, 1);

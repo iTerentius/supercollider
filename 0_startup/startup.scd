@@ -21,14 +21,14 @@ s.waitForBoot {
     // ----------------------------------------------------------------
 
     // Map path MUST be a String when used with File.exists
-    ~lcxlMapPath = {
-        var base = if(thisProcess.nowExecutingPath.notNil) {
-            PathName(thisProcess.nowExecutingPath).pathOnly   // String
-        }{
-            Platform.userHomeDir                              // String
-        };
-        (base +/+ "_includes/_midi-ctrl/lcxl-track-mute.map").asString
-    };
+    // ~lcxlMapPath = {
+    //     var base = if(thisProcess.nowExecutingPath.notNil) {
+    //         PathName(thisProcess.nowExecutingPath).pathOnly   // String
+    //     }{
+    //         Platform.userHomeDir                              // String
+    //     };
+    //     (base +/+ "_includes/_midi-ctrl/lcxl-track-mute.map").asString
+    // };
     // SuperDirt
     // "_includes/superdirt.scd".loadRelative;
     // "_includes/superdirt-mixer.scd".loadRelative;
@@ -36,8 +36,7 @@ s.waitForBoot {
     "_includes/sample_loader.scd".loadRelative;
     "_includes/midi-setup.scd".loadRelative;
   
-    // --- SC Meters
-    "_includes/sc-gui-meters.scd".loadRelative;
+
 
     // ---Quantized recording function
     "_includes/quant-recording.scd".loadRelative;
@@ -49,20 +48,28 @@ s.waitForBoot {
     // "_includes/tidal-dry-bus.scd".loadRelative;
  
     // "_includes/_midi-ctrl/lcxl-control.scd".loadRelative;
-    "_includes/_midi-ctrl/lcxl-sc-cc-router.scd".loadRelative;
+    // after MIDI init and your other includes:
+    (thisProcess.nowExecutingPath.dirname +/+ "_includes/_midi-ctrl/lcxl-sc-cc-router.scd").load;
+    // "_includes/_midi-ctrl/lcxl-sc-cc-router.scd".loadRelative;
+    // install & load LCXL router
+    ~lcxlInit.();   // <-- safe, idempotent, only call once
 
-    AppClock.sched(0.2, {
-        var p;
-        ~installCCByNameRouter.();
+    // --- SC Meters
+    "_includes/sc-gui-meters.scd".loadRelative;
 
-        p = ~lcxlMapPath.().asString;
-        if (File.exists(p)) {
-            ~loadMap.();      // restores UID, channel, ccMap
-        } {
-            ~pp.("loadMap", (info:"no file", path:p));
-        };
-        nil   // <- important to stop rescheduling
-    });
+    // AppClock.sched(0.2, {
+    //     var p;
+    //     ~installCCByNameRouter.();
+    //     ~installBankButtons.();
+    //
+    //     p = ~lcxlMapPath.().asString;
+    //     if (File.exists(p)) {
+    //         ~loadMap.();      // restores UID, channel, ccMap
+    //     } {
+    //         ~pp.("loadMap", (info:"no file", path:p));
+    //     };
+    //     nil   // <- important to stop rescheduling
+    // });
     "Setup done!".postln;
 };
 )
