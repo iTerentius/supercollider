@@ -1,3 +1,4 @@
+"Synths Common:".postln;
 (
 SynthDef(\trigTest2, { |out, trig=0, freq=440|
     Out.ar(out, SinOsc.ar(freq+[0,1], 0, Decay2.kr(trig, 0.005, 1.0)));
@@ -153,47 +154,47 @@ SynthDef(\bass8, {
 
 // Pdef(\x, Pbind(\note, Pseq([0, 3, 5, 7], inf))).play;
 
-(
-SynthDef(\myFX, { |out, inBus, mix = 1.0, feedback = 0.5, delayTime = 0.1 |
-  var signal = In.ar(inBus, 2); // Get stereo audio from the specified input bus
-  var delayedSignal = DelayC.ar(signal, 0.2, delayTime); // Example: simple delay
-  var processedSignal = (signal * (1 - mix)) + (delayedSignal * mix); // Mix wet/dry
-  Out.ar(out, processedSignal); // Output the processed signal
-}).add;
-);
-
-(
-SynthDef("spectral-delay" ++ ~dirt.numChannels, { |out, tsdelay, xsdelay = 1, sustain|
-  
-  var signal, delayTime, delays, freqs, filtered;
-  var size = 16;
-  var maxDelayTime = 0.2;
-
-  signal = In.ar(out, ~dirt.numChannels);
-  delayTime = tsdelay * maxDelayTime;
-  filtered = (1..size).sum { |i|
-    var filterFreq = i.linexp(1, size, 40, 17000);
-    var sig = BPF.ar(signal, filterFreq, 0.005);
-    // the delay pattern is determined from xsdelay by bitwise-and:
-    DelayN.ar(sig, maxDelayTime, i & xsdelay * (1/size) * delayTime )
-  };
-  signal = signal * 0.2 + (filtered * 4); // this controls wet/dry
-  ReplaceOut.ar(out, signal)
-}).add;
-);
-
-(
-SynthDef("grains" ++ ~dirt.numChannels, { | out, sustain, pan=0, amp=0.6, grate=1, gdur=0.1, ggrains=20 |
-    var trig, pos, env, grain, signal;
-
-    signal = In.ar(out, ~dirt.numChannels);
-    trig = Impulse.kr(ggrains * grate);
-    pos = LFNoise1.kr(1).range(0, BufDur.kr(Buffer.alloc(s, 44100, 1)));
-    env = EnvGen.kr(Env.perc(0.01, gdur), doneAction: 2);
-    grain = TGrains.ar(2, trig, Buffer.alloc(s, 44100, 1), grate, pos, gdur, pan, env * amp);
-    // grain = GrainSin.ar(2, trig, Buffer.alloc(s, 44100, 1), grate, pos, gdur, pan, env * amp);
-    signal = signal * 0.2 + ( grain * 2);
-    ReplaceOut.ar(out, signal)
-}).add;
-);
-
+// (
+// SynthDef(\myFX, { |out, inBus, mix = 1.0, feedback = 0.5, delayTime = 0.1 |
+//   var signal = In.ar(inBus, 2); // Get stereo audio from the specified input bus
+//   var delayedSignal = DelayC.ar(signal, 0.2, delayTime); // Example: simple delay
+//   var processedSignal = (signal * (1 - mix)) + (delayedSignal * mix); // Mix wet/dry
+//   Out.ar(out, processedSignal); // Output the processed signal
+// }).add;
+// );
+//
+// (
+// SynthDef("spectral-delay" ++ ~dirt.numChannels, { |out, tsdelay, xsdelay = 1, sustain|
+//
+//   var signal, delayTime, delays, freqs, filtered;
+//   var size = 16;
+//   var maxDelayTime = 0.2;
+//
+//   signal = In.ar(out, ~dirt.numChannels);
+//   delayTime = tsdelay * maxDelayTime;
+//   filtered = (1..size).sum { |i|
+//     var filterFreq = i.linexp(1, size, 40, 17000);
+//     var sig = BPF.ar(signal, filterFreq, 0.005);
+//     // the delay pattern is determined from xsdelay by bitwise-and:
+//     DelayN.ar(sig, maxDelayTime, i & xsdelay * (1/size) * delayTime )
+//   };
+//   signal = signal * 0.2 + (filtered * 4); // this controls wet/dry
+//   ReplaceOut.ar(out, signal)
+// }).add;
+// );
+//
+// (
+// SynthDef("grains" ++ ~dirt.numChannels, { | out, sustain, pan=0, amp=0.6, grate=1, gdur=0.1, ggrains=20 |
+//     var trig, pos, env, grain, signal;
+//
+//     signal = In.ar(out, ~dirt.numChannels);
+//     trig = Impulse.kr(ggrains * grate);
+//     pos = LFNoise1.kr(1).range(0, BufDur.kr(Buffer.alloc(s, 44100, 1)));
+//     env = EnvGen.kr(Env.perc(0.01, gdur), doneAction: 2);
+//     grain = TGrains.ar(2, trig, Buffer.alloc(s, 44100, 1), grate, pos, gdur, pan, env * amp);
+//     // grain = GrainSin.ar(2, trig, Buffer.alloc(s, 44100, 1), grate, pos, gdur, pan, env * amp);
+//     signal = signal * 0.2 + ( grain * 2);
+//     ReplaceOut.ar(out, signal)
+// }).add;
+// );
+//

@@ -1,0 +1,31 @@
+
+    // --- SuperDirt (create once)
+    ~dirt = ~dirt ?? { SuperDirt(2, s) };
+    ~dirt.loadSoundFiles;   // default Dirt paths
+    ~dirt.loadSoundFiles("~/Music/supercollider/_samples/*");
+    ~dirt.loadSoundFiles("~/Music/supercollider/_samples/**");
+    ~dirt.loadSoundFiles("~/Music/supercollider/_samples/**/*");
+    ~dirt.loadSoundFiles("~/Music/supercollider/_samples/**/**/*");
+    s.sync; // wait for sample scan to finish
+
+    // --- start Dirt; send orbits to stereo bus pairs (0,2,4,…,24)
+    ~dirt.start(57120, [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32]);
+    s.sync;
+
+    // optional convenient aliases: ~d1, ~d2, … for however many orbits actually exist
+    ~dirt.orbits.do { |o, i| ("d" ++ (i + 1)).asSymbol.envirPut(o) };
+
+    // create a synchronized clock
+    // l = LinkClock(1).latency_(Server.default.latency);
+
+    // --- collect each orbit’s dry bus (you already had this)
+    ~dirtbusses = ~dirt.orbits.collect { |x| x.dryBus };
+
+    // --- your readorb synthdef (unchanged)
+    SynthDef(\readorb, { |out, amp = 1, n = 0, obus = 0|
+        var bus = Select.kr(n, ~dirtbusses);
+        var sound = InFeedback.ar(bus, ~dirt.numChannels);
+        Out.ar(out, sound * (amp * 2.5));
+    }).add;
+
+

@@ -20,36 +20,6 @@ s.waitForBoot {
     // StageLimiter.activate;   // if you use BatLib
     // ----------------------------------------------------------------
 
-    // --- SuperDirt (create once)
-    ~dirt = ~dirt ?? { SuperDirt(2, s) };
-    ~dirt.loadSoundFiles;   // default Dirt paths
-    ~dirt.loadSoundFiles("~/Music/supercollider/_samples/*");
-    ~dirt.loadSoundFiles("~/Music/supercollider/_samples/**");
-    ~dirt.loadSoundFiles("~/Music/supercollider/_samples/**/*");
-    ~dirt.loadSoundFiles("~/Music/supercollider/_samples/**/**/*");
-    s.sync; // wait for sample scan to finish
-
-    // --- start Dirt; send orbits to stereo bus pairs (0,2,4,…,24)
-    ~dirt.start(57120, [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32]);
-    s.sync;
-
-    // optional convenient aliases: ~d1, ~d2, … for however many orbits actually exist
-    ~dirt.orbits.do { |o, i| ("d" ++ (i + 1)).asSymbol.envirPut(o) };
-
-    // create a synchronized clock
-    // l = LinkClock(1).latency_(Server.default.latency);
-
-    // --- collect each orbit’s dry bus (you already had this)
-    ~dirtbusses = ~dirt.orbits.collect { |x| x.dryBus };
-
-    // --- your readorb synthdef (unchanged)
-    SynthDef(\readorb, { |out, amp = 1, n = 0, obus = 0|
-        var bus = Select.kr(n, ~dirtbusses);
-        var sound = InFeedback.ar(bus, ~dirt.numChannels);
-        Out.ar(out, sound * (amp * 2.5));
-    }).add;
-
-
     // Map path MUST be a String when used with File.exists
     ~lcxlMapPath = {
         var base = if(thisProcess.nowExecutingPath.notNil) {
@@ -59,32 +29,40 @@ s.waitForBoot {
         };
         (base +/+ "_includes/_midi-ctrl/lcxl-track-mute.map").asString
     };
+    // SuperDirt
+    // "_includes/superdirt.scd".loadRelative;
+    // "_includes/superdirt-mixer.scd".loadRelative;
 
     "_includes/sample_loader.scd".loadRelative;
     "_includes/midi-setup.scd".loadRelative;
-    "_includes/_midi-ctrl/lcxl-control.scd".loadRelative;
-    "_includes/_midi-ctrl/lcxl-sc-cc-router.scd".loadRelative;
-    // "_includes/_midi-ctrl/apc40mk2-control.scd".loadRelative;
-    // --- bring up SuperDirtMixer (assumes ~dirt is running; see file below)
-    // "_includes/superdirt-mixer.scd".loadRelative;
+  
     // --- SC Meters
     "_includes/sc-gui-meters.scd".loadRelative;
+
     // ---Quantized recording function
     "_includes/quant-recording.scd".loadRelative;
-    // -- Tidal & SC sync setup
-    // "_includes/sc-tidal-sync.scd".loadRelative;
+
     // --- your synthdefs that reference ~dirt.numChannels can safely load now
     "_synthdefs/synths_common.scd".loadRelative;
-    "_includes/tidal-dry-bus.scd".loadRelative;
+
+    // --- tidal track mute LCXL
+    // "_includes/tidal-dry-bus.scd".loadRelative;
+ 
+    // "_includes/_midi-ctrl/lcxl-control.scd".loadRelative;
+    "_includes/_midi-ctrl/lcxl-sc-cc-router.scd".loadRelative;
 
     AppClock.sched(0.2, {
-        var p = ~lcxlMapPath.().asString;
-        if(File.exists(p)) { ~loadMap.() } {
+        var p;
+        ~installCCByNameRouter.();
+
+        p = ~lcxlMapPath.().asString;
+        if (File.exists(p)) {
+            ~loadMap.();      // restores UID, channel, ccMap
+        } {
             ~pp.("loadMap", (info:"no file", path:p));
         };
-        nil  // <- this 'nil' stops rescheduling
+        nil   // <- important to stop rescheduling
     });
-
     "Setup done!".postln;
 };
 )

@@ -20,7 +20,8 @@ MIDIClient.destinations.do { |dst, i|
 // Helpers --------------------------------------------------------------------
 ~stamp = { Date.getDate.stamp };
 ~pp = { |tag, data|
-    ("[" ++ ~stamp.() ++ "] " ++ tag ++ "  " ++ data.asString).postln
+    // ("[" ++ ~stamp.() ++ "] " ++ tag ++ "  " ++ data.asString).postln
+    ("[ " ++ tag ++ "  " ++ data.asString ++ " ]").postln
 };
 
 // Merge two Events/IdentityDictionaries safely
@@ -62,7 +63,7 @@ MIDIdef.noteOff(\printNoteOff, { |vel, note, chan, src|
 
 // CC / Pitch Bend / Program / Aftertouch -------------------------------------
 MIDIdef.cc(\printCC, { |val, num, chan, src|
-    ~pp.("cc", ~merge.(~srcInfo.(src), (chan: chan, cc: num, val: val, val01: val/127)));
+    ~pp.("cc: " ++ num ++", chan: " ++ chan ++ ", val: " ++ val);
 });
 
 // If your SC uses 'bend' (most builds): 

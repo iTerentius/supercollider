@@ -1,293 +1,469 @@
-/* ---------------------------------------------------------------------------
-   LCXL CC Mapper: rows+faders learner + named routing + auto save/load
-   Names:
-     Knob rows → \t1r1 .. \t8r1, \t1r2 .. \t8r2, \t1r3 .. \t8r3
-     Faders    → \f1 .. \f8
-
-   Workflow:
-     1) Map hardware → names:
-          ~learnRow1.(); ~learnRow2.(); ~learnRow3.(); ~learnFaders.();
-        (turn each control once in the prompted order; autosaves)
-     2) Bind names → synth params:
-          ~ccBind.(\t1r1, \myNdef, \cutoff, ControlSpec(100,12000,\exp));
-     3) Install router (translates incoming CCs into Ndef.set):
-          ~installCCByNameRouter.();   // (auto-runs on load if map file exists)
-
+/* =========================================================
+   LCXL CC Router (UID-safe)
+   - Fader learner (77..84)
+   - Row learners R1/R2/R3 (exact CC sequences)
+   - Bind CC name -> Ndef parameter
+   - Save/Load (uid, channel, ccMap)
+   - Startup compatibility shims:
+       ~lcxlMapPath.()   // function returning the path
+       ~loadMap.()       // wrapper to load map from disk
+       ~saveMap.()       // wrapper to save map to disk
    Notes:
-     • Autosaves to lcxl-cc-map.archive next to this file; auto-loads on include.
-     • Optional device filter: set ~lcxlCC[\srcUid] to your LCXL source uid.
---------------------------------------------------------------------------- */
+   - No auto-run/defer block here; your startup.scd can call ~loadMap.()
+   - No ~_names; all vars declared at the top of functions.
+========================================================= */
 
-// ---------- tiny utils ----------
-if(~pp.isNil) {
-    ~pp = { |tag, data|
-        var s;
-        s = "[" ++ Date.getDate.stamp ++ "] " ++ tag ++ "  " ++ data.asString;
-        s.postln; s;
+// -------------------------------
+// CONFIG: default save/load path
+// -------------------------------
+~ccMapPath = "/Users/isaaclinder/_includes/_midi-ctrl/lcxl-track-mute.map";
+
+// ----------------------------------------------------
+// INTERNAL STATE (kept in ~ccRouter IdentityDictionary)
+// ----------------------------------------------------
+~installCCByNameRouter = {
+    var routerExists, init, onCC, def, chanOne;
+    routerExists = ~ccRouter.notNil and: { ~ccRouter.isKindOf(IdentityDictionary) };
+    if(routerExists) {
+        chanOne = ((~ccRouter[\chan] ? 7) + 1);
+        "[ ccRouter (installed)  ('filterByUID': %, 'uid': %, 'chan': %) ]"
+            .postf(~ccRouter[\filterByUID], ~ccRouter[\uid], chanOne).postln;
+        ^~ccRouter
     };
-};
 
-if(~pathForFile.isNil) {
-    ~pathForFile = { |fname|
-        var base, p;
-        base = if(thisProcess.nowExecutingPath.notNil) {
-            PathName(thisProcess.nowExecutingPath).pathOnly
-        }{
-            Platform.userHomeDir
+    init = {
+        var r;
+        r = IdentityDictionary.new;
+        r[\name]        = "CCRouter";
+        r[\uid]         = nil;                 // Integer UID of selected device
+        r[\filterByUID] = true;                // limit handling to the selected device
+        r[\chan]        = 7;                   // zero-based channel (prints as 8)
+        r[\devSubstr]   = "Launch Control XL"; // default device name substring
+        r[\ccMap]       = IdentityDictionary.new;  // name -> (cc, chan, uid)
+        r[\binds]       = IdentityDictionary.new;  // name -> binding record
+        r[\defs]        = IdentityDictionary.new;  // internal MIDIdef registry
+        r
+    };
+
+    ~ccRouter = init.value;
+    "[ ccRouter (installed)  ('filterByUID': %) ]".postf(~ccRouter[\filterByUID]).postln;
+
+    onCC = { |val, cc, chan, src|
+        var r, uid, okDevice, okChan;
+        var recCC, recChan, recUID, ccMatch, chanMatch, uidMatch;
+        r = ~ccRouter;
+        uid = src.tryPerform(\uid) ? src;
+
+        okDevice = r[\filterByUID].if({
+            (r[\uid].notNil) and: { uid == r[\uid] }
+        },{
+            true
+        });
+
+        okChan = (chan == (r[\chan] ? 7));
+
+        if(okDevice and: { okChan }) {
+            r[\ccMap].keysValuesDo { |key, rec|
+                recCC   = rec[\cc];
+                recChan = rec[\chan];
+                recUID  = rec[\uid];
+                ccMatch   = recCC == cc;
+                chanMatch = recChan == chan;
+                uidMatch  = recUID.isNil or: { recUID == uid };
+                if(ccMatch and: { chanMatch } and: { uidMatch }) {
+                    ~ccApplyBinding.(key, val);
+                };
+            };
         };
-        p = (base +/+ fname.asString).asString;
-        p;
     };
+
+    def = MIDIdef.cc(\_ccrouter_global, onCC);
+    ~ccRouter[\defs][\globalRouter] = def;
+
+    ~ccRouter
 };
 
-// ---------- global-ish state ----------
-if(~lcxlCC.isNil) { ~lcxlCC = (); };
-if(~lcxlCC[\map].isNil)     { ~lcxlCC[\map]     = IdentityDictionary.new; };
-if(~lcxlCC[\rev].isNil)     { ~lcxlCC[\rev]     = IdentityDictionary.new; };
-if(~lcxlCC[\srcUid].isNil)  { ~lcxlCC[\srcUid]  = nil; };  // set uid to filter device (optional)
-if(~lcxlCC[\mapPath].isNil) { ~lcxlCC[\mapPath] = ~pathForFile.("lcxl-cc-map.archive"); };
+// ---------------------------------------
+// HELPERS: endpoint lookup & safe src info
+// ---------------------------------------
+~ccFindEndpointByUID = { |uid|
+    var ep;
+    ep = MIDIClient.sources.detect { |e| e.uid == uid };
+    ep ?? { MIDIClient.destinations.detect { |e| e.uid == uid } }
+};
 
-if(~ccTargets.isNil)     { ~ccTargets     = IdentityDictionary.new; };
-if(~ccDefaultSpec.isNil) { ~ccDefaultSpec = ControlSpec(0, 1, \lin, 0, 0); };
-if(~ccAutosave.isNil)    { ~ccAutosave    = true; };
-if(~ccAutoBoot.isNil)    { ~ccAutoBoot    = true; };
+~ccSafeSrcInfo = { |src|
+    var uid, ep, name;
+    uid  = src.tryPerform(\uid) ? src;
+    ep   = ~ccFindEndpointByUID.(uid);
+    name = ep.notNil.if({ ep.tryPerform(\name) ? { ep.device ? "" } }, { "uid:%".format(uid) });
+    (uid: uid, name: name, endpoint: ep)
+};
 
-// ---------- helpers ----------
-if(~edgeKey.isNil) {
-    ~edgeKey = { |chan, num|
-        var k;
-        k = chan.asInteger * 128 + num.asInteger;
-        k;
+// ---------------------------------------
+// CONFIG: device selection & channel
+// ---------------------------------------
+~setCCDeviceByName = { |substr = "Launch Control XL"|
+    var ep, uid;
+    ep = MIDIClient.sources.detect { |e| e.name.asString.contains(substr) };
+    ep ?? { ep = MIDIClient.destinations.detect { |e| e.name.asString.contains(substr) } };
+
+    if(ep.isNil) {
+        "[ ccDevice  ('error': device not found, 'substr': %) ]".postf(substr).postln;
+        ^nil
     };
+
+    uid = ep.uid;
+    ~ccRouter[\uid] = uid;
+    ~ccRouter[\devSubstr] = substr;
+    "[ ccDevice  ('uid': %, 'name': %) ]".postf(uid, ep.name).postln;
+    uid
 };
 
-if(~rowNames.isNil) {
-    ~rowNames = { |row|
-        var names;
-        names = (1..8).collect { |i| ("t" ++ i ++ "r" ++ row).asSymbol };
-        names;
-    };
+~setCCDeviceByUID = { |uid|
+    var ep, nameStr;
+    ep = ~ccFindEndpointByUID.(uid);
+    nameStr = ep.notNil.if({ ep.name }, { "?" });
+    ~ccRouter[\uid] = uid;
+    "[ ccDevice  ('uid': %, 'name': %) ]".postf(uid, nameStr).postln;
+    uid
 };
 
-if(~faderNames.isNil) {
-    ~faderNames = {
-        var names;
-        names = (1..8).collect { |i| ("f" ++ i).asSymbol };
-        names;
-    };
+~setCCChannel = { |oneBased = 8|
+    var zero;
+    zero = (oneBased - 1).clip(0, 15);
+    ~ccRouter[\chan] = zero;
+    "[ ccChan   ('chan': %) ]".postf(zero + 1).postln;
+    zero
 };
 
-// ---------- persistence ----------
-~ccSaveCCMap = {
-    var path, data;
-    path = ~lcxlCC[\mapPath];
-    data = (map: ~lcxlCC[\map], rev: ~lcxlCC[\rev], srcUid: ~lcxlCC[\srcUid]);
-    data.writeArchive(path);
-    ~pp.("ccSave", (path: path, names: ~lcxlCC[\map].keys.asArray.sort));
-};
+// ---------------------------------------
+// LEARNERS: faders (strict 77..84), deterministic
+// ---------------------------------------
+~learnFaders = {
+    var r, wantCCs, names, idx, got, def, headerChanOne, devName;
 
-~ccLoadCCMap = {
-    var path, data;
-    path = ~lcxlCC[\mapPath];
-    if(path.notNil and: { File.exists(path) }) {
-        data = Object.readArchive(path);
-        if(data.respondsTo(\at)) {
-            ~lcxlCC[\map]    = data[\map] ? IdentityDictionary.new;
-            ~lcxlCC[\rev]    = data[\rev] ? IdentityDictionary.new;
-            ~lcxlCC[\srcUid] = data[\srcUid] ?? { ~lcxlCC[\srcUid] };
-            ~pp.("ccLoad", (ok: true, names: ~lcxlCC[\map].keys.asArray.sort));
-        }{
-            ~pp.("ccLoad", (warn: "bad archive", path: path));
+    r       = ~ccRouter ? { ~installCCByNameRouter.() };
+    wantCCs = (77..84);                                 // LCXL Factory faders
+    names   = [\f1,\f2,\f3,\f4,\f5,\f6,\f7,\f8];
+    idx     = 0;
+    got     = IdentityDictionary.new;
+
+    headerChanOne = ((r[\chan] ? 7) + 1);
+    devName = r[\devSubstr] ? "Launch Control XL";
+
+    ("LEARN: Move faders 1→8 on '%', channel % (Factory template)…"
+        .format(devName, headerChanOne)).postln;
+
+    MIDIdef(\_ccrouter_learnFaders).free;  // ensure clean
+
+    def = MIDIdef.cc(\_ccrouter_learnFaders, { |val, cc, chan, src|
+        var uid, ep, name, expect, routerChan, okChan, accepted, slotName;
+
+        uid  = src.tryPerform(\uid) ? src;
+        ep   = MIDIClient.sources.detect { |e| e.uid == uid }
+            ? MIDIClient.destinations.detect { |e| e.uid == uid };
+        name = ep.notNil.if({ ep.tryPerform(\name) ? { ep.device ? "" } }, { "uid:%".format(uid) });
+
+        routerChan = r[\chan] ? 7;   // zero-based, live each event
+        expect     = wantCCs[idx];
+
+        if(idx == 0 and: { chan != routerChan }) {
+            r[\chan] = chan;
+            ("LEARN set router channel = % (one-based %)"
+                .format(chan, chan+1)).postln;
+            routerChan = chan;
         };
+
+        okChan   = (chan == routerChan);
+        accepted = okChan and: { cc == expect };
+
+        ("LEARN recv cc:% chan(zero):% val:% dev:%  expect:% idx:%  okChan:% -> %"
+            .format(cc, chan, val, name, expect, idx, okChan, accepted)).postln;
+
+        if(accepted) {
+            slotName = names[idx];
+            got[slotName] = (cc: cc, chan: chan, uid: uid);
+            ("% ✔ % → cc:% (chan:% dev:%)").postf(slotName, cc, chan+1, name).postln;
+
+            if(r[\uid].isNil) {  // capture UID once
+                r[\uid] = uid;
+                ("LEARN set router UID = % (%).".format(uid, name)).postln;
+            };
+
+            idx = idx + 1;
+
+            if(idx >= names.size) {
+                def.free;
+                got.keysValuesDo { |k, rec| r[\ccMap][k] = rec };
+                ("[ ccLoad  ('ok': true, 'names': %) ]".format(got.keys)).postln;
+            };
+        };
+    });
+};
+
+// ----------------------------------------------------
+// ROW LEARNER GENERATOR + row wrappers
+// ----------------------------------------------------
+~ccMakeRowLearner = { |label, ccList, names|
+    var r, idx, got, def, headerChanOne, devName;
+
+    r       = ~ccRouter ? { ~installCCByNameRouter.() };
+    idx     = 0;
+    got     = IdentityDictionary.new;
+    headerChanOne = ((r[\chan] ? 7) + 1);
+    devName = r[\devSubstr] ? "Launch Control XL";
+
+    ("LEARN " ++ label ++ ": press controls in order on '%', channel % …")
+        .format(devName, headerChanOne).postln;
+
+    MIDIdef(\_ccrouter_learnRow).free;
+
+    def = MIDIdef.cc(\_ccrouter_learnRow, { |val, cc, chan, src|
+        var uid, ep, name, expect, routerChan, okChan, accepted, slotName;
+
+        uid  = src.tryPerform(\uid) ? src;
+        ep   = MIDIClient.sources.detect { |e| e.uid == uid }
+             ? MIDIClient.destinations.detect { |e| e.uid == uid };
+        name = ep.notNil.if({ ep.tryPerform(\name) ? { ep.device ? "" } }, { "uid:%".format(uid) });
+
+        routerChan = r[\chan] ? 7;
+        expect     = ccList[idx];
+
+        if(idx == 0 and: { chan != routerChan }) {
+            r[\chan] = chan;
+            ("LEARN set router channel = % (one-based %)")
+                .format(chan, chan+1).postln;
+            routerChan = chan;
+        };
+
+        okChan   = (chan == routerChan);
+        accepted = okChan and: { cc == expect };
+
+        ("LEARN " ++ label ++ " recv cc:% chan(zero):% val:% dev:%  expect:% idx:%  okChan:% -> %")
+            .format(cc, chan, val, name, expect, idx, okChan, accepted).postln;
+
+        if(accepted) {
+            slotName = names[idx];
+            got[slotName] = (cc: cc, chan: chan, uid: uid);
+            ("% ✔ % → cc:% (chan:% dev:%)")
+                .postf(slotName, cc, chan+1, name).postln;
+
+            if(r[\uid].isNil) {
+                r[\uid] = uid;
+                ("LEARN set router UID = % (%).").format(uid, name).postln;
+            };
+
+            idx = idx + 1;
+
+            if(idx >= names.size) {
+                def.free;
+                got.keysValuesDo { |k, rec| r[\ccMap][k] = rec };
+                ("[ ccLoad  ('ok': true, 'names': %) ]").format(got.keys).postln;
+            };
+        };
+    });
+
+    def
+};
+
+// Row 1 (your dump): 13,14,15,16,17,18,19,20
+~learnRow1 = {
+    var ccList, names;
+    ccList = [13,14,15,16,17,18,19,20];
+    names  = [\t1r1,\t2r1,\t3r1,\t4r1,\t5r1,\t6r1,\t7r1,\t8r1];
+    ~ccMakeRowLearner.( "Row1", ccList, names )
+};
+
+// Row 2 (your dump): 20,29,30,31,32,33,34,35
+~learnRow2 = {
+    var ccList, names;
+    ccList = [20,29,30,31,32,33,34,35];
+    names  = [\t1r2,\t2r2,\t3r2,\t4r2,\t5r2,\t6r2,\t7r2,\t8r2];
+    ~ccMakeRowLearner.( "Row2", ccList, names )
+};
+
+// Row 3 (your dump): 35,36,49,50,51,52,53,54
+~learnRow3 = {
+    var ccList, names;
+    ccList = [35,36,49,50,51,52,53,54];
+    names  = [\t1r3,\t2r3,\t3r3,\t4r3,\t5r3,\t6r3,\t7r3,\t8r3];
+    ~ccMakeRowLearner.( "Row3", ccList, names )
+};
+
+// ---------------------------------------
+// BINDINGS: name -> target param control
+// ---------------------------------------
+~ccBind = { |name, target, param, spec|
+    var r, rec, ndef, kind, bindRec, specUse;
+
+    r       = ~ccRouter;
+    rec     = r[\ccMap][name];
+    specUse = spec ? ControlSpec(0, 1, \lin);   // portable default here
+
+    if(rec.isNil) {
+        "[ ccBind  ('error': 'no mapping for %') ]".postf(name).postln;
+        ^nil
+    };
+
+    if(target.isKindOf(Symbol)) {
+        ndef = Ndef(target);
+        kind = \ndef;
     }{
-        ~pp.("ccLoad", (info: "no file", path: path));
+        ndef = target;
+        kind = (ndef.isKindOf(NodeProxy) or: { ndef.isKindOf(Ndef) }).if({ \ndef }, { \unknown })
     };
-};
 
-// ---------- fast learner for a given ordered name list ----------
-~ccQuickLearn = { |names, lockChan = true|
-    var seen, got, locked, lockedChan;
-    names = names.collect(_.asSymbol);
-    seen = IdentitySet.new;
-    got = 0;
-    locked = (lockChan == true);
-    lockedChan = nil;
-
-    MIDIdef.free(\lcxl_cc_quick);
-    ~pp.("ccQuick", (expect: names.size, names: names));
-
-    MIDIdef.cc(\lcxl_cc_quick, { |val, num, chan, src|
-        var key, name, rkey;
-        if(~lcxlCC[\srcUid].notNil and: { src.asInteger != ~lcxlCC[\srcUid] }) { ^nil };
-
-        if(locked and: { lockedChan.isNil }) {
-            lockedChan = chan;
-            ~pp.("ccQuick", (lockChan: chan));
-        };
-        if(locked and: { chan != lockedChan }) { ^nil };
-
-        key = locked.if({ chan.asInteger * 128 + num.asInteger }, { num.asInteger });
-        if(seen.includes(key)) { ^nil };
-        seen.add(key);
-
-        name = names.at(got);
-        rkey = chan.asInteger * 128 + num.asInteger;
-        ~lcxlCC[\map][name] = (chan: chan, num: num);
-        ~lcxlCC[\rev][rkey] = name;
-
-        got = got + 1;
-        ~pp.("ccQuick", (index: got, name: name, chan: chan, cc: num));
-        if(~ccAutosave) { ~ccSaveCCMap.() };
-
-        if(got >= names.size) {
-            MIDIdef.free(\lcxl_cc_quick);
-            ~pp.("ccQuick ✅", (done: true, captured: got));
-        };
-    }, nil, nil, nil);
-};
-
-// convenience wrappers (8 controls each)
-~learnRow1   = { var names; names = ~rowNames.(1); ~ccQuickLearn.(names, true); };
-~learnRow2   = { var names; names = ~rowNames.(2); ~ccQuickLearn.(names, true); };
-~learnRow3   = { var names; names = ~rowNames.(3); ~ccQuickLearn.(names, true); };
-~learnFaders = { var names; names = ~faderNames.();  ~ccQuickLearn.(names, true); };
-
-// ---------- binding & routing ----------
-// --- Flexible binder --------------------------------------------------------
-~ccBind = { |name, target, param=nil, spec=nil|
-    var nm, theSpec, rec;
-    nm = name.asSymbol;
-    theSpec = spec ?? { ~ccDefaultSpec };
-
-    // Two forms:
-    // 1) target is a Function => call with mapped value
-    // 2) target is a Symbol (Ndef name) + param => set Ndef(param)
-    if(target.isKindOf(Function)) {
-        rec = (fn: target, spec: theSpec);
-        ~pp.("ccBind+", (name: nm, kind: "fn"));
-    }{
-        rec = (ndef: target.asSymbol, param: param.asSymbol, spec: theSpec);
-        ~pp.("ccBind+", (name: nm, kind: "ndef", ndef: target, param: param));
+    if(kind != \ndef) {
+        "[ ccBind  ('error': unsupported target kind) ]".postln;
+        ^nil
     };
-    ~ccTargets[nm] = rec;
+
+    bindRec = (kind: \ndef, name: name, ndef: ndef.key, param: param, spec: specUse);
+    r[\binds][name] = bindRec;
+
+    "[ ccBind+  ('kind': ndef, 'name': %, 'param': %, 'ndef': %) ]"
+        .postf(name, param, ndef.key).postln;
+    r[\binds][name]
 };
 
-// --- Router (unchanged behavior + adds fn target) ---------------------------
-~installCCByNameRouter = { |srcUid = nil|
-    var suid;
-    suid = (srcUid.notNil).if({ srcUid }, { ~lcxlCC[\srcUid] });
-    MIDIdef.free(\lcxl_cc_byname_router);
+~ccApplyBinding = { |name, val|
+    var r, bindRec, spec, norm, scaled, ndef;
 
-    MIDIdef.cc(\lcxl_cc_byname_router, { |val, num, chan, src|
-        var k, name, tgt, spec, outVal, n, p, fn;
-        if(suid.notNil and: { src.asInteger != suid }) { ^nil };
+    r = ~ccRouter;
+    bindRec = r[\binds][name];
+    if(bindRec.isNil) { ^nil };
 
-        k = chan.asInteger * 128 + num.asInteger;
-        name = ~lcxlCC[\rev][k];
-        if(name.isNil) { ^nil };
+    spec   = bindRec[\spec] ? ControlSpec(0, 1, \lin);
+    norm   = val / 127.0;
+    scaled = spec.map(norm);
 
-        tgt = ~ccTargets.at(name);
-        if(tgt.isNil) { ^nil };
-
-        spec = tgt[\spec]; if(spec.isNil) { spec = ~ccDefaultSpec };
-        outVal = spec.map(val / 127.0);
-
-        fn = tgt[\fn];
-        if(fn.notNil) {
-            fn.value(outVal);
-            ~pp.("cc→fn", (name: name, val: outVal.round(0.001)));
-        }{
-            n = tgt[\ndef]; p = tgt[\param];
-            Ndef(n).set(p, outVal);
-            ~pp.("cc→Ndef", (name: name, ndef: n, param: p, val: outVal.round(0.001)));
-        };
-    }, nil, nil, nil);
-
-    ~pp.("ccRouter (installed)", (filterByUID: suid.notNil));
+    ndef = Ndef(bindRec[\ndef]);
+    ndef.set(bindRec[\param], scaled);
 };
 
-// --- Convenience helpers -----------------------------------------------------
-~ccBindFn = { |name, func, spec=nil|
-    var sp;
-    sp = spec ?? { ~ccDefaultSpec };
-    ~ccBind.(name, func, nil, sp);
-};
-
-~ccBindSynth = { |name, synth, param, spec=nil|
-    var sp, fn;
-    sp = spec ?? { ~ccDefaultSpec };
-    fn = { |v| synth.set(param, v) };
-    ~ccBind.(name, fn, nil, sp);
-};
-
-~ccBindBus = { |name, bus, spec=nil|
-    var sp, fn;
-    sp = spec ?? { ~ccDefaultSpec };
-    fn = { |v| bus.set(v) };
-    ~ccBind.(name, fn, nil, sp);
-};
-
-~ccBindPbindef = { |name, pdefName, param, spec=nil|
-    var sp, fn;
-    sp = spec ?? { ~ccDefaultSpec };
-    fn = { |v| Pbindef(pdefName, param, v) };  // live pattern param updates
-    ~ccBind.(name, fn, nil, sp);
-};
-
-// ---------- dump & clear ----------
+// ---------------------------------------
+// UTILITIES: dump/clear current mappings
+// ---------------------------------------
 ~ccDumpCCMap = {
-    var keys;
-    keys = ~lcxlCC[\map].keys.asArray.sort;
-    keys.do { |nm|
-        var m, line;
-        m = ~lcxlCC[\map][nm];
-        line = "%-6s -> chan:% 2d  cc:% 3d".format(nm.asString, m[\chan], m[\num]);
-        line.postln;
+    var r;
+    r = ~ccRouter ? { ~installCCByNameRouter.() };
+    r[\ccMap].keysValuesDo { |k, rec|
+        "% -> chan:%  cc:%  uid:%".postf(k, rec[\chan]+1, rec[\cc], rec[\uid]).postln;
     };
+    r[\ccMap].keys
 };
 
 ~ccClearMap = {
-    ~lcxlCC[\map] = IdentityDictionary.new;
-    ~lcxlCC[\rev] = IdentityDictionary.new;
-    ~ccSaveCCMap.();
-    ~pp.("ccClear", ());
+    var r;
+    r = ~ccRouter ? { ~installCCByNameRouter.() };
+    r[\ccMap] = IdentityDictionary.new;
+    "[ ccMap ('cleared': true) ]".postln;
+    true
 };
 
-// ---------- auto-load on include (scheduled; avoids top-level if pitfalls) ----------
-~ccAutoloadFn = {
-    var path, loaded;
-    path = ~lcxlCC[\mapPath];
-    loaded = false;
-    if(path.notNil and: { File.exists(path) }) {
-        ~ccLoadCCMap.();
-        loaded = true;
+// ---------------------------------------
+// SAVE / LOAD map (uid, chan, ccMap)
+// ---------------------------------------
+~ccSaveMap = { |path|
+    var r, dir, pack, ok;
+    r = ~ccRouter ? { ~installCCByNameRouter.() };
+
+    pack = (
+        uid:   r[\uid],
+        chan:  r[\chan],          // zero-based
+        ccMap: r[\ccMap].copy
+    );
+
+    dir = PathName(path).parentPath;
+    if(dir.notNil and: { File.exists(dir).not }) { PathName(dir).mkdir };
+
+    ok = pack.writeArchive(path);
+    if(ok) {
+        "[ saveMap  ('ok': true, 'path': %) ]".format(path).postln;
     }{
-        ~pp.("ccAuto", (info: "no cc map found", path: path));
+        "[ saveMap  ('ok': false, 'path': %) ]".format(path).postln;
     };
-    if(loaded) {
-        ~installCCByNameRouter.();
-        ~pp.("ccAuto", (loaded: true, path: path));
-    };
+    ok
 };
 
-if(~ccAutoBoot) {
-    AppClock.sched(0.2, { ~ccAutoloadFn.(); nil; });
+~ccLoadMap = { |path|
+    var r, hasFile, pack, map, chanOne;
+    r = ~ccRouter ? { ~installCCByNameRouter.() };
+    hasFile = File.exists(path);
+
+    if(hasFile.not) {
+        "[ loadMap  ('info': no file, 'path': %) ]".format(path).postln;
+        ^Set[]
+    };
+
+    pack = Object.readArchive(path);
+    if(pack.isKindOf(Event).not and: { pack.isKindOf(Dictionary).not }) {
+        "[ loadMap  ('error': bad archive, 'path': %) ]".format(path).postln;
+        ^Set[]
+    };
+
+    r[\uid]  = pack[\uid] ? r[\uid];
+    r[\chan] = pack[\chan] ? r[\chan];
+
+    map = pack[\ccMap];
+    if(map.isKindOf(IdentityDictionary).not and: { map.isKindOf(Dictionary).not }) {
+        "[ loadMap  ('error': no ccMap in archive, 'path': %) ]".format(path).postln;
+        ^Set[]
+    };
+
+    r[\ccMap] = IdentityDictionary.newFrom(map);
+
+    chanOne = ((r[\chan] ? 7) + 1);
+    "[ loadMap  ('ok': true, 'uid': %, 'chan': %, 'count': %) ]"
+        .format(r[\uid], chanOne, r[\ccMap].size).postln;
+
+    r[\ccMap].keys
 };
 
-// ---------- quick tips (scheduled) ----------
-if(~postCcHintFn.isNil) {
-    ~postCcHintFn = {
-        var done;
-        done = ~lcxlCC[\_hintDone];
-        if(done.isNil) {
-            ~lcxlCC[\_hintDone] = true;
-            ~pp.("hint", (a: "Learn: ~learnRow1.(); ~learnRow2.(); ~learnRow3.(); ~learnFaders.()",
-                          b: "Bind:  ~ccBind.(\\t1r1, \\pad, \\cutoff, ControlSpec(100,12000,\\exp))",
-                          c: "Route: ~installCCByNameRouter.()",
-                          d: "Dump:  ~ccDumpCCMap.();  Clear: ~ccClearMap.()"));
+// ---------------------------------------
+// OPTIONAL: quick CC probe for debugging
+// ---------------------------------------
+~probeCCs = {
+    var r, def;
+    r = ~ccRouter ? { ~installCCByNameRouter.() };
+
+    def = MIDIdef.cc(\_ccrouter_probe, { |val, cc, chan, src|
+        var info, okDev, okChan, chanOne;
+        info   = ~ccSafeSrcInfo.(src);
+        okDev  = r[\filterByUID].if({ (r[\uid].notNil) and: { info[\uid] == r[\uid] } }, { true });
+        okChan = (chan == (r[\chan] ? 7));
+        if(okDev and: { okChan }) {
+            chanOne = chan + 1;
+            "[ cc: %, chan: %, val: %  % ]".postf(cc, chanOne, val, info[\name]).postln;
         };
-    };
+    });
+
+    def
 };
 
-AppClock.sched(0.3, { ~postCcHintFn.(); nil; });
+// ---------------------------------------
+// STARTUP COMPATIBILITY SHIMS (for your startup.scd)
+// ---------------------------------------
+// Your startup calls these; they delegate to the core API above.
+
+~lcxlMapPath = {
+    var p;
+    p = ~ccMapPath ? "/Users/isaaclinder/_includes/_midi-ctrl/lcxl-track-mute.map";
+    p
+};
+
+~loadMap = {
+    var path, keys;
+    path = ~lcxlMapPath.().asString;
+    keys = ~ccLoadMap.(path);
+    keys
+};
+
+~saveMap = {
+    var path, ok;
+    path = ~lcxlMapPath.().asString;
+    ok = ~ccSaveMap.(path);
+    ok
+};
 

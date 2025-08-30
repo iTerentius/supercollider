@@ -43,7 +43,7 @@ var sig, env;
 )
 
 (
-~y = Pbind(
+Ndef(\y) = Pbind(
 	\instrument, Pseq([\sp0, \sp1, \puls], inf),
 	\freqs, Pseq([Rand(30, 60), 60, 66, Rest(10), 68, 70], inf),
 	\dur, Pseq([0.25, 0.125, 0.5, 0.125], inf),
@@ -53,9 +53,9 @@ var sig, env;
 )
 )
 
-~y.play(fadeTime: 3);
-~y.free(fadeTime: 20);
-~y.stop(fadeTime: 5);
+Ndef(\y).play(fadeTime: 3);
+Ndef(\y).free(fadeTime: 20);
+Ndef(\y).stop(fadeTime: 5);
 
 // 2020.07.16 Figure out how to play \puls with a synth inside of ProxySpace.
 ~s1 = \puls;
