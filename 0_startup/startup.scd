@@ -33,7 +33,6 @@ s.waitForBoot {
     // "_includes/superdirt.scd".loadRelative;
     // "_includes/superdirt-mixer.scd".loadRelative;
 
-    "_includes/sample_loader.scd".loadRelative;
     "_includes/midi-setup.scd".loadRelative;
   
 
@@ -44,6 +43,7 @@ s.waitForBoot {
     // --- your synthdefs that reference ~dirt.numChannels can safely load now
     "_synthdefs/synths_common.scd".loadRelative;
 
+    "_includes/sample_loader.scd".loadRelative;
     // --- tidal track mute LCXL
     // "_includes/tidal-dry-bus.scd".loadRelative;
  

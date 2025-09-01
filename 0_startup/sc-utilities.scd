@@ -34,17 +34,19 @@ s.stopRecording; // stop recording
 ~printMapAll.();  // should list b0-... keys explicitly
 ~printMap.(0);    // filtered for bank 0
 
+~migrateNamesToUnderscore.();
+
 ~ccBind.(\f1, \track, \amp);  // defaults spec inside ~ccBind body
 ~ccBind.(\t1r1, \track, \amp);  // defaults spec inside ~ccBind body
 
 // Sample Loader
-~loadSamplesRecursive.("~/Music/supercollider/_samples/Neutron_12");
+~loadSamplesRecursive.("~/Music/supercollider/_samples/Field/");
 
 ~printTree.();
 
 ~listKeys.();
 
-{ PlayBuf.ar(1, ~getSample.(\123), doneAction:2) * 0.5 }.play;
+{ PlayBuf.ar(1, ~getSample.(\cat_water), doneAction:2) * 0.5 }.play;
 
 
 PathName(~sampleRoot).entries.do(_.postln);

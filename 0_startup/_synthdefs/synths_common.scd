@@ -1,4 +1,3 @@
-"Synths Common:".postln;
 (
 SynthDef(\trigTest2, { |out, trig=0, freq=440|
     Out.ar(out, SinOsc.ar(freq+[0,1], 0, Decay2.kr(trig, 0.005, 1.0)));
@@ -151,50 +150,83 @@ SynthDef(\bass8, {
 		// Out.ar(aux, sig*auxsend);
 	}).add;
 );
+// version 2025-09-01  chop mono and stereo  PlayBuf only  no right parens in comments
 
-// Pdef(\x, Pbind(\note, Pseq([0, 3, 5, 7], inf))).play;
+SynthDef(\chop_pb_m, { 
+    |out=0, buf=0, chop=8, slice=0, start=0.0, stop=1.0,
+     rate=1.0, amp=0.35, pan=0.0, useInternal=0, trate=4,
+     atk=0.005, rel=0.08, gate=1, trig=0|
 
-// (
-// SynthDef(\myFX, { |out, inBus, mix = 1.0, feedback = 0.5, delayTime = 0.1 |
-//   var signal = In.ar(inBus, 2); // Get stereo audio from the specified input bus
-//   var delayedSignal = DelayC.ar(signal, 0.2, delayTime); // Example: simple delay
-//   var processedSignal = (signal * (1 - mix)) + (delayedSignal * mix); // Mix wet/dry
-//   Out.ar(out, processedSignal); // Output the processed signal
-// }).add;
-// );
-//
-// (
-// SynthDef("spectral-delay" ++ ~dirt.numChannels, { |out, tsdelay, xsdelay = 1, sustain|
-//
-//   var signal, delayTime, delays, freqs, filtered;
-//   var size = 16;
-//   var maxDelayTime = 0.2;
-//
-//   signal = In.ar(out, ~dirt.numChannels);
-//   delayTime = tsdelay * maxDelayTime;
-//   filtered = (1..size).sum { |i|
-//     var filterFreq = i.linexp(1, size, 40, 17000);
-//     var sig = BPF.ar(signal, filterFreq, 0.005);
-//     // the delay pattern is determined from xsdelay by bitwise-and:
-//     DelayN.ar(sig, maxDelayTime, i & xsdelay * (1/size) * delayTime )
-//   };
-//   signal = signal * 0.2 + (filtered * 4); // this controls wet/dry
-//   ReplaceOut.ar(out, signal)
-// }).add;
-// );
-//
-// (
-// SynthDef("grains" ++ ~dirt.numChannels, { | out, sustain, pan=0, amp=0.6, grate=1, gdur=0.1, ggrains=20 |
-//     var trig, pos, env, grain, signal;
-//
-//     signal = In.ar(out, ~dirt.numChannels);
-//     trig = Impulse.kr(ggrains * grate);
-//     pos = LFNoise1.kr(1).range(0, BufDur.kr(Buffer.alloc(s, 44100, 1)));
-//     env = EnvGen.kr(Env.perc(0.01, gdur), doneAction: 2);
-//     grain = TGrains.ar(2, trig, Buffer.alloc(s, 44100, 1), grate, pos, gdur, pan, env * amp);
-//     // grain = GrainSin.ar(2, trig, Buffer.alloc(s, 44100, 1), grate, pos, gdur, pan, env * amp);
-//     signal = signal * 0.2 + ( grain * 2);
-//     ReplaceOut.ar(out, signal)
-// }).add;
-// );
-//
+    var frames, lo, hi, segLen, idxExt, idxInt, idx, pos;
+    var isInternal, tInt, tGate, t, rabs, sliceFrames, sliceSecs;
+    var envInt, envExt, envSel, sig, pair;
+
+    frames = BufFrames.kr(buf);
+    lo     = (start.clip(0, 1) * frames).round(1);
+    hi     = (stop.clip(0, 1) * frames).round(1).max(lo + 2);
+    segLen = (hi - lo) / chop.max(1);
+
+    isInternal = (useInternal > 0);
+    tInt  = Impulse.kr(trate);
+    tGate = Trig1.kr(HPZ1.kr(gate).max(0), 0.001);
+    t     = Select.kr(isInternal, [tGate, tInt]);
+
+    idxExt = slice.clip(0, chop - 1);
+    idxInt = (PulseCount.kr(tInt) % chop).clip(0, chop - 1);
+    idx    = Select.kr(isInternal, [idxExt, idxInt]);
+
+    pos = lo + (idx * segLen);
+
+    rabs        = rate.abs.max(0.001);
+    sliceFrames = segLen.max(2);
+    sliceSecs   = sliceFrames / BufSampleRate.kr(buf) / rabs;
+
+    envExt = EnvGen.kr(Env.asr(atk, 1, rel), gate, doneAction: 2);
+    envInt = EnvGen.kr(Env.perc(atk, sliceSecs), t);
+    envSel = Select.kr(isInternal, [envExt, envInt]);
+
+    sig  = PlayBuf.ar(1, buf, BufRateScale.kr(buf) * rate, t, startPos: pos, loop: 0);
+    pair = Pan2.ar(sig, pan);
+
+    OffsetOut.ar(out, pair * envSel * amp);
+}).add;
+
+SynthDef(\chop_pb_s, { 
+    |out=0, buf=0, chop=8, slice=0, start=0.0, stop=1.0,
+     rate=1.0, amp=0.35, pan=0.0, useInternal=0, trate=4,
+     atk=0.005, rel=0.08, gate=1, trig=0|
+
+    var frames, lo, hi, segLen, idxExt, idxInt, idx, pos;
+    var isInternal, tInt, tGate, t, rabs, sliceFrames, sliceSecs;
+    var envInt, envExt, envSel, sig, pair;
+
+    frames = BufFrames.kr(buf);
+    lo     = (start.clip(0, 1) * frames).round(1);
+    hi     = (stop.clip(0, 1) * frames).round(1).max(lo + 2);
+    segLen = (hi - lo) / chop.max(1);
+
+    isInternal = (useInternal > 0);
+    tInt  = Impulse.kr(trate);
+    tGate = Trig1.kr(HPZ1.kr(gate).max(0), 0.001);
+    t     = Select.kr(isInternal, [tGate, tInt]);
+
+    idxExt = slice.clip(0, chop - 1);
+    idxInt = (PulseCount.kr(tInt) % chop).clip(0, chop - 1);
+    idx    = Select.kr(isInternal, [idxExt, idxInt]);
+
+    pos = lo + (idx * segLen);
+
+    rabs        = rate.abs.max(0.001);
+    sliceFrames = segLen.max(2);
+    sliceSecs   = sliceFrames / BufSampleRate.kr(buf) / rabs;
+
+    envExt = EnvGen.kr(Env.asr(atk, 1, rel), gate, doneAction: 2);
+    envInt = EnvGen.kr(Env.perc(atk, sliceSecs), t);
+    envSel = Select.kr(isInternal, [envExt, envInt]);
+
+    sig  = PlayBuf.ar(2, buf, BufRateScale.kr(buf) * rate, t, startPos: pos, loop: 0);
+    pair = Balance2.ar(sig[0], sig[1], pan);
+
+    OffsetOut.ar(out, pair * envSel * amp);
+}).add;
+
