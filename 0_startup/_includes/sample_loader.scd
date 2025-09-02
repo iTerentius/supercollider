@@ -1,287 +1,335 @@
+
 // sample_loader.scd
-// version 2025-09-01 15:36:09 CDT
-// sample loader and audition helpers
-// no Ndefs created here
-// no right parens in comments
+// version 2025-09-01 auto mono or stereo audition recursive loader no right parens in comments
 
-(
-var exts, count, startTime, auditionOut,
-    symFromPath, folderKeyFrom, isAudioName, addBuf, loadDir,
-    postTree, listKeys, keysIn, firstIn, getSample, findSample,
-    playBufFallbackMono, playBufFallbackStereo,
-    probeOutputsOneShot, setDefaultOut,
-    f_getSampleSmart;
+// state
+if(~samplesTree.isNil) { ~samplesTree = IdentityDictionary.new };
+if(~auditionOut.isNil) { ~auditionOut = 0 };
+if(~bufMeta.isNil) { ~bufMeta = IdentityDictionary.new };
 
-// exported state
-~samplesRoot = nil;
-~samplesTree = IdentityDictionary.new;
-
-// config
-exts = [ "wav", "aif", "aiff", "flac" ];
-auditionOut = 0;
-
-// global normalizer returns Symbol
-// treats space dot dash as underscore and collapses doubles
+// helpers
 ~canon = { |x|
     var s;
-    s = x.asString.toLower;
-    s = s.replace($ , $_).replace($., $_).replace($-, $_);
-    while({ s.contains("__") }, { s = s.replace("__", "_") });
+    s = x.asString;
+    s = s.toLower;
+    s = s.replace($ , $_);
+    s = s.replace($-, $_);
+    s = s.replace($., $_);
+    s = s.replace($[, $_);
+    s = s.replace($], $_);
     s.asSymbol
 };
 
-// filename to symbol with underscores
-symFromPath = { |str|
-    var base;
-    base = PathName(str).fileNameWithoutExtension;
-    base = base.replace($ , $_);
-    base = base.replace($., $_);
-    base = base.replace($-, $_);
-    base.asSymbol
+~postRoot = { |root|
+    var msg;
+    msg = "[sample_loader] root, " ++ root ++ " ";
+    msg.postln;
 };
 
-// derive folder symbol from directory path
-folderKeyFrom = { |dirPath|
-    var std, parts, nonEmpty, lastStr, sym;
-    std = dirPath.standardizePath;
-    parts = std.split($/);
-    nonEmpty = parts.select({ |s| s.notNil and: { s.size > 0 } });
-    lastStr = nonEmpty.isEmpty.if({ "root" }, { nonEmpty.last });
-    lastStr = lastStr.replace($ , $_).replace($-, $_);
-    sym = lastStr.asSymbol;
-    sym
+// ensure audition synthdefs mono and stereo
+~ensureAuditionDefs = {
+    var haveM, haveS;
+
+    haveM = SynthDescLib.global.at(\audPBmono).notNil;
+    haveS = SynthDescLib.global.at(\audPBstereo).notNil;
+
+    if(haveM.not) {
+        SynthDef(\audPBmono, { |out=0, buf=0, rate=1, amp=0.8, startPos=0, loop=0, pan=0|
+            var sig;
+            sig = PlayBuf.ar(1, buf, BufRateScale.kr(buf) * rate, startPos: startPos, loop: loop);
+            sig = Pan2.ar(sig, pan);
+            OffsetOut.ar(out, sig * amp);
+        }).add;
+    };
+
+    if(haveS.not) {
+        SynthDef(\audPBstereo, { |out=0, buf=0, rate=1, amp=0.8, startPos=0, loop=0, pan=0|
+            var pair, left, right, outPair;
+            pair = PlayBuf.ar(2, buf, BufRateScale.kr(buf) * rate, startPos: startPos, loop: loop);
+            left = pair[0];
+            right = pair[1];
+            outPair = Balance2.ar(left, right, pan);
+            OffsetOut.ar(out, outPair * amp);
+        }).add;
+    };
 };
 
-isAudioName = { |fileName|
-    var low;
-    low = fileName.asString.toLower;
-    exts.any({ |x| low.endsWith("." ++ x) })
+// public api
+~setDefaultOut = { |pair=0|
+    var msg;
+    ~auditionOut = pair;
+    msg = "[auditionOut set to " ++ pair ++ "]";
+    msg.postln;
 };
 
-addBuf = { |folderSym, filePath|
-    var key, buf;
-    key = symFromPath.(filePath);
-    if(~samplesTree[folderSym].isNil) { ~samplesTree[folderSym] = IdentityDictionary.new };
-    buf = Buffer.read(s, filePath, action: { |b|
-        ["[[ready],", folderSym, ",", key].join(" ").postln;
-    });
-    ~samplesTree[folderSym][key] = buf;
-    count = count + 1;
-    ["[[add],", folderSym, ",", key].join(" ").postln;
-};
-
-loadDir = { |dirPath|
-    var pathStd, pn, ents, fkey;
-    pathStd = dirPath.standardizePath;
-    pn = PathName(pathStd);
-    if(pn.isNil) { ["[sample_loader] bad path", dirPath].postln; ^nil };
-    if(pn.isFolder.not) { ["[sample_loader] not a folder", pathStd].postln; ^nil };
-    fkey = folderKeyFrom.(pathStd);
-    ents = pn.entries;
-    ents.do({ |e|
-        var name;
-        name = e.fileName.asString;
-        if(e.isFile and: { isAudioName.(name) }) {
-            addBuf.(fkey, e.fullPath);
-        }{
-            if(e.isFolder) { loadDir.(e.fullPath) };
+~printTree = {
+    var rec;
+    rec = { |d, indent=0|
+        d.keysValuesDo { |k, v|
+            (((" " ! indent).join) ++ k.asString).postln;
+            if(v.isKindOf(Dictionary) or: { v.isKindOf(IdentityDictionary) }) { rec.(v, indent+2) };
         };
-    });
+    };
+    rec.(~samplesTree, 0);
 };
 
-postTree = {
-    var keys;
-    keys = ~samplesTree.keys.asArray.sort;
-    keys.do({ |k|
-        k.postln;
-        ~samplesTree[k].keys.asArray.sort.do({ |kk| "  ".post; kk.postln });
-    });
+~getSample = { |folderSym, fileSym|
+    var sub, buf;
+    sub = ~samplesTree[folderSym];
+    if(sub.isNil) { buf = nil } { buf = sub[fileSym] };
+    buf
 };
 
-listKeys = {
-    var keys;
-    keys = ~samplesTree.keys.asArray.sort;
-    ^keys
+// audition player auto mono or stereo
+~playBuf = { |buf, out, amp=0.8, rate=1, loop=0, start=0.0, pan=0|
+    var outBus, bnum, chs, frames, startPos, instr;
+
+    if(buf.isNil) { "[playBuf] nil buffer".postln; ^nil };
+
+    // choose default output here, not in the arg list
+    outBus = out;
+    if(outBus.isNil) { outBus = ~auditionOut };
+
+    // make sure audition defs exist
+    ~ensureAuditionDefs.();
+
+    bnum    = buf.bufnum;
+    chs     = if(buf.numChannels.isNil) { 2 } { buf.numChannels };
+    frames  = if(buf.numFrames.isNil)   { 0 } { buf.numFrames };
+    startPos = (start.clip(0, 1) * frames).round(1);
+
+    instr = if(chs == 1) { \audPBmono } { \audPBstereo };
+
+    ^Synth(instr, [
+        \out, outBus,
+        \buf, bnum,
+        \amp, amp,
+        \rate, rate,
+        \loop, loop,
+        \startPos, startPos,
+        \pan, pan
+    ]);
 };
 
-keysIn = { |folderSym|
-    var d, keys;
-    d = ~samplesTree[folderSym];
-    if(d.isNil) { ^[] };
-    keys = d.keys.asArray.sort;
-    ^keys
-};
+// recursive loader
+~loadSamplesRecursive = { |dirPath|
+    var root, count, t0, walk, addBuf, canonSym;
 
-firstIn = { |folderSym|
-    var d;
-    d = ~samplesTree[folderSym];
-    if(d.isNil) { ^nil };
-    ^d.values.asArray.detect({ |b| b.notNil })
-};
+    // normalize to a safe symbol  lower and underscores
+    canonSym = { |str|
+        var s;
+        s = str.asString.toLower.replace($ , $_).replace($-, $_).replace($., $_);
+        s.asSymbol
+    };
 
-getSample = { |a, b=nil|
-    var d, out;
-    if(b.isNil) { ^~samplesTree[a] }{
-        d = ~samplesTree[a];
-        if(d.notNil) {
-            out = d[b];
-            if(out.notNil) { ^out };
+    count = 0;
+    t0 = Main.elapsedTime;
+
+    root = dirPath.asString.standardizePath;
+    ("[sample_loader] root, " ++ root ++ " ").postln;
+
+    addBuf = { |fpath|
+        var parts, len, fname, folderName, base, nameParts, folderSym, fileSym, lower, ok;
+
+        parts = fpath.split($/);
+        len = parts.size;
+        if(len < 1) { ^nil };
+
+        fname = parts.last;
+        folderName = (len >= 2).if({ parts[len-2] }, { "root" });
+
+        lower = fpath.toLower;
+        ok = lower.endsWith(".wav") or: { lower.endsWith(".aif") } or: { lower.endsWith(".aiff") } or: { lower.endsWith(".flac") };
+        if(ok.not) { ^nil };
+
+        // strip extension by splitting on dot and rejoining everything except final segment
+        nameParts = fname.split($.);
+        base = (nameParts.size > 1).if({
+            nameParts.copyRange(0, nameParts.size - 2).join(".")
+        },{
+            fname
+        });
+
+        folderSym = canonSym.(folderName);
+        base = base.replace($ , $_).replace($-, $_).replace($., $_);
+        fileSym = base.asSymbol;
+
+        if(~samplesTree[folderSym].isNil) {
+            ~samplesTree[folderSym] = IdentityDictionary.new;
         };
-        ~samplesTree.keysValuesDo({ |k, dd|
-            if(out.isNil and: { dd.notNil }) {
-                var hit;
-                hit = dd[b];
-                if(hit.notNil) { out = hit };
+
+        Buffer.read(s, fpath, action: { |b|
+            var sub, ch;
+            sub = ~samplesTree[folderSym];
+            sub[fileSym] = b;
+            ~samplesTree[folderSym] = sub;
+
+            ch = if(b.numChannels.isNil) { 2 } { b.numChannels };
+            ~bufMeta[b.bufnum] = ch;
+
+            ("[[ready], " ++ folderSym ++ " , " ++ fileSym ++ "]").postln;
+        });
+
+        count = count + 1;
+        ("[[add], " ++ folderSym ++ " , " ++ fileSym ++ "]").postln;
+    };
+
+    walk = { |path|
+        var dir, entries;
+        dir = PathName.new(path);
+        if(dir.isFolder.not) {
+            "[sample_loader] not a folder".warn;
+            ^nil
+        };
+        entries = dir.entries;
+        entries.do({ |child|
+            if(child.isFolder) {
+                walk.(child.fullPath);
+            }{
+                addBuf.(child.fullPath);
             };
         });
-        if(out.isNil) { ["[getSample] not found", a, b].join(" ").postln };
-        ^out
+    };
+
+    walk.(root);
+
+    ("[sample_loader] Loaded " ++ count ++ " files in " ++ (Main.elapsedTime - t0).round(0.001) ++ " s").postln;
+};
+
+// 2025-09-02 — robust sample root resolver, tolerant key match, mono or stereo player, chop helper
+
+(
+// small utility to get whichever tree exists
+if(~sampleRoot.isNil) {
+    ~sampleRoot = {
+        var root;
+        root = ~samplesTree;
+        if(root.isNil) { root = ~sampleTree };
+        if(root.isNil) { "[sampleRoot] no ~samplesTree or ~sampleTree is defined".postln };
+        ^root
     };
 };
 
-findSample = { |fileSym|
-    var out;
-    out = nil;
-    ~samplesTree.valuesDo({ |d|
-        if(out.isNil and: { d.notNil }) {
-            var h;
-            h = d[fileSym];
-            if(h.notNil) { out = h };
+// optional quick inspector for the current tree
+if(~listTopKeys.isNil) {
+    ~listTopKeys = {
+        var root, keys;
+        root = ~sampleRoot.();
+        if(root.isNil) { ^nil };
+        keys = root.tryPerform(\keys) ? [];
+        "[listTopKeys] top level keys → %".format(keys).postln;
+        ^keys
+    };
+};
+
+// tolerant key finder that accepts Symbol or String and ignores case and basic separators
+if(~matchKey.isNil) {
+    ~matchKey = { |dict, key|
+        var dictKeys, normChar, normalize, target, chosen;
+        dictKeys = dict.tryPerform(\keys) ? [];
+        normChar = { |c| var ch; ch = c; if(ch == $_ or: { ch == $- } or: { ch == $\  }) { $_ } { ch.toLower } };
+        normalize = { |s| var str, arr; str = s.asString; arr = str.collect(normChar); String.newFrom(arr) };
+        target = normalize.(key);
+        chosen = dictKeys.detect { |k| normalize.(k) == target };
+        ^chosen
+    };
+};
+
+// resolve either a Buffer or exact-ish keys into a Buffer with good error messages
+if(~asBuf.isNil) {
+    ~asBuf = { |a, b=nil, c=nil|
+        var root, path, buf, v, k, step, levels, label, found;
+        if(a.isKindOf(Buffer)) {
+            buf = a;
+            ^buf
         };
-    });
-    if(out.isNil) { ["[findSample] not found", fileSym].join(" ").postln };
-    ^out
-};
+        root = ~sampleRoot.();
+        if(root.isNil) { "[asBuf] no sample tree is available".postln; ^nil };
+        path = [a, b, c].reject(_.isNil);
+        label = path.collect(_.asString).join("/");
 
-// tolerant lookup exact first then canonical
-f_getSampleSmart = { |folderSym, fileSym=nil|
-    var tree, sub, buf, fs, ks, canon;
-    canon = ~canon;
-    tree  = ~samplesTree;
-    if(tree.isNil) { ^nil };
+        v = root;
+        levels = path.size;
+        step = 0;
+        while { step < levels } {
+            k = path[step];
+            if(v.isKindOf(Buffer)) {
+                "[asBuf] encountered a Buffer before finishing the path → %".format(label).postln;
+                ^v
+            };
+            if(v.isNil) {
+                "[asBuf] parent is nil at step % for %".format(step + 1, label).postln;
+                ^nil
+            };
+            found = v.at(k);
+            if(found.isNil) {
+                // try tolerant match
+                var mk;
+                mk = ~matchKey.(v, k);
+                if(mk.notNil) { found = v.at(mk) };
+            };
+            if(found.isNil) {
+                "[asBuf] not found at level % for key % in %".format(step + 1, k, label).postln;
+                ^nil
+            };
+            v = found;
+            step = step + 1;
+        };
 
-    sub = tree[folderSym];
-    if(sub.notNil) {
-        if(fileSym.isNil) { ^sub };
-        buf = sub[fileSym];
-        if(buf.notNil) { ^buf };
-    };
-
-    fs = canon.(folderSym);
-    sub = nil;
-    tree.keysDo({ |k| if(canon.(k) == fs) { sub = tree[k] } });
-    if(sub.isNil) { ^nil };
-    if(fileSym.isNil) { ^sub };
-
-    buf = sub[fileSym];
-    if(buf.notNil) { ^buf };
-
-    ks = canon.(fileSym);
-    buf = nil;
-    sub.keysDo({ |k| if(canon.(k) == ks) { buf = sub[k] } });
-    ^buf
-};
-
-// public api  tilded names only
-~loadSamplesRecursive = { |path|
-    var elapsed, std;
-    count = 0;
-    startTime = Main.elapsedTime;
-    std = path.standardizePath;
-    ~samplesRoot = std;
-    ["[[sample_loader] root,", std, "]"].join(" ").postln;
-    loadDir.(std);
-    elapsed = Main.elapsedTime - startTime;
-    ["[sample_loader] Loaded", count, "files in", elapsed.round(0.01), "s"].join(" ").postln;
-};
-
-~printTree      = postTree;
-~listKeys       = listKeys;
-~keysIn         = keysIn;
-~firstIn        = firstIn;
-~getSample      = getSample;
-~findSample     = findSample;
-~getSampleSmart = f_getSampleSmart;
-
-// fallback players
-playBufFallbackMono = { |bnum, out=0, amp=0.8, rate=1, loop=0, start=0.0, pan=0|
-    var synth;
-    synth = {
-        var frames, startSamp, sig;
-        frames    = BufFrames.kr(bnum);
-        startSamp = (start.clip(0, 1) * frames).round(1);
-        sig = PlayBuf.ar(1, bnum, rate * BufRateScale.kr(bnum), startPos: startSamp, loop: loop, doneAction: 0);
-        Out.ar(out, Pan2.ar(sig, pan, amp));
-    }.play;
-    ^synth
-};
-
-playBufFallbackStereo = { |bnum, out=0, amp=0.8, rate=1, loop=0, start=0.0, pan=0|
-    var synth;
-    synth = {
-        var frames, startSamp, sig, pair;
-        frames    = BufFrames.kr(bnum);
-        startSamp = (start.clip(0, 1) * frames).round(1);
-        sig = PlayBuf.ar(2, bnum, rate * BufRateScale.kr(bnum), startPos: startSamp, loop: loop, doneAction: 0);
-        pair = sig.isArray.if({ sig[0..1] }, { [sig, sig] });
-        Out.ar(out, Balance2.ar(pair[0], pair[1], pan, amp));
-    }.play;
-    ^synth
-};
-
-// audition wrapper uses your defs if present else falls back
-~playBuf = { |bufOrBufnum, out=nil, amp=0.8, rate=1, loop=0, start=0.0, pan=0, numCh=nil|
-    var isBuf, bnum, chs, def, hasDef, node;
-    out = out ?? { auditionOut };
-    if(bufOrBufnum.isNil) { "[playBuf] nil buffer".postln; ^nil };
-    isBuf = bufOrBufnum.isKindOf(Buffer);
-    if(isBuf.not and: { bufOrBufnum.isNumber.not }) { "[playBuf] received non buffer and non bufnum".postln; ^nil };
-    bnum = isBuf.if({ bufOrBufnum.bufnum }, { bufOrBufnum });
-    chs  = numCh ?? { isBuf.if({ bufOrBufnum.numChannels }, { 2 }) };
-    def  = (chs <= 1).if({ \playBuf_m }, { \playBuf_s });
-    hasDef = SynthDescLib.global.at(def).notNil;
-    if(hasDef) {
-        node = Synth(def, [ \buf, bnum, \out, out, \amp, amp, \rate, rate, \loop, loop, \start, start, \pan, pan ]);
-        ^node;
-    }{
-        node = (chs <= 1).if({
-            playBufFallbackMono.(bnum, out, amp, rate, loop, start, pan)
-        },{ 
-            playBufFallbackStereo.(bnum, out, amp, rate, loop, start, pan)
-        });
-        ^node;
+        if(v.isKindOf(Buffer)) { ^v };
+        "[asBuf] resolved % but final value is not a Buffer".format(label).postln;
+        ^nil
     };
 };
 
-// output probe one shot
-probeOutputsOneShot = { |dur=0.25|
-    var n, pairs, r;
-    n = s.options.numOutputBusChannels;
-    pairs = (0, 2 .. (n - 2));
-    r = Routine({
-        pairs.do({ |ch|
-            ("[probe once] out: " ++ ch).postln;
-            {
-                var env, sig;
-                env = EnvGen.kr(Env.perc(0.005, dur), doneAction: 2);
-                sig = WhiteNoise.ar(0.05) * env;
-                OffsetOut.ar(ch, sig ! 2);
-            }.play;
-            dur.wait;
-        });
-    });
-    r.play;
-    ^r
+// mono player duplicated to stereo
+SynthDef(\st_playbuf_mono, { |out=0, buf=0, amp=0.5, rate=1, startPos=0, pan=0|
+    var rateScale, sig, l, r;
+    rateScale = BufRateScale.kr(buf) * rate;
+    sig = PlayBuf.ar(1, buf, rateScale, startPos: startPos, doneAction: 2);
+    l = sig; r = sig;
+    OffsetOut.ar(out, Balance2.ar(l, r, pan, amp));
+}).add;
+
+// stereo player
+SynthDef(\st_playbuf_stereo, { |out=0, buf=0, amp=0.5, rate=1, startPos=0, pan=0|
+    var rateScale, sig, l, r;
+    rateScale = BufRateScale.kr(buf) * rate;
+    sig = PlayBuf.ar(2, buf, rateScale, startPos: startPos, doneAction: 2);
+    l = sig[0]; r = sig[1];
+    OffsetOut.ar(out, Balance2.ar(l, r, pan, amp));
+}).add;
+
+// stereo-ensuring player that accepts Buffer or keys
+if(~playBuf.isNil) {
+    ~playBuf = { |a, b=nil, c=nil, out=0, amp=0.6, rate=1, startPos=0, pan=0|
+        var buf, ch, defName;
+        buf = ~asBuf.(a, b, c);
+        if(buf.isNil) { ^nil };
+        ch = buf.numChannels ? 2;
+        defName = (ch == 1).if({ \st_playbuf_mono }, { \st_playbuf_stereo });
+        Synth(defName, [\out, out, \buf, buf, \amp, amp, \rate, rate, \startPos, startPos, \pan, pan])
+    };
 };
 
-setDefaultOut = { |bus|
-    auditionOut = bus;
-    ("[auditionOut set to " ++ bus ++ "]").postln;
+// auto-pick your mono or stereo chop def by buffer channels
+if(~chopInstrForBuf.isNil) {
+    ~chopInstrForBuf = { |buf|
+        var ch;
+        ch = buf.numChannels ? 2;
+        if(ch == 1) { \chop_pb_m } { \chop_pb_s }
+    };
 };
 
-~probeOutputs  = probeOutputsOneShot;
-~setDefaultOut = setDefaultOut;
-
-"[[sample_loader] ready]".postln;
+// convenience helper to trigger chop on a Buffer or keys
+if(~chopSample.isNil) {
+    ~chopSample = { |a, b=nil, c=nil, out=0, amp=0.5, rate=1|
+        var buf, instr;
+        buf = ~asBuf.(a, b, c);
+        if(buf.isNil) { "[chopSample] could not resolve to a Buffer".postln; ^nil };
+        instr = ~chopInstrForBuf.(buf);
+        Synth(instr, [\buf, buf, \out, out, \amp, amp, \rate, rate])
+    };
+};
 )
 

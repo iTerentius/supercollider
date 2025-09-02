@@ -1,7 +1,7 @@
 (
 SynthDef(\trigTest2, { |out, trig=0, freq=440|
     Out.ar(out, SinOsc.ar(freq+[0,1], 0, Decay2.kr(trig, 0.005, 1.0)));
-    }, [0, \tr, 4]        // lag the freq (lagtime: 4s), \tr creates a TrigControl for trig
+    }, [0, \tr, 4]        // lag the freq lagtime: 4s, \tr creates a TrigControl for trig
 ).add;
 );
 
@@ -26,19 +26,19 @@ SynthDef(\s1, {
 	Out.ar(out, s *0.5);
 }).add;
 );
-// (
+// 
 // var busses = ~dirt.orbits.collect { |x| x.dryBus };
 
-// SynthDef(\readorb, { |out, amp = 1, n = 0, obus = 0 | // number
+// SynthDef\readorb, { |out, amp = 1, n = 0, obus = 0 | // number
 // 	var bus, sound;
-// 	bus = Select.kr(n, busses);
-// 	sound = InFeedback.ar(bus, ~dirt.numChannels);
-// 	//sound = CombL.ar(sound, 0.2, 0.03, 1);
-// 	Out.ar(out,
-// 		sound * (amp * 2.5);
-// 	)
-// }).add;
-// );
+// 	bus = Select.krn, busses;
+// 	sound = InFeedback.arbus, ~dirt.numChannels;
+// 	//sound = CombL.arsound, 0.2, 0.03, 1;
+// 	Out.arout,
+// 		sound * amp * 2.5;
+// 	
+// }.add;
+// ;
 
 (
 SynthDef(\t1002, {
@@ -47,8 +47,8 @@ SynthDef(\t1002, {
 	arg out = 0, amp = 0.6, gate = 1, pan = 0, freq = 200, offset, noise=0, ph=1;
 	var sig, env;
 	env = EnvGen.kr(Env.circle([0.1, 0.25, 0.5], [0.25, 0.75]), 1);
-	sig = SinOsc.ar(freq + LFPulse.ar(freq: freq * 2, phase: ph, add: ph )) * env * ph * 3;
-	// sig = sig + LFNoise0.kr(noise + freq);
+	sig = SinOsc.ar(freq + LFPulse.ar(freq: freq * 2, iphase: ph, add: ph )) * env * ph * 3;
+	// sig = sig + LFNoise0.krnoise + freq;
 	Out.ar(out, Pan2.ar(sig, pan));
 }).add;
 );
@@ -147,7 +147,7 @@ SynthDef(\bass8, {
 		sig = Decimator.ar(sig, 22050,2);
 		sig = sig *env* amp;
 		Out.ar(out, Pan2.ar(sig, pan));
-		// Out.ar(aux, sig*auxsend);
+		// Out.araux, sig*auxsend;
 	}).add;
 );
 // version 2025-09-01  chop mono and stereo  PlayBuf only  no right parens in comments
