@@ -1,335 +1,237 @@
-
-// sample_loader.scd
-// version 2025-09-01 auto mono or stereo audition recursive loader no right parens in comments
-
-// state
-if(~samplesTree.isNil) { ~samplesTree = IdentityDictionary.new };
-if(~auditionOut.isNil) { ~auditionOut = 0 };
-if(~bufMeta.isNil) { ~bufMeta = IdentityDictionary.new };
-
-// helpers
-~canon = { |x|
-    var s;
-    s = x.asString;
-    s = s.toLower;
-    s = s.replace($ , $_);
-    s = s.replace($-, $_);
-    s = s.replace($., $_);
-    s = s.replace($[, $_);
-    s = s.replace($], $_);
-    s.asSymbol
-};
-
-~postRoot = { |root|
-    var msg;
-    msg = "[sample_loader] root, " ++ root ++ " ";
-    msg.postln;
-};
-
-// ensure audition synthdefs mono and stereo
-~ensureAuditionDefs = {
-    var haveM, haveS;
-
-    haveM = SynthDescLib.global.at(\audPBmono).notNil;
-    haveS = SynthDescLib.global.at(\audPBstereo).notNil;
-
-    if(haveM.not) {
-        SynthDef(\audPBmono, { |out=0, buf=0, rate=1, amp=0.8, startPos=0, loop=0, pan=0|
-            var sig;
-            sig = PlayBuf.ar(1, buf, BufRateScale.kr(buf) * rate, startPos: startPos, loop: loop);
-            sig = Pan2.ar(sig, pan);
-            OffsetOut.ar(out, sig * amp);
-        }).add;
-    };
-
-    if(haveS.not) {
-        SynthDef(\audPBstereo, { |out=0, buf=0, rate=1, amp=0.8, startPos=0, loop=0, pan=0|
-            var pair, left, right, outPair;
-            pair = PlayBuf.ar(2, buf, BufRateScale.kr(buf) * rate, startPos: startPos, loop: loop);
-            left = pair[0];
-            right = pair[1];
-            outPair = Balance2.ar(left, right, pan);
-            OffsetOut.ar(out, outPair * amp);
-        }).add;
-    };
-};
-
-// public api
-~setDefaultOut = { |pair=0|
-    var msg;
-    ~auditionOut = pair;
-    msg = "[auditionOut set to " ++ pair ++ "]";
-    msg.postln;
-};
-
-~printTree = {
-    var rec;
-    rec = { |d, indent=0|
-        d.keysValuesDo { |k, v|
-            (((" " ! indent).join) ++ k.asString).postln;
-            if(v.isKindOf(Dictionary) or: { v.isKindOf(IdentityDictionary) }) { rec.(v, indent+2) };
-        };
-    };
-    rec.(~samplesTree, 0);
-};
-
-~getSample = { |folderSym, fileSym|
-    var sub, buf;
-    sub = ~samplesTree[folderSym];
-    if(sub.isNil) { buf = nil } { buf = sub[fileSym] };
-    buf
-};
-
-// audition player auto mono or stereo
-~playBuf = { |buf, out, amp=0.8, rate=1, loop=0, start=0.0, pan=0|
-    var outBus, bnum, chs, frames, startPos, instr;
-
-    if(buf.isNil) { "[playBuf] nil buffer".postln; ^nil };
-
-    // choose default output here, not in the arg list
-    outBus = out;
-    if(outBus.isNil) { outBus = ~auditionOut };
-
-    // make sure audition defs exist
-    ~ensureAuditionDefs.();
-
-    bnum    = buf.bufnum;
-    chs     = if(buf.numChannels.isNil) { 2 } { buf.numChannels };
-    frames  = if(buf.numFrames.isNil)   { 0 } { buf.numFrames };
-    startPos = (start.clip(0, 1) * frames).round(1);
-
-    instr = if(chs == 1) { \audPBmono } { \audPBstereo };
-
-    ^Synth(instr, [
-        \out, outBus,
-        \buf, bnum,
-        \amp, amp,
-        \rate, rate,
-        \loop, loop,
-        \startPos, startPos,
-        \pan, pan
-    ]);
-};
-
-// recursive loader
-~loadSamplesRecursive = { |dirPath|
-    var root, count, t0, walk, addBuf, canonSym;
-
-    // normalize to a safe symbol  lower and underscores
-    canonSym = { |str|
-        var s;
-        s = str.asString.toLower.replace($ , $_).replace($-, $_).replace($., $_);
-        s.asSymbol
-    };
-
-    count = 0;
-    t0 = Main.elapsedTime;
-
-    root = dirPath.asString.standardizePath;
-    ("[sample_loader] root, " ++ root ++ " ").postln;
-
-    addBuf = { |fpath|
-        var parts, len, fname, folderName, base, nameParts, folderSym, fileSym, lower, ok;
-
-        parts = fpath.split($/);
-        len = parts.size;
-        if(len < 1) { ^nil };
-
-        fname = parts.last;
-        folderName = (len >= 2).if({ parts[len-2] }, { "root" });
-
-        lower = fpath.toLower;
-        ok = lower.endsWith(".wav") or: { lower.endsWith(".aif") } or: { lower.endsWith(".aiff") } or: { lower.endsWith(".flac") };
-        if(ok.not) { ^nil };
-
-        // strip extension by splitting on dot and rejoining everything except final segment
-        nameParts = fname.split($.);
-        base = (nameParts.size > 1).if({
-            nameParts.copyRange(0, nameParts.size - 2).join(".")
-        },{
-            fname
-        });
-
-        folderSym = canonSym.(folderName);
-        base = base.replace($ , $_).replace($-, $_).replace($., $_);
-        fileSym = base.asSymbol;
-
-        if(~samplesTree[folderSym].isNil) {
-            ~samplesTree[folderSym] = IdentityDictionary.new;
-        };
-
-        Buffer.read(s, fpath, action: { |b|
-            var sub, ch;
-            sub = ~samplesTree[folderSym];
-            sub[fileSym] = b;
-            ~samplesTree[folderSym] = sub;
-
-            ch = if(b.numChannels.isNil) { 2 } { b.numChannels };
-            ~bufMeta[b.bufnum] = ch;
-
-            ("[[ready], " ++ folderSym ++ " , " ++ fileSym ++ "]").postln;
-        });
-
-        count = count + 1;
-        ("[[add], " ++ folderSym ++ " , " ++ fileSym ++ "]").postln;
-    };
-
-    walk = { |path|
-        var dir, entries;
-        dir = PathName.new(path);
-        if(dir.isFolder.not) {
-            "[sample_loader] not a folder".warn;
-            ^nil
-        };
-        entries = dir.entries;
-        entries.do({ |child|
-            if(child.isFolder) {
-                walk.(child.fullPath);
-            }{
-                addBuf.(child.fullPath);
-            };
-        });
-    };
-
-    walk.(root);
-
-    ("[sample_loader] Loaded " ++ count ++ " files in " ++ (Main.elapsedTime - t0).round(0.001) ++ " s").postln;
-};
-
-// 2025-09-02 — robust sample root resolver, tolerant key match, mono or stereo player, chop helper
+// version 2025-09-02 21:05 America/Chicago sample loader and stereo helpers in one block
 
 (
-// small utility to get whichever tree exists
-if(~sampleRoot.isNil) {
-    ~sampleRoot = {
-        var root;
-        root = ~samplesTree;
-        if(root.isNil) { root = ~sampleTree };
-        if(root.isNil) { "[sampleRoot] no ~samplesTree or ~sampleTree is defined".postln };
-        ^root
-    };
-};
+/* =========================================================
+   1 load samples and build a tree
+   prints [add] when queuing and [ready] when a Buffer finishes
+   returns the tree and stores to ~samplesTree and ~sampleTree
+   ========================================================= */
 
-// optional quick inspector for the current tree
-if(~listTopKeys.isNil) {
-    ~listTopKeys = {
-        var root, keys;
-        root = ~sampleRoot.();
-        if(root.isNil) { ^nil };
-        keys = root.tryPerform(\keys) ? [];
-        "[listTopKeys] top level keys → %".format(keys).postln;
-        ^keys
-    };
-};
+// 2025-09-02 21:20 America/Chicago — loader with robust root key and guaranteed tree set
 
-// tolerant key finder that accepts Symbol or String and ignores case and basic separators
-if(~matchKey.isNil) {
-    ~matchKey = { |dict, key|
-        var dictKeys, normChar, normalize, target, chosen;
-        dictKeys = dict.tryPerform(\keys) ? [];
-        normChar = { |c| var ch; ch = c; if(ch == $_ or: { ch == $- } or: { ch == $\  }) { $_ } { ch.toLower } };
-        normalize = { |s| var str, arr; str = s.asString; arr = str.collect(normChar); String.newFrom(arr) };
-        target = normalize.(key);
-        chosen = dictKeys.detect { |k| normalize.(k) == target };
-        ^chosen
-    };
-};
 
-// resolve either a Buffer or exact-ish keys into a Buffer with good error messages
-if(~asBuf.isNil) {
-    ~asBuf = { |a, b=nil, c=nil|
-        var root, path, buf, v, k, step, levels, label, found;
-        if(a.isKindOf(Buffer)) {
-            buf = a;
-            ^buf
-        };
-        root = ~sampleRoot.();
-        if(root.isNil) { "[asBuf] no sample tree is available".postln; ^nil };
-        path = [a, b, c].reject(_.isNil);
-        label = path.collect(_.asString).join("/");
+~loadSamplesRecursive = { |rootPath|
+    var server, expanded, rootPN, tree, exts;
+    var deriveKey, toSampleKey;
+    var entries, rootFiles, subfolders;
+    var ensureFolder, registerFile, loadFile;
+    var registered, start, elapsed, total;
 
-        v = root;
-        levels = path.size;
-        step = 0;
-        while { step < levels } {
-            k = path[step];
-            if(v.isKindOf(Buffer)) {
-                "[asBuf] encountered a Buffer before finishing the path → %".format(label).postln;
-                ^v
-            };
-            if(v.isNil) {
-                "[asBuf] parent is nil at step % for %".format(step + 1, label).postln;
-                ^nil
-            };
-            found = v.at(k);
-            if(found.isNil) {
-                // try tolerant match
-                var mk;
-                mk = ~matchKey.(v, k);
-                if(mk.notNil) { found = v.at(mk) };
-            };
-            if(found.isNil) {
-                "[asBuf] not found at level % for key % in %".format(step + 1, k, label).postln;
-                ^nil
-            };
-            v = found;
-            step = step + 1;
-        };
+    server   = s;
+    expanded = rootPath.standardizePath;
 
-        if(v.isKindOf(Buffer)) { ^v };
-        "[asBuf] resolved % but final value is not a Buffer".format(label).postln;
+    if(File.exists(expanded).not) {
+        "[sample_loader] ERROR root missing → %".format(expanded).postln;
         ^nil
     };
-};
 
-// mono player duplicated to stereo
-SynthDef(\st_playbuf_mono, { |out=0, buf=0, amp=0.5, rate=1, startPos=0, pan=0|
-    var rateScale, sig, l, r;
-    rateScale = BufRateScale.kr(buf) * rate;
-    sig = PlayBuf.ar(1, buf, rateScale, startPos: startPos, doneAction: 2);
-    l = sig; r = sig;
-    OffsetOut.ar(out, Balance2.ar(l, r, pan, amp));
-}).add;
+    rootPN = PathName.new(expanded);
 
-// stereo player
-SynthDef(\st_playbuf_stereo, { |out=0, buf=0, amp=0.5, rate=1, startPos=0, pan=0|
-    var rateScale, sig, l, r;
-    rateScale = BufRateScale.kr(buf) * rate;
-    sig = PlayBuf.ar(2, buf, rateScale, startPos: startPos, doneAction: 2);
-    l = sig[0]; r = sig[1];
-    OffsetOut.ar(out, Balance2.ar(l, r, pan, amp));
-}).add;
+    exts = ["wav", "aif", "aiff", "flac"];
 
-// stereo-ensuring player that accepts Buffer or keys
-if(~playBuf.isNil) {
-    ~playBuf = { |a, b=nil, c=nil, out=0, amp=0.6, rate=1, startPos=0, pan=0|
-        var buf, ch, defName;
-        buf = ~asBuf.(a, b, c);
-        if(buf.isNil) { ^nil };
-        ch = buf.numChannels ? 2;
-        defName = (ch == 1).if({ \st_playbuf_mono }, { \st_playbuf_stereo });
-        Synth(defName, [\out, out, \buf, buf, \amp, amp, \rate, rate, \startPos, startPos, \pan, pan])
+    // folder key from last non-empty path segment
+    deriveKey = { |pn|
+        var segs, last, norm;
+        segs = pn.fullPath.split($/).reject({ |s| s.isEmpty });
+        last = segs.isEmpty.if({ "" }, { segs.last });
+        norm = last.asString.toLower;
+        if(norm.size == 0) { ^\root };
+        ^norm.asSymbol
     };
+
+    // sample key from filename, dots and spaces to underscores
+    toSampleKey = { |name|
+        var base;
+        base = name.asString;
+        base = base.replace($., $_);
+        base = base.replace($ , $_);
+        base = base.replace($-, $_);
+        ^base.asSymbol
+    };
+
+    tree = IdentityDictionary.new;
+    ~samplesTree = tree;
+    ~sampleTree  = tree;   // mirror for older code
+
+    "[sample_loader] REGISTER start → %".format(rootPN.fullPath).postln;
+
+    start = SystemClock.seconds;
+    registered = List.new;
+    total = 0;
+
+    // helper to ensure a folder dict exists
+    ensureFolder = { |folderKey|
+        if(tree.includesKey(folderKey).not) {
+            "[ensure] make folder key → %".format(folderKey).postln;
+            tree.put(folderKey, IdentityDictionary.new);
+        }{
+            "[ensure] folder key already present → %".format(folderKey).postln;
+        };
+        ^tree.at(folderKey)
+    };
+
+    // first pass: register the file path as a placeholder so keys appear immediately
+    registerFile = { |folderKey, filePN|
+        var ext, base, sampleKey, subdict, info;
+        ext = filePN.extension.asString.toLower;
+
+        "[try] register % ext % → folder %"
+        .format(filePN.fileName, ext, folderKey).postln;
+
+        if(exts.detect({ |e| e == ext }).isNil) {
+            "[skip] unsupported ext for %".format(filePN.fileName).postln;
+            ^nil
+        };
+
+        base      = filePN.fileNameWithoutExtension;
+        sampleKey = toSampleKey.(base);
+        subdict   = ensureFolder.(folderKey);
+
+        // store a small info dict for now; replaced by Buffer on load
+        info = (path: filePN.fullPath, ext: ext, status: \queued);
+        subdict.put(sampleKey, info);
+
+        "[[add], % , %]".format(folderKey.asString, sampleKey.asString).postln;
+
+        registered.add([folderKey, sampleKey, filePN.fullPath]);
+        total = total + 1;
+    };
+
+    // second pass: actually load buffers and replace placeholders
+    loadFile = { |folderKey, sampleKey, fullPath|
+        Buffer.read(server, fullPath, action: { |b|
+            tree[folderKey][sampleKey] = b;
+            "[[ready], % , %]".format(folderKey.asString, sampleKey.asString).postln;
+        });
+    };
+
+    // enumerate root entries
+    entries    = rootPN.entries ? [];
+    rootFiles  = entries.select(_.isFile) ? [];
+    subfolders = entries.select(_.isFolder) ? [];
+
+    "[debug] entries %  rootFiles %  subfolders %"
+    .format(entries.size, rootFiles.size, subfolders.size).postln;
+
+    // register loose files at root
+    if(rootFiles.size > 0) {
+        var rootKey;
+        rootKey = deriveKey.(rootPN);
+        "[root] register % files under → %".format(rootFiles.size, rootKey).postln;
+        rootFiles.do { |fp| registerFile.(rootKey, fp) };
+    }{
+        "[root] no loose files".postln;
+    };
+
+    // register files in each immediate subfolder
+    if(subfolders.size > 0) {
+        "[folders] iterating % subfolders".format(subfolders.size).postln;
+        subfolders.do { |folderPN|
+            var folderKey, files;
+            folderKey = deriveKey.(folderPN);
+            files = folderPN.entries.select(_.isFile) ? [];
+            "[folder] % has % files".format(folderKey, files.size).postln;
+            files.do { |fp| registerFile.(folderKey, fp) };
+        };
+    }{
+        "[folders] none".postln;
+    };
+
+    // keys should be visible now
+    "[registered] keys → %".format((tree.keys ? []).asArray).postln;
+
+    elapsed = (SystemClock.seconds - start).round(0.001);
+    "[registered] queued % files in % s".format(total, elapsed).postln;
+
+    // kick off buffer loads
+    registered.do { |triple|
+        loadFile.(triple[0], triple[1], triple[2])
+    };
+
+    ^tree
+};
+/* =========================================================
+
+   2 tiny stereo safe players
+   no comments with closing parens and vars at top of functions
+   ========================================================= */
+
+s.waitForBoot {
+    SynthDef(\st_play_mono, { |out=0, buf=0, amp=0.5, rate=1, startPos=0, pan=0|
+        var rs, sig, l, r;
+        rs  = BufRateScale.kr(buf) * rate;
+        sig = PlayBuf.ar(1, buf, rs, startPos: startPos, doneAction: 2);
+        l   = sig; r = sig;
+        OffsetOut.ar(out, Balance2.ar(l, r, pan, amp));
+    }).add;
+
+    SynthDef(\st_play_stereo, { |out=0, buf=0, amp=0.5, rate=1, startPos=0, pan=0|
+        var rs, sig, l, r;
+        rs  = BufRateScale.kr(buf) * rate;
+        sig = PlayBuf.ar(2, buf, rs, startPos: startPos, doneAction: 2);
+        l   = sig[0]; r = sig[1];
+        OffsetOut.ar(out, Balance2.ar(l, r, pan, amp));
+    }).add;
 };
 
-// auto-pick your mono or stereo chop def by buffer channels
-if(~chopInstrForBuf.isNil) {
-    ~chopInstrForBuf = { |buf|
-        var ch;
-        ch = buf.numChannels ? 2;
-        if(ch == 1) { \chop_pb_m } { \chop_pb_s }
-    };
+/* =========================================================
+   3 helpers to inspect the tree, resolve buffers, and play
+   ========================================================= */
+
+~listTopKeys = {
+    var root, keys;
+    root = ~samplesTree; if(root.isNil and: { ~sampleTree.notNil }) { root = ~sampleTree };
+    if(root.isNil) { "[listTopKeys] no sample tree".postln; ^nil };
+    keys = root.tryPerform(\keys) ? [];
+    "[listTopKeys] top keys → %".format(keys).postln;
+    ^keys
 };
 
-// convenience helper to trigger chop on a Buffer or keys
-if(~chopSample.isNil) {
-    ~chopSample = { |a, b=nil, c=nil, out=0, amp=0.5, rate=1|
-        var buf, instr;
-        buf = ~asBuf.(a, b, c);
-        if(buf.isNil) { "[chopSample] could not resolve to a Buffer".postln; ^nil };
-        instr = ~chopInstrForBuf.(buf);
-        Synth(instr, [\buf, buf, \out, out, \amp, amp, \rate, rate])
+~asBuf = { |a, b=nil, c=nil|
+    var t, path, v1, v2, v3, buf;
+    if(a.isKindOf(Buffer)) {
+        buf = a;
+        ^buf
     };
+    t = ~samplesTree; if(t.isNil and: { ~sampleTree.notNil }) { t = ~sampleTree };
+    if(t.isNil) { "[asBuf] no sample tree available".postln; ^nil };
+    path = [a, b, c].reject(_.isNil);
+
+    v1 = t.at(path[0]);
+    if(path.size == 1) { ^(v1.isKindOf(Buffer).if({ v1 }, { nil })) };
+
+    v2 = v1.tryPerform(\at, path[1]);
+    if(path.size == 2) { ^(v2.isKindOf(Buffer).if({ v2 }, { nil })) };
+
+    v3 = v2.tryPerform(\at, path[2]);
+    ^(v3.isKindOf(Buffer).if({ v3 }, { nil }))
 };
-)
+
+~playBuf = { |a, b=nil, c=nil, out=0, amp=0.6, rate=1, startPos=0, pan=0|
+    var buf, ch, defName;
+    buf = ~asBuf.(a, b, c);
+    if(buf.isNil) { "[playBuf] buf is nil".postln; ^nil };
+    ch = buf.numChannels ? 2;
+    defName = (ch == 1).if({ \st_play_mono }, { \st_play_stereo });
+    "[playBuf] bufnum:% channels:% def:% out:%"
+    .format(buf.bufnum, ch, defName, out).postln;
+    Synth(defName, [\out, out, \buf, buf, \amp, amp, \rate, rate,
+                    \startPos, startPos, \pan, pan])
+};
+
+~chopInstrForBuf = { |buf|
+    var ch;
+    ch = buf.numChannels ? 2;
+    if(ch == 1) { \chop_pb_m } { \chop_pb_s }
+};
+
+~chopSample = { |a, b=nil, c=nil, out=0, amp=0.5, rate=1|
+    var buf, instr;
+    buf = ~asBuf.(a, b, c);
+    if(buf.isNil) { "[chopSample] could not resolve to a Buffer".postln; ^nil };
+    instr = ~chopInstrForBuf.(buf);
+    Synth(instr, [\buf, buf, \out, out, \amp, amp, \rate, rate])
+};
+
+)  // end single outer block
 
