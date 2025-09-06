@@ -1,68 +1,90 @@
+~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/Field/");
+~loadSamplesRecursive.("~/Music/supercollider/_samples/Neutron_12/");
+~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/");
 
-// exact keys
-~storm = ~samplesTree[\Storm][\Storm_05_11_2022_01];
+~listTopKeys.();                                   // should show [ samp, bambu, field ] in your case
+~samp = ~samplesTree[\bass_drums][\SHD_808BD_03];
+~samp = ~samplesTree[\field][\cat_food];
+~samp = ~samplesTree[\neutron_12][\121];
+~samples = ~samplesTree.at(\neutron_12);
+~samples = ~samplesTree.at(\hoarder);
+~samples = ~samplesTree.at(\bass_drums);
+~samples.postln;
+~bufnums = ~samples.collect(_.bufnum);
 
-// decide instrument name based on channel count in language
-~chopInstr = (~storm.numChannels == 1).if(\chop_pb_m, \chop_pb_s);
-~chopInstr.postln;  // should print chop_pb_s for your Storm file
+Ndef(\s1).play;
+Ndef(\s1).fadeTime = 1;
+(
+Ndef(\s1, {
+    var bufnums = ~bufnums;
+    var which = TIRand.kr(0, bufnums.size-1, Impulse.kr(1)); // random index each second
+    var bufnum = Select.kr(which, bufnums);
+    PlayBuf.ar(1, bufnum, 1, loop: 1)!2 * 0.5
+}).play;
+)
+(
+Ndef(\s1, {| rate=1, amp=0.5 | 
+  var rateSig = Lag.kr(rate, 0.05); 
+  // Poll.kr(Impulse.kr(2), rateSig, label:"rate"); 
+  PlayBuf.ar(numChannels: 1, bufnum: Prand(~samples, inf), rate: rateSig, loop: 1)!2 * amp
+});
+)
+Ndef(\s1)[1] = \filter -> { |in, dur=1, amp=0.5 | GrainIn.ar(2, Impulse.kr(32), dur, in, 0.5) * amp * 0.2} 
+Ndef(\s1)[2] = \filter -> { |in, dur=1, amp=0.5 | CombL.ar(in) } 
+Ndef(\s1)[3] = \pset -> Pbind(\rate, Pwhite(0.1, 2.0, inf), \dur, Pseq([0.125, 0.25, 0.5, 1.0, 1.5], inf), \amp, 0.6);
+Ndef(\s1)[1] = nil;
 
-( 
-Synth(~chopInstr, [
-    \out, 0,
-    \buf, ~storm.bufnum,  // bufnum for SynthDef
-    \chop, 8, \slice, 0, \start, 0.0, \stop, 1.0,
-    \rate, 1.0, \amp, 0.35, \pan, 0.0,
-    \useInternal, 0, \gate, 1, \atk, 0.005, \rel, 0.06
-]);
- )
+Ndef(\s1).set(\wet1, 1);
 
 
-Pdef(\stormChop_clean).stop.clear;
-( 
-Pdef(\stormChop_clean,
-    Pbind(
-        \type, \note,
-        \instrument, Pfunc { ~chopInstr },    // mono or stereo chosen here
-        \out, 0,
-        \buf, ~storm.bufnum,
-        \chop, 8,
-        \slice, Pseq((0..7), inf),
-        \start, 0.0,
-        \stop, 1.0,
-        \rate, 1.0,
-        \amp, 0.35,
-        \pan, 0.0,
-        \useInternal, 0,                     // pattern controls gate
-        \atk, 0.005,
-        \rel, 0.06,
-        \dur, 0.25,
-        \legato, 0.9
-    )
-).play;   // trace first to confirm instrument and buf values 
+// doesn't drive the rate. 
+(
+Pdef(\p1, Pbind(
+  \type, \pset,
+  \id, Pfunc {Ndef(\s1).nodeID},
+  \dur, Pwhite(0.5, 2.0, inf),
+  \rate, Pwhite(0.5, 2.0, inf),
+)).play;
+)
+Ndef(\s1).map(\rate, Pseq([0.5, 1.0, 2.0], inf));
+Pdef(\p1).stop;
+Ndef(\s1).stop;
+
+Ndef(\s1).nodeID;
+Pdef(\p1)[\id].postln;
+// show what you have
+~samplesTree.keys.postln;                // should include \samp
+~samplesTree[\neutron_12].keys.postln;        // file keys inside samp
+
+// 2025-09-06 09:40 America/Chicago
+
+(
+// declare vars at the top
+var src, flt, pat;
+
+// source (slot 0)
+Ndef(\s1, { |amp = 0.2| Saw.ar(120) * amp });
+
+// filter (slot 1)
+Ndef(\s1)[1] = \filter -> { |in, freq = 1000, rq = 0.3|
+    RLPF.ar(in, freq, rq)
+};
+
+// play first so the synths actually exist
+Ndef(\s1).play;
+
+// pattern that always fetches the **current** node id of slot 1
+Pdef(\filtPat, Pbind(
+    \type, \set,
+    \id, Pfunc { Ndef(\s1).nodeID },   // fetch fresh node id each event
+    \freq, Pseq([200, 400, 800, 1600], inf),
+    \rq,   Pwhite(0.1, 0.9, inf),
+    \dur,  0.5,
+    \latency, s.latency                    // optional: align with server latency
+)).play;
 )
 
-// show what you have
-~samplesTree.keys.postln;                // should include \storm
-~samplesTree[\storm].keys.postln;        // file keys inside storm
-
-// quick exact access with the lowercase folder
-~storm = ~samplesTree[\storm][\Storm_05_11_2022_01];
-~playBuf.(~storm, amp: 0.6);
-
-~listTopKeys.();                                   // should show [ storm, bambu, field ] in your case
-~storm = ~asBuf.(\storm, \Storm_05_11_2022_01);    // Buffer(...)
-~playBuf.(~storm, amp: 0.6);                       // plays on out 0 1
-~chopSample.(~storm, amp: 0.5);                    // calls your \chop_pb_s since it's stereo
-
-// 1 load
-~loadSamplesRecursive.("~/Music/supercollider/_samples/Field/");
-
-// 2 confirm top keys
-~listTopKeys.();   // should print [ storm, bambu, field ] in your case
-
-// 3 resolve a Buffer and play
-~storm = ~asBuf.(\storm, \Storm_05_11_2022_01);
-~playBuf.(~storm, amp: 0.6);
-~chopSample.(~storm, amp: 0.5);
-
+~samp = Buffer.read(s, Platform.resourceDir +/+ "sounds/a11wlk01.wav");
+Ndef(\s1, {|rate=1| PlayBuf.ar(1, ~samp, rate, loop: 1)!2 }).play;
+Ndef(\s1).map(\rate, Pseq([0.5, 1, 2], inf));
