@@ -15,29 +15,23 @@
 s.stopRecording; // stop recording
 
 // Launch Control XL learn and bind
-~setBank.(0); // set bank, it remembers
-
-~setBank.(1); // set bank, it remembers
-
+// Run these in order if starting fresh
+~lcxl_config[\midiChan] = 9
+~installCCByNameRouter.();
+~setBank.(0);
+~learnFaders.();
 ~learnRow1.();
 ~learnRow2.();
 ~learnRow3.();
-~learnFaders.();
+~printMapAll.();
+~ccSanity.();
 
-~setMapPath.("/Users/isaaclinder/Music/supercollider/0_startup/_includes/_midi-ctrl/lcxl-router.map");
-// learn a control or two…
-~saveMap.();     // creates the file & parent folder if missing
-~printMap.();    // should list b0-… keys
-~loadMap.();
+// Example bind
+~ccBindParam.(\b0_f1, \track, \amp, ControlSpec(0, 0.5, \lin, 0, 0));
 
-~mapStats.();     // should say entries: 16 and show banks, e.g. [ "b0", ... ]
-~printMapAll.();  // should list b0-... keys explicitly
-~printMap.(0);    // filtered for bank 0
-
-~migrateNamesToUnderscore.();
-
-~ccBind.(\f1, \track, \amp);  // defaults spec inside ~ccBind body
-~ccBind.(\t1r1, \track, \amp);  // defaults spec inside ~ccBind body
+// Persist
+~ccSave.();
+~ccLoad.();
 
 // Sample Loader
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/Field/");

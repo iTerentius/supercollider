@@ -52,7 +52,7 @@ s.waitForBoot {
     (thisProcess.nowExecutingPath.dirname +/+ "_includes/_midi-ctrl/lcxl-sc-cc-router.scd").load;
     // "_includes/_midi-ctrl/lcxl-sc-cc-router.scd".loadRelative;
     // install & load LCXL router
-    ~lcxlInit.();   // <-- safe, idempotent, only call once
+    ~ccLoad.();   // <-- safe, idempotent, only call once
 
     // --- SC Meters
     "_includes/sc-gui-meters.scd".loadRelative;

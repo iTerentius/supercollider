@@ -40,7 +40,7 @@ Ndef(\s1, { |amp=0.5 rate=1, dur=1|
 
 Ndef(\s1)[1] = \filter -> { |in, dur=1, amp=0.5, grains=32 | GrainIn.ar(2, LFPulse.kr(grains), dur, in, 0.5) *(grains /100)/amp } 
 Ndef(\s1)[2] = \filter -> { |in, dur=1, amp=0.5 | CombL.ar(in) } 
-Ndef(\s1)[3] = \pset -> Pbind(\rate, Pwhite(0.1, 2.0, inf), \dur, Pseq([0.125, 0.25, 0.5, 1.0, 1.5], inf), \amp, 0.6);
+Ndef(\s1)[3] = \pset -> Pbind(\rate, Pwhite(0.5, 2.0, inf), \dur, Pseq([0.125, 0.25, 0.5, 1.0, 1.5], inf), \amp, 0.6);
 Ndef(\s1)[1] = nil;
 
 Ndef(\s1).set(\wet1, 0.3);
