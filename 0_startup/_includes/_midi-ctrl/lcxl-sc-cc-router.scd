@@ -1,434 +1,356 @@
-/* LaunchControl XL — Multi-Bank Router (underscore, stable)
-   ---------------------------------------------------------
-   - Key names: \bN_f1..f8, \bN_tX_rY (e.g. \b0_f1, \b0_t1_r1)
-   - Bank buttons: Back CC106 (val==0) dec; Next CC107 (val>0) inc — global listener
-   - On load: adopts UID + channel from saved map
-   - Bindings: prefer Ndef, then Pdef (only if it works), else ~onCCValue
-*/
+// LCXL CC Router — full include with bind save load — 2025-09-07 America/Chicago
+(
+////////////////////////////////////////////////////////////////////////////////
+// CONFIG
+////////////////////////////////////////////////////////////////////////////////
+~lcxl_config = (
+    deviceName: "Launch Control XL",
+    midiChan: 9,
+    mapPath: Platform.userHomeDir +/+ "Music/supercollider/_lcxl_cc_map.txt"
+);
 
-// ==================== Config / Path ====================
-~ccMapDefaultPath = {
-    "/Users/isaaclinder/Music/supercollider/0_startup/_includes/_midi-ctrl/lcxl-router.map"
-};
-
-~ccMapPendingPath = ~ccMapPendingPath ? nil;
-~lcxlAutoInitDone = ~lcxlAutoInitDone ? false;
-~lcxlDebug = ~lcxlDebug ? false;  // set true to see routing debug
-
-// ==================== Helpers ====================
-~ensureDir = { |path|
-    var dir, ok;
-    dir = PathName(path).pathOnly;
-    if(dir.notNil and: { dir.size > 0 }) {
-        if(File.exists(dir).not) {
-            ok = File.mkdir(dir);
-            if(ok.not) { ("[ saveMap ] couldn't create dir: " ++ dir).warn; };
-        };
-    };
-    dir
-};
-
-~setMapPath = { |path|
-    var finalPath, r;
-    finalPath = path ? ~ccMapDefaultPath.();
-    r = ~ccRouter ?? { ~installCCByNameRouter.() };
-    if(r.notNil) { r[\mapFile] = finalPath }{ ~ccMapPendingPath = finalPath };
-    ("[ mapPath set ] %").format(finalPath).postln;
-    finalPath
-};
-
-// ==================== Router ====================
+////////////////////////////////////////////////////////////////////////////////
+// INSTALLER
+////////////////////////////////////////////////////////////////////////////////
 ~installCCByNameRouter = {
-    var routerExists, init, onCC, def, r;
+    var r, dev, makeMatcher, tryFind, mk;
+    r = IdentityDictionary.new;
+    dev = nil;
 
-    routerExists = ~ccRouter.notNil and: { ~ccRouter.isKindOf(IdentityDictionary) };
-    if(routerExists) { ^~ccRouter };
-
-    init = {
-        var rr;
-        rr = IdentityDictionary.new;
-        rr[\uid]         = nil;                 // adopted from learn or load
-        rr[\filterByUID] = true;                // allow nil (adopt first seen UID)
-        rr[\chan]        = 7;                   // 0-based in SC; LCXL shows this as channel 8
-        rr[\devSubstr]   = "Launch Control XL";
-        rr[\ccMap]       = IdentityDictionary.new;
-        rr[\binds]       = IdentityDictionary.new;
-        rr[\defs]        = IdentityDictionary.new;
-        rr[\bank]        = 0;
-        rr[\mapFile]     = (~ccMapPendingPath ? ~ccMapDefaultPath.());
-        rr
-    };
-
-    ~ccRouter = init.value;
-    r = ~ccRouter;
-
-    onCC = { |val, cc, chan, src|
-        var uid, allowDevice, okChan, bankTag, keyString;
-        var recCC, recChan, recUID, ccMatch, chanMatch, uidMatch;
-
-        uid = src.tryPerform(\uid) ? src;
-
-        // Accept first device to set UID when filterByUID is true but UID is nil
-        allowDevice = r[\filterByUID].if({ r[\uid].isNil or: { uid == r[\uid] } }, { true });
-        if(r[\uid].isNil and: { allowDevice }) {
-            r[\uid] = uid; ("[ router ] adopted UID: %").format(uid).postln;
-        };
-
-        okChan  = (chan == (r[\chan] ? 7));
-        bankTag = ("b" ++ r[\bank] ++ "_").asString;
-
-        if(~lcxlDebug) {
-            ("[ onCC ] val:% cc:% chan:% uid:% bankTag:% okChan:%"
-                .format(val, cc, chan, uid, bankTag, okChan)).postln;
-        };
-
-        if(allowDevice and: { okChan }) {
-            r[\ccMap].keysValuesDo { |key, rec|
-                recCC   = rec[\cc]; recChan = rec[\chan]; recUID = rec[\uid];
-                ccMatch = recCC == cc; chanMatch = recChan == chan;
-                uidMatch= recUID.isNil or: { recUID == uid };
-                keyString = key.asString;
-                if(keyString.beginsWith(bankTag) and: { ccMatch } and: { chanMatch } and: { uidMatch }) {
-                    if(~lcxlDebug) { ("[ route ] % matched".format(key)).postln };
-                    ~ccApplyBinding.(key, val);
-                };
-            };
-        };
-    };
-
-    def = MIDIdef.cc(\_ccrouter_global, onCC);
-    r[\defs][\globalRouter] = def;
-    r
-};
-
-// ==================== Banking ====================
-~getBank = { var r; r = ~ccRouter ?? { ~installCCByNameRouter.() }; r[\bank] ? 0 };
-
-~setBank = { |n|
-    var r, nn;
-    r = ~ccRouter ?? { ~installCCByNameRouter.() };
-    nn = n.max(0);
-    if(nn != (r[\bank] ? 0)) { r[\bank] = nn; "[ bank ] b%".format(nn).postln; };
-    r[\bank]
-};
-
-~incBank = { ~setBank.(~getBank.() + 1) };
-~decBank = { ~setBank.( (~getBank.() - 1).max(0) ) };
-
-~installBankButtons = {
-    var r, def;
-    r = ~ccRouter; if(r.isNil) { ^nil };
-    (r[\defs][\bankButtons]).tryPerform(\free);
-
-    // Global listen (no filter) so buttons always change bank
-    def = MIDIdef.cc(\_ccrouter_bank, { |val, cc, chan, src|
-        if(cc == 107 and: { val > 0 }) {
-            ~incBank.();
-            ("[ bank ] Next → b% (val:% chan:% uid:%)")
-                .format(~getBank.(), val, chan, src.tryPerform(\uid) ? src).postln;
-        };
-        if(cc == 106 and: { val == 0 }) {
-            ~decBank.();
-            ("[ bank ] Back → b% (val:% chan:% uid:%)")
-                .format(~getBank.(), val, chan, src.tryPerform(\uid) ? src).postln;
-        };
-    });
-
-    def.permanent_(true);
-    r[\defs][\bankButtons] = def;
-    "[ bank ] handlers installed (global CC106/107)".postln;
-};
-
-// ==================== Name Helpers ====================
-~withBankName = { |baseSym|
-    var r, bank, baseStr;
-    r = ~ccRouter ?? { ~installCCByNameRouter.() };
-    bank = r[\bank] ? 0;
-    baseStr = baseSym.asString;
-    ("b" ++ bank ++ "_" ++ baseStr).asSymbol
-};
-
-~withBankNames = { |syms|
-    var out;
-    out = syms.collect { |s| ~withBankName.(s) };
-    out
-};
-
-// ==================== Learning ====================
-~learnFaders = {
-    var r, wantCCs, baseNames, names, idx, got, def;
-    r = ~ccRouter ?? { ~installCCByNameRouter.() };
-    wantCCs   = (77..84);
-    baseNames = [\f1,\f2,\f3,\f4,\f5,\f6,\f7,\f8];
-    names     = ~withBankNames.(baseNames);
-    idx = 0; got = IdentityDictionary.new;
-
-    MIDIdef(\_ccrouter_learnFaders).free;
-
-    def = MIDIdef.cc(\_ccrouter_learnFaders, { |val, cc, chan, src|
-        var uid, expect, routerChan, okChan, accepted, slotName;
-        uid = src.tryPerform(\uid) ? src;
-        routerChan = r[\chan] ? 7;
-        expect = wantCCs[idx];
-        okChan = (chan == routerChan);
-        accepted = okChan and: { cc == expect };
-
-        if(accepted) {
-            slotName = names[idx];
-            got[slotName] = (cc: cc, chan: chan, uid: uid);
-            ("% ✔ % → cc:% (chan:%)".format(slotName, cc, chan)).postln;
-            if(r[\uid].isNil) { r[\uid] = uid };
-            idx = idx + 1;
-
-            if(idx >= names.size) {
-                def.free;
-                got.keysValuesDo { |k, v| r[\ccMap][k] = v };
-                ("[ ccLoad ('ok': true, 'names': %) ]").format(got.keys).postln;
-            };
-        };
-    });
-
-    def.permanent_(true);
-    r[\defs][\learnFaders] = def;
-    r
-};
-
-~ccMakeRowLearner = { |label, ccList, baseNames|
-    var r, idx, got, def, names;
-    r = ~ccRouter ?? { ~installCCByNameRouter.() };
-    idx = 0; got = IdentityDictionary.new;
-    names = ~withBankNames.(baseNames);
-
-    MIDIdef(\_ccrouter_learnRow).free;
-
-    def = MIDIdef.cc(\_ccrouter_learnRow, { |val, cc, chan, src|
-        var uid, expect, routerChan, okChan, accepted, slotName;
-        uid = src.tryPerform(\uid) ? src; routerChan = r[\chan] ? 7;
-        expect = ccList[idx];
-        okChan = (chan == routerChan);
-        accepted = okChan and: { cc == expect };
-
-        if(accepted) {
-            slotName = names[idx];
-            got[slotName] = (cc: cc, chan: chan, uid: uid);
-            ("% ✔ % → cc:% (chan:%)".format(slotName, cc, chan)).postln;
-            if(r[\uid].isNil) { r[\uid] = uid };
-            idx = idx + 1;
-
-            if(idx >= names.size) {
-                def.free;
-                got.keysValuesDo { |k, v| r[\ccMap][k] = v };
-                ("[ ccLoad ('ok': true, 'names': %) ]").format(got.keys).postln;
-            };
-        };
-    });
-
-    def.permanent_(true);
-    r[\defs][\learnRow] = def;
-    r
-};
-
-~learnRow1 = { ~ccMakeRowLearner.( "Row1", [13,14,15,16,17,18,19,20], [\t1r1,\t2r1,\t3r1,\t4r1,\t5r1,\t6r1,\t7r1,\t8r1] ) };
-~learnRow2 = { ~ccMakeRowLearner.( "Row2", [21,22,23,24,25,26,27,28], [\t1r2,\t2r2,\t3r2,\t4r2,\t5r2,\t6r2,\t7r2,\t8r2] ) };
-~learnRow3 = { ~ccMakeRowLearner.( "Row3", [29,30,31,32,33,34,35,36], [\t1r3,\t2r3,\t3r3,\t4r3,\t5r3,\t6r3,\t7r3,\t8r3] ) };
-
-// ==================== Binding ====================
-~ccBind = { |name, target, param, spec, lag = 0.0|
-    var r, bindsForKey, binding, defSpec;
-    r = ~ccRouter ?? { ~installCCByNameRouter.() };
-    bindsForKey = r[\binds][name] ? Array.new;
-    // default to 0..1 for musical params unless spec is provided
-    defSpec = spec ? ControlSpec(0, 1, \lin);
-    binding = ( target: target, param: param, spec: defSpec, lag: lag );
-    r[\binds][name] = bindsForKey.add(binding);
-    ("[ bind ] % → %.% (spec:% lag:% bank:b%)"
-        .format(name, target, param, defSpec, lag, ~getBank.())).postln;
-    r
-};
-
-// *** Final, robust binder: try Ndef, then Pdef, else ~onCCValue ***
-~ccApplyBinding = { |name, midiVal|
-    var r, bindsForKey, valueFrom127, trigged;
-    var target, param, spec, lag, value, ok;
-
-    r = ~ccRouter ?? { ~installCCByNameRouter.() };
-    bindsForKey = r[\binds][name];
-    if(bindsForKey.isNil or: { bindsForKey.isEmpty }) { ^nil };
-
-    trigged = false;
-    valueFrom127 = { |s| (s ? ControlSpec(0, 1, \lin)).map(midiVal / 127.0) };
-
-    bindsForKey.do { |b|
-        target = b[\target];
-        param  = b[\param];
-        spec   = b[\spec];
-        lag    = b[\lag] ? 0.0;
-        value  = valueFrom127.(spec);
-        ok     = false;
-
-        // 1) Ndef, unconditionally (avoids Ndef.all emptiness issues)
-        try {
-            Ndef(target).set(param, value);
-            ("[ cc ] % → Ndef(%).% = %").format(name, target, param, value).postln;
-            ok = true;
-        } { |e| };
-
-        // 2) Pdef if Ndef wasn't set successfully
-        if(ok.not) {
-            try {
-                Pdef(target).set(param, value);
-                ("[ cc ] % → Pdef(%).% = %").format(name, target, param, value).postln;
-                ok = true;
-            } { |e| };
-        };
-
-        // 3) Fallback hook
-        if(ok.not) {
-            if(~onCCValue.notNil) {
-                ~onCCValue.(name, value, midiVal);
-                ("[ cc ] % → ~onCCValue (val:% raw:%)").format(name, value, midiVal).postln;
-                ok = true;
-            } {
-                ("[ cc ] % had a binding but target wasn't found (no Pdef/Ndef/Function)")
-                    .format(name).warn;
-            };
-        };
-
-        if(ok) { trigged = true };
-    };
-
-    trigged
-};
-
-// ==================== Persistence ====================
-~saveMap = { |path|
-    var r, fpath, count;
-    r = ~ccRouter ?? { ~installCCByNameRouter.() };
-    fpath = path ? (r[\mapFile] ? ~ccMapDefaultPath.());
-    r[\mapFile] = fpath;
-    ~ensureDir.(fpath);
-    r[\ccMap].writeArchive(fpath);
-    count = r[\ccMap].size;
-    ("[ saveMap ('ok':true,'count':%,'path':%) ]").format(count, fpath).postln;
-    fpath
-};
-
-~loadMap = { |path|
-    var r, fpath, exists, loaded, asId, count, firstUID, firstChan;
-    r = ~ccRouter ?? { ~installCCByNameRouter.() };
-    fpath = path ? (r[\mapFile] ? ~ccMapDefaultPath.());
-    exists = File.exists(fpath);
-    if(exists.not) { ("[ loadMap ('info':no file,'path':%) ]").format(fpath).postln; ^nil };
-
-    loaded = Object.readArchive(fpath);
-    asId = loaded.isKindOf(IdentityDictionary).if({ loaded }, {
-        var id; id = IdentityDictionary.new;
-        loaded.keysValuesDo { |k, v| id[k] = v }; id
-    });
-
-    // Adopt first UID/chan from the map so routing works immediately
-    firstUID = nil; firstChan = nil;
-    asId.keysDo { |k|
-        var v; v = asId[k];
-        if(firstUID.isNil) { firstUID = v[\uid] };
-        if(firstChan.isNil) { firstChan = v[\chan] };
-    };
-
-    r[\ccMap] = asId;
-    if(r[\uid].isNil and: { firstUID.notNil }) {
-        r[\uid] = firstUID; ("[ router ] adopted UID from map: %").format(firstUID).postln;
-    };
-    if(firstChan.notNil and: { r[\chan] != firstChan }) {
-        r[\chan] = firstChan;
-        ("[ router ] adopted channel from map: % (0-based; device sees %)"
-            .format(firstChan, firstChan+1)).postln;
-    };
-
-    count = r[\ccMap].size;
-    ("[ loadMap ('ok':true,'count':%,'path':%) ]").format(count, fpath).postln;
-    count
-};
-
-// ==================== Inspect ====================
-~printMap = { |bank = nil|
-    var r, b, prefix, keys;
-    r = ~ccRouter ?? { ~installCCByNameRouter.() };
-    b = bank ?? { r[\bank] ? 0 };
-    prefix = ("b" ++ b ++ "_").asString;
-
-    keys = r[\ccMap].keys.as(Array)
-        .select { |k| k.asString.beginsWith(prefix) }
-        .collect(_.asString)
-        .sort;
-
-    ("---- CC Map (bank % only) ----".format(b)).postln;
-    if(keys.isEmpty) { "[printMap] no keys".postln; "------------------------------".postln; ^nil };
-
-    // Order rows r1→r3 t1..t8, then f1..f8
-    keys = keys.sort { |a, c|
-        var isFa, isFc, ra, rc, ta, tc, fa, fc;
-        isFa = a.contains("_f"); isFc = c.contains("_f");
-        if(isFa != isFc) { ^(isFa.not) }; // rows first
-        if(isFa and: { isFc }) { // compare faders
-            fa = a.findRegexp("f(\\d+)"); fc = c.findRegexp("f(\\d+)");
-            if(fa.isNil or: { fc.isNil }) { ^(a < c) };
-            ^(fa[1].asInteger < fc[1].asInteger)
-        }{
-            ra = a.findRegexp("r(\\d+)"); rc = c.findRegexp("r(\\d+)");
-            ta = a.findRegexp("t(\\d+)"); tc = c.findRegexp("t(\\d+)");
-            if(ra.isNil or: { rc.isNil } or: { ta.isNil } or: { tc.isNil }) { ^(a < c) };
-            (ra[1].asInteger < rc[1].asInteger) or: {
-                (ra[1].asInteger == rc[1].asInteger) and: { ta[1].asInteger < tc[1].asInteger }
-            }
+    makeMatcher = { |want|
+        var v;
+        v = want.asString;
+        { |src|
+            var n;
+            n = src.name ? "";
+            (n == v) or: { n.find(v).notNil }
         }
     };
 
-    keys.do { |ks|
-        var v;
-        v = r[\ccMap][ks.asSymbol];
-        "% -> cc:% chan:% uid:%".format(ks, v[\cc], v[\chan], v[\uid]).postln;
+    tryFind = {
+        var matcher, srcs, choice;
+        matcher = makeMatcher.(~lcxl_config[\deviceName]);
+        srcs = MIDIClient.sources.select(matcher);
+        choice = srcs.first;
+        choice
     };
-    "------------------------------".postln;
+
+    mk = {
+        var defs;
+        defs = IdentityDictionary.new;
+        r[\device] = tryFind.();
+        r[\chan]   = ~lcxl_config[\midiChan];
+        r[\bank]   = 0;
+        r[\ccMap]  = IdentityDictionary.new;
+        r[\defs]   = defs;
+        r
+    };
+
+    ~ccRouter = mk.();
+    "[ lcxl  ready ]".postln;
+    ~ccRouter
 };
 
-~printMapAll = {
-    var r, keys;
+////////////////////////////////////////////////////////////////////////////////
+// BANK HELPERS
+////////////////////////////////////////////////////////////////////////////////
+~setBank = { |n=0|
+    var r, nn;
+    r  = ~ccRouter ?? { ~installCCByNameRouter.() };
+    nn = n.clip(0, 3);
+    r[\bank] = nn;
+    ("[ bank  b" ++ nn ++ " ]").postln;
+    nn
+};
+
+~getBank = {
+    var r, b;
     r = ~ccRouter ?? { ~installCCByNameRouter.() };
-    keys = r[\ccMap].keys.as(Array).collect(_.asString).sort;
-    "---- CC Map (ALL KEYS) ----".postln;
-    keys.do { |ks|
-        var v; v = r[\ccMap][ks.asSymbol];
-        "% -> cc:% chan:% uid:%".format(ks, v[\cc], v[\chan], v[\uid]).postln;
+    b = r[\bank] ? 0;
+    b
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// NAMING
+////////////////////////////////////////////////////////////////////////////////
+~withBankNames = { |baseNames|
+    var bank, out;
+    bank = ~getBank.();
+    out  = baseNames.collect { |sym| ("b" ++ bank ++ "_" ++ sym.asString).asSymbol };
+    out
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// PRINTER
+////////////////////////////////////////////////////////////////////////////////
+~printMapAll = {
+    var r, map, keys;
+    r   = ~ccRouter ?? { ~installCCByNameRouter.() };
+    map = r[\ccMap] ? IdentityDictionary.new;
+    keys = map.keys.asArray.sort { |a, b| a.asString < b.asString };
+
+    "---- CC Map ALL KEYS ----".postln;
+    keys.do { |k|
+        var d, cc, ch, uid;
+        d = map[k];
+        cc = d[\cc]; ch = d[\chan]; uid = d[\uid];
+        ("% -> cc:% chan:% uid:%".format(k, cc, ch, uid)).postln;
     };
     "---------------------------".postln;
 };
 
-// ==================== Migration helper (dash → underscore) ====================
-~migrateNamesToUnderscore = {
-    var r, src, dst, changed;
+////////////////////////////////////////////////////////////////////////////////
+// LEARNER RESET
+////////////////////////////////////////////////////////////////////////////////
+~ccLearnerReset = {
+    var r, keys;
     r = ~ccRouter ?? { ~installCCByNameRouter.() };
-    src = r[\ccMap]; if(src.isNil) { ^nil };
-    dst = IdentityDictionary.new; changed = 0;
-
-    src.keysValuesDo { |k, v|
-        var s, nk;
-        s  = k.asString;
-        nk = s.contains("-").if({ s.replace("-", "_").asSymbol }, { k });
-        if(nk != k) { changed = changed + 1 };
-        dst[nk] = v;
-    };
-
-    r[\ccMap] = dst; ~saveMap.();
-    ("[migrate] renamed % keys to underscores; total now %").format(changed, dst.size).postln;
+    keys = r[\defs].keys.asArray;
+    keys.do { |k| r[\defs][k].tryPerform(\free) };
+    MIDIdef(\lcxl_learn_any).free;
+    r[\defs].clear;
+    "[ learners cleared ]".postln;
 };
 
-// ==================== Self-init ====================
-if(~lcxlAutoInitDone.not) {
-    ~lcxlAutoInitDone = true;
-    if(MIDIClient.initialized.not) { MIDIClient.init };
-    ~installCCByNameRouter.();
-    ~loadMap.(nil);
-    ~installBankButtons.();
-    "[lcxl] init complete".postln;
-}
+////////////////////////////////////////////////////////////////////////////////
+// GENERIC LEARNER relaxed and duplicate safe
+////////////////////////////////////////////////////////////////////////////////
+~ccMakeRowLearner = { |label="Row", ccList=nil, baseNames|
+    var r, names, idx, def, wantChan, devUid, defaults;
+    r = ~ccRouter ?? { ~installCCByNameRouter.() };
+    defaults = (13..20).asArray;
+    ccList = ccList ?? { defaults };
+    names = ~withBankNames.(baseNames);
+    idx = 0;
+    wantChan = r[\chan];
+    devUid = if(r[\device].notNil) { r[\device].uid } { nil };
+
+    if (r[\defs][\learnAny].notNil) { r[\defs][\learnAny].free };
+    MIDIdef.cc(\lcxl_learn_any).free;
+
+    ("LEARN " ++ label ++ " b" ++ ~getBank.() ++ " — move " ++ names[idx]).postln;
+
+    def = MIDIdef.cc(\lcxl_learn_any, { |val, cc, chan, src|
+        var okChan, okDev, name, entry, prev;
+        okChan = ((wantChan == (chan+1)) or: { wantChan.isNil });
+        okDev  = (devUid.isNil) or: { src == devUid };
+
+        if (okChan and: { okDev }) {
+            prev = if(idx > 0) { r[\ccMap][names[idx-1]] } { nil };
+            if(prev.notNil and: { prev[\cc] == cc }) {
+                ("[ skip duplicate cc:" ++ cc ++ " for " ++ names[idx] ++ " ]").postln;
+            } {
+                name  = names[idx];
+                entry = ( 'cc': cc, 'chan': chan+1, 'uid': src );
+                r[\ccMap][name] = entry;
+
+                ("[ learned  " ++ name ++ " -> cc:" ++ cc
+                    ++ " chan:" ++ (chan+1) ++ " uid:" ++ src ++ " ]").postln;
+
+                idx = idx + 1;
+
+                if (idx >= names.size) {
+                    MIDIdef.cc(\lcxl_learn_any).free;
+                    def.free;
+                    r[\defs][\learnAny] = nil;
+                    ("[ learn  ok " ++ label ++ " names:" ++ names ++ " ]").postln;
+                } {
+                    ("Move " ++ names[idx]).postln;
+                };
+            };
+        };
+    });
+
+    def.permanent_(true);
+    r[\defs][\learnAny] = def;
+    r
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// WRAPPER AND LEARNERS
+////////////////////////////////////////////////////////////////////////////////
+~wrapLearn = { |fn|
+    var r;
+    r = fn.value;
+    "[ learning active — move the requested control now ]".postln;
+    "ok"
+};
+
+~learnFaders = { ~wrapLearn.({
+    var base, want;
+    base = [\f1,\f2,\f3,\f4,\f5,\f6,\f7,\f8];
+    want = (77..84).asArray;
+    ~ccMakeRowLearner.( "Faders", want, base )
+}) };
+
+~learnRow1 = { ~wrapLearn.({
+    var base, want;
+    base = [\t1_r1,\t2_r1,\t3_r1,\t4_r1,\t5_r1,\t6_r1,\t7_r1,\t8_r1];
+    want = [13,14,15,16,17,18,19,20];
+    ~ccMakeRowLearner.( "Row1", want, base )
+}) };
+
+~learnRow2 = { ~wrapLearn.({
+    var base, want;
+    base = [\t1_r2,\t2_r2,\t3_r2,\t4_r2,\t5_r2,\t6_r2,\t7_r2,\t8_r2];
+    want = [21,22,23,24,25,26,27,28];
+    ~ccMakeRowLearner.( "Row2", want, base )
+}) };
+
+~learnRow3 = { ~wrapLearn.({
+    var base, want;
+    base = [\t1_r3,\t2_r3,\t3_r3,\t4_r3,\t5_r3,\t6_r3,\t7_r3,\t8_r3];
+    want = [29,30,31,32,33,34,35,36];
+    ~ccMakeRowLearner.( "Row3", want, base )
+}) };
+
+////////////////////////////////////////////////////////////////////////////////
+// SANITY CHECK
+////////////////////////////////////////////////////////////////////////////////
+~ccSanity = {
+    var r, missing, expect;
+    r = ~ccRouter ?? { ~installCCByNameRouter.() };
+    expect = [
+        ~withBankNames.([\f1,\f2,\f3,\f4,\f5,\f6,\f7,\f8]),
+        ~withBankNames.([\t1_r1,\t2_r1,\t3_r1,\t4_r1,\t5_r1,\t6_r1,\t7_r1,\t8_r1]),
+        ~withBankNames.([\t1_r2,\t2_r2,\t3_r2,\t4_r2,\t5_r2,\t6_r2,\t7_r2,\t8_r2]),
+        ~withBankNames.([\t1_r3,\t2_r3,\t3_r3,\t4_r3,\t5_r3,\t6_r3,\t7_r3,\t8_r3])
+    ].flatten;
+    missing = expect.select { |k| r[\ccMap][k].isNil };
+    if (missing.isEmpty) { "[ ccSanity  ok ]".postln } {
+        ("[ ccSanity  missing: " ++ missing ++ " ]").postln
+    };
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// SAVE AND LOAD
+////////////////////////////////////////////////////////////////////////////////
+~ccSave = {
+    var r, map, path, dir, file, keys;
+    r = ~ccRouter ?? { ~installCCByNameRouter.() };
+    map = r[\ccMap] ? IdentityDictionary.new;
+    path = ~lcxl_config[\mapPath];
+    dir = PathName(path).pathOnly;
+    if(dir.notNil and: { File.exists(dir).not }) {
+        File.mkdir(dir);
+    };
+
+    file = File(path, "w");
+    file.write("# lcxl map saved " ++ Date.getDate.stamp ++ "\n");
+    keys = map.keys.asArray.sort { |a, b| a.asString < b.asString };
+    keys.do { |k|
+        var d;
+        d = map[k];
+        file.write("% % % %\n".format(k.asString, d[\cc], d[\chan], d[\uid]));
+    };
+    file.close;
+
+    ("[ save  " ++ path ++ " entries:" ++ keys.size ++ " ]").postln;
+    path
+};
+
+~ccLoad = {
+    var r, path, file, lines;
+    r = ~ccRouter ?? { ~installCCByNameRouter.() };
+    path = ~lcxl_config[\mapPath];
+
+    if(File.exists(path).not) {
+        ("[ load  not found " ++ path ++ " ]").postln;
+        ^nil
+    };
+
+    file = File(path, "r");
+    lines = file.readAllString.split($\n);
+    file.close;
+
+    lines.do { |line|
+        var t, k, cc, ch, uid;
+        if(line.size == 0 or: { line.first == $# }) { } {
+            t = line.split($ );
+            if(t.size >= 4) {
+                k = t[0].asSymbol;
+                cc = t[1].asInteger;
+                ch = t[2].asInteger;
+                uid = t[3].asInteger;
+                r[\ccMap][k] = ( 'cc': cc, 'chan': ch, 'uid': uid );
+            };
+        };
+    };
+
+    "[ load  ok ]".postln;
+    r[\ccMap]
+};
+
+// lcxl autoload helper 2025-09-07 America/Chicago
+
+~lcxl_autoload = {
+    var r, path;
+    r = ~ccRouter ?? { ~installCCByNameRouter.() };
+    path = ~lcxl_config[\mapPath];
+    if(File.exists(path)) { ~ccLoad.() } { "[ lcxl autoload  no map found ]".postln };
+    "[ lcxl autoload  done ]".postln;
+};
+
+// arm autoload on language boot or recompile
+AppClock.sched(0.2, { ~lcxl_autoload.(); nil });
+
+////////////////////////////////////////////////////////////////////////////////
+// BIND HELPERS
+////////////////////////////////////////////////////////////////////////////////
+~ccBind = { |key, action, spec=nil|
+    var r, entry, ccnum, chan, srcUid, defKey, mapper, mididef;
+    r = ~ccRouter ?? { ~installCCByNameRouter.() };
+    entry = r[\ccMap][key];
+
+    if(entry.isNil) {
+        ("[ ccBind  missing map for " ++ key ++ " ]").postln;
+        ^nil
+    };
+
+    // set default spec inside to avoid parse issues
+    spec = spec ?? { ControlSpec(0, 1, \lin, 0, 0) };
+
+    ccnum  = entry[\cc];
+    chan   = entry[\chan];
+    srcUid = entry[\uid];
+
+    mapper = { |val| spec.map(val / 127) };
+
+    defKey = ("lcxl_bind_" ++ key.asString).asSymbol;
+    if(r[\defs][defKey].notNil) { r[\defs][defKey].free };
+
+    mididef = MIDIdef.cc(defKey, { |val, cc, ch, src|
+        var ok, x;
+        ok = (cc == ccnum) and: { (ch + 1) == chan } and: { src == srcUid };
+        if(ok) {
+            x = mapper.(val);
+            action.(x);
+        }
+    }, ccnum, chan - 1).permanent_(true);
+
+    r[\defs][defKey] = mididef;
+    ("[ ccBind  " ++ key ++ " -> " ++ defKey ++ " cc:" ++ ccnum
+        ++ " chan:" ++ chan ++ " uid:" ++ srcUid ++ " ]").postln;
+    defKey
+};
+
+~ccBindParam = { |key, ndefName, param=\amp, spec=nil|
+    var f;
+    // set default spec inside to avoid parse issues
+    spec = spec ?? { ControlSpec(0, 1, \lin, 0, 0) };
+    f = { |x| Ndef(ndefName).set(param, x) };
+    ~ccBind.(key, f, spec)
+};
+
+~ccUnbind = { |key|
+    var r, defKey;
+    r = ~ccRouter ?? { ~installCCByNameRouter.() };
+    defKey = ("lcxl_bind_" ++ key.asString).asSymbol;
+    if(r[\defs][defKey].notNil) {
+        r[\defs][defKey].free;
+        r[\defs].removeAt(defKey);
+        ("[ ccUnbind  " ++ key ++ " ]").postln;
+    };
+};
+)
 
