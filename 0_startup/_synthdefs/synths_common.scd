@@ -150,7 +150,3 @@ SynthDef(\bass8, {
 		// Out.araux, sig*auxsend;
 	}).add;
 );
-
-(
-SynthDef(\)
-)
