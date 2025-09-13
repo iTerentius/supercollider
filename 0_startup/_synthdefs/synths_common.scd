@@ -150,3 +150,34 @@ SynthDef(\bass8, {
 		// Out.araux, sig*auxsend;
 	}).add;
 );
+// One shot sample players
+(
+SynthDef(\pBs, { |out=0, bufnum=0, amp=0.2, rev=0, rate=1, pan=0, startPos=0, loop=0 |
+    var sig, sigL, sigR;
+    rate = Lag.kr(rate, 0.05) * BufRateScale.ir(bufnum);
+    # sigL, sigR = PlayBuf.ar(
+        2,
+        bufnum,
+        rate,
+        startPos: startPos,
+        loop: loop,
+        doneAction: 2
+    );
+    sig = Balance2.ar(sigL, sigR, pan, amp);Out.ar(out, sig );
+}).add;
+);
+(
+SynthDef(\pBm, { |out=0, bufnum=0, amp=0.2, rate=1, pan=0, startPos=0, loop=0|
+    var sig;
+    sig = PlayBuf.ar(
+        numChannels: 1, 
+        bufnum: bufnum,
+        rate: rate * BufRateScale.kr(bufnum),
+        loop: loop,
+        startPos: startPos,
+        doneAction: 2
+    );
+    sig = Pan2.ar(sig, pan, amp ); // pan + amp
+    Out.ar(out, sig );
+}).add;
+);

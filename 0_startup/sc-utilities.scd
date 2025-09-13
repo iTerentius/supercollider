@@ -26,6 +26,8 @@ s.stopRecording; // stop recording
 ~printMapAll.();
 ~ccSanity.();
 
+~lcStartLearnRow.(1);
+
 // Example bind
 ~ccBindParam.(\b0_f1, \track, \amp, ControlSpec(0, 0.5, \lin, 0, 0));
 
@@ -37,4 +39,7 @@ s.stopRecording; // stop recording
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/Field/");
 
 ~printTree.();
+
+NodeTreeView(s).start;
+s.queryAllNodes;
 

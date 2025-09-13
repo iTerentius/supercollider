@@ -106,5 +106,5 @@ Ndef(\sends1).set(\a_to_fx, 0.5, \b_to_fx, 0.5);
 Ndef(\fx).set(\mix, 0.0);
 Ndef(\master).set(\amp, 0.7);
 
-Ndef(\fx).set(\mix, 1.0);
+Ndef(\fx1).set(\mix, 1.0);
 Ndef(\master).set(\wet, 0.75, \dry, 0.25);

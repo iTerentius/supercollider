@@ -50,9 +50,11 @@ s.waitForBoot {
     // "_includes/_midi-ctrl/lcxl-control.scd".loadRelative;
     // after MIDI init and your other includes:
     (thisProcess.nowExecutingPath.dirname +/+ "_includes/_midi-ctrl/lcxl-sc-cc-router.scd").load;
+    // (thisProcess.nowExecutingPath.dirname +/+ "_includes/_midi-ctrl/launchcontrol-sc-cc-router.scd").load;
     // "_includes/_midi-ctrl/lcxl-sc-cc-router.scd".loadRelative;
     // install & load LCXL router
     ~ccLoad.();   // <-- safe, idempotent, only call once
+    ~lcLoadMap.();
 
     // --- SC Meters
     "_includes/sc-gui-meters.scd".loadRelative;
