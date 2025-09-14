@@ -56,6 +56,8 @@ s.waitForBoot {
     ~ccLoad.();   // <-- safe, idempotent, only call once
     ~lcLoadMap.();
 
+    "_includes/mixer-channel.scd".loadRelative;
+
     // --- SC Meters
     "_includes/sc-gui-meters.scd".loadRelative;
 
