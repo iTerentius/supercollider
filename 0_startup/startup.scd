@@ -59,7 +59,7 @@ s.waitForBoot {
     "_includes/mixer-channel.scd".loadRelative;
 
     // --- SC Meters
-    "_includes/sc-gui-meters.scd".loadRelative;
+    // "_includes/sc-gui-meters.scd".loadRelative;
 
     // AppClock.sched(0.2, {
     //     var p;
