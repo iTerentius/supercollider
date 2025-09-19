@@ -37,7 +37,7 @@ Ndef(\i2).clear(3);
 TempoClock.default.tempo = 60/60; // 90 bpm
 
 ( ~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); )
-Ndef(\bd1).play(quant: 1, out: 2);
+Ndef(\bd1).play(quant: 1, out: ~m36_in.(3));
 (
 ~bd1 = ~samplesTree.at(\bass_drums).asArray[0];
 Ndef(\bd1).quant = 1;
@@ -51,11 +51,16 @@ Ndef(\bd1)[0] = Pbind(
     \amp,   0.4,
     \rate,  1,
     \pan,   0.5,
-    \out,   2
+    \out,   ~m36_in.(2) 
 );
 )
-Ndef(\bd1).play(vol: 0.5, out: 2);
+Ndef(\bd1).play;
 Ndef(\bd1).stop;
+
+~m36_tracks[2].level_(0.25);
+~m36_master.level_(0.24);
+
+ServerMeter(s);
 
 Ndef.clear;
 
@@ -72,14 +77,14 @@ Ndef(\bd2)[0] = Pbind(
     \amp,   0.4,
     \rate,  1,
     \pan,   -0.5,
-    \out, 4
+    \out, ~m36_in.(1) 
 );
 )
 
 Ndef(\bd2)[1] = \filter -> { |in| CombL.ar(in, 0.2, LFPulse.kr(0.5!2).exprange(0.01, 0.2), 3) * 0.7 };
 Ndef(\bd2).set(\wet1, 0.8);
 Ndef(\bd2)[1] = nil;
-Ndef(\bd2).play(vol:0.5, out:4);
+Ndef(\bd2).play;
 Ndef(\bd2).stop;
 Ndef(\bd2).clear(3);
 
@@ -90,7 +95,7 @@ Ndef(\bdFx).play(out:6);
 Ndef(\bdFx).stop(5);
 
 (
-~hh1 = ~samplesTree.at(\hats).asArray[4];
+~hh1 = ~samplesTree.at(\hats).asArray[1];
 Ndef(\hh1).quant = 1;
 Ndef(\hh1)[0] = Pbind(
     \buf,    ~hh1,
@@ -98,19 +103,19 @@ Ndef(\hh1)[0] = Pbind(
         if(e[\buf].numChannels == 2) { \pBs } { \pBm }
     },
     \bufnum, Pkey(\buf),   // SC will pass the Buffer’s bufnum
-    \dur,   2.0,
+    \dur,   1.0,
     \amp,   Pseq([0.4, 0.4, 0.7, 0.9], inf),
     \rate,  Pseq([0.5, 0.25, 0.125, 1], inf),
     \pan,   0.2,
     \startPos, 0,
     \loop, 0,
-    \out, 6 
+    \out, ~m36_in.(3) 
 );
 )
 Ndef(\hh1)[1] = \filter -> { |in| FreeVerb.ar(in, 0.5, 0.5, 0.5) };
 
 
-Ndef(\hh1).play(vol: 0.5, out: 6);
+Ndef(\hh1).play;
 Ndef(\hh1).stop(3);
 Ndef(\hh1).clear;
 

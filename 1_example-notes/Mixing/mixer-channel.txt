@@ -1,0 +1,99 @@
+
+/* OVERVIEW
+- Build
+  master MixerChannel to hardware outs 0 1
+  9 stereo tracks feed master  names m36_tr1..m36_tr9  handles in ~m36_tracks array index 0..8
+  8 stereo FX returns feed master  names m36_fx1..m36_fx8  handles in ~m36_fxchans array index 0..7
+  post fader sends from every track to every return are created with newPostSend  stored in ~m36_sends a 2d array
+
+- Signal flow
+  track synths write into each track inbus
+  track post sends mix into each return inbus
+  each FX return reads its own inbus  does processing  outputs to master
+
+- Indexing
+  tracks and returns use zero based indexes throughout the helpers
+  example  track 3 is index 2  FX 2 is index 1
+*/
+
+/* CORE HANDLES
+- ~m36_master             MixerChannel for master bus
+  method level_(val)      set master fader in linear 0..1
+
+- ~m36_tracks[i]          MixerChannel per track  i in 0..8
+  method level_(val)      track fader  post sends follow the fader
+
+- ~m36_fxchans[j]         MixerChannel per FX return  j in 0..7
+  method level_(val)      return level to master
+
+- ~m36_in.(trackIndex)    returns the audio bus index to route into that track
+  param trackIndex        integer  zero based  example 2 for track 3
+  use with Pbind or Synth args field out
+
+- ~m36_setSend.(ti, si, level)
+  param ti                track index  integer  zero based
+  param si                send index   integer  zero based
+  param level             send amount  float  0..1  post fader
+*/
+
+/* QUICK EXAMPLES  all of these are typical one liners you can drop into code
+// route a Pbind into track 3
+Pbind(\instrument, \default, \dur, 0.25, \degree, Pwhite(0,7,inf), \amp, 0.12, \out, ~m36_in.(2)).play;
+
+// raise sends for that track
+~m36_setSend.(2, 0, 0.7);   // to FX 1
+~m36_setSend.(2, 1, 0.5);   // to FX 2
+*/
+
+/* FX MANAGEMENT
+- ~m36_fxReset.(which, func)
+  clears a return insert and attaches a new effect that reads that return inbus
+  param which            FX return index  integer  zero based
+  param func             function that returns a stereo UGen signal
+  contract inside func   use In.ar(~m36_fxchans[which].inbus, 2) as input and return processed stereo
+
+// example  wet reverb on FX 1  heavy distortion on FX 2
+~m36_fxReset.(0, { var s; s = In.ar(~m36_fxchans[0].inbus, 2); FreeVerb2.ar(s[0], s[1], 0.6, 0.9, 0.2) });
+~m36_fxReset.(1, { var s; s = In.ar(~m36_fxchans[1].inbus, 2); HPF.ar(tanh(s * 12), 200) * 0.9 });
+*/
+
+/* STEM MIRRORS  multichannel recording
+- ~m36_armStemMirrors.(base)
+  mirrors post fader tracks and wet FX returns to contiguous output pairs starting at base
+  param base             left channel index of the first stem pair
+  layout when base is 2  master stays 0 1
+                         tr1 2 3  tr2 4 5  …  tr9 18 19
+                         fx1 20 21  fx2 22 23  …  fx8 34 35
+  ensure s.options.numOutputBusChannels is at least ~m36_stemTotal
+
+- ~m36_disarmStemMirrors.()
+  frees the mirror inserts
+*/
+
+/* SENDS ONLY PER TRACK  like Ableton sends only
+- ~m36_sendsOnly.(ti, on)
+  param ti               track index  integer
+  param on               boolean  true enables sends only  dry is removed from master
+  sends remain active  post fader  mirrors still work
+*/
+
+/* DIAGNOSTICS  metering and routing prints
+- ~m36_scopeFx.(which)        opens a server scope on the chosen return input bus  shows send activity
+- ~m36_printRouting.(ti)      prints fx1 and fx2 inbus indexes and the send levels from that track
+- ~m36_demo.(trackIndex)      quick audible test on a track and raises sends to fx1 and fx2
+- ~m36_zeroTrackSends.(ti)    sets all sends for that track to zero
+- ~m36_soloFX.(which)         sets the chosen return to 0.9 and all other returns to 0
+- ~m36_debug.()               prints mixer counts and sanity
+*/
+
+/* CLEANUP
+- ~m36_freeAll.()
+  frees mirrors  tracks  returns  buses  master  and clears all ~m36_* references
+*/
+
+/* TIPS
+- set sends after you see the ready line  m36 ready master 0 1 tracks 9 sends 8
+- post fader behavior means lowering a track fader reduces its sends as in a console
+- if a return sounds wrong run fxReset on that return to wipe stale inserts and attach your effect again
+- for scope reliability prefer ~m36_scopeFx which scopes the raw bus rather than channel widgets
+*/
