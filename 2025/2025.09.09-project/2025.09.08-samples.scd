@@ -54,10 +54,25 @@ Ndef(\bd1)[0] = Pbind(
     \out,   ~m36_in.(2) 
 );
 )
-Ndef(\bd1).play;
+Ndef(\bd1).play(out: ~m36_in.(2));
 Ndef(\bd1).stop;
 
-~m36_tracks[2].level_(0.25);
+// 2025-09-18 12:15 America-Chicago  Pattern directly to track 3
+(
+Pbind(
+    \buf,    ~samplesTree.at(\bass_drums).asArray[0],
+    \instrument, Pfunc { |e| if(e[\buf].numChannels == 2) { \pBs } { \pBm } },
+    \bufnum, Pkey(\buf),
+    \dur,    0.5,
+    \amp,    1,
+    \rate,   1,
+    \pan,    0.5,
+    \out,    ~m36_in.(2)    // direct to the track bus
+).play;
+)
+
+
+~m36_tracks[2].level_(1);
 ~m36_master.level_(0.24);
 
 ServerMeter(s);
