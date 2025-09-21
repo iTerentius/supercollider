@@ -1,7 +1,8 @@
-Ndef(\t1, {|mod=1| LFPulse.ar([110, 111]) * SinOsc.kr(mod) * 0.5 });
+Ndef(\t1, {|mod=1| LFPulse.ar([110/mod, 111]) * SinOsc.kr(mod) * 0.5 });
 Ndef(\t1).set(\out, ~m36_in.(0));
 Ndef(\t1).play;
 Ndef(\t1).stop;
+Ndef(\t1).clear;
 
 // Bank 0, Strip 3, Row-1: control a reverb "room" (0.05..0.98)
 ~lcxlBindParam.(\b0_s1_r1, { |x|
@@ -31,3 +32,7 @@ Ndef(\t1).stop;
 // list binds
 ~ccshow.();        // both devices
 ~ccshow.(\lcx);    // LCXL only
+
+{SinOsc.ar([100, 102]) * 0.5}.play(out: ~m36_in.(1));
+
+~m36_tracks[1].play({ SinOsc.ar([100, 101]) * 0.5});
