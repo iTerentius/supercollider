@@ -39,8 +39,9 @@ s.waitForBoot {
     // --- Optional Plan-A filler (only if you still use that helper)
     "_includes/_midi-ctrl/lcxl_mixer_auto_bind.scd".loadRelative;
     "_includes/_midi-ctrl/lcxl_toprows_param_router.scd".loadRelative;
+    "_includes/_midi-ctrl/lcxl_mixer_bank_buttons.scd".loadRelative;
+    "_includes/_midi-ctrl/lcn_param_router.scd".loadRelative;
 
     "Setup done!".postln;
 };
 )
-
