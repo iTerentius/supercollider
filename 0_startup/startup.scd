@@ -41,6 +41,7 @@ s.waitForBoot {
     "_includes/_midi-ctrl/lcxl_toprows_param_router.scd".loadRelative;
     "_includes/_midi-ctrl/lcxl_mixer_bank_buttons.scd".loadRelative;
     "_includes/_midi-ctrl/lcn_param_router.scd".loadRelative;
+    "_includes/_midi-ctrl/cc_bind_hub.scd".loadRelative;
 
     "Setup done!".postln;
 };
