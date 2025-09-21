@@ -8,30 +8,36 @@ if (s.serverRunning.not) { s.boot };
 
 s.waitForBoot {
 
+    // --- Core MIDI + quantized recording + common synths + sample loader
     "_includes/midi-setup.scd".loadRelative;
-
     "_includes/quant-recording.scd".loadRelative;
     "_synthdefs/synths_common.scd".loadRelative;
     "_includes/sample_loader.scd".loadRelative;
 
-    // --- LCXL router must be before bindings/bridge
-    "_includes/_midi-ctrl/lcxl-sc-cc-router.scd".loadRelative;
+    // --- LCXL router must load before CC map + bindings
+    // "_includes/_midi-ctrl/lcxl-sc-cc-router.scd".loadRelative;
 
-    // load your saved CC map (so bindings have keys to attach to)
-    ~installCCByNameRouter.();
-    ~ccLoad.();
+    // --- Load your saved CC map (so bindings have keys/chan to attach to)
+    // ~installCCByNameRouter.();  // from router include
+    // ~ccLoad.();                  // loads lcxl-router.map / _lcxl_cc_map.txt
 
-    // (optional) bank number print when you change banks
-    "_includes/_midi-ctrl/lcxl-bank-post.scd".loadRelative;
+    // --- Optional: posts bank changes; if you KEEP this, you may want to
+    //     DISABLE the big banner inside the binder to avoid double prints.
+    // "_includes/_midi-ctrl/lcxl-bank-post.scd".loadRelative;
 
-    // your mixer (defines ~m36_tr1..~m36_tr16 etc.)
+    // --- Your mixer: defines ~m36_* objects and/or setters like ~m36_setLevel/~m36_setPan
     "_includes/mixer-channel.scd".loadRelative;
 
-    // bind LCXL → mixer (levels + pan)
-    "_includes/_midi-ctrl/lcxl_mixer_core_bridge.scd".loadRelative;
+    // --- LCXL → Mixer (levels + pan), 3-bank (b0/b1/b2) binder
+    //     REPLACES: _includes/_midi-ctrl/lcxl_mixer_core_bridge.scd
+    //
+    // Put the new file here (use the 3-bank code I sent and save it as):
+    //     _includes/_midi-ctrl/lcxl_mixer_bind_3bank.scd
+    //
+    // "_includes/_midi-ctrl/lcxl_mixer_bind_3bank.scd".loadRelative;
 
-    // optional: only if you still use the default “Plan A” map filler
-    "_includes/_midi-ctrl/lcxl_bank_planA_map.scd".loadRelative;
+    // --- Optional Plan-A filler (only if you still use that helper)
+    "_includes/_midi-ctrl/lcxl_mixer_auto_bind.scd".loadRelative;
 
     "Setup done!".postln;
 };

@@ -261,8 +261,6 @@ s.waitForBoot({
     };
 
     "[m36] ready  master 0 1  tracks ".post; numTracks.post; "  sends ".post; numSends.postln;
-    // 2025-09-19 America/Chicago
-    ~m36_ready = true;
 });
 )
 
