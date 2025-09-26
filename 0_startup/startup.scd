@@ -13,27 +13,9 @@ s.waitForBoot {
     "_includes/quant-recording.scd".loadRelative;
     "_synthdefs/synths_common.scd".loadRelative;
     "_includes/sample_loader.scd".loadRelative;
-
-    // For MixerChannel
-    // "_includes/_midi-ctrl/lcxl_mixer_auto_bind.scd".loadRelative;
-    // "_includes/_midi-ctrl/lcxl_toprows_param_router.scd".loadRelative;
-    // "_includes/_midi-ctrl/lcxl_mixer_bank_buttons.scd".loadRelative;
-    // "_includes/_midi-ctrl/lcn_param_router.scd".loadRelative;
-    // "_includes/_midi-ctrl/cc_bind_hub.scd".loadRelative;
-    // ~installCCByNameRouter.();
-    // ~load.();                          // loads default map path
-    // ~lcxlMix[\cfg].put(\faderBottom_dB, -60);
-    // ~lcxlMix[\cfg].put(\faderTop_dB,    12);
-    // "_includes/panic-hook.scd".loadRelative;
-
-    // For Regular Params.
-    // "_includes/_midi-ctrl/lcxl_lite_router.scd".loadRelative;    // LCXL direct mapping plus LEDs
-    "_includes/_midi-ctrl/cc_bind_hub.scd".loadRelative;         // hub first so ~ccEmit exists
-    // "_includes/_midi-ctrl/lcxl_param_router_full.scd".loadRelative;    // LCXL direct mapping plus LEDs
-    // "_includes/_midi-ctrl/lcn_param_router.scd".loadRelative;    // optional if you still use LCN/ LCXL taper override
-    "_includes/_midi-ctrl/lcn_param_router.locked.uid.v3.scd".loadRelative;         // hub first so ~ccEmit exists
-    "_includes/_midi-ctrl/lcxl_param_router.locked.uid.v7.scd".loadRelative;         // hub first so ~ccEmit exists
-    "_includes/_midi-ctrl/rearm_both_locked_uid.scd".loadRelative;         // hub first so ~ccEmit exists
+    //MIDI Controllers
+    // "_includes/_midi-ctrl/launch-control/launch-controls.mixer-channel.scd".loadRelative; // Launch-controls with auto binding for mixer + params for leftovers.
+    "_includes/_midi-ctrl/launch-control/launch-controls.scd".loadRelative; // Launch-controls for just params.
 
     "Setup done!".postln;
 };
