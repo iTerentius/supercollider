@@ -241,6 +241,14 @@ s.waitForBoot({
         s.scope(2, idx);
     };
 
+    ~ndefToTrack = { |key, track=0, chans=2|
+      var tr, busIndex, grp;
+      tr = ~m36_tracks[track];
+      busIndex = tr.inbus.index;
+      grp = tr.synthgroup;
+      Ndef(key).play(out: busIndex, numChannels: chans, group: grp, addAction: \addToHead);
+    };
+
     // debug
     ~m36_debug = {
         "m36 ready ".post; (~m36_tracks.notNil) and: { ~m36_tracks.size == ~m36_numTracks };

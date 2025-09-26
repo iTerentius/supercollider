@@ -36,3 +36,5 @@ Ndef(\t1).clear;
 {SinOsc.ar([100, 102]) * 0.5}.play(out: ~m36_in.(1));
 
 ~m36_tracks[1].play({ SinOsc.ar([100, 101]) * 0.5});
+
+ServerMeter

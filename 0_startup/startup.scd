@@ -7,42 +7,33 @@ s.options.numInputBusChannels = 0;
 if (s.serverRunning.not) { s.boot };
 
 s.waitForBoot {
-
+    "Current!".postln;
     // --- Core MIDI + quantized recording + common synths + sample loader
     "_includes/midi-setup.scd".loadRelative;
     "_includes/quant-recording.scd".loadRelative;
     "_synthdefs/synths_common.scd".loadRelative;
     "_includes/sample_loader.scd".loadRelative;
 
-    // --- LCXL router must load before CC map + bindings
-    // "_includes/_midi-ctrl/lcxl-sc-cc-router.scd".loadRelative;
+    // For MixerChannel
+    // "_includes/_midi-ctrl/lcxl_mixer_auto_bind.scd".loadRelative;
+    // "_includes/_midi-ctrl/lcxl_toprows_param_router.scd".loadRelative;
+    // "_includes/_midi-ctrl/lcxl_mixer_bank_buttons.scd".loadRelative;
+    // "_includes/_midi-ctrl/lcn_param_router.scd".loadRelative;
+    // "_includes/_midi-ctrl/cc_bind_hub.scd".loadRelative;
+    // ~installCCByNameRouter.();
+    // ~load.();                          // loads default map path
+    // ~lcxlMix[\cfg].put(\faderBottom_dB, -60);
+    // ~lcxlMix[\cfg].put(\faderTop_dB,    12);
+    // "_includes/panic-hook.scd".loadRelative;
 
-    // --- Load your saved CC map (so bindings have keys/chan to attach to)
-    // ~installCCByNameRouter.();  // from router include
-    // ~ccLoad.();                  // loads lcxl-router.map / _lcxl_cc_map.txt
-
-    // --- Optional: posts bank changes; if you KEEP this, you may want to
-    //     DISABLE the big banner inside the binder to avoid double prints.
-    // "_includes/_midi-ctrl/lcxl-bank-post.scd".loadRelative;
-
-    // --- Your mixer: defines ~m36_* objects and/or setters like ~m36_setLevel/~m36_setPan
-    "_includes/mixer-channel.scd".loadRelative;
-
-    // --- LCXL → Mixer (levels + pan), 3-bank (b0/b1/b2) binder
-    //     REPLACES: _includes/_midi-ctrl/lcxl_mixer_core_bridge.scd
-    //
-    // Put the new file here (use the 3-bank code I sent and save it as):
-    //     _includes/_midi-ctrl/lcxl_mixer_bind_3bank.scd
-    //
-    // "_includes/_midi-ctrl/lcxl_mixer_bind_3bank.scd".loadRelative;
-
-    // --- Optional Plan-A filler (only if you still use that helper)
-    "_includes/_midi-ctrl/lcxl_mixer_auto_bind.scd".loadRelative;
-    "_includes/_midi-ctrl/lcxl_toprows_param_router.scd".loadRelative;
-    "_includes/_midi-ctrl/lcxl_mixer_bank_buttons.scd".loadRelative;
-    "_includes/_midi-ctrl/lcn_param_router.scd".loadRelative;
-    "_includes/_midi-ctrl/cc_bind_hub.scd".loadRelative;
-    "_includes/panic-hook.scd".loadRelative;
+    // For Regular Params.
+    // "_includes/_midi-ctrl/lcxl_lite_router.scd".loadRelative;    // LCXL direct mapping plus LEDs
+    "_includes/_midi-ctrl/cc_bind_hub.scd".loadRelative;         // hub first so ~ccEmit exists
+    // "_includes/_midi-ctrl/lcxl_param_router_full.scd".loadRelative;    // LCXL direct mapping plus LEDs
+    // "_includes/_midi-ctrl/lcn_param_router.scd".loadRelative;    // optional if you still use LCN/ LCXL taper override
+    "_includes/_midi-ctrl/lcn_param_router.locked.uid.v3.scd".loadRelative;         // hub first so ~ccEmit exists
+    "_includes/_midi-ctrl/lcxl_param_router.locked.uid.v7.scd".loadRelative;         // hub first so ~ccEmit exists
+    "_includes/_midi-ctrl/rearm_both_locked_uid.scd".loadRelative;         // hub first so ~ccEmit exists
 
     "Setup done!".postln;
 };

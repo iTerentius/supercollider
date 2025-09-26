@@ -3,14 +3,15 @@ Pdef(\pats1, Pbind(
   \instrument, \syn1,
   \scale, Scale.minor,
   \octave, 4,
-  \degree, Pseq([1, -1, 5, 3, 7, Rest(2)], inf),
-  \dur, Pseq([0.25, 0.5, 0.25, Rest(1)], inf),
-  \amp, 0.3,
+  \degree, Prand([1, -1, 5, 3, 7, Rest(2)]/2, inf),
+  \dur, Prand([0.25, 0.5, 0.25, Rest(1)]/2, inf),
+  \amp, 0.6,
   \root, Pshuf([10, 0, 5, 3], inf),
   \out, ~m36_in.(0)
 ));
 )
 Pdef(\pats1).play;
+Pdef(\pats1).stop;
 
 ~m36_tracks[0].level_(1.7);
 

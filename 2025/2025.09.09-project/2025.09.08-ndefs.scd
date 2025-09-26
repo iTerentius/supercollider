@@ -18,10 +18,10 @@ Ndef(\11).set(\wet1, 1);
 (
 Ndef(\i3, { |amp = 0.28, freq = 90, dur = 1|
     var sig;
-    sig = Saw.ar(LFPulse.ar(dur) * freq ! 2) * amp;
+    sig = SinOsc.ar(LFPulse.ar(dur) * freq ! 2) * amp;
     LPF.ar(sig, 1000)
-}).play(out: 2, vol: 1);
-Ndef(\i3)[1] = \pset -> Pbind(\freq, Pseq([90, 120, 440, Rest(0.5)], inf), \dur, Prand([0.25, Rest(0.5)], inf), \amp, 0.6);
+}).play(out: 2, vol: 0.4);
+Ndef(\i3)[1] = \pset -> Pbind(\freq, Pseq([90, 120, 440, Rest(0.5)], inf), \dur, Prand([0.25, Rest(0.5)], inf), \amp, 0.3);
 )
 Ndef(\i3).stop;
 Ndef(\i3)[2] = \filter -> {|in, rate=32, dur=0.5 | Gate.ar(in, LFPulse.kr(rate*dur))};
