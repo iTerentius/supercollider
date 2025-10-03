@@ -51,10 +51,10 @@ Ndef(\bd1)[0] = Pbind(
     \amp,   0.4,
     \rate,  1,
     \pan,   0.5,
-    \out,   ~m36_in.(2) 
+    \out,   2 
 );
 )
-Ndef(\bd1).play;
+Ndef(\bd1).play(out: 2);
 Ndef(\bd1).stop;
 
 ~m36_tracks[2].level_(0.25);
@@ -74,17 +74,17 @@ Ndef(\bd2)[0] = Pbind(
     },
     \bufnum, Pkey(\buf),   // SC will pass the Buffer’s bufnum
     \dur,   Prand([0.25, 0.5, Rest(0.25)], inf),
-    \amp,   0.4,
+    \amp,   0.5,
     \rate,  1,
     \pan,   -0.5,
-    \out, ~m36_in.(1) 
+    \out, 2
 );
 )
 
 Ndef(\bd2)[1] = \filter -> { |in| CombL.ar(in, 0.2, LFPulse.kr(0.5!2).exprange(0.01, 0.2), 3) * 0.7 };
 Ndef(\bd2).set(\wet1, 0.8);
 Ndef(\bd2)[1] = nil;
-Ndef(\bd2).play;
+Ndef(\bd2).play(out: 2);
 Ndef(\bd2).stop;
 Ndef(\bd2).clear(3);
 
@@ -109,13 +109,13 @@ Ndef(\hh1)[0] = Pbind(
     \pan,   0.2,
     \startPos, 0,
     \loop, 0,
-    \out, ~m36_in.(3) 
+    \out, 2
 );
 )
 Ndef(\hh1)[1] = \filter -> { |in| FreeVerb.ar(in, 0.5, 0.5, 0.5) };
 
 
-Ndef(\hh1).play;
+Ndef(\hh1).play(vol: 0.4, out: 2);
 Ndef(\hh1).stop(3);
 Ndef(\hh1).clear;
 

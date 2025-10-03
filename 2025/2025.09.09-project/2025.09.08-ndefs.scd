@@ -62,6 +62,7 @@ Ndef(\fx1, { |mix = 0.7, room = 0.6, damp = 0.3, amp = 0.8|
     srcMix = src1 + src2;
     // wet = CombC.ar(0.5, 0.5, 0.3, 1.0);
     wet = Disintegrator.ar(srcMix, 0.5).distort;
+    wet = Decimator.ar(srcMix, 41000, 4).distort;
     // wet = FreeVerb2.ar(src[0], src[1], room, damp, 0.5);
     XFade2.ar(srcMix, wet, (mix * 2 - 1)) * amp
 });
@@ -109,3 +110,5 @@ Ndef(\master).set(\amp, 0.7);
 
 Ndef(\fx1).set(\mix, 1.0);
 Ndef(\master).set(\wet, 0.75, \dry, 0.25);
+Ndef.gui;
+ServerMeter(s);

@@ -26,7 +26,7 @@ s.waitForBoot {
     // "_includes/_midi-ctrl/lcxl-bank-post.scd".loadRelative;
 
     // --- Your mixer: defines ~m36_* objects and/or setters like ~m36_setLevel/~m36_setPan
-    "_includes/mixer-channel.scd".loadRelative;
+    //"_includes/mixer-channel.scd".loadRelative;
 
     // --- LCXL → Mixer (levels + pan), 3-bank (b0/b1/b2) binder
     //     REPLACES: _includes/_midi-ctrl/lcxl_mixer_core_bridge.scd
@@ -37,12 +37,14 @@ s.waitForBoot {
     // "_includes/_midi-ctrl/lcxl_mixer_bind_3bank.scd".loadRelative;
 
     // --- Optional Plan-A filler (only if you still use that helper)
-    "_includes/_midi-ctrl/lcxl_mixer_auto_bind.scd".loadRelative;
-    "_includes/_midi-ctrl/lcxl_toprows_param_router.scd".loadRelative;
-    "_includes/_midi-ctrl/lcxl_mixer_bank_buttons.scd".loadRelative;
-    "_includes/_midi-ctrl/lcn_param_router.scd".loadRelative;
-    "_includes/_midi-ctrl/cc_bind_hub.scd".loadRelative;
-    "_includes/panic-hook.scd".loadRelative;
+    s.plotTree;
+    ServerMeter(s);
+     
+    //"_includes/_midi-ctrl/lcxl_toprows_param_router.scd".loadRelative;
+    //"_includes/_midi-ctrl/lcxl_mixer_bank_buttons.scd".loadRelative;
+    //"_includes/_midi-ctrl/lcn_param_router.scd".loadRelative;
+    //"_includes/_midi-ctrl/cc_bind_hub.scd".loadRelative;
+    //"_includes/panic-hook.scd".loadRelative;
 
     "Setup done!".postln;
 };
