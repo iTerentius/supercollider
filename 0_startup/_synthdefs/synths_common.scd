@@ -152,32 +152,47 @@ SynthDef(\bass8, {
 );
 // One shot sample players
 (
-SynthDef(\pBs, { |out=0, bufnum=0, amp=0.2, rev=0, rate=1, pan=0, startPos=0, loop=0 |
-    var sig, sigL, sigR;
-    rate = Lag.kr(rate, 0.05) * BufRateScale.ir(bufnum);
+// --- SynthDefs (unchanged behavior, small consistency tweaks) ---
+SynthDef(\pBs, { |out=0, bufnum=0, amp=0.2, rev=0, rate=1, pan=0, startPos=0, loop=0|
+    var sig, sigL, sigR;  // declare vars at top
+    rate = Lag.kr(rate, 0.05) * BufRateScale.kr(bufnum);
     # sigL, sigR = PlayBuf.ar(
-        2,
-        bufnum,
-        rate,
+        2, bufnum, rate,
         startPos: startPos,
         loop: loop,
         doneAction: 2
     );
-    sig = Balance2.ar(sigL, sigR, pan, amp);Out.ar(out, sig );
+    sig = Balance2.ar(sigL, sigR, pan, amp);
+    Out.ar(out, sig);
 }).add;
-);
-(
+
 SynthDef(\pBm, { |out=0, bufnum=0, amp=0.2, rate=1, pan=0, startPos=0, loop=0|
-    var sig;
+    var sig;  // declare vars at top
     sig = PlayBuf.ar(
-        numChannels: 1, 
-        bufnum: bufnum,
-        rate: rate * BufRateScale.kr(bufnum),
+        1, bufnum, rate * BufRateScale.kr(bufnum),
         loop: loop,
         startPos: startPos,
         doneAction: 2
     );
-    sig = Pan2.ar(sig, pan, amp ); // pan + amp
-    Out.ar(out, sig );
+    sig = Pan2.ar(sig, pan, amp);
+    Out.ar(out, sig);
 }).add;
-);
+
+
+// --- Helper 1: a tiny function that picks the right instrument symbol
+~bufInstr = { |buf|
+    // returns \pBs for stereo, \pBm for mono
+    if(buf.notNil and: { buf.numChannels == 2 }) { \pBs } { \pBm }
+};
+
+// --- Helper 2: a pattern wrapper so you never type the selection again
+~pBuf = { |pat|
+    // injects \instrument based on \buf in each event
+    pat.collect { |e|
+        var buf;  // declare vars at top
+        buf = e[\buf];
+        e[\instrument] = ~bufInstr.(buf);
+        e
+    }
+};
+)

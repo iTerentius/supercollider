@@ -18,3 +18,5 @@ SynthDef(\syn1, { |out=0, freq=440, amp=0.2, gate=1|
 }).add;
 
 )
+{ SinOsc.ar(220) * 0.05 }.play;
+treeView.refresh;

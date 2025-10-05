@@ -13,10 +13,15 @@ s.waitForBoot {
     "_includes/quant-recording.scd".loadRelative;
     "_synthdefs/synths_common.scd".loadRelative;
     "_includes/sample_loader.scd".loadRelative;
+    "_includes/_midi-ctrl/launch-control/launch-controls.scd".loadRelative; // Launch-controls for just params.
+    "_includes/mixer-channel-16s.scd".loadRelative;
+    "_includes/mixer-channel-stem-record.scd".loadRelative;
+    // "_includes/ndef-mixer.scd".loadRelative;
     //MIDI Controllers
     // "_includes/_midi-ctrl/launch-control/launch-controls.mixer-channel.scd".loadRelative; // Launch-controls with auto binding for mixer + params for leftovers.
-    "_includes/_midi-ctrl/launch-control/launch-controls.scd".loadRelative; // Launch-controls for just params.
-
+   // s.plotTree;
+   // ServerMeter(s);
+    // "_includes/mixer-channel-gui.scd".loadRelative;
     "Setup done!".postln;
 };
 )
