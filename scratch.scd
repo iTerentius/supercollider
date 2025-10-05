@@ -47,7 +47,7 @@ Pdef(\melody,
 );
 )
 ~t2s1 = ~t2.newPostSend(~r1, 1);
-~t2s1.level_(1);
+~t2s1.level_(0.5);
 ~t3s1.free;
 ~t3s1 = ~t3.newPostSend(~r1, 1);
 ~t4s1 = ~t4.newPostSend(~r1, 1);
@@ -59,7 +59,7 @@ ServerMeter(s);
 
 
 // start stems to one multichannel WAV on the next bar
-~stopStems = ~stemDiskStart.([~m1, ~t2, ~t3, ~t4], [~r1], "songB");
+~stopStems = ~stemDiskStart.([~m1, ~t2, ~perc, ~phh1], [~r1], "songB");
 
 // later, stop one bar after you call it
 ~stopStems.(1);

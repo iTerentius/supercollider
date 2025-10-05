@@ -37,6 +37,23 @@ Ndef(\i2).clear(3);
 
 TempoClock.default.tempo = 60/60; // 90 bpm
 
+(
+~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t2);
+
+~pbd1 = MixerChannel.new(\pbd1, s, 2, 2, outbus: ~perc);
+~lcxlBindParam.(\b4_s1_f, {|x| ~pbd1.level_(x)});
+~lcxlBindParam.(\b4_s1_r3, {|x| ~pbd1.pan_(x.linlin(0, 1, -1, 1))});
+
+~pbd2 = MixerChannel.new(\pbd2, s, 2, 2, outbus: ~perc);
+~lcxlBindParam.(\b4_s2_f, {|x| ~pbd2.level_(x)});
+~lcxlBindParam.(\b4_s2_r3, {|x| ~pbd2.pan_(x.linlin(0, 1, -1, 1))});
+
+~phh1 = MixerChannel.new(\phh1, s, 2, 2, outbus: ~perc);
+~lcxlBindParam.(\b4_s3_f, {|x| ~phh1.level_(x)});
+~lcxlBindParam.(\b4_s3_r3, {|x| ~phh1.pan_(x.linlin(0, 1, -1, 1))});
+)
+
+
 ( ~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); )
 (
 ~bd1 = ~samplesTree.at(\bass_drums).asArray[0];
@@ -50,7 +67,7 @@ Pdef(\bd1,
             \amp,   1.0,
             \rate,  1,
             \pan,   0.5,
-            \out,   ~t2.inbus.index
+            \out,   ~pbd1.inbus.index
         )
     )
 ).play;
@@ -75,7 +92,7 @@ Pdef(\bd2,
       \amp,   1.0,
       \rate,  1,
       \pan,   -0.5,
-      \out, ~t3.inbus.index 
+      \out, ~pbd2.inbus.index 
     )
   )
 ).play;
@@ -111,7 +128,7 @@ Pdef(\hh1,
       \pan,   0.2,
       \startPos, 0,
       \loop, 0,
-      \out, ~t4.inbus.index
+      \out, ~phh1.inbus.index
     )
   )
 ).play;
@@ -124,5 +141,4 @@ Pdef(\hh1).play;
 Ndef(\hh1).stop(3);
 Ndef(\hh1).clear;
 
-~perc = MixerChannel
 
