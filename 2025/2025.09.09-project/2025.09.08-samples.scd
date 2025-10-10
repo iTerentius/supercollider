@@ -63,10 +63,9 @@ Pdef(\bd1,
         Pbind(
             \buf,   ~bd1,          // your Buffer object
             \bufnum, Pkey(\buf),   // SC uses the Buffer’s bufnum
-            \dur,   0.5,
+            \dur,    Pbjorklund2(3, 8)/4,
             \amp,   1.0,
             \rate,  1,
-            \pan,   0.5,
             \out,   ~pbd1.inbus.index
         )
     )
@@ -90,8 +89,7 @@ Pdef(\bd2,
       \bufnum, Pkey(\buf),   // SC will pass the Buffer’s bufnum
       \dur,   Prand([0.25, 0.5, Rest(0.25)], inf),
       \amp,   1.0,
-      \rate,  1,
-      \pan,   -0.5,
+      \rate,  Prand([1, 2, 3], inf),
       \out, ~pbd2.inbus.index 
     )
   )
@@ -140,5 +138,26 @@ Ndef(\hh1).play(~t4.inbus);
 Pdef(\hh1).play;
 Ndef(\hh1).stop(3);
 Ndef(\hh1).clear;
+
+(
+// ~yesorno = ~samplesTree.at(\hoarder).asArray[0];
+~sample = ~samplesTree.at(\hoarder).asArray[rrand(0, 6)];
+~slices = 64;
+Pdef(\yesorno, Pbind(
+    \instrument, \slice_s,
+    \bufnum, ~sample,
+    \nSlices, ~slices,
+    \spread, 0.5,
+    \rev, Pseq([0, 1, 0], inf),
+    \sliceIndex, Prand((0..~slices-1), inf),
+    \pan, Ndef(\slicePan),
+    \dur, 0.125,
+    \amp, 1,
+    \out, ~t2.inbus.index
+)).play;
+)
+Ndef(\slicePan, {SinOsc.kr(3)});
+Ndef(\slicePan).fadeTime_(3);
+
 
 

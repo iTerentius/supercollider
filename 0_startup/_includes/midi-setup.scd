@@ -16,7 +16,7 @@ MIDIClient.sources.do { |src, i|
 MIDIClient.destinations.do { |dst, i|
     (i.asString ++ ": " ++ dst.device ++ " (" ++ dst.name ++ ")").postln
 };
-//
+
 // // Helpers --------------------------------------------------------------------
 // ~stamp = { Date.getDate.stamp };
 // ~pp = { |tag, data|

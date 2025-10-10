@@ -17,6 +17,9 @@ s.waitForBoot {
     "_includes/mixer-channel-16s.scd".loadRelative;
     "_includes/mixer-channel-stem-record.scd".loadRelative;
     // "_includes/ndef-mixer.scd".loadRelative;
+    // Helpers
+    // "_includes/_helpers/peuc.scd".loadRelative;
+
     //MIDI Controllers
     // "_includes/_midi-ctrl/launch-control/launch-controls.mixer-channel.scd".loadRelative; // Launch-controls with auto binding for mixer + params for leftovers.
    // s.plotTree;

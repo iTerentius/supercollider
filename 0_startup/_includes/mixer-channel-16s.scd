@@ -65,7 +65,39 @@
 ~r4 = MixerChannel.new(\r4, s, 2, 2, \outbus, ~m1);
 ~lcxlBindParam.(\b1_s8_f, {|x| ~r4.level_(x)});
 ~lcxlbindparam.(\b1_s8_r3, {|x| ~r4.pan_(x.linlin(0, 1, -1, 1))});
+
+~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t2);
+
+~pbd1 = MixerChannel.new(\pbd1, s, 2, 2, outbus: ~perc);
+~lcxlBindParam.(\b4_s1_f, {|x| ~pbd1.level_(x)});
+~lcxlBindParam.(\b4_s1_r3, {|x| ~pbd1.pan_(x.linlin(0, 1, -1, 1))});
+
+~pbd2 = MixerChannel.new(\pbd2, s, 2, 2, outbus: ~perc);
+~lcxlBindParam.(\b4_s2_f, {|x| ~pbd2.level_(x)});
+~lcxlBindParam.(\b4_s2_r3, {|x| ~pbd2.pan_(x.linlin(0, 1, -1, 1))});
+
+~phh1 = MixerChannel.new(\phh1, s, 2, 2, outbus: ~perc);
+~lcxlBindParam.(\b4_s3_f, {|x| ~phh1.level_(x)});
+~lcxlBindParam.(\b4_s3_r3, {|x| ~phh1.pan_(x.linlin(0, 1, -1, 1))});
+
+// Default FX
+// -- Reverb
+~r1.playfx( { |outbus|
+			var sig = In.ar(outbus, 2);
+			FreeVerb2.ar(sig[0], sig[1], mix: 1, room: 0.8, damp: 0.2);
+		}
+);
+
+// -- Delay
+~r2.playfx( { |outbus|
+			var sig = In.ar(outbus, 2);
+			CombL.ar(sig, maxdelaytime: 0.2, delaytime: 0.2, decaytime: 1.0);
+		}
+);
+
+
 )
+
 
 // (
 // ~r1.playfx({ |out| 

@@ -7,5 +7,7 @@
     "midi_router_cleanup.scd".loadRelative;         // hub first so ~ccEmit exists
     "lcn_param_router.locked.uid.v4.scd".loadRelative;         // hub first so ~ccEmit exists
     "lcxl_param_router.locked.uid.v9.scd".loadRelative;         // hub first so ~ccEmit exists
-    "rearm_both_locked_uid.v2.scd".loadRelative;         // hub first so ~ccEmit exists
+    "apc_param_router.locked.uid.v2.scd".loadRelative;
+    "rearm_all_locked_uid.v2.scd".loadRelative;         // hub first so ~ccEmit exists
     "lcxl_force_rearm.v1.scd".loadRelative;         // hub first so ~ccEmit exists
+

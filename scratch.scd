@@ -46,12 +46,12 @@ Pdef(\melody,
 		}
 );
 )
-~t2s1 = ~t2.newPostSend(~r1, 1);
-~t2s1.level_(0.5);
+~t2s1 = ~t2.newPostSend(~r1, 0.1);
+~t2s1.level_(1);
 ~t3s1.free;
 ~t3s1 = ~t3.newPostSend(~r1, 1);
 ~t4s1 = ~t4.newPostSend(~r1, 1);
-~r1.level_(1.0);
+~r1.level_(0.9);
 Pdef.clear;
 Pdef(\melody).clear;
 
