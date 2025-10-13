@@ -28,12 +28,14 @@ Ndef(\i2)[0] = { |amp=1, rate=1, dur=1|
   sig = PlayBuf.ar(2, buf, rateSig, loop: 1);
   sig = (isMono).if({sig!2},{sig});
   sig * amp;
-  // Silent.ar(2)
+  // Out.ar(~t5.inbus.index, sig);
 });
 )
 Ndef(\i2).play;
 Ndef(\i2).stop(3);
 Ndef(\i2).clear(3);
+
+~r5.play(Ndef(\i2).play);
 
 TempoClock.default.tempo = 60/60; // 90 bpm
 
@@ -54,7 +56,7 @@ TempoClock.default.tempo = 60/60; // 90 bpm
 )
 
 
-( ~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); )
+~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); 
 (
 ~bd1 = ~samplesTree.at(\bass_drums).asArray[0];
 Pdef(\bd1).quant = 1;
@@ -120,7 +122,7 @@ Pdef(\hh1,
         if(e[\buf].numChannels == 2) { \pBs } { \pBm }
       },
       \bufnum, Pkey(\buf),   // SC will pass the Buffer’s bufnum
-      \dur,   0.5,
+      \dur,   0.125,
       \amp,   Pseq([0.4, 0.4, 0.7, 0.9], inf),
       \rate,  Pseq([0.5, 0.25, 0.125, 1], inf),
       \pan,   0.2,
@@ -137,27 +139,58 @@ Ndef(\hh1)[1] = \filter -> { |in| FreeVerb.ar(in, 0.5, 0.5, 0.5) };
 Ndef(\hh1).play(~t4.inbus);
 Pdef(\hh1).play;
 Ndef(\hh1).stop(3);
-Ndef(\hh1).clear;
+Pdef(\hh1).clear;
 
+( ~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/"); )
+( ~samples = ~samplesTree.at(\hoarder); )
 (
 // ~yesorno = ~samplesTree.at(\hoarder).asArray[0];
 ~sample = ~samplesTree.at(\hoarder).asArray[rrand(0, 6)];
-~slices = 64;
+~slices = 4;
 Pdef(\yesorno, Pbind(
     \instrument, \slice_s,
     \bufnum, ~sample,
     \nSlices, ~slices,
-    \spread, 0.5,
+    \spread, 0.75,
     \rev, Pseq([0, 1, 0], inf),
     \sliceIndex, Prand((0..~slices-1), inf),
     \pan, Ndef(\slicePan),
     \dur, 0.125,
-    \amp, 1,
+    \amp, Pwhite(0.5, 1.5, inf),
+    \rate, 0.5,
     \out, ~t2.inbus.index
 )).play;
 )
-Ndef(\slicePan, {SinOsc.kr(3)});
+Pdef(\yesorno).stop;
+Pdef.clear;
+Ndef(\slicePan, {SinOsc.kr(5)});
 Ndef(\slicePan).fadeTime_(3);
 
+~perc_reverb = ~perc.newPostSend(~r1, 0.5);
+~perc_s_4.free;
+~r2.level_(0.5);
+~perc_reverb.level_(1);
 
+(
+~r4.playfx(\slice_s, [
+    \bufSecs, 2,     // length of rolling buffer in seconds
+    \nSlices, 64,     // number of slices across that window
+    \mix, 1,         // 0 dry  1 wet
+    \spread, 0.5,    // alternating pan offset
+    \rate, 0.5,        // playback rate per slice
+    \rev, 0,         // 0 forward  1 reverse
+    \pan, 0,
+    \amp, 1
+]);
+)
+~perc_slice = ~t1.newPostSend(~r4, 1.0);
+~perc_slice.free;
+~r4.level_(0.5);
+~perc_slice.level_(1);
 
+~slice_idx.set(0);
+~slice_rev.set(0);      // 0 or 1
+~slice_sp.set(0.5);     // spread amount
+~slice_rate.set(0.5);
+~slice_mix.set(1);
+~slice_pan.set(0);

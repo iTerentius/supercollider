@@ -1,182 +1,133 @@
-// apc_param_router.locked.uid.v12b.scd  2025-10-09 America Chicago
-// Knob mapping fixed: 48..55 -> strip by CC, 16..23 -> strip by channel
-// Adds RAW note logging for grid diagnostics  no right parens in comments
+// apc_param_router.locked.uid.v3.scd  2025-10-11 14:16:18 America/Chicago
+// APC40 mkII router using UID filter  LCXL-style structure  no right parens in comments
 
 (
-~apcParam = ~apcParam ? IdentityDictionary.new;
+var ep, uid;
 
-if(~apcParam[\bankIdx].isNil)    { ~apcParam[\bankIdx]    = 0 };
-if(~apcParam[\prefix].isNil)     { ~apcParam[\prefix]     = "" };
-if(~apcParam[\debug].isNil)      { ~apcParam[\debug]      = false };
-if(~apcParam[\palette].isNil)    { ~apcParam[\palette]    = (selected: 127, unselected: 10, on: 127, off: 0) };
-if(~apcParam[\pdefMap].isNil)    { ~apcParam[\pdefMap]    = IdentityDictionary.new };
-if(~apcParam[\handlers].isNil)   { ~apcParam[\handlers]   = IdentityDictionary.new };
+// state and config
+~apcParam = ~apcParam ? ();
 
-if(~apcParam[\faderCC].isNil)    { ~apcParam[\faderCC]    = 7 };
-if(~apcParam[\masterChan].isNil) { ~apcParam[\masterChan] = 0 };
-if(~apcParam[\masterCC].isNil)   { ~apcParam[\masterCC]   = 14 };
-if(~apcParam[\bankNotes].isNil)  { ~apcParam[\bankNotes]  = (82..89) };
-if(~apcParam[\gridChan].isNil)   { ~apcParam[\gridChan]   = 0 };
-if(~apcParam[\gridNotes].isNil)  { ~apcParam[\gridNotes]  = (0..39) };
+~apcParam[\bankIdx]   = (~apcParam[\bankIdx] ? 0).clip(0,7);
+~apcParam[\palette]   = ~apcParam[\palette] ? (selected: 127, unselected: 0); // LED values
+~apcParam[\prefix]    = ~apcParam[\prefix] ? ""; // optional key prefix
+~apcParam[\handlers]  = ~apcParam[\handlers] ? IdentityDictionary.new;
+~apcParam[\snapshotMuteMs] = ~apcParam[\snapshotMuteMs] ? 0.15;
+~apcParam[\masterCC]  = ~apcParam[\masterCC] ? 7; // also accept 14
 
-~apcDetectUID = {
-    var ep, both, uid;
-    ep = MIDIClient.sources.detect { |e|
-        both = (e.device.asString ++ " " ++ e.name.asString).toLower;
-        both.contains("apc40")
-    };
-    uid = ep !? { ep.uid };
-    if(uid.notNil) { ~apcParam[\srcID] = uid };
-    uid
+// key builder parity with LCXL
+~apcParam[\makeKey] = { |bank, strip, role|
+    var pfx, b, s, r;
+    pfx = ~apcParam[\prefix] ? "";
+    b = bank.asInteger; s = strip.asInteger; r = role.asSymbol;
+    (pfx ++ "b" ++ b ++ "_s" ++ s ++ "_" ++ r).asSymbol
 };
 
-~apcParam[\dbgSay] = { |...xs| var on; on = ~apcParam[\debug] ? false; if(on) { xs.postln } };
-
-~apcParam[\makeKey] = { |bank, strip1, slotSym|
-    var pfx, k;
-    pfx = ~apcParam[\prefix];
-    k = (pfx ++ "b" ++ bank ++ "_s" ++ strip1 ++ "_" ++ slotSym.asString).asSymbol;
-    ^k
-};
-
+// midi out for LED refresh  track select LEDs use note 0x33 sent on channels 0..7
 ~apcParam[\ensureOut] = {
-    var dest, o, both;
-    dest = MIDIClient.destinations.detect { |e|
-        both = (e.device.asString ++ " " ++ e.name.asString).toLower;
-        both.contains("apc40")
-    };
+    var dest, out, found;
+    dest = MIDIClient.destinations.detect { |e| (e.device++" "++e.name).toLower.contains("apc40 mk") };
     if(dest.isNil) { ^nil };
-    o = MIDIOut.newByName(dest.device, dest.name);
-    ~apcParam[\out] = o; o
+    found = MIDIOut.findPort(dest.device, dest.name);
+    out = if(found.notNil) { MIDIOut.newByName(dest.device, dest.name) } { MIDIOut.new(0) };
+    ~apcParam[\out] = out; out
 };
 
-~apcParam[\ledNote] = { |note, vel| var o; o = ~apcParam[\out]; if(o.isNil) { o = ~apcParam[\ensureOut].() }; if(o.notNil) { o.noteOn(0, note, vel) } };
-
-~apcParam[\refreshBankLEDs] = {
-    var notes, pal, bank;
-    notes = ~apcParam[\bankNotes];
-    pal   = ~apcParam[\palette];
-    bank  = ~apcParam[\bankIdx] ? 0;
-    if(notes.isNil) { ^thisThread };
-    8.do { |k| var on, n, v; on = (bank == k); n = notes.wrapAt(k); v = on.if(pal[\selected], pal[\unselected]); ~apcParam[\ledNote].(n, v) };
-    ~apcParam[\dbgSay].("[APC] leds refreshed bank " ++ bank);
+~apcParam[\refreshLEDs] = {
+    var out, pal, bank, note, ch, val;
+    out = ~apcParam[\out]; if(out.isNil) { out = ~apcParam[\ensureOut].() };
+    if(out.isNil) { ^nil };
+    pal = ~apcParam[\palette];
+    bank = (~apcParam[\bankIdx] ? 0).clip(0,7);
+    note = 16r33; // track select LED id
+    8.do { |k|
+        ch = k;
+        val = (bank == k).if { pal[\selected] } { pal[\unselected] };
+        if(val > 0) { out.noteOn(ch, note, val) } { out.noteOff(ch, note, 0) };
+    };
+    "[APC] leds refreshed bank %".format(bank).postln;
 };
 
-~apcParam[\refreshGridLED] = { |note| var pal, p, on; pal = ~apcParam[\palette]; p = ~apcParam[\pdefMap][note]; on = (p.notNil and: { Pdef(p).isPlaying }).if(pal[\on], pal[\off]); ~apcParam[\ledNote].(note, on) };
+// resolve and store UID once on load
+ep  = MIDIClient.sources.detect { |x| (x.device++" "++x.name).toLower.contains("apc40 mk") };
+uid = ep.notNil.if({ ep.uid }, { ~apcParam[\srcID] });
+~apcParam[\srcID] = uid;
 
-~apcMapPdef = { |note, pdefName| var n; n = note; ~apcParam[\pdefMap][n] = pdefName.asSymbol; ~apcParam[\refreshGridLED].(n) };
-~apcUnmapPdef = { |note| var n; n = note; ~apcParam[\pdefMap].removeAt(n); ~apcParam[\ledNote].(n, ~apcParam[\palette][\off]) };
+// public bind api
+~apcBindParam   = { |key, func| var k; k = key.asSymbol; ~apcParam[\handlers][k] = func; "[apc] bind %".format(k).postln; func };
+~apcUnbindParam = { |key| var k; k = key.asSymbol; ~apcParam[\handlers].removeAt(k) };
 
-~apcArmLocked = {
-    var srcUID, dbg;
-    if(~apcParam[\srcID].isNil or: { ~apcParam[\srcID].isNumber.not }) { ~apcDetectUID.() };
+// bank setter used by all sources
+~apcParam[\setBankSafe] = { |i|
+    var idx, now, win;
+    idx = i.clip(0,7);
+    now = SystemClock.seconds;
+    win = ~apcParam[\snapshotMuteMs] ? 0.15;
+    if(~apcParam[\bankIdx] != idx) {
+        ~apcParam[\bankIdx] = idx;
+        "[APC SAFE] bank -> %".format(idx).postln;
+        ~apcParam[\snapshotMuteUntil] = now + win;
+        ~apcParam[\refreshLEDs].();
+    };
+};
+
+// main arm function LCXL-style
+~apcArmLocked = { |strict=false, chan0=nil|
+    var srcUID, debugOn;
     srcUID = ~apcParam[\srcID];
-    dbg    = ~apcParam[\debug] ? false;
+    debugOn = ~apcParam[\debug] ? false;
 
-    MIDIdef.free(\apc40_note_raw);
-    MIDIdef.free(\apc40_bank_note);
-    MIDIdef.free(\apc40_grid_on);
+    // free prior defs
     MIDIdef.free(\apc40_cc);
+    MIDIdef.free(\apc40_bank_lr);
+    MIDIdef.free(\apc40_bank_stripbtn);
 
-    // RAW note logger to confirm pads
-    MIDIdef.noteOn(\apc40_note_raw, { |vel, note, chan, src|
-        if(srcUID.notNil and: { src != srcUID }) { ^nil };
-        if(dbg) { "[APC RAW NOTE] note:% vel:% chan0:%".format(note, vel, chan).postln };
-    }, nil, nil, srcUID);
-
-    // bank select
-    MIDIdef.noteOn(\apc40_bank_note, { |vel, note, chan, src|
-        var idx;
-        if(srcUID.notNil and: { src != srcUID }) { ^nil };
-        idx = ~apcParam[\bankNotes].indexOf(note);
-        if(idx.notNil) {
-            ~apcParam[\bankIdx] = idx;
-            ("[APC SAFE] bank -> " ++ idx).postln;
-            ~apcParam[\refreshBankLEDs].();
+    // bank left right buttons  notes 0x3C 0x3D on press
+    MIDIdef.noteOn(\apc40_bank_lr, { |vel, note, chan, src|
+        var b;
+        if(strict and: { chan0.notNil and: { chan != chan0 } }) { ^nil };
+        if(src != srcUID) { ^nil };
+        b = ~apcParam[\bankIdx] ? 0;
+        if(vel > 0) {
+            if(note == 16r3C) { ~apcParam[\setBankSafe].(b - 1) };
+            if(note == 16r3D) { ~apcParam[\setBankSafe].(b + 1) };
         };
-    }, nil, nil, srcUID);
+    }, nil, chan0, srcUID);
 
-    // grid toggle  ch gridChan
-    MIDIdef.noteOn(\apc40_grid_on, { |vel, note, chan, src|
-        var p;
-        if(srcUID.notNil and: { src != srcUID }) { ^nil };
-        if(chan != (~apcParam[\gridChan] ? 0)) { ^nil };
-        if(~apcParam[\gridNotes].includes(note)) {
-            p = ~apcParam[\pdefMap][note];
-            if(p.notNil) {
-                if(Pdef(p).isPlaying) { Pdef(p).stop } { Pdef(p).play };
-                ~apcParam[\refreshGridLED].(note);
-            };
-        };
-    }, nil, ~apcParam[\gridChan] ? 0, srcUID);
+    // per strip buttons set bank based on their channel  notes 0x30..0x34 on press
+    MIDIdef.noteOn(\apc40_bank_stripbtn, { |vel, note, chan, src|
+        var isStrip;
+        if(strict and: { chan0.notNil and: { chan != chan0 } }) { ^nil };
+        if(src != srcUID) { ^nil };
+        isStrip = (note >= 16r30) and: { note <= 16r34 }; // record solo activator trackselect stop
+        if(isStrip and: { vel > 0 }) { ~apcParam[\setBankSafe].(chan.clip(0,7)) };
+    }, nil, chan0, srcUID);
 
-    // CCs
+    // device control knobs cc 16..23 and 48..55  do not change bank
     MIDIdef.cc(\apc40_cc, { |val, cc, chan, src|
-        var v01, bank, strip1, key, h, knobA, knobB;
-        if(srcUID.notNil and: { src != srcUID }) { ^nil };
-        if(dbg) { "[APC RAW] cc:% val:% chan0:%".format(cc, val, chan).postln };
+        var bank, strip1, v01, key, fn, now, muteUntil, isDev;
+        if(strict and: { chan0.notNil and: { chan != chan0 } }) { ^nil };
+        if(src != srcUID) { ^nil };
+        v01 = val / 127.0;
+        now = SystemClock.seconds;
+        muteUntil = ~apcParam[\snapshotMuteUntil] ? 0.0;
+        isDev = (((cc >= 16) and: { cc <= 23 }) or: { (cc >= 48) and: { cc <= 55 } });
+        if(isDev.not) { ^nil };
+        if(now < muteUntil) { ^nil };
 
-        v01  = val / 127.0;
         bank = ~apcParam[\bankIdx] ? 0;
-
-        // master
-        if((chan == (~apcParam[\masterChan] ? 0)) and: { cc == (~apcParam[\masterCC] ? 14) }) {
-            key = (~apcParam[\prefix] ++ "master_f").asSymbol;
-            if(~ccEmit.notNil) { ~ccEmit.(key, v01) };
-            h = ~apcParam[\handlers][key];
-            if(h.notNil) { h.(v01) };
-            if(dbg) { "[APC PEAK] cc:% val:% chan0:%".format(cc, val, chan).postln };
-            ^nil;
-        };
-
-        // faders  cc 7 ch 0..7
-        if((cc == (~apcParam[\faderCC] ? 7)) and: { chan >= 0 } and: { chan <= 7 }) {
-            strip1 = chan + 1;
-            key = ~apcParam[\makeKey].(bank, strip1, \f);
-            if(~ccEmit.notNil) { ~ccEmit.(key, v01) };
-            h = ~apcParam[\handlers][key];
-            if(h.notNil) { h.(v01) };
-            if(dbg) { "[APC PEAK] cc:% val:% chan0:%".format(cc, val, chan).postln };
-            ^nil;
-        };
-
-        // knobs 16..23 -> strip by channel, 48..55 -> strip by CC
-        knobA = (cc >= 16) and: (cc <= 23);  // likely sends row
-        knobB = (cc >= 48) and: (cc <= 55);  // top device row
-
-        if(knobA and: { chan >= 0 } and: { chan <= 7 }) {
-            strip1 = chan + 1;
-            key = ~apcParam[\makeKey].(bank, strip1, \r1);
-            if(~ccEmit.notNil) { ~ccEmit.(key, v01) };
-            h = ~apcParam[\handlers][key];
-            if(h.notNil) { h.(v01) };
-            if(dbg) { "[APC PEAK] cc:% val:% chan0:%".format(cc, val, chan).postln };
-            ^nil;
-        };
-
-        if(knobB and: { chan >= 0 } and: { chan <= 7 }) {
-            strip1 = (cc - 48) + 1; // cc48 -> s1
-            key = ~apcParam[\makeKey].(bank, strip1, \r1);
-            if(~ccEmit.notNil) { ~ccEmit.(key, v01) };
-            h = ~apcParam[\handlers][key];
-            if(h.notNil) { h.(v01) };
-            if(dbg) { "[APC PEAK] cc:% val:% chan0:%".format(cc, val, chan).postln };
-            ^nil;
-        };
-
-        if(dbg) { "[APC MISS] no branch cc % ch %".format(cc, chan).postln };
-    }, nil, nil, srcUID);
+        strip1 = (cc % 8) + 1;
+        key = ~apcParam[\makeKey].(bank, strip1, \r1);
+        if(~ccEmit.notNil) { ~ccEmit.(key, v01) };
+        fn = ~apcParam[\handlers][key];
+        if(fn.notNil) { fn.(v01) };
+        if(debugOn) { ["[APC cc]", key, "cc", cc, "chan0", chan, "v01", v01].postln };
+    }, nil, chan0, srcUID);
 
     ~apcParam[\ensureOut].();
-    ~apcParam[\refreshBankLEDs].();
-    ~apcParam[\dbgSay].("[APC armed] uid " ++ srcUID);
+    ~apcParam[\refreshLEDs].();
+    "[APC SAFE] re-armed on uid %  chan0 %  strict %".format(srcUID, chan0, strict).postln;
 };
 
-~apcRefresh = {
-    var notes;
-    ~apcParam[\refreshBankLEDs].();
-    notes = ~apcParam[\pdefMap].keys;
-    notes.do(~apcParam[\refreshGridLED]);
-};
+~apcArmLocked.();
 )
 

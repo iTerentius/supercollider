@@ -10,14 +10,13 @@ s.waitForBoot {
     "Current!".postln;
     // --- Core MIDI + quantized recording + common synths + sample loader
     "_includes/midi-setup.scd".loadRelative;
-    "_includes/quant-recording.scd".loadRelative;
+    // "_includes/quant-recording.scd".loadRelative;
     "_synthdefs/synths_common.scd".loadRelative;
     "_includes/sample_loader.scd".loadRelative;
     "_includes/_midi-ctrl/launch-control/launch-controls.scd".loadRelative; // Launch-controls for just params.
     "_includes/mixer-channel-16s.scd".loadRelative;
     "_includes/mixer-channel-stem-record.scd".loadRelative;
-    // "_includes/ndef-mixer.scd".loadRelative;
-    // Helpers
+    // "_includes/ndef-mixer.scd".loadRelative; Helpers
     // "_includes/_helpers/peuc.scd".loadRelative;
 
     //MIDI Controllers

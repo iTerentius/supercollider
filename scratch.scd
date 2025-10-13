@@ -40,13 +40,15 @@ Pdef(\melody,
 // );
 // )
 (
-~r1.playfx( { |outbus|
+~r4.playfx( { |outbus|
 			var sig = In.ar(outbus, 2);
 			FreeVerb2.ar(sig[0], sig[1], mix: 1, room: 0.8, damp: 0.2);
 		}
 );
 )
-~t2s1 = ~t2.newPostSend(~r1, 0.1);
+~perc_s_4 = ~perc.newPostSend(~r2, 0.5);
+~perc_s_4.free;
+~r2.level_(0.1);
 ~t2s1.level_(1);
 ~t3s1.free;
 ~t3s1 = ~t3.newPostSend(~r1, 1);
