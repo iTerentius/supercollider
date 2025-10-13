@@ -71,7 +71,8 @@ Pdef(\bd1,
             \out,   ~pbd1.inbus.index
         )
     )
-).play;
+);
+~lcxlBindPdef.(\b0_s0_p, \bd1);
 )
 Pdef(\bd1).play;
 Pdef(\bd1).stop(3);
@@ -79,7 +80,7 @@ Pdef(\bd1).clear;
 
 ServerMeter(s);
 
-Ndef.clear;
+Pdef.clear;
 
 (
 ~bd2 = ~samplesTree.at(\bass_drums).asArray[4];
@@ -95,21 +96,22 @@ Pdef(\bd2,
       \out, ~pbd2.inbus.index 
     )
   )
-).play;
+);
+~lcxlBindPdef.(\b0_s2_p, \bd2);
 )
-
-Pdef(\bd2)[1] = \filter -> { |in| CombL.ar(in, 0.2, LFPulse.kr(0.5!2).exprange(0.01, 0.2), 3) * 0.7 };
-Pdef(\bd2).set(\wet1, 0.8);
-Pdef(\bd2)[1] = nil;
 Pdef(\bd2).play;
 Pdef(\bd2).stop;
 Pdef(\bd2).clear(3);
 
-Pdef(\bdFx, { FreeVerb2.ar(\in1.ar([0, 0]), \in2.ar([0,0]), \mix.kr(0.5), \room.kr(0.7), \damp.kr(0.5))});
-Pdef(\bdFx) <<>.in1 Pdef(\bd1);
-Pdef(\bdFx) <<>.in2 Pdef(\bd2);
-Pdef(\bdFx).play(out:6);
-Pdef(\bdFx).stop(5);
+// Ndef(\bd2)[1] = \filter -> { |in| CombL.ar(in, 0.2, LFPulse.kr(0.5!2).exprange(0.01, 0.2), 3) * 0.7 };
+// Ndef(\bd2).set(\wet1, 0.8);
+// Ndef(\bd2)[1] = nil;
+//
+// Ndef(\bdFx, { FreeVerb2.ar(\in1.ar([0, 0]), \in2.ar([0,0]), \mix.kr(0.5), \room.kr(0.7), \damp.kr(0.5))});
+// Ndef(\bdFx) <<>.in1 Ndef(\bd1);
+// Ndef(\bdFx) <<>.in2 Ndef(\bd2);
+// Ndef(\bdFx).play(out:6);
+// Ndef(\bdFx).stop(5);
 
 (
 ~hh1 = ~samplesTree.at(\hats).asArray[1];
@@ -131,15 +133,17 @@ Pdef(\hh1,
       \out, ~phh1.inbus.index
     )
   )
-).play;
+);
+~lcxlBindPdef.(\b0_s4_p, \hh1);
 )
-Ndef(\hh1)[1] = \filter -> { |in| FreeVerb.ar(in, 0.5, 0.5, 0.5) };
-
-
-Ndef(\hh1).play(~t4.inbus);
 Pdef(\hh1).play;
-Ndef(\hh1).stop(3);
 Pdef(\hh1).clear;
+
+// Ndef(\hh1)[1] = \filter -> { |in| FreeVerb.ar(in, 0.5, 0.5, 0.5) };
+// Ndef(\hh1).play(~t4.inbus);
+// Pdef(\hh1).play;
+// Ndef(\hh1).stop(3);
+// Pdef(\hh1).clear;
 
 ( ~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/"); )
 ( ~samples = ~samplesTree.at(\hoarder); )
@@ -159,7 +163,8 @@ Pdef(\yesorno, Pbind(
     \amp, Pwhite(0.5, 1.5, inf),
     \rate, 0.5,
     \out, ~t2.inbus.index
-)).play;
+));
+~lcxlBindPdef.(\b0_s5_p, \yesorno);
 )
 Pdef(\yesorno).stop;
 Pdef.clear;

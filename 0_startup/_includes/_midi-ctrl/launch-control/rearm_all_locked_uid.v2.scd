@@ -20,7 +20,10 @@
 ~lcxlArmLocked !? { ~lcxlArmLocked.() };
 ~lcnArmLocked  !? { ~lcnArmLocked.() };
 ~lcxlParam !? { ~lcxlParam[\refreshLEDs].() };
+~lcxlPdefArm.();        // re-arm our dedicated listener
+~lcxlPdefRefresh.();    // repaint the p-row for the current bank
 ~lcn      !? { ~lcn[\refreshLEDs].() };
+
 
 // APC last so a failure here cannot block LCXL or LCN logs you expect
 ~apcEnsureMaps !? { ~apcEnsureMaps.() };
