@@ -162,12 +162,13 @@ uid = ep.notNil.if({ ep.uid }, { ~lcxlParam[\srcID] });
 };
 
 ~lcxlP_parseKey = { |keySym|
-    var s, parts, bank, strip;
+    var s, parts, bank, strip, snum;
     s = keySym.asString;
     parts = s.split($_);
     if((parts.size != 3) or: { parts[0][0] != $b } or: { parts[1][0] != $s } or: { parts[2] != "p" }) { ^[0,0] };
     bank  = parts[0].copyRange(1, parts[0].size-1).asInteger ? 0;
-    strip = parts[1].copyRange(1, parts[1].size-1).asInteger ? 0;
+    snum  = parts[1].copyRange(1, parts[1].size-1).asInteger ? 1;  // 1..8
+    strip = (snum - 1).clip(0, 7);  // internal 0..7
     [bank, strip]
 };
 
@@ -242,7 +243,7 @@ uid = ep.notNil.if({ ep.uid }, { ~lcxlParam[\srcID] });
         var idx = ~lcxlP_idxFrom.(bank, c);
         var nameSym = ~lcxlP_state[\idxToPdef][idx];
         var isPlaying = ~lcxlP_state[\playing][idx] ? false;
-        var key = ("b" ++ bank ++ "_s" ++ c ++ "_p").asSymbol;
+        var key = ("b" ++ bank ++ "_s" ++ (c + 1) ++ "_p").asSymbol;
         if(nameSym.isNil) { ~lcxlP_ledKey.(key, \off) } { ~lcxlP_ledKey.(key, if(isPlaying) { \green } { \amber }) };
     };
 };
@@ -264,7 +265,7 @@ uid = ep.notNil.if({ ep.uid }, { ~lcxlParam[\srcID] });
         col = row.indexOf(note);
         if(col.isNil) { ^nil };
         bank = ~lcxlP_getBank.();
-        key = ("b" ++ bank ++ "_s" ++ col ++ "_p").asSymbol;
+        key = ("b" ++ bank ++ "_s" ++ (col + 1) ++ "_p").asSymbol;
         ~lcxlPdefHandle.(key, vel);
     }, nil, chan, nil);
 
@@ -286,4 +287,5 @@ uid = ep.notNil.if({ ep.uid }, { ~lcxlParam[\srcID] });
 // end PDEF addon
 // -----------------------------------------------------------------------------
 )
+
 

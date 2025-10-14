@@ -20,8 +20,6 @@ ch0 = ~lcxlParam[\chan0] ? 8;            // set to 8 unless already set
 // arm
 ~lcxlArmLocked !? { ~lcxlArmLocked.() };
 
-~lcxlPdefArm.();        // re-arm our dedicated listener
-~lcxlPdefRefresh.();    // repaint the p-row for the current bank
 // quick peek def to prove CC handler is hot
 MIDIdef.free(\lcxl_cc_peek_once);
 MIDIdef.cc(\lcxl_cc_peek_once, { |val, cc, chan, src|
@@ -29,5 +27,7 @@ MIDIdef.cc(\lcxl_cc_peek_once, { |val, cc, chan, src|
     MIDIdef.free(\lcxl_cc_peek_once);
 }, nil, ch0, uid);
 
+~lcxlPdefArm.();        // re-arm our dedicated listener
+~lcxlPdefRefresh.();    // repaint the p-row for the current bank
 "[LCXL FORCE] uid %, chan0 %, strict true  armed".format(uid, ch0).postln;
 )

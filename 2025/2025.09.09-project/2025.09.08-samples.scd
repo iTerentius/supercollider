@@ -72,8 +72,9 @@ Pdef(\bd1,
         )
     )
 );
-~lcxlBindPdef.(\b0_s0_p, \bd1);
+~lcxlBindPdef.(\b0_s1_p, \bd1);
 )
+~lcxlUnbindPdef.(\b0_s1_p, \bd1);
 Pdef(\bd1).play;
 Pdef(\bd1).stop(3);
 Pdef(\bd1).clear;
@@ -97,7 +98,7 @@ Pdef(\bd2,
     )
   )
 );
-~lcxlBindPdef.(\b0_s2_p, \bd2);
+~lcxlBindPdef.(\b0_s1_p, \bd2);
 )
 Pdef(\bd2).play;
 Pdef(\bd2).stop;
