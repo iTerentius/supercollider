@@ -9,7 +9,7 @@ if (s.serverRunning.not) { s.boot };
 s.waitForBoot {
     "Current!".postln;
     // --- Core MIDI + quantized recording + common synths + sample loader
-    "_includes/midi-setup.scd".loadRelative;
+    // "_includes/midi-setup.scd".loadRelative;
     // "_includes/quant-recording.scd".loadRelative;
     "_synthdefs/synths_common.scd".loadRelative;
     "_includes/sample_loader.scd".loadRelative;

@@ -66,7 +66,7 @@
 ~lcxlBindParam.(\b1_s8_f, {|x| ~r4.level_(x)});
 ~lcxlbindparam.(\b1_s8_r3, {|x| ~r4.pan_(x.linlin(0, 1, -1, 1))});
 
-~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t2);
+~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t1);
 
 ~pbd1 = MixerChannel.new(\pbd1, s, 2, 2, outbus: ~perc);
 ~lcxlBindParam.(\b4_s1_f, {|x| ~pbd1.level_(x)});
@@ -82,9 +82,9 @@
 
 // Default FX
 // -- Reverb
-~r1.playfx( { |outbus|
+~r1.playfx( { |outbus, room=0.8, damp=0.2|
 			var sig = In.ar(outbus, 2);
-			FreeVerb2.ar(sig[0], sig[1], mix: 1, room: 0.8, damp: 0.2);
+			FreeVerb2.ar(sig[0], sig[1], mix: 1, room: room, damp: damp);
 		}
 );
 

@@ -26,6 +26,19 @@ Pdef(\melody,
 ).play;
 )
 
+// Pdef test
+Pdef(\kick, Pbind(\instrument, \default, \dur, 0.25, \freq, 110));
+~lcxlBindPdef.(\b0_s1_p, \kick);
+
+// Ndef test (simple drone)
+Ndef(\padbus, { SinOsc.ar(220) * EnvGen.kr(Env.asr, gate:1, doneAction:0) * -12.dbamp });
+~lcxlBindNdef.(\b0_s2_n, \padbus);
+
+// press s1 -> Pdef plays green; press again -> amber
+// press s2 -> Ndef plays green; press again -> amber
+
+// bank switch (as before), then:
+~lcxlPdefRefresh.(); // recompute p-row LEDs for current bank
 // reverb send
 // // we know in advance what fx insert is needed!
 // // so we can write it at init time, save a step

@@ -1,133 +1,243 @@
-// apc_param_router.locked.uid.v3.scd  2025-10-11 14:16:18 America/Chicago
-// APC40 mkII router using UID filter  LCXL-style structure  no right parens in comments
+/* 2025-10-16 APC40 mkII router drop-in with auto MIDI init and LED follow */
 
 (
-var ep, uid;
+/* settings and state */
+~apcAutoStart = ~apcAutoStart ?? { true };      // set to false before eval if you want manual start
+~apcPressMode = ~apcPressMode  ?? { \toggle };  // \toggle or \gate
 
-// state and config
-~apcParam = ~apcParam ? ();
+~apcPadMap    = ~apcPadMap    ? IdentityDictionary.new;
+~apcColorVel  = (green: 122, amber: 126, yellow: 124, off: 0);
 
-~apcParam[\bankIdx]   = (~apcParam[\bankIdx] ? 0).clip(0,7);
-~apcParam[\palette]   = ~apcParam[\palette] ? (selected: 127, unselected: 0); // LED values
-~apcParam[\prefix]    = ~apcParam[\prefix] ? ""; // optional key prefix
-~apcParam[\handlers]  = ~apcParam[\handlers] ? IdentityDictionary.new;
-~apcParam[\snapshotMuteMs] = ~apcParam[\snapshotMuteMs] ? 0.15;
-~apcParam[\masterCC]  = ~apcParam[\masterCC] ? 7; // also accept 14
+~apcOut = ~apcOut ? nil;
+~apcSrcUID = ~apcSrcUID ? nil;
 
-// key builder parity with LCXL
-~apcParam[\makeKey] = { |bank, strip, role|
-    var pfx, b, s, r;
-    pfx = ~apcParam[\prefix] ? "";
-    b = bank.asInteger; s = strip.asInteger; r = role.asSymbol;
-    (pfx ++ "b" ++ b ++ "_s" ++ s ++ "_" ++ r).asSymbol
+~apcGridWatchActive = ~apcGridWatchActive ? false;
+~apcGridPeriod = ~apcGridPeriod ? 0.25;
+~apcGridTicker = ~apcGridTicker ? nil;
+
+/* free any old handlers to avoid duplicates across recompiles */
+~apcFreeMIDIDefs = {
+    var names;
+    names = [\apc_grid_on, \apc_grid_off, \apc_any_on, \apc_any_off, \apc_debug, \apc_debug_off];
+    names.do { |n| var d; d = MIDIdef(n); if(d.notNil) { d.free } };
+    "APC MIDIdefs cleared".postln;
 };
 
-// midi out for LED refresh  track select LEDs use note 0x33 sent on channels 0..7
-~apcParam[\ensureOut] = {
-    var dest, out, found;
-    dest = MIDIClient.destinations.detect { |e| (e.device++" "++e.name).toLower.contains("apc40 mk") };
-    if(dest.isNil) { ^nil };
-    found = MIDIOut.findPort(dest.device, dest.name);
-    out = if(found.notNil) { MIDIOut.newByName(dest.device, dest.name) } { MIDIOut.new(0) };
-    ~apcParam[\out] = out; out
-};
+/* choose APC source and destination, connect inputs, open output */
+~apcPickPorts = {
+    var dests, srcs, didx, sidx, out;
+    MIDIClient.init;
+    MIDIIn.disconnectAll;
+    MIDIIn.connectAll;
 
-~apcParam[\refreshLEDs] = {
-    var out, pal, bank, note, ch, val;
-    out = ~apcParam[\out]; if(out.isNil) { out = ~apcParam[\ensureOut].() };
-    if(out.isNil) { ^nil };
-    pal = ~apcParam[\palette];
-    bank = (~apcParam[\bankIdx] ? 0).clip(0,7);
-    note = 16r33; // track select LED id
-    8.do { |k|
-        ch = k;
-        val = (bank == k).if { pal[\selected] } { pal[\unselected] };
-        if(val > 0) { out.noteOn(ch, note, val) } { out.noteOff(ch, note, 0) };
+    srcs = MIDIClient.sources;
+    dests = MIDIClient.destinations;
+
+    sidx = srcs.detectIndex { |e| e.device.contains("APC40") || e.name.contains("APC40") };
+    didx = dests.detectIndex { |e| e.device.contains("APC40") || e.name.contains("APC40") };
+
+    if(sidx.isNil or: { didx.isNil }) {
+        "APC40 mkII source or destination not found".warn;
+        ^nil
     };
-    "[APC] leds refreshed bank %".format(bank).postln;
+
+    ~apcSrcUID = srcs[sidx].uid;
+    out = MIDIOut.newByName(dests[didx].device, dests[didx].name);
+    out.latency = 0;
+    ~apcOut = out;
+
+    ["[APC] picked srcUID", ~apcSrcUID, "dest", dests[didx].device, dests[didx].name].postln;
+    ^true
 };
 
-// resolve and store UID once on load
-ep  = MIDIClient.sources.detect { |x| (x.device++" "++x.name).toLower.contains("apc40 mk") };
-uid = ep.notNil.if({ ep.uid }, { ~apcParam[\srcID] });
-~apcParam[\srcID] = uid;
-
-// public bind api
-~apcBindParam   = { |key, func| var k; k = key.asSymbol; ~apcParam[\handlers][k] = func; "[apc] bind %".format(k).postln; func };
-~apcUnbindParam = { |key| var k; k = key.asSymbol; ~apcParam[\handlers].removeAt(k) };
-
-// bank setter used by all sources
-~apcParam[\setBankSafe] = { |i|
-    var idx, now, win;
-    idx = i.clip(0,7);
-    now = SystemClock.seconds;
-    win = ~apcParam[\snapshotMuteMs] ? 0.15;
-    if(~apcParam[\bankIdx] != idx) {
-        ~apcParam[\bankIdx] = idx;
-        "[APC SAFE] bank -> %".format(idx).postln;
-        ~apcParam[\snapshotMuteUntil] = now + win;
-        ~apcParam[\refreshLEDs].();
-    };
-};
-
-// main arm function LCXL-style
-~apcArmLocked = { |strict=false, chan0=nil|
-    var srcUID, debugOn;
-    srcUID = ~apcParam[\srcID];
-    debugOn = ~apcParam[\debug] ? false;
-
-    // free prior defs
-    MIDIdef.free(\apc40_cc);
-    MIDIdef.free(\apc40_bank_lr);
-    MIDIdef.free(\apc40_bank_stripbtn);
-
-    // bank left right buttons  notes 0x3C 0x3D on press
-    MIDIdef.noteOn(\apc40_bank_lr, { |vel, note, chan, src|
-        var b;
-        if(strict and: { chan0.notNil and: { chan != chan0 } }) { ^nil };
-        if(src != srcUID) { ^nil };
-        b = ~apcParam[\bankIdx] ? 0;
-        if(vel > 0) {
-            if(note == 16r3C) { ~apcParam[\setBankSafe].(b - 1) };
-            if(note == 16r3D) { ~apcParam[\setBankSafe].(b + 1) };
+/* send the Akai Introduction sysex so RGB velocity colors are honored */
+~apcIntro = { |mode=1|
+    var out, syx;
+    out = ~apcOut;
+    if(out.isNil) { "[APC] no ~apcOut for Intro".warn }{
+        if(mode == 1) {
+            syx = Int8Array[0xF0, 0x47, 0x7F, 0x29, 0x60, 0x00, 0x04, 0x41, 0x00, 0x01, 0x00, 0xF7];
+            out.sysex(syx);
+            "[APC] Intro sent mode 1".postln;
+        }{
+            syx = Int8Array[0xF0, 0x47, 0x7F, 0x29, 0x60, 0x00, 0x04, 0x42, 0x00, 0x01, 0x00, 0xF7];
+            out.sysex(syx);
+            "[APC] Intro sent mode 2".postln;
         };
-    }, nil, chan0, srcUID);
-
-    // per strip buttons set bank based on their channel  notes 0x30..0x34 on press
-    MIDIdef.noteOn(\apc40_bank_stripbtn, { |vel, note, chan, src|
-        var isStrip;
-        if(strict and: { chan0.notNil and: { chan != chan0 } }) { ^nil };
-        if(src != srcUID) { ^nil };
-        isStrip = (note >= 16r30) and: { note <= 16r34 }; // record solo activator trackselect stop
-        if(isStrip and: { vel > 0 }) { ~apcParam[\setBankSafe].(chan.clip(0,7)) };
-    }, nil, chan0, srcUID);
-
-    // device control knobs cc 16..23 and 48..55  do not change bank
-    MIDIdef.cc(\apc40_cc, { |val, cc, chan, src|
-        var bank, strip1, v01, key, fn, now, muteUntil, isDev;
-        if(strict and: { chan0.notNil and: { chan != chan0 } }) { ^nil };
-        if(src != srcUID) { ^nil };
-        v01 = val / 127.0;
-        now = SystemClock.seconds;
-        muteUntil = ~apcParam[\snapshotMuteUntil] ? 0.0;
-        isDev = (((cc >= 16) and: { cc <= 23 }) or: { (cc >= 48) and: { cc <= 55 } });
-        if(isDev.not) { ^nil };
-        if(now < muteUntil) { ^nil };
-
-        bank = ~apcParam[\bankIdx] ? 0;
-        strip1 = (cc % 8) + 1;
-        key = ~apcParam[\makeKey].(bank, strip1, \r1);
-        if(~ccEmit.notNil) { ~ccEmit.(key, v01) };
-        fn = ~apcParam[\handlers][key];
-        if(fn.notNil) { fn.(v01) };
-        if(debugOn) { ["[APC cc]", key, "cc", cc, "chan0", chan, "v01", v01].postln };
-    }, nil, chan0, srcUID);
-
-    ~apcParam[\ensureOut].();
-    ~apcParam[\refreshLEDs].();
-    "[APC SAFE] re-armed on uid %  chan0 %  strict %".format(srcUID, chan0, strict).postln;
+    };
 };
 
-~apcArmLocked.();
+/* set one grid pad LED color by symbolic name using velocity colors */
+~apcPadLED = { |note, color=\amber|
+    var out, vel;
+    out = ~apcOut;
+    vel = ~apcColorVel[color] ? 0;
+    if(out.notNil) {
+        out.noteOn(0, note, vel); // grid pads ignore channel, color comes from velocity
+    };
+    ^vel
+};
+
+/* paint LED by actual Pdef state */
+~apcLEDByState = { |note, key|
+    var playing;
+    playing = Pdef(key).isPlaying;
+    if(playing) { ~apcPadLED.(note, \green) } { ~apcPadLED.(note, \amber) };
+};
+
+/* assign a pad to a Pdef key and paint its current state */
+~apcAssignPad = { |note, key|
+    var k;
+    k = key.asSymbol;
+    ~apcPadMap[note] = k;
+    ~apcLEDByState.(note, k);
+    ["[APC] assigned", note, k].postln;
+    ^k
+};
+
+/* compatibility alias so your existing calls still work */
+~apcGL2AssignNote = { |note, key|
+    var r;
+    r = ~apcAssignPad.(note, key);
+    ^r
+};
+
+/* set press mode at runtime and re-arm handlers */
+~apcSetPressMode = { |mode|
+    var m;
+    m = mode.asSymbol;
+    if([ \toggle, \gate ].includes(m).not) { m = \toggle };
+    ~apcPressMode = m;
+    ~apcArmGrid.();
+    ["[APC] press mode", m].postln;
+    ^m
+};
+
+/* arm grid note handlers bound to the APC source UID */
+/* optional quick debug toggle */
+~apcDebug = ~apcDebug ? false;
+
+/* re-arm with captured references so MIDIdef closures always see the map */
+~apcArmGrid = {
+    var uid, mode, padMap, padLED, ledByState;
+
+    /* capture references once so closures use the same objects */
+    uid        = ~apcSrcUID;
+    mode       = ~apcPressMode;
+    padMap     = ~apcPadMap;      // IdentityDictionary (mutable, shared)
+    padLED     = ~apcPadLED;      // Function
+    ledByState = ~apcLEDByState;  // Function
+
+    /* free old */
+    MIDIdef(\apc_grid_on).free;
+    MIDIdef(\apc_grid_off).free;
+
+    MIDIdef.noteOn(
+        \apc_grid_on,
+        { |vel, num, chan, src|
+            var key, isPlaying;
+            if(~apcDebug == true) { ["[apc_grid_on]", num, "vel", vel, "chan", chan, "src", src].postln };
+            key = padMap[num];
+            if(key.notNil) {
+                if(mode == \toggle) {
+                    isPlaying = Pdef(key).isPlaying;
+                    if(isPlaying) {
+                        Pdef(key).stop;
+                        padLED.value(num, \amber);
+                    }{
+                        Pdef(key).play;
+                        padLED.value(num, \green);
+                    };
+                }{
+                    if(vel > 0) {
+                        Pdef(key).play;
+                        padLED.value(num, \green);
+                    };
+                };
+            }{
+                if(~apcDebug == true) { ["[apc_grid_on] no assign for", num].postln };
+            };
+        },
+        nil, nil, uid
+    );
+
+    if(mode == \gate) {
+        MIDIdef.noteOff(
+            \apc_grid_off,
+            { |vel, num, chan, src|
+                var key;
+                if(~apcDebug == true) { ["[apc_grid_off]", num, "vel", vel].postln };
+                key = padMap[num];
+                if(key.notNil) {
+                    Pdef(key).stop;
+                    padLED.value(num, \amber);
+                };
+            },
+            nil, nil, uid
+        );
+    };
+
+    /* repaint using the captured helper so LEDs match current truth */
+    padMap.keysValuesDo { |n, k| ledByState.value(n, k) };
+
+    ["[APC] armed grid for uid", uid, "mode", mode, "assigns", padMap.keys.size].postln;
+    uid
+};
+
+/* watcher using AppClock.sched so there is no Routine to stop or resume */
+~apcGridWatchStop = {
+    var was;
+    was = (~apcGridWatchActive == true);
+    ~apcGridWatchActive = false;
+    if(was) { "[APC] grid watch stop requested".postln };
+};
+
+~apcGridWatchStart = { |period=0.25|
+    var already;
+    already = (~apcGridWatchActive == true);
+    ~apcGridPeriod = period;
+
+    if(already) {
+        "[APC] grid watch already running, period updated".postln;
+        ^\running
+    };
+
+    ~apcGridWatchActive = true;
+    ~apcGridTicker = AppClock.sched(0.0, {
+        var p;
+        p = ~apcGridPeriod ? 0.25;
+        if(~apcGridWatchActive == true) {
+            ~apcPadMap.keysValuesDo { |n, k| ~apcLEDByState.(n, k) };
+            p
+        }{
+            ~apcGridTicker = nil;
+            "[APC] grid watch exited".postln;
+            nil
+        }
+    });
+
+    "[APC] grid watch started".postln;
+    ^\started
+};
+
+/* one-call boot that runs automatically when the file is evaluated */
+~apcRouterBoot = {
+    var ok1;
+    ok1 = ~apcPickPorts.();
+    if(ok1.notNil) {
+        ~apcIntro.(1);
+        ~apcArmGrid.();
+        ~apcGridWatchStart.(~apcGridPeriod ? 0.25);
+        "[APC] router boot complete".postln;
+    }{
+        "[APC] router boot failed to pick ports".warn;
+    };
+    ^ok1
+};
+
+/* autorun at load unless disabled */
+if(~apcAutoStart == true) {
+    AppClock.sched(0.05, { ~apcRouterBoot.(); nil });
+};
 )
 

@@ -63,12 +63,12 @@ Pdef(\bd1).quant = 1;
 Pdef(\bd1,
     ~pBuf.(
         Pbind(
-            \buf,   ~bd1,          // your Buffer object
-            \bufnum, Pkey(\buf),   // SC uses the Buffer’s bufnum
-            \dur,    Pbjorklund2(3, 8)/4,
-            \amp,   1.0,
-            \rate,  1,
-            \out,   ~pbd1.inbus.index
+          \buf,   ~bd1,          // your Buffer object
+          \bufnum, Pkey(\buf),   // SC uses the Buffer’s bufnum
+          \dur,    Pbjorklund2(3, 8)/4,
+          \amp,   1.0,
+          \rate,  1,
+          \out,   ~pbd1.inbus.index
         )
     )
 );
@@ -98,11 +98,13 @@ Pdef(\bd2,
     )
   )
 );
-~lcxlBindPdef.(\b0_s1_p, \bd2);
+~lcxlBindPdef.(\b0_s2_p, \bd2);
 )
 Pdef(\bd2).play;
 Pdef(\bd2).stop;
 Pdef(\bd2).clear(3);
+
+
 
 // Ndef(\bd2)[1] = \filter -> { |in| CombL.ar(in, 0.2, LFPulse.kr(0.5!2).exprange(0.01, 0.2), 3) * 0.7 };
 // Ndef(\bd2).set(\wet1, 0.8);
@@ -114,6 +116,7 @@ Pdef(\bd2).clear(3);
 // Ndef(\bdFx).play(out:6);
 // Ndef(\bdFx).stop(5);
 
+~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); 
 (
 ~hh1 = ~samplesTree.at(\hats).asArray[1];
 Pdef(\hh1).quant = 1;
@@ -125,7 +128,7 @@ Pdef(\hh1,
         if(e[\buf].numChannels == 2) { \pBs } { \pBm }
       },
       \bufnum, Pkey(\buf),   // SC will pass the Buffer’s bufnum
-      \dur,   0.125,
+      \dur,   0.25,
       \amp,   Pseq([0.4, 0.4, 0.7, 0.9], inf),
       \rate,  Pseq([0.5, 0.25, 0.125, 1], inf),
       \pan,   0.2,
@@ -140,6 +143,20 @@ Pdef(\hh1,
 Pdef(\hh1).play;
 Pdef(\hh1).clear;
 
+(
+SynthDef(\fx_distort, { |outbus, crush = 1 , wet=0.5|
+    var inSig, outSig;
+    inSig  = In.ar(outbus, 1);
+    outSig = inSig.abs * crush * 0.4;
+    ReplaceOut.ar(outbus, inSig * (1 - wet).sqrt + outSig * wet.sqrt);
+}).add;
+)
+
+~phh1_fx = ~phh1.playfx(\fx_distort, [\crush, 2.3, \wet, 1 ] );
+~phh1_fx.set(\crush, 4);
+~phh1_fx.free;
+
+s.plotTree;
 // Ndef(\hh1)[1] = \filter -> { |in| FreeVerb.ar(in, 0.5, 0.5, 0.5) };
 // Ndef(\hh1).play(~t4.inbus);
 // Pdef(\hh1).play;
@@ -149,11 +166,10 @@ Pdef(\hh1).clear;
 ( ~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/"); )
 ( ~samples = ~samplesTree.at(\hoarder); )
 (
-// ~yesorno = ~samplesTree.at(\hoarder).asArray[0];
 ~sample = ~samplesTree.at(\hoarder).asArray[rrand(0, 6)];
 ~slices = 4;
 Pdef(\yesorno, Pbind(
-    \instrument, \slice_s,
+    \instrument, \slice_s,:
     \bufnum, ~sample,
     \nSlices, ~slices,
     \spread, 0.75,
@@ -162,7 +178,7 @@ Pdef(\yesorno, Pbind(
     \pan, Ndef(\slicePan),
     \dur, 0.125,
     \amp, Pwhite(0.5, 1.5, inf),
-    \rate, 0.5,
+    \rate, Ndef(\sliceRate),
     \out, ~t2.inbus.index
 ));
 ~lcxlBindPdef.(\b0_s5_p, \yesorno);
@@ -171,10 +187,14 @@ Pdef(\yesorno).stop;
 Pdef.clear;
 Ndef(\slicePan, {SinOsc.kr(5)});
 Ndef(\slicePan).fadeTime_(3);
+Ndef(\sliceRate, {LFPulse.kr(0.5, 0.8, 1)});
+Ndef(\sliceRate).fadeTime_(3);
+~yn_slice = ~t2.newPostSend(~r2, 1.0);
+~yn_slice.free;
 
 ~perc_reverb = ~perc.newPostSend(~r1, 0.5);
-~perc_s_4.free;
-~r2.level_(0.5);
+~perc_reverb.free;
+~r1.level_(1.0);
 ~perc_reverb.level_(1);
 
 (
@@ -191,9 +211,9 @@ Ndef(\slicePan).fadeTime_(3);
 )
 ~perc_slice = ~t1.newPostSend(~r4, 1.0);
 ~perc_slice.free;
-~r4.level_(0.5);
+~r4.level_(1.0);
 ~perc_slice.level_(1);
-
+~r1.set(\room, 0.1);
 ~slice_idx.set(0);
 ~slice_rev.set(0);      // 0 or 1
 ~slice_sp.set(0.5);     // spread amount
