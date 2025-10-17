@@ -58,15 +58,15 @@ TempoClock.default.tempo = 60/60; // 90 bpm
 
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); 
 (
-~bd1 = ~samplesTree.at(\bass_drums).asArray[0];
+~bd1 = ~samplesTree.at(\bass_drums).asArray;
 Pdef(\bd1).quant = 1;
 Pdef(\bd1,
     ~pBuf.(
         Pbind(
-            \buf,   ~bd1,          // your Buffer object
+            \buf,   Prand(~bd1, inf),          // your Buffer object
             \bufnum, Pkey(\buf),   // SC uses the Buffer’s bufnum
             \dur,    Pbjorklund2(3, 8)/4,
-            \amp,   1.0,
+            \amp,   3.0,
             \rate,  1,
             \out,   ~pbd1.inbus.index
         )
@@ -98,7 +98,7 @@ Pdef(\bd2,
     )
   )
 );
-~lcxlBindPdef.(\b0_s1_p, \bd2);
+~lcxlBindPdef.(\b0_s2_p, \bd2);
 )
 Pdef(\bd2).play;
 Pdef(\bd2).stop;
@@ -121,13 +121,10 @@ Pdef(\hh1,
   ~pBuf.(
     Pbind(
       \buf,    ~hh1,
-      \instrument, Pfunc { |e|
-        if(e[\buf].numChannels == 2) { \pBs } { \pBm }
-      },
       \bufnum, Pkey(\buf),   // SC will pass the Buffer’s bufnum
-      \dur,   0.125,
+      \dur,   0.25,
       \amp,   Pseq([0.4, 0.4, 0.7, 0.9], inf),
-      \rate,  Pseq([0.5, 0.25, 0.125, 1], inf),
+      \rate,  Prand([0.5, 0.25, 0.125, 1], inf),
       \pan,   0.2,
       \startPos, 0,
       \loop, 0,
@@ -139,43 +136,67 @@ Pdef(\hh1,
 )
 Pdef(\hh1).play;
 Pdef(\hh1).clear;
-
-// Ndef(\hh1)[1] = \filter -> { |in| FreeVerb.ar(in, 0.5, 0.5, 0.5) };
+s.scope;
+FreqScope.new(s);
 // Ndef(\hh1).play(~t4.inbus);
 // Pdef(\hh1).play;
 // Ndef(\hh1).stop(3);
 // Pdef(\hh1).clear;
 
-( ~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/"); )
-( ~samples = ~samplesTree.at(\hoarder); )
+~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/"); 
 (
-// ~yesorno = ~samplesTree.at(\hoarder).asArray[0];
-~sample = ~samplesTree.at(\hoarder).asArray[rrand(0, 6)];
-~slices = 4;
+// ~sample = ~samplesTree.at(\neutron_12).asArray[rrand(0, 6)];
+// ~sample = ~samplesTree.at(\hoarder).asArray[rrand(0, 20)];
+~sample = ~samplesTree.at(\cat_water).asArray;
+// ~sample = ~samplesTree.at(\storm);
+~slices = 22;
 Pdef(\yesorno, Pbind(
     \instrument, \slice_s,
-    \bufnum, ~sample,
+    \bufnum, Pseq(~sample, inf),
     \nSlices, ~slices,
     \spread, 0.75,
-    \rev, Pseq([0, 1, 0], inf),
+    \rev, Prand([1, 0], inf),
     \sliceIndex, Prand((0..~slices-1), inf),
     \pan, Ndef(\slicePan),
     \dur, 0.125,
     \amp, Pwhite(0.5, 1.5, inf),
-    \rate, 0.5,
-    \out, ~t2.inbus.index
+    \rate, 0.9,
+    \out, ~t5.inbus.index
 ));
 ~lcxlBindPdef.(\b0_s5_p, \yesorno);
-)
-Pdef(\yesorno).stop;
-Pdef.clear;
 Ndef(\slicePan, {SinOsc.kr(5)});
 Ndef(\slicePan).fadeTime_(3);
+)
+
+Pdef(\yesorno).stop;
+Pdef.clear;
+
+~yesorno_reverb = ~t5.newPostSend(~r1, 1.0);
+~yesorno_reverb.free;
+
+~yesorno_delay = ~t5.newPostSend(~r2, 1.0);
+~yesorno_delay.free;
 
 ~perc_reverb = ~perc.newPostSend(~r1, 0.5);
 ~perc_s_4.free;
-~r2.level_(0.5);
+~r1.level_(1);
+~r2.level_(1);
+
+~r2_fx.set(\mdt, 3,\dlt, 3, \dct, 3);
 ~perc_reverb.level_(1);
+
+(
+~t5_fx = ~t5.playfx{ | outbus, bot=30, wet=0.5|
+  var sig = In.ar(outbus, 2);
+  sig * Pulse.ar(bot) * wet;
+};
+)
+~t5_fx.free;
+
+Ndef(\mod_bot).fadeTime = 3;
+Ndef(\mod_bot, {LFSaw.ar(0.5).range(20, 200)});
+~t5_fx.set(\bot, Ndef(\mod_bot));
+~t5_fx.set(\wet, 1.0);
 
 (
 ~r4.playfx(\slice_s, [
@@ -189,6 +210,7 @@ Ndef(\slicePan).fadeTime_(3);
     \amp, 1
 ]);
 )
+
 ~perc_slice = ~t1.newPostSend(~r4, 1.0);
 ~perc_slice.free;
 ~r4.level_(0.5);
