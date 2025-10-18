@@ -25,7 +25,7 @@ s.waitForBoot {
     // "_includes/mixer-channel-gui.scd".loadRelative;
     "Setup done!".postln;
 
-    3.wait;
-    ~apcArmGrid.();
+    // 3.wait;
+    // ~apcArmGrid.();
 };
 )

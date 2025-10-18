@@ -38,10 +38,18 @@
 // MIDIdef.trace(true);
 // ~apcRouterBoot.();            // it will pick ports, send Intro, arm, start watch
 // ~apcArmGrid.();
-// Pdef(\kick2, Pbind(\instrument, \default, \degree, 0, \dur, 0.25, \amp, 0.15));
-// ~apcAssignPad.(32, \kick2);    // paints amber
-// /* 2025-10-17 APC40 mkII — bulletproof handlers with fallback and loud debug */
-// Pdef(\kick).play;
-// Pdef(\kick).stop;
-// /* 2025-10-17 APC40 mkII — ensure armed on assign + double-boot */
+/* 1 set Generic Mode */
+// ~apcIntroGenericMode.();
 //
+// /* 2 install listener */
+// ~apcInstallGridListener.();
+//
+// /* 3 define Pdef and bind pad */
+// Pdef(\kick2, Pbind(\instrument, \default, \degree, 0, \dur, 0.25, \amp, 0.15));
+// ~apcAssignPad.(32, \kick2);   // should be amber and stay amber
+// Pdef(\hat, Pbind(\instrument, \default, \degree, 12, \dur, 0.125, \amp, 0.15));
+// ~apcAssignPad.(33, \hat);   // should be amber and stay amber
+// //
+// // /* 4 start the LED heartbeat (sticks colors even if firmware blanks) */
+// // ~apcStartLedHeartbeat.();
+// //
