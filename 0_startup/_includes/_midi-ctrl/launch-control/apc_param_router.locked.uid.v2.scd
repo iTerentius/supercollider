@@ -118,69 +118,72 @@
 ~apcDebug = ~apcDebug ? false;
 
 /* re-arm with captured references so MIDIdef closures always see the map */
-~apcArmGrid = {
-    var uid, mode, padMap, padLED, ledByState;
 
-    /* capture references once so closures use the same objects */
+~apcArmGrid = {
+    var uid, mode, map, padLED, ledByState;
+
     uid        = ~apcSrcUID;
     mode       = ~apcPressMode;
-    padMap     = ~apcPadMap;      // IdentityDictionary (mutable, shared)
-    padLED     = ~apcPadLED;      // Function
-    ledByState = ~apcLEDByState;  // Function
+    map        = ~apcPadMap;
+    padLED     = ~apcPadLED;
+    ledByState = ~apcLEDByState;
 
-    /* free old */
+    /* free old handlers */
     MIDIdef(\apc_grid_on).free;
     MIDIdef(\apc_grid_off).free;
+    MIDIdef(\apc_grid_off_any).free;
 
+    /* note-on toggles play state, paints LED, then repaints on next tick */
     MIDIdef.noteOn(
         \apc_grid_on,
         { |vel, num, chan, src|
             var key, isPlaying;
-            if(~apcDebug == true) { ["[apc_grid_on]", num, "vel", vel, "chan", chan, "src", src].postln };
-            key = padMap[num];
+            key = map[num];
             if(key.notNil) {
                 if(mode == \toggle) {
                     isPlaying = Pdef(key).isPlaying;
                     if(isPlaying) {
                         Pdef(key).stop;
-                        padLED.value(num, \amber);
+                        padLED.(num, \amber);
                     }{
                         Pdef(key).play;
-                        padLED.value(num, \green);
+                        padLED.(num, \green);
                     };
+                    SystemClock.sched(0.02, { ledByState.(num, key); nil });
                 }{
                     if(vel > 0) {
                         Pdef(key).play;
-                        padLED.value(num, \green);
+                        padLED.(num, \green);
+                        SystemClock.sched(0.02, { ledByState.(num, key); nil });
                     };
                 };
-            }{
-                if(~apcDebug == true) { ["[apc_grid_on] no assign for", num].postln };
             };
         },
         nil, nil, uid
     );
 
-    if(mode == \gate) {
-        MIDIdef.noteOff(
-            \apc_grid_off,
-            { |vel, num, chan, src|
-                var key;
-                if(~apcDebug == true) { ["[apc_grid_off]", num, "vel", vel].postln };
-                key = padMap[num];
-                if(key.notNil) {
+    /* always repaint on release so the pad stays green while playing in toggle */
+    MIDIdef.noteOff(
+        \apc_grid_off,
+        { |vel, num, chan, src|
+            var key;
+            key = map[num];
+            if(key.notNil) {
+                if(mode == \gate) {
                     Pdef(key).stop;
-                    padLED.value(num, \amber);
+                    padLED.(num, \amber);
+                }{
+                    ledByState.(num, key);  // repaint according to truth
                 };
-            },
-            nil, nil, uid
-        );
-    };
+            };
+        },
+        nil, nil, uid
+    );
 
-    /* repaint using the captured helper so LEDs match current truth */
-    padMap.keysValuesDo { |n, k| ledByState.value(n, k) };
+    /* also repaint once now so arming reflects current truth */
+    map.keysValuesDo { |n, k| ledByState.(n, k) };
 
-    ["[APC] armed grid for uid", uid, "mode", mode, "assigns", padMap.keys.size].postln;
+    ["[APC] armed grid for uid", uid, "mode", mode, "assigns", map.keys.size].postln;
     uid
 };
 

@@ -5,7 +5,7 @@
 // "lcxl_pn_launcher_routerhook.v1.scd".loadRelative;
 
 "apc_param_router.locked.uid.v2.scd".loadRelative;   // APC router
-// "apc_grid_launcher.locked.uid.scd".loadRelative;  // NEW grid include
+"apc_boot.scd".loadRelative;  // NEW grid include
 
 // ~apcArmLocked.();       // arm APC router
 // ~apcGridFixed = (uid: 762601288, dest: 4);  // replace with your numbers
@@ -15,29 +15,34 @@
 // "lcxl_force_rearm.v1.scd".loadRelative;
 
 
-// // Pdef test
-// Pdef(\kick, Pbind(\instrument, \default, \dur, 0.25, \freq, 110));
-// // ~lcxlBindPdef.(\b0_s0_p, \kick);
+// Pdef test
+// ~lcxlBindPdef.(\b0_s0_p, \kick);
+
+// simple sound if needed
+// Pdef(\kick).play;
+// Pdef(\kick).stop;
 //
-// // simple sound if needed
-// Pdef(\kick, Pbind(\instrument, \default, \degree, 0, \dur, 0.25, \amp, 0.15));
-// // Pdef(\kick).play;
-// // Pdef(\kick).stop;
-// //
 // MIDIClient.init;
-// // ~apcGridInit.(762601288, 4);
-// // ~apcSetPressMode.(\toggle);         // or \gate
-// // ~apcGL2AssignNote.(32, \kick);      // LED amber when stopped, green while playing
-// // ~apcAssignPad.(32, \kick);
-// //
-// // // optional CC binds
-// // ~apcBindCC.(7,  { |x| ("apc-fader 1: " ++ x).postln; });
-// // ~apcBindCC.(16, { |x| ("apc-knob 1: " ++ x).postln; });
-// // /* 2025-10-16 APC40 mkII LED core for grid pads — color via velocity, with Pdef follow */
-// // ~apcGL2AssignNote.(32, \kick);
-// // ~apcGridWatchStart.(0.2);
-// //
-// // ~apcDebug = true;
-// // MIDIdef.trace(true);
+// ~apcGridInit.(762601288, 4);
+// ~apcSetPressMode.(\toggle);         // or \gate
+// ~apcGL2AssignNote.(32, \kick);      // LED amber when stopped, green while playing
+// ~apcAssignPad.(32, \kick);
+//
+// // optional CC binds
+// ~apcBindCC.(7,  { |x| ("apc-fader 1: " ++ x).postln; });
+// ~apcBindCC.(16, { |x| ("apc-knob 1: " ++ x).postln; });
+// /* 2025-10-16 APC40 mkII LED core for grid pads — color via velocity, with Pdef follow */
+// ~apcGL2AssignNote.(32, \kick);
+// ~apcGridWatchStart.(0.2);
+//
+// ~apcDebug = true;
+// MIDIdef.trace(true);
 // ~apcRouterBoot.();            // it will pick ports, send Intro, arm, start watch
-// ~apcAssignPad.(32, \kick);    // paints amber
+// ~apcArmGrid.();
+// Pdef(\kick2, Pbind(\instrument, \default, \degree, 0, \dur, 0.25, \amp, 0.15));
+// ~apcAssignPad.(32, \kick2);    // paints amber
+// /* 2025-10-17 APC40 mkII — bulletproof handlers with fallback and loud debug */
+// Pdef(\kick).play;
+// Pdef(\kick).stop;
+// /* 2025-10-17 APC40 mkII — ensure armed on assign + double-boot */
+//
