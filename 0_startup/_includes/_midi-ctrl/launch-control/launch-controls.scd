@@ -5,8 +5,7 @@
 // "lcxl_pn_launcher_routerhook.v1.scd".loadRelative;
 
 "apc_param_router.locked.uid.v2.scd".loadRelative;   // APC router
-"apc_boot.scd".loadRelative;  // NEW grid include
-
+"apc_boot.scd".loadRelative;  // NEW grid inclu
 // ~apcArmLocked.();       // arm APC router
 // ~apcGridFixed = (uid: 762601288, dest: 4);  // replace with your numbers
 

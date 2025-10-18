@@ -7,15 +7,14 @@ s.options.numInputBusChannels = 0;
 if (s.serverRunning.not) { s.boot };
 
 s.waitForBoot {
-    "Current!".postln;
     // --- Core MIDI + quantized recording + common synths + sample loader
     // "_includes/midi-setup.scd".loadRelative;
     // "_includes/quant-recording.scd".loadRelative;
-    "_synthdefs/synths_common.scd".loadRelative;
-    "_includes/sample_loader.scd".loadRelative;
+    // "_synthdefs/synths_common.scd".loadRelative;
+    // "_includes/sample_loader.scd".loadRelative;
     "_includes/_midi-ctrl/launch-control/launch-controls.scd".loadRelative; // Launch-controls for just params.
-    "_includes/mixer-channel-16s.scd".loadRelative;
-    "_includes/mixer-channel-stem-record.scd".loadRelative;
+    // "_includes/mixer-channel-16s.scd".loadRelative;
+    // "_includes/mixer-channel-stem-record.scd".loadRelative;
     // "_includes/ndef-mixer.scd".loadRelative; Helpers
     // "_includes/_helpers/peuc.scd".loadRelative;
 
@@ -25,5 +24,8 @@ s.waitForBoot {
    // ServerMeter(s);
     // "_includes/mixer-channel-gui.scd".loadRelative;
     "Setup done!".postln;
+
+    3.wait;
+    ~apcArmGrid.();
 };
 )
