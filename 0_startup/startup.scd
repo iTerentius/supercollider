@@ -12,7 +12,7 @@ s.waitForBoot {
     // "_includes/quant-recording.scd".loadRelative;
     "_synthdefs/synths_common.scd".loadRelative;
     "_includes/sample_loader.scd".loadRelative;
-    "_includes/_midi-ctrl/launch-control/launch-controls.scd".loadRelative; // Launch-controls for just params.
+    "_includes/_midi-ctrl/midi-device-loader.scd".loadRelative; // Launch-controls for just params.
     "_includes/mixer-channel-16s.scd".loadRelative;
     "_includes/mixer-channel-stem-record.scd".loadRelative;
     // "_includes/ndef-mixer.scd".loadRelative; Helpers
