@@ -1,17 +1,5 @@
-// "cc_bind_hub.scd".loadRelative;
-// "midi_router_cleanup.scd".loadRelative;
-// "lcn_param_router.locked.uid.v4.scd".loadRelative;
-// "lcxl_param_router.locked.uid.v9.scd".loadRelative;
-// "lcxl_pn_launcher_routerhook.v1.scd".loadRelative;
-
-// "apc_param_router.locked.uid.v2.scd".loadRelative;   // APC router
 "apc_boot_all.scd".loadRelative;  // NEW grid inclu
 "apc_device_knobs.scd".loadRelative;  // NEW grid inclu
-
-// "rearm_all_locked_uid.v2.scd".loadRelative;
-// "apc40_grid_rearm.locked.uid.scd".loadRelative;
-// "lcxl_force_rearm.v1.scd".loadRelative;
-
 
 // // map a couple pads to patterns
 // Pdef(\kick2, Pbind(\instrument, \default, \degree, 0, \dur, 0.25, \amp, 0.15, \out, ~t1.inbus.index));

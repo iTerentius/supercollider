@@ -4,7 +4,7 @@
 
 Ndef(\all).proxyspace.quant = 1;
 Ndef(\all).proxyspace.fadeTime = 1;
-
+Ndef(\test, )
 (
 Ndef(\i1, { |freq = 110, amp = 0.15|
     var sig;
@@ -20,9 +20,10 @@ Ndef(\i3, { |amp = 0.28, freq = 90, dur = 1|
     var sig;
     sig = SinOsc.ar(LFPulse.ar(dur) * freq ! 2) * amp;
     LPF.ar(sig, 1000)
-}).play(out: 2, vol: 0.4);
+});
 Ndef(\i3)[1] = \pset -> Pbind(\freq, Pseq([90, 120, 440, Rest(0.5)], inf), \dur, Prand([0.25, Rest(0.5)], inf), \amp, 0.3);
 )
+~lcxlBindPdef.(\b0_s7_p, \i3);
 Ndef(\i3).stop;
 Ndef(\i3)[2] = \filter -> {|in, rate=32, dur=0.5 | Gate.ar(in, LFPulse.kr(rate*dur))};
 Ndef(\i3).set(\wet2, 1);

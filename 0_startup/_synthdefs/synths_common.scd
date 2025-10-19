@@ -273,35 +273,100 @@ SynthDef(\slice_s, { |out=0, bufnum=0, sliceIndex=0, nSlices=8, amp=0.5, rate=1,
 
 // stereo live-slice effect
 (
-SynthDef(\slice_fx, { |outbus=0, bufSecs=2, nSlices=8, sliceIndex=0, rate=1, pan=0, spread=0, rev=0, amp=1, mix=1, trig=1|
-  var sigIn, sigPlay, buf, numFrames, sliceFrames, writePhase;
-  var startPos, playRate, sliceDur, env, altSign, panCalc, l, r, wet, dry;
+SynthDef(\slice_fx, { |inbus=0, out=0, bufSecs=2, nSlices=8, sliceIndex=0, rate=1, pan=0, spread=0, rev=0, amp=1, mix=1, trig=1|
+    var sigIn, sigPlay, numFrames, sliceFrames, sliceDur, buf, writePhase, startPos, playRate, altSign, panCalc, env, dry, wet, l, r;
 
-  sigIn = In.ar(outbus, 2);
-  buf = LocalBuf(SampleRate.ir * bufSecs, 2);
-  numFrames = BufFrames.ir(buf);
-  sliceFrames = numFrames / max(1, nSlices);
+    // input and buffer setup
+    sigIn = In.ar(inbus, 2);
+    buf = LocalBuf(SampleRate.ir * bufSecs, 2);
+    numFrames = BufFrames.ir(buf);
+    sliceFrames = numFrames / max(1, nSlices);
 
-  writePhase = Phasor.ar(0, 1, 0, numFrames);
-  BufWr.ar(sigIn, buf, writePhase, loop: 1);
+    // rolling write head and continuous record
+    writePhase = Phasor.ar(0, 1, 0, numFrames);
+    BufWr.ar(sigIn, buf, writePhase, loop: 1);
 
-  sliceIndex = sliceIndex % max(1, nSlices);
-  startPos = (writePhase - (sliceIndex * sliceFrames)) % numFrames;
+    // choose slice behind the head
+    sliceIndex = sliceIndex % max(1, nSlices);
+    startPos = (writePhase - (sliceIndex * sliceFrames)) % numFrames;
 
-  playRate = BufRateScale.kr(buf) * Select.kr(rev > 0.5, [rate.abs, rate.abs.neg]);
-  sliceDur = (sliceFrames / BufSampleRate.ir(buf)) / max(0.0001, rate.abs);
+    // reverse and timing
+    playRate = BufRateScale.kr(buf) * Select.kr(rev > 0.5, [rate.abs, rate.abs.neg]);
+    sliceDur = (sliceFrames / BufSampleRate.ir(buf)) / max(0.0001, rate.abs);
 
-  sigPlay = PlayBuf.ar(2, buf, rate: playRate, startPos: startPos, loop: 0, doneAction: 0);
-  env = EnvGen.kr(Env.linen(0.001, sliceDur, 0.05), trig, doneAction: 0);
-  sigPlay = sigPlay * env * amp;
+    // play one slice per event
+    sigPlay = PlayBuf.ar(2, buf, rate: playRate, startPos: startPos, loop: 0, doneAction: 0);
+    env = EnvGen.kr(Env.linen(0.001, sliceDur, 0.05), trig, doneAction: 2);
+    sigPlay = sigPlay * env * amp;
 
-  l = sigPlay[0]; r = sigPlay[1];
-  altSign = Select.kr(sliceIndex % 2, [-1, 1]);
-  panCalc = Clip.kr(pan + (spread * altSign), -1, 1);
-  wet = Balance2.ar(l, r, panCalc);
-  dry = Balance2.ar(sigIn[0], sigIn[1], pan);
+    // spread alternates per slice
+    l = sigPlay[0]; r = sigPlay[1];
+    altSign = Select.kr(sliceIndex % 2, [-1, 1]);
+    panCalc = Clip.kr(pan + (spread * altSign), -1, 1);
+    wet = Balance2.ar(l, r, panCalc);
+    dry = Balance2.ar(sigIn[0], sigIn[1], pan);
 
-  Out.ar(outbus, XFade2.ar(dry, wet, (mix * 2) - 1));
+    // mix wet/dry to out
+    Out.ar(out, XFade2.ar(dry, wet, (mix * 2) - 1));
 }).add;
 );
+/* slice_fx for ddwMixerChannel .playfx stereo 2025-10-08 */
 
+~sliceFX_makeCtrlBuses = {
+    ~slice_idx  = ~slice_idx  ?? { Bus.control(s, 1) };
+    ~slice_rev  = ~slice_rev  ?? { Bus.control(s, 1) };
+    ~slice_sp   = ~slice_sp   ?? { Bus.control(s, 1) };
+    ~slice_rate = ~slice_rate ?? { Bus.control(s, 1) };
+    ~slice_mix  = ~slice_mix  ?? { Bus.control(s, 1) };
+    ~slice_pan  = ~slice_pan  ?? { Bus.control(s, 1) };
+    // defaults
+    ~slice_idx.set(0);
+    ~slice_rev.set(0);
+    ~slice_sp.set(0.5);
+    ~slice_rate.set(1);
+    ~slice_mix.set(1);
+    ~slice_pan.set(0);
+};
+
+~sliceFX_playfx_s = { |bufSecs=2, nSlices=8|
+    { |outbus|
+        var sigIn, sigPlay, buf, numFrames, sliceFrames, writePhase;
+        var startPos, playRate, sliceDur, env, altSign, panCalc, l, r, wet, dry;
+        var sliceIndex, rev, spread, rate, mix, pan;
+
+        sliceIndex = In.kr(~slice_idx, 1);
+        rev        = In.kr(~slice_rev, 1);
+        spread     = In.kr(~slice_sp, 1);
+        rate       = In.kr(~slice_rate, 1);
+        mix        = In.kr(~slice_mix, 1);
+        pan        = In.kr(~slice_pan, 1);
+
+        sigIn = In.ar(outbus, 2);
+        buf = LocalBuf(SampleRate.ir * bufSecs, 2);
+        numFrames = BufFrames.ir(buf);
+        sliceFrames = numFrames / max(1, nSlices);
+
+        writePhase = Phasor.ar(0, 1, 0, numFrames);
+        BufWr.ar(sigIn, buf, writePhase, loop: 1);
+
+        sliceIndex = sliceIndex % max(1, nSlices);
+        startPos = (writePhase - (sliceIndex * sliceFrames)) % numFrames;
+
+        playRate = BufRateScale.kr(buf) * Select.kr(rev > 0.5, [rate.abs, rate.abs.neg]);
+        sliceDur = (sliceFrames / BufSampleRate.ir(buf)) / max(0.0001, rate.abs);
+
+        sigPlay = PlayBuf.ar(2, buf, rate: playRate, startPos: startPos, loop: 0, doneAction: 0);
+        env = EnvGen.kr(Env.linen(0.001, sliceDur, 0.05), 1, doneAction: 0);
+        sigPlay = sigPlay * env;
+
+        l = sigPlay[0]; r = sigPlay[1];
+        altSign = Select.kr((sliceIndex % 2).round(0), [-1, 1]);
+        panCalc = Clip.kr(pan + (spread * altSign), -1, 1);
+        wet = Balance2.ar(l, r, panCalc);
+        dry = Balance2.ar(sigIn[0], sigIn[1], pan);
+
+        Out.ar(outbus, XFade2.ar(dry, wet, (mix * 2) - 1));
+    }
+};
+
+~sliceFX_makeCtrlBuses.();

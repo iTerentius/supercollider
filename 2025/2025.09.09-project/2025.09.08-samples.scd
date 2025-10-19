@@ -28,14 +28,12 @@ Ndef(\i2)[0] = { |amp=1, rate=1, dur=1|
   sig = PlayBuf.ar(2, buf, rateSig, loop: 1);
   sig = (isMono).if({sig!2},{sig});
   sig * amp;
-  // Out.ar(~t5.inbus.index, sig);
+  // Silent.ar(2)
 });
 )
 Ndef(\i2).play;
 Ndef(\i2).stop(3);
 Ndef(\i2).clear(3);
-
-~r5.play(Ndef(\i2).play);
 
 TempoClock.default.tempo = 60/60; // 90 bpm
 
@@ -56,7 +54,7 @@ TempoClock.default.tempo = 60/60; // 90 bpm
 )
 
 
-~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); 
+( ~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); )
 (
 ~bd1 = ~samplesTree.at(\bass_drums).asArray;
 Pdef(\bd1).quant = 1;
@@ -71,17 +69,15 @@ Pdef(\bd1,
             \out,   ~pbd1.inbus.index
         )
     )
-);
-~lcxlBindPdef.(\b0_s1_p, \bd1);
+).play;
 )
-~lcxlUnbindPdef.(\b0_s1_p, \bd1);
 Pdef(\bd1).play;
 Pdef(\bd1).stop(3);
 Pdef(\bd1).clear;
 
 ServerMeter(s);
 
-Pdef.clear;
+Ndef.clear;
 
 (
 ~bd2 = ~samplesTree.at(\bass_drums).asArray[4];
@@ -100,9 +96,15 @@ Pdef(\bd2,
 );
 ~lcxlBindPdef.(\b0_s2_p, \bd2);
 )
+
+Pdef(\bd2)[1] = \filter -> { |in| CombL.ar(in, 0.2, LFPulse.kr(0.5!2).exprange(0.01, 0.2), 3) * 0.7 };
+Pdef(\bd2).set(\wet1, 0.8);
+Pdef(\bd2)[1] = nil;
 Pdef(\bd2).play;
 Pdef(\bd2).stop;
 Pdef(\bd2).clear(3);
+
+
 
 // Ndef(\bd2)[1] = \filter -> { |in| CombL.ar(in, 0.2, LFPulse.kr(0.5!2).exprange(0.01, 0.2), 3) * 0.7 };
 // Ndef(\bd2).set(\wet1, 0.8);
@@ -114,6 +116,7 @@ Pdef(\bd2).clear(3);
 // Ndef(\bdFx).play(out:6);
 // Ndef(\bdFx).stop(5);
 
+~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); 
 (
 ~hh1 = ~samplesTree.at(\hats).asArray[1];
 Pdef(\hh1).quant = 1;
@@ -131,8 +134,7 @@ Pdef(\hh1,
       \out, ~phh1.inbus.index
     )
   )
-);
-~lcxlBindPdef.(\b0_s4_p, \hh1);
+).play;
 )
 Pdef(\hh1).play;
 Pdef(\hh1).clear;
@@ -213,9 +215,9 @@ Ndef(\mod_bot, {LFSaw.ar(0.5).range(20, 200)});
 
 ~perc_slice = ~t1.newPostSend(~r4, 1.0);
 ~perc_slice.free;
-~r4.level_(0.5);
+~r4.level_(1.0);
 ~perc_slice.level_(1);
-
+~r1.set(\room, 0.1);
 ~slice_idx.set(0);
 ~slice_rev.set(0);      // 0 or 1
 ~slice_sp.set(0.5);     // spread amount
