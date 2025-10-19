@@ -37,22 +37,6 @@ Ndef(\i2).clear(3);
 
 TempoClock.default.tempo = 60/60; // 90 bpm
 
-(
-~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t2);
-
-~pbd1 = MixerChannel.new(\pbd1, s, 2, 2, outbus: ~perc);
-~lcxlBindParam.(\b4_s1_f, {|x| ~pbd1.level_(x)});
-~lcxlBindParam.(\b4_s1_r3, {|x| ~pbd1.pan_(x.linlin(0, 1, -1, 1))});
-
-~pbd2 = MixerChannel.new(\pbd2, s, 2, 2, outbus: ~perc);
-~lcxlBindParam.(\b4_s2_f, {|x| ~pbd2.level_(x)});
-~lcxlBindParam.(\b4_s2_r3, {|x| ~pbd2.pan_(x.linlin(0, 1, -1, 1))});
-
-~phh1 = MixerChannel.new(\phh1, s, 2, 2, outbus: ~perc);
-~lcxlBindParam.(\b4_s3_f, {|x| ~phh1.level_(x)});
-~lcxlBindParam.(\b4_s3_r3, {|x| ~phh1.pan_(x.linlin(0, 1, -1, 1))});
-)
-
 
 ( ~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); )
 (
@@ -69,7 +53,8 @@ Pdef(\bd1,
             \out,   ~pbd1.inbus.index
         )
     )
-).play;
+);
+~apcAssignPad.(32, \bd1);
 )
 Pdef(\bd1).play;
 Pdef(\bd1).stop(3);
@@ -94,12 +79,8 @@ Pdef(\bd2,
     )
   )
 );
-~lcxlBindPdef.(\b0_s2_p, \bd2);
+~apcAssignPad.(33, \bd2);
 )
-
-Pdef(\bd2)[1] = \filter -> { |in| CombL.ar(in, 0.2, LFPulse.kr(0.5!2).exprange(0.01, 0.2), 3) * 0.7 };
-Pdef(\bd2).set(\wet1, 0.8);
-Pdef(\bd2)[1] = nil;
 Pdef(\bd2).play;
 Pdef(\bd2).stop;
 Pdef(\bd2).clear(3);
@@ -134,7 +115,8 @@ Pdef(\hh1,
       \out, ~phh1.inbus.index
     )
   )
-).play;
+);
+~apcAssignPad.(34, \hh1);
 )
 Pdef(\hh1).play;
 Pdef(\hh1).clear;
@@ -149,7 +131,8 @@ FreqScope.new(s);
 (
 // ~sample = ~samplesTree.at(\neutron_12).asArray[rrand(0, 6)];
 // ~sample = ~samplesTree.at(\hoarder).asArray[rrand(0, 20)];
-~sample = ~samplesTree.at(\cat_water).asArray;
+~sample = ~samplesTree.at(\hoarder).asArray;
+// ~sample = ~samplesTree.at(\cat_water).asArray;
 // ~sample = ~samplesTree.at(\storm);
 ~slices = 22;
 Pdef(\yesorno, Pbind(
@@ -166,9 +149,11 @@ Pdef(\yesorno, Pbind(
     \out, ~t5.inbus.index
 ));
 ~lcxlBindPdef.(\b0_s5_p, \yesorno);
+~apcAssignPad.(24, \yesorno);
 Ndef(\slicePan, {SinOsc.kr(5)});
 Ndef(\slicePan).fadeTime_(3);
 )
+~apcBindPdef.(7, \yesorno);
 
 Pdef(\yesorno).stop;
 Pdef.clear;
