@@ -1,182 +1,157 @@
-// apc_param_router.locked.uid.v12b.scd  2025-10-09 America Chicago
-// Knob mapping fixed: 48..55 -> strip by CC, 16..23 -> strip by channel
-// Adds RAW note logging for grid diagnostics  no right parens in comments
+/* 2025-10-19 11:14 — apc_param_router v2b: banks via small buttons (note 50 ch0..7), faders CC7 ch0..7, master CC14 ch0 */
+/* rules: single () block, declare vars at top of funcs, no ) in comments */
 
 (
-~apcParam = ~apcParam ? IdentityDictionary.new;
+/* ---------- normalize shared params ---------- */
+var tmp, colorsDict;
+colorsDict = IdentityDictionary[\off -> 0, \amber -> 126, \green -> 21];
 
-if(~apcParam[\bankIdx].isNil)    { ~apcParam[\bankIdx]    = 0 };
-if(~apcParam[\prefix].isNil)     { ~apcParam[\prefix]     = "" };
-if(~apcParam[\debug].isNil)      { ~apcParam[\debug]      = false };
-if(~apcParam[\palette].isNil)    { ~apcParam[\palette]    = (selected: 127, unselected: 10, on: 127, off: 0) };
-if(~apcParam[\pdefMap].isNil)    { ~apcParam[\pdefMap]    = IdentityDictionary.new };
-if(~apcParam[\handlers].isNil)   { ~apcParam[\handlers]   = IdentityDictionary.new };
-
-if(~apcParam[\faderCC].isNil)    { ~apcParam[\faderCC]    = 7 };
-if(~apcParam[\masterChan].isNil) { ~apcParam[\masterChan] = 0 };
-if(~apcParam[\masterCC].isNil)   { ~apcParam[\masterCC]   = 14 };
-if(~apcParam[\bankNotes].isNil)  { ~apcParam[\bankNotes]  = (82..89) };
-if(~apcParam[\gridChan].isNil)   { ~apcParam[\gridChan]   = 0 };
-if(~apcParam[\gridNotes].isNil)  { ~apcParam[\gridNotes]  = (0..39) };
-
-~apcDetectUID = {
-    var ep, both, uid;
-    ep = MIDIClient.sources.detect { |e|
-        both = (e.device.asString ++ " " ++ e.name.asString).toLower;
-        both.contains("apc40")
+if(~apcParam.isNil) {
+    ~apcParam = IdentityDictionary.new;
+} {
+    if(~apcParam.isKindOf(IdentityDictionary).not) {
+        tmp = IdentityDictionary.new;
+        ~apcParam.keysValuesDo { |k, v| tmp[k] = v };
+        ~apcParam = tmp;
     };
-    uid = ep !? { ep.uid };
-    if(uid.notNil) { ~apcParam[\srcID] = uid };
-    uid
+};
+if(~apcParam[\colors].isNil)    { ~apcParam[\colors] = colorsDict };
+if(~apcParam[\gridChan].isNil)  { ~apcParam[\gridChan] = 0 };
+
+/* ---------- state ---------- */
+~apcBank            = ~apcBank            ? 0;                       // 0..7
+~apcParamBindings   = ~apcParamBindings   ? IdentityDictionary.new;  // \bN_sM_f or \master_f -> Function
+
+/* bank select small buttons: all are note 50 on channels 0..7 */
+~apcBankBtnNote     = ~apcBankBtnNote     ? 50;
+~apcBankBtnChans    = ~apcBankBtnChans    ? (0..7);
+
+/* faders: strips 1..8 are CC 7 on channels 0..7, master is CC 14 on channel 0 */
+~apcStripFaderCC    = ~apcStripFaderCC    ? 7;
+~apcMasterFaderCC   = ~apcMasterFaderCC   ? 14;
+~apcMasterFaderChan = ~apcMasterFaderChan ? 0;
+
+/* ---------- utils ---------- */
+~apcParamKeyFor = { |bank, strip|
+    var b, s;
+    b = bank.clip(0, 7);
+    s = strip.clip(1, 8);
+    ("b" ++ b ++ "_s" ++ s ++ "_f").asSymbol
 };
 
-~apcParam[\dbgSay] = { |...xs| var on; on = ~apcParam[\debug] ? false; if(on) { xs.postln } };
-
-~apcParam[\makeKey] = { |bank, strip1, slotSym|
-    var pfx, k;
-    pfx = ~apcParam[\prefix];
-    k = (pfx ++ "b" ++ bank ++ "_s" ++ strip1 ++ "_" ++ slotSym.asString).asSymbol;
-    ^k
+~apcBindParam = { |key, func|
+    var f; f = func;
+    ~apcParamBindings[key] = f;
+    ["[apcBindParam] bound", key].postln;
 };
 
-~apcParam[\ensureOut] = {
-    var dest, o, both;
-    dest = MIDIClient.destinations.detect { |e|
-        both = (e.device.asString ++ " " ++ e.name.asString).toLower;
-        both.contains("apc40")
-    };
-    if(dest.isNil) { ^nil };
-    o = MIDIOut.newByName(dest.device, dest.name);
-    ~apcParam[\out] = o; o
+~apcApplyParam = { |key, x|
+    var f; f = ~apcParamBindings[key];
+    if(f.notNil) { f.value(x) } { ["[apcApplyParam] no binding for", key].postln };
 };
 
-~apcParam[\ledNote] = { |note, vel| var o; o = ~apcParam[\out]; if(o.isNil) { o = ~apcParam[\ensureOut].() }; if(o.notNil) { o.noteOn(0, note, vel) } };
+~apcNorm7 = { |val| (val.asFloat.clip(0, 127)) / 127.0 };
 
-~apcParam[\refreshBankLEDs] = {
-    var notes, pal, bank;
-    notes = ~apcParam[\bankNotes];
-    pal   = ~apcParam[\palette];
-    bank  = ~apcParam[\bankIdx] ? 0;
-    if(notes.isNil) { ^thisThread };
-    8.do { |k| var on, n, v; on = (bank == k); n = notes.wrapAt(k); v = on.if(pal[\selected], pal[\unselected]); ~apcParam[\ledNote].(n, v) };
-    ~apcParam[\dbgSay].("[APC] leds refreshed bank " ++ bank);
+/* LED helpers on a specific channel */
+~apcPadLEDch = ~apcPadLEDch ? { |note, color, chan|
+    var out;
+    out = ~apcOut ?? { ~apcForceAPCOut !? { ~apcForceAPCOut.() } };
+    if(out.notNil) { out.latency = 0.0; out.noteOn(chan, note, color) };
 };
 
-~apcParam[\refreshGridLED] = { |note| var pal, p, on; pal = ~apcParam[\palette]; p = ~apcParam[\pdefMap][note]; on = (p.notNil and: { Pdef(p).isPlaying }).if(pal[\on], pal[\off]); ~apcParam[\ledNote].(note, on) };
+/* ---------- bank button LED paint ---------- */
+~apcPaintBankBtn = { |bankIdx|
+    var colors, want, chan;
+    colors = ~apcParam[\colors];
+    chan = bankIdx.clip(0, 7);
+    want = (bankIdx == ~apcBank).if(colors[\green], colors[\amber]);
+    ~apcPadLEDch.(~apcBankBtnNote, want, chan);
+    AppClock.sched(0.03, { ~apcPadLEDch.(~apcBankBtnNote, want, chan) });
+};
 
-~apcMapPdef = { |note, pdefName| var n; n = note; ~apcParam[\pdefMap][n] = pdefName.asSymbol; ~apcParam[\refreshGridLED].(n) };
-~apcUnmapPdef = { |note| var n; n = note; ~apcParam[\pdefMap].removeAt(n); ~apcParam[\ledNote].(n, ~apcParam[\palette][\off]) };
+~apcPaintAllBanks = {
+    0.until(8, { |i| ~apcPaintBankBtn.(i) });
+};
 
-~apcArmLocked = {
-    var srcUID, dbg;
-    if(~apcParam[\srcID].isNil or: { ~apcParam[\srcID].isNumber.not }) { ~apcDetectUID.() };
-    srcUID = ~apcParam[\srcID];
-    dbg    = ~apcParam[\debug] ? false;
+/* ---------- bank switch listener (press latch, ignore release) ---------- */
+~apcInstallBankButtons = {
+    var nameOn, nameOff, note, chans;
+    nameOn = \apc_bank_on; nameOff = \apc_bank_off;
+    note = ~apcBankBtnNote; chans = ~apcBankBtnChans;
+    MIDIdef.free(nameOn); MIDIdef.free(nameOff);
 
-    MIDIdef.free(\apc40_note_raw);
-    MIDIdef.free(\apc40_bank_note);
-    MIDIdef.free(\apc40_grid_on);
-    MIDIdef.free(\apc40_cc);
-
-    // RAW note logger to confirm pads
-    MIDIdef.noteOn(\apc40_note_raw, { |vel, note, chan, src|
-        if(srcUID.notNil and: { src != srcUID }) { ^nil };
-        if(dbg) { "[APC RAW NOTE] note:% vel:% chan0:%".format(note, vel, chan).postln };
-    }, nil, nil, srcUID);
-
-    // bank select
-    MIDIdef.noteOn(\apc40_bank_note, { |vel, note, chan, src|
+    MIDIdef.noteOn(nameOn, { |vel, num, chan, src|
         var idx;
-        if(srcUID.notNil and: { src != srcUID }) { ^nil };
-        idx = ~apcParam[\bankNotes].indexOf(note);
-        if(idx.notNil) {
-            ~apcParam[\bankIdx] = idx;
-            ("[APC SAFE] bank -> " ++ idx).postln;
-            ~apcParam[\refreshBankLEDs].();
-        };
-    }, nil, nil, srcUID);
-
-    // grid toggle  ch gridChan
-    MIDIdef.noteOn(\apc40_grid_on, { |vel, note, chan, src|
-        var p;
-        if(srcUID.notNil and: { src != srcUID }) { ^nil };
-        if(chan != (~apcParam[\gridChan] ? 0)) { ^nil };
-        if(~apcParam[\gridNotes].includes(note)) {
-            p = ~apcParam[\pdefMap][note];
-            if(p.notNil) {
-                if(Pdef(p).isPlaying) { Pdef(p).stop } { Pdef(p).play };
-                ~apcParam[\refreshGridLED].(note);
+        if(num == note and: { chans.includes(chan) }) {
+            if(vel > 0) {
+                idx = chan;    // channel selects bank
+                ~apcBank = idx;
+                "[APC PARAM] bank -> b".post; ~apcBank.postln;
+                ~apcPaintAllBanks.();
+            }{
+                ~apcPaintBankBtn.(chan);
             };
         };
-    }, nil, ~apcParam[\gridChan] ? 0, srcUID);
+    });
 
-    // CCs
-    MIDIdef.cc(\apc40_cc, { |val, cc, chan, src|
-        var v01, bank, strip1, key, h, knobA, knobB;
-        if(srcUID.notNil and: { src != srcUID }) { ^nil };
-        if(dbg) { "[APC RAW] cc:% val:% chan0:%".format(cc, val, chan).postln };
-
-        v01  = val / 127.0;
-        bank = ~apcParam[\bankIdx] ? 0;
-
-        // master
-        if((chan == (~apcParam[\masterChan] ? 0)) and: { cc == (~apcParam[\masterCC] ? 14) }) {
-            key = (~apcParam[\prefix] ++ "master_f").asSymbol;
-            if(~ccEmit.notNil) { ~ccEmit.(key, v01) };
-            h = ~apcParam[\handlers][key];
-            if(h.notNil) { h.(v01) };
-            if(dbg) { "[APC PEAK] cc:% val:% chan0:%".format(cc, val, chan).postln };
-            ^nil;
+    MIDIdef.noteOff(nameOff, { |vel, num, chan, src|
+        if(num == note and: { chans.includes(chan) }) {
+            ~apcPaintBankBtn.(chan);
         };
+    });
 
-        // faders  cc 7 ch 0..7
-        if((cc == (~apcParam[\faderCC] ? 7)) and: { chan >= 0 } and: { chan <= 7 }) {
-            strip1 = chan + 1;
-            key = ~apcParam[\makeKey].(bank, strip1, \f);
-            if(~ccEmit.notNil) { ~ccEmit.(key, v01) };
-            h = ~apcParam[\handlers][key];
-            if(h.notNil) { h.(v01) };
-            if(dbg) { "[APC PEAK] cc:% val:% chan0:%".format(cc, val, chan).postln };
-            ^nil;
-        };
-
-        // knobs 16..23 -> strip by channel, 48..55 -> strip by CC
-        knobA = (cc >= 16) and: (cc <= 23);  // likely sends row
-        knobB = (cc >= 48) and: (cc <= 55);  // top device row
-
-        if(knobA and: { chan >= 0 } and: { chan <= 7 }) {
-            strip1 = chan + 1;
-            key = ~apcParam[\makeKey].(bank, strip1, \r1);
-            if(~ccEmit.notNil) { ~ccEmit.(key, v01) };
-            h = ~apcParam[\handlers][key];
-            if(h.notNil) { h.(v01) };
-            if(dbg) { "[APC PEAK] cc:% val:% chan0:%".format(cc, val, chan).postln };
-            ^nil;
-        };
-
-        if(knobB and: { chan >= 0 } and: { chan <= 7 }) {
-            strip1 = (cc - 48) + 1; // cc48 -> s1
-            key = ~apcParam[\makeKey].(bank, strip1, \r1);
-            if(~ccEmit.notNil) { ~ccEmit.(key, v01) };
-            h = ~apcParam[\handlers][key];
-            if(h.notNil) { h.(v01) };
-            if(dbg) { "[APC PEAK] cc:% val:% chan0:%".format(cc, val, chan).postln };
-            ^nil;
-        };
-
-        if(dbg) { "[APC MISS] no branch cc % ch %".format(cc, chan).postln };
-    }, nil, nil, srcUID);
-
-    ~apcParam[\ensureOut].();
-    ~apcParam[\refreshBankLEDs].();
-    ~apcParam[\dbgSay].("[APC armed] uid " ++ srcUID);
+    "[APC PARAM] bank button listener armed".postln;
+    true
 };
 
-~apcRefresh = {
-    var notes;
-    ~apcParam[\refreshBankLEDs].();
-    notes = ~apcParam[\pdefMap].keys;
-    notes.do(~apcParam[\refreshGridLED]);
+/* ---------- fader CC handler ---------- */
+~apcInstallFaderCC = {
+    var name, stripCC, masterCC, masterCh;
+    name = \apc_faders_cc;
+    stripCC = ~apcStripFaderCC;
+    masterCC = ~apcMasterFaderCC;
+    masterCh = ~apcMasterFaderChan;
+    MIDIdef.free(name);
+
+    MIDIdef.cc(name, { |val, num, chan, src|
+        var x, stripIdx, key;
+        if(num == masterCC and: { chan == masterCh }) {
+            x = ~apcNorm7.(val);
+            ~apcApplyParam.(\master_f, x);
+            ^nil;
+        };
+        if(num == stripCC and: { chan >= 0 } and: { chan <= 7 }) {
+            stripIdx = chan + 1;                     // chan 0..7 → strip 1..8
+            key = ~apcParamKeyFor.(~apcBank, stripIdx);
+            x = ~apcNorm7.(val);
+            ~apcApplyParam.(key, x);
+        };
+    });
+
+    "[APC PARAM] Fader CC listener armed".postln;
+    true
 };
+
+/* ---------- setup helpers ---------- */
+~apcParamInstall = {
+    ~apcInstallBankButtons.();
+    ~apcInstallFaderCC.();
+    ~apcPaintAllBanks.();
+    "[APC PARAM] installed".postln;
+    true
+};
+
+~apcParamRepaint = {
+    ~apcPaintAllBanks.();
+    "[APC PARAM] bank LEDs repainted".postln;
+    true
+};
+
+/* ---------- example bindings ----------
+~apcBindParam.(\b0_s1_f, { |x| ~t1.level_(x) });
+~apcBindParam.(\b0_s2_f, { |x| ~t2.level_(x) });
+~apcBindParam.(\b1_s1_f, { |x| ~t9.level_(x) });     // same strip on bank 1
+~apcBindParam.(\master_f, { |x| ~master.level_(x) });
+*/
 )
 

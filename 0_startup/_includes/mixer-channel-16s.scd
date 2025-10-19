@@ -1,72 +1,76 @@
 // Main Out
 (
 ~m1 = MixerChannel.new(\m1, s, 2, 2, outbus: 0);
-~lcxlBindParam.(\b0_s1_f, {|x| ~m1.level_(x)});
-~lcxlBindParam.(\b0_s1_r3, {|x| ~m1.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b7_s8_f, {|x| ~m1.level_(x)});
+~lcxlBindParam.(\b7_s8_r3, {|x| ~m1.pan_(x.linlin(0, 1, -1, 1))});
 
 // Instrument Tracks
 ~t1 = MixerChannel.new(\t1, s, 2, 2, outbus: ~m1);
-~lcxlBindParam.(\b0_s2_f, {|x| ~t1.level_(x)});
-~lcxlBindParam.(\b0_s2_r3, {|x| ~t1.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b0_s1_f, {|x| ~t1.level_(x)});
+~lcxlBindParam.(\b0_s1_r3, {|x| ~t1.pan_(x.linlin(0, 1, -1, 1))});
 
 ~t2 = MixerChannel.new(\t2, s, 2, 2, outbus: ~m1);
-~lcxlBindParam.(\b0_s3_f, {|x| ~t2.level_(x)});
-~lcxlBindParam.(\b0_s3_r3, {|x| ~t2.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b0_s2_f, {|x| ~t2.level_(x)});
+~lcxlBindParam.(\b0_s2_r3, {|x| ~t2.pan_(x.linlin(0, 1, -1, 1))});
 
 ~t3 = MixerChannel.new(\t3, s, 2, 2, outbus: ~m1);
-~lcxlBindParam.(\b0_s4_f, {|x| ~t3.level_(x)});
-~lcxlBindParam.(\b0_s4_r3, {|x| ~t3.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b0_s3_f, {|x| ~t3.level_(x)});
+~lcxlBindParam.(\b0_s3_r3, {|x| ~t3.pan_(x.linlin(0, 1, -1, 1))});
 
 ~t4 = MixerChannel.new(\t4, s, 2, 2, outbus: ~m1);
-~lcxlBindParam.(\b0_s5_f, {|x| ~t4.level_(x)});
-~lcxlBindParam.(\b0_s5_r3, {|x| ~t4.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b0_s4_f, {|x| ~t4.level_(x)});
+~lcxlBindParam.(\b0_s4_r3, {|x| ~t4.pan_(x.linlin(0, 1, -1, 1))});
 
 ~t5 = MixerChannel.new(\t5, s, 2, 2, outbus: ~m1);
-~lcxlBindParam.(\b0_s6_f, {|x| ~t5.level_(x)});
-~lcxlBindParam.(\b0_s6_r3, {|x| ~t5.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b0_s5_f, {|x| ~t5.level_(x)});
+~lcxlBindParam.(\b0_s5_r3, {|x| ~t5.pan_(x.linlin(0, 1, -1, 1))});
 
 ~t6 = MixerChannel.new(\t6, s, 2, 2, outbus: ~m1);
-~lcxlBindParam.(\b0_s7_f, {|x| ~t6.level_(x)});
-~lcxlBindParam.(\b0_s7_r3, {|x| ~t6.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b0_s6_f, {|x| ~t6.level_(x)});
+~lcxlBindParam.(\b0_s6_r3, {|x| ~t6.pan_(x.linlin(0, 1, -1, 1))});
 
 ~t7 = MixerChannel.new(\t7, s, 2, 2, outbus: ~m1);
-~lcxlBindParam.(\b0_s8_f, {|x| ~t7.level_(x)});
-~lcxlBindParam.(\b0_s8_r3, {|x| ~t7.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b0_s7_f, {|x| ~t7.level_(x)});
+~lcxlBindParam.(\b0_s7_r3, {|x| ~t7.pan_(x.linlin(0, 1, -1, 1))});
 
 ~t8 = MixerChannel.new(\t8, s, 2, 2, outbus: ~m1);
-~lcxlBindParam.(\b1_s1_f, {|x| ~t8.level_(x)});
-~lcxlBindParam.(\b1_s1_r3, {|x| ~t8.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b0_s8_f, {|x| ~t8.level_(x)});
+~lcxlBindParam.(\b0_s8_r3, {|x| ~t8.pan_(x.linlin(0, 1, -1, 1))});
 
 ~t9 = MixerChannel.new(\t9, s, 2, 2, outbus: ~m1);
-~lcxlBindParam.(\b1_s2_f, {|x| ~t9.level_(x)});
-~lcxlBindParam.(\b1_s2_r3, {|x| ~t9.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b1_s1_f, {|x| ~t9.level_(x)});
+~lcxlBindParam.(\b1_s1_r3, {|x| ~t9.pan_(x.linlin(0, 1, -1, 1))});
 
 ~t10 = MixerChannel.new(\t10, s, 2, 2, outbus: ~m1);
-~lcxlBindParam.(\b1_s3_f, {|x| ~t10.level_(x)});
-~lcxlbindparam.(\b1_s3_r3, {|x| ~t10.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b1_s2_f, {|x| ~t10.level_(x)});
+~lcxlbindparam.(\b1_s2_r3, {|x| ~t10.pan_(x.linlin(0, 1, -1, 1))});
 
 ~t11 = MixerChannel.new(\t11, s, 2, 2, outbus: ~m1);
-~lcxlBindParam.(\b1_s4_f, {|x| ~t11.level_(x)});
-~lcxlbindparam.(\b1_s4_r3, {|x| ~t11.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b1_s3_f, {|x| ~t11.level_(x)});
+~lcxlbindparam.(\b1_s3_r3, {|x| ~t11.pan_(x.linlin(0, 1, -1, 1))});
+
+~t12 = MixerChannel.new(\t12, s, 2, 2, outbus: ~m1);
+~lcxlBindParam.(\b1_s4_f, {|x| ~t12.level_(x)});
+~lcxlbindparam.(\b1_s4_r3, {|x| ~t12.pan_(x.linlin(0, 1, -1, 1))});
 
 // Returns
 ~r1 = MixerChannel.new(\r1, s, 2, 2, \outbus, ~m1);
-~lcxlBindParam.(\b1_s5_f, {|x| ~r1.level_(x)});
+~lcxlBindParam.(\b1_s4_f, {|x| ~r1.level_(x)});
 ~lcxlbindparam.(\b1_s4_r3, {|x| ~r1.pan_(x.linlin(0, 1, -1, 1))});
 
 ~r2 = MixerChannel.new(\r2, s, 2, 2, \outbus, ~m1);
-~lcxlBindParam.(\b1_s6_f, {|x| ~r2.level_(x)});
-~lcxlbindparam.(\b1_s6_r3, {|x| ~r2.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b1_s5_f, {|x| ~r2.level_(x)});
+~lcxlbindparam.(\b1_s5_r3, {|x| ~r2.pan_(x.linlin(0, 1, -1, 1))});
 
 ~r3 = MixerChannel.new(\r3, s, 2, 2, \outbus, ~m1);
-~lcxlBindParam.(\b1_s7_f, {|x| ~r3.level_(x)});
-~lcxlbindparam.(\b1_s7_r3, {|x| ~r3.pan_(x.linlin(0, 1, -1, 1))});
+~lcxlBindParam.(\b1_s6_f, {|x| ~r3.level_(x)});
+~lcxlbindparam.(\b1_s6_r3, {|x| ~r3.pan_(x.linlin(0, 1, -1, 1))});
 
 ~r4 = MixerChannel.new(\r4, s, 2, 2, \outbus, ~m1);
 ~lcxlBindParam.(\b1_s8_f, {|x| ~r4.level_(x)});
 ~lcxlbindparam.(\b1_s8_r3, {|x| ~r4.pan_(x.linlin(0, 1, -1, 1))});
 
-~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t2);
+~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t1);
 
 ~pbd1 = MixerChannel.new(\pbd1, s, 2, 2, outbus: ~perc);
 ~lcxlBindParam.(\b4_s1_f, {|x| ~pbd1.level_(x)});
@@ -82,23 +86,22 @@
 
 // Default FX
 // -- Reverb
-~r1.playfx( { |outbus, room=0.8, damp=0.2|
+~r1_fx = ~r1.playfx( { |outbus|
 			var sig = In.ar(outbus, 2);
-			FreeVerb2.ar(sig[0], sig[1], mix: 1, room: room, damp: damp);
+			FreeVerb2.ar(sig[0], sig[1], mix: 1, room: 0.8, damp: 0.2);
 		}
 );
 
 // -- Delay
-~r2.playfx( { |outbus|
+~r2_fx = ~r2.playfx( { |outbus, mdt=0.2, dlt=0.2, dct=1|
 			var sig = In.ar(outbus, 2);
-			CombL.ar(sig, maxdelaytime: 0.2, delaytime: 0.2, decaytime: 1.0);
+			CombL.ar(sig, maxdelaytime: mdt, delaytime: dlt, decaytime: dct);
 		}
 );
 
 
 )
-
-
+// ~r2.set(\dct, 1, \dlt, 0.1);
 // (
 // ~r1.playfx({ |out| 
 //    var numChan, maxDelay, preDelay, decay, numRefl, random;
@@ -119,3 +122,4 @@
 //     \room, 0.8,
 //     \damp, 0.5,
 // ]);
+
