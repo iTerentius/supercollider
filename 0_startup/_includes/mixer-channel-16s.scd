@@ -66,7 +66,7 @@
 ~lcxlBindParam.(\b1_s8_f, {|x| ~r4.level_(x)});
 ~lcxlbindparam.(\b1_s8_r3, {|x| ~r4.pan_(x.linlin(0, 1, -1, 1))});
 
-~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t1);
+~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t2);
 
 ~pbd1 = MixerChannel.new(\pbd1, s, 2, 2, outbus: ~perc);
 ~lcxlBindParam.(\b4_s1_f, {|x| ~pbd1.level_(x)});

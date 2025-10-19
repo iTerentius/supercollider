@@ -27,7 +27,5 @@ MIDIdef.cc(\lcxl_cc_peek_once, { |val, cc, chan, src|
     MIDIdef.free(\lcxl_cc_peek_once);
 }, nil, ch0, uid);
 
-~lcxlPdefArm.();        // re-arm our dedicated listener
-~lcxlPdefRefresh.();    // repaint the p-row for the current bank
 "[LCXL FORCE] uid %, chan0 %, strict true  armed".format(uid, ch0).postln;
 )

@@ -28,14 +28,12 @@ Ndef(\i2)[0] = { |amp=1, rate=1, dur=1|
   sig = PlayBuf.ar(2, buf, rateSig, loop: 1);
   sig = (isMono).if({sig!2},{sig});
   sig * amp;
-  // Out.ar(~t5.inbus.index, sig);
+  // Silent.ar(2)
 });
 )
 Ndef(\i2).play;
 Ndef(\i2).stop(3);
 Ndef(\i2).clear(3);
-
-~r5.play(Ndef(\i2).play);
 
 TempoClock.default.tempo = 60/60; // 90 bpm
 
@@ -56,7 +54,7 @@ TempoClock.default.tempo = 60/60; // 90 bpm
 )
 
 
-~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); 
+( ~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); )
 (
 ~bd1 = ~samplesTree.at(\bass_drums).asArray[0];
 Pdef(\bd1).quant = 1;
@@ -71,17 +69,15 @@ Pdef(\bd1,
           \out,   ~pbd1.inbus.index
         )
     )
-);
-~lcxlBindPdef.(\b0_s1_p, \bd1);
+).play;
 )
-~lcxlUnbindPdef.(\b0_s1_p, \bd1);
 Pdef(\bd1).play;
 Pdef(\bd1).stop(3);
 Pdef(\bd1).clear;
 
 ServerMeter(s);
 
-Pdef.clear;
+Ndef.clear;
 
 (
 ~bd2 = ~samplesTree.at(\bass_drums).asArray[4];
@@ -97,9 +93,12 @@ Pdef(\bd2,
       \out, ~pbd2.inbus.index 
     )
   )
-);
-~lcxlBindPdef.(\b0_s2_p, \bd2);
+).play;
 )
+
+Pdef(\bd2)[1] = \filter -> { |in| CombL.ar(in, 0.2, LFPulse.kr(0.5!2).exprange(0.01, 0.2), 3) * 0.7 };
+Pdef(\bd2).set(\wet1, 0.8);
+Pdef(\bd2)[1] = nil;
 Pdef(\bd2).play;
 Pdef(\bd2).stop;
 Pdef(\bd2).clear(3);
@@ -128,7 +127,7 @@ Pdef(\hh1,
         if(e[\buf].numChannels == 2) { \pBs } { \pBm }
       },
       \bufnum, Pkey(\buf),   // SC will pass the Buffer’s bufnum
-      \dur,   0.25,
+      \dur,   0.5,
       \amp,   Pseq([0.4, 0.4, 0.7, 0.9], inf),
       \rate,  Pseq([0.5, 0.25, 0.125, 1], inf),
       \pan,   0.2,
@@ -137,8 +136,7 @@ Pdef(\hh1,
       \out, ~phh1.inbus.index
     )
   )
-);
-~lcxlBindPdef.(\b0_s4_p, \hh1);
+).play;
 )
 Pdef(\hh1).play;
 Pdef(\hh1).clear;
