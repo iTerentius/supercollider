@@ -3,7 +3,6 @@
 "midi_router_cleanup.scd".loadRelative;
 "lcn_param_router.locked.uid.v4.scd".loadRelative;
 "lcxl_param_router.locked.uid.v9.scd".loadRelative;
-"lcxl_pn_launcher_routerhook.v1.scd".loadRelative;
 "rearm_all_locked_uid.v2.scd".loadRelative;
 "lcxl_force_rearm.v1.scd".loadRelative;
 
