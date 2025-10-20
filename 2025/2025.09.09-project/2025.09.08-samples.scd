@@ -1,44 +1,24 @@
-( ~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); )
-( ~loadSamplesRecursive.("~/Music/supercollider/_samples/Field/"); )
-( ~loadSamplesRecursive.("~/Music/supercollider/_samples/Neutron_12/"); )
-( ~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/"); )
-( ~loadSamplesRecursive.("~/Music/supercollider/_samples/AKWF/AKWF_0001/"); )
-( ~loadSamplesRecursive.("~/Music/supercollider/_samples/Cat-Water/"); )
+ ~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
+ ~loadSamplesRecursive.("~/Music/supercollider/_samples/Field/");
+ ~loadSamplesRecursive.("~/Music/supercollider/_samples/Neutron_12/");
+ ~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/");
+ ~loadSamplesRecursive.("~/Music/supercollider/_samples/AKWF/AKWF_0001/");
+ ~loadSamplesRecursive.("~/Music/supercollider/_samples/Cat-Water/");
 
-( ~samp = ~samplesTree[\bass_drums][\SHD_808BD_03]; )
-( ~samp = ~samplesTree[\field][\cat_food]; )
-( ~samp = ~samplesTree[\neutron_12][\121]; )
-( ~samples = ~samplesTree.at(\neutron_12); )
-( ~samples = ~samplesTree.at(\hoarder); )
-( ~samples = ~samplesTree.at(\bass_drums); )
-( ~samples = ~samplesTree.at(\cat_water); )
-( ~samples = ~samplesTree.at(\akwf_0001); )
+ ~samp = ~samplesTree[\bass_drums][\SHD_808BD_03];
+ ~samp = ~samplesTree[\field][\cat_food];
+ ~samp = ~samplesTree[\neutron_12][\121];
+ ~samples = ~samplesTree.at(\neutron_12);
+ ~samples = ~samplesTree.at(\hoarder);
+ ~samples = ~samplesTree.at(\bass_drums);
+ ~samples = ~samplesTree.at(\cat_water);
+ ~samples = ~samplesTree.at(\akwf_0001);
  ~samples.postln; 
-
-(
-~samples = ~samplesTree.at(\hoarder);
-Ndef(\i2).quant = 1;
-Ndef(\i2)[0] = { |amp=1, rate=1, dur=1|
-  var buffers = ~samples.values; // get array of Buffer objects
-  var which = TIRand.kr(0, buffers.size-1, Impulse.kr(1)); // random index each second
-  var buf = Select.kr(which, buffers); // select Buffer object
-  var isMono = (buf.numChannels == 1);
-  var rateSig = Lag.kr(rate, 0.05);
-  var sig;
-  sig = PlayBuf.ar(2, buf, rateSig, loop: 1);
-  sig = (isMono).if({sig!2},{sig});
-  sig * amp;
-  // Silent.ar(2)
-});
-)
-Ndef(\i2).play;
-Ndef(\i2).stop(3);
-Ndef(\i2).clear(3);
 
 TempoClock.default.tempo = 60/60; // 90 bpm
 
 
-( ~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/"); )
+~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
 (
 ~bd1 = ~samplesTree.at(\bass_drums).asArray;
 Pdef(\bd1).quant = 1;
@@ -48,7 +28,7 @@ Pdef(\bd1,
             \buf,   Prand(~bd1, inf),          // your Buffer object
             \bufnum, Pkey(\buf),   // SC uses the Buffer’s bufnum
             \dur,    Pbjorklund2(3, 8)/4,
-            \amp,   3.0,
+            \amp,   2.0,
             \rate,  1,
             \out,   ~pbd1.inbus.index
         )
@@ -129,15 +109,15 @@ FreqScope.new(s);
 
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/"); 
 (
-// ~sample = ~samplesTree.at(\neutron_12).asArray[rrand(0, 6)];
+~yesorno_samp = ~samplesTree.at(\neutron_12).asArray;
 // ~sample = ~samplesTree.at(\hoarder).asArray[rrand(0, 20)];
-~sample = ~samplesTree.at(\hoarder).asArray;
+// ~sample = ~samplesTree.at(\hoarder).asArray;
 // ~sample = ~samplesTree.at(\cat_water).asArray;
 // ~sample = ~samplesTree.at(\storm);
-~slices = 22;
+~slices = 32;
 Pdef(\yesorno, Pbind(
     \instrument, \slice_s,
-    \bufnum, Pseq(~sample, inf),
+    \bufnum, Prand(~yesorno_samp, inf),
     \nSlices, ~slices,
     \spread, 0.75,
     \rev, Prand([1, 0], inf),
@@ -165,11 +145,11 @@ Pdef.clear;
 ~yesorno_delay.free;
 
 ~perc_reverb = ~perc.newPostSend(~r1, 0.5);
-~perc_s_4.free;
+~perc_reverb.free;
 ~r1.level_(1);
 ~r2.level_(1);
 
-~r2_fx.set(\mdt, 3,\dlt, 3, \dct, 3);
+~r2_fx.set(\mdt, 1,\dlt, 1, \dct, 1);
 ~perc_reverb.level_(1);
 
 (
@@ -181,9 +161,9 @@ Pdef.clear;
 ~t5_fx.free;
 
 Ndef(\mod_bot).fadeTime = 3;
-Ndef(\mod_bot, {LFSaw.ar(0.5).range(20, 200)});
+Ndef(\mod_bot, {SinOsc.ar(0.5).range(20, 100)});
 ~t5_fx.set(\bot, Ndef(\mod_bot));
-~t5_fx.set(\wet, 1.0);
+~t5_fx.set(\wet, 1.4);
 
 (
 ~r4.playfx(\slice_s, [

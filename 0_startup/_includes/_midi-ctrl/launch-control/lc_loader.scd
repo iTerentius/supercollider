@@ -1,5 +1,4 @@
 
-MIDIIn.connectAll;
 "cc_bind_hub.scd".loadRelative;
 "midi_router_cleanup.scd".loadRelative;
 "lcn_param_router.locked.uid.v4.scd".loadRelative;

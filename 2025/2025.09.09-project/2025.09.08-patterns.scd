@@ -10,6 +10,7 @@ Pdef(\pats1, Pbind(
   \out, ~t3.inbus.index
 ));
 ~lcxlBindPdef.(\b0_s3_p, \pats1);
+~apcAssignPad.(25, \pats1);
 )
 Pdef(\pats1).play;
 Pdef(\pats1).stop;
