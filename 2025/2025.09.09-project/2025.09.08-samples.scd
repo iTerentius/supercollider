@@ -146,11 +146,11 @@ Pdef.clear;
 
 ~perc_reverb = ~perc.newPostSend(~r1, 0.5);
 ~perc_reverb.free;
-~r1.level_(1);
-~r2.level_(1);
+~r1.level_(0.2);
+~r2.level_(0.5);
 
 ~r2_fx.set(\mdt, 1,\dlt, 1, \dct, 1);
-~perc_reverb.level_(1);
+~perc_reverb.level_(0.5);
 
 (
 ~t5_fx = ~t5.playfx{ | outbus, bot=30, wet=0.5|

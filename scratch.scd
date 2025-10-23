@@ -76,3 +76,115 @@ ServerMeter(s);
 
 // later, stop one bar after you call it
 ~stopStems.(1);
+
+(
+// TEMP one shot  lcxl midi spy  2025-10-20 America Chicago
+
+MIDIdef(\spy_cc).free;
+MIDIdef(\spy_note).free;
+
+MIDIdef.cc(\spy_cc, { |val, num, chan, src|
+    var ep, dev, name;
+    ep = MIDIClient.sources.detect { |e| e.uid == src };
+    dev = (ep.notNil).if({ ep.device }, { "?" });
+    name = (ep.notNil).if({ ep.name }, { "?" });
+    ["CC", "src", src, "dev", dev, "name", name, "chan", chan, "num", num, "val", val].postln;
+}, nil);
+
+MIDIdef.noteOn(\spy_note, { |vel, num, chan, src|
+    var ep, dev, name;
+    ep = MIDIClient.sources.detect { |e| e.uid == src };
+    dev = (ep.notNil).if({ ep.device }, { "?" });
+    name = (ep.notNil).if({ ep.name }, { "?" });
+    ["NOTE", "src", src, "dev", dev, "name", name, "chan", chan, "num", num, "vel", vel].postln;
+}, nil);
+)
+
+(
+// 2025-10-21 CDT — wavetable bank + Pdef control (no resize calls)
+
+// ---------- VARS ----------
+var wtSize, numTables, mkCos, wtSignals;
+wtSize = 8192;         // source Signal length (power of two)
+numTables = 4;
+
+// ---------- SOURCE SIGNALS (exact sizes) ----------
+// Helper: single-cycle cosine table of exact length
+mkCos = { |n|
+    Signal.fill(n, { |i| cos(2pi * (i / n)) })
+};
+
+// Build a set of different spectra/shapes, all exactly wtSize long
+wtSignals = [
+    Signal.chebyFill(wtSize, Array.rand(7, 0, 7)), // random partial weighting
+    Signal.hanningWindow(wtSize),                  // exact-length window
+    Signal.rectWindow(wtSize, wtSize/8),          // exact-length rect window
+    mkCos.(wtSize)                                 // exact-length cosine
+];
+// ---------- SERVER BUFFERS ----------
+~wtBufs = Buffer.allocConsecutive(numTables, s, wtSize * 2, 1);
+
+
+// Load wavetables (each source Signal size is power-of-two)
+~wtBufs.do { |buf, i|
+    var wt = wtSignals[i].asWavetable; // OK: source is power-of-two length
+    buf.loadCollection(wt);
+};
+
+// s.sync;
+)
+(
+// ---------- SYNTHDEF ----------
+SynthDef(\wavtab, { |out=0, freq=110, baseBuf=0, tableCount=4, sel=0, amp=0.2|
+    var sig, tableSel;
+    tableSel = sel.clip(0, tableCount - 0.001);   // fractional index 0..N-ε
+    sig = VOsc.ar(baseBuf + tableSel, freq, 0);
+    Out.ar(out, (sig * amp) ! 2);
+}).add;
+
+// s.sync;
+)
+(
+// ---------- PATTERNS ----------
+
+// Continuous scanner: sweeps across all tables with Pseg
+Pdef(\wtScan,
+    Pbind(
+        \type, \note,
+        \instrument, \wavtab,
+        \dur, 0.25,
+        \degree, Pwhite(0, 7),
+        \octave, 4,
+        \baseBuf, ~wtBufs[0].bufnum,
+        \tableCount, numTables,
+        \sel, Pseg(
+            levels: Pseq([0, numTables - 0.001], inf),
+            durs:  Pseq([8], inf),   // seconds per full sweep
+            curve: \lin
+        ),
+        \amp, 0.15
+    )
+);
+)
+(
+// Stepped selector: hops tables per bar
+Pdef(\wtStep,
+    Pbind(
+        \type, \note,
+        \instrument, \wavtab,
+        \dur, 0.5,
+        \degree, Pseq([0,2,4,5,7,9,11,12], inf),
+        \octave, 3,
+        \baseBuf, ~wtBufs[0].bufnum,
+        \tableCount, numTables,
+        \sel, Pstutter(8, Pseries(0, 1, numTables)).wrap(0, numTables - 0.001),
+        \amp, 0.18
+    )
+);
+)
+// ---------- HELPERS ----------
+~wtPlayScan = { Pdef(\wtScan).play };
+~wtPlayStep = { Pdef(\wtStep).play };
+~wtStop = { Pdef(\wtScan).stop; Pdef(\wtStep).stop };
+~wtFree = { ~wtStop.(); ~wtBufs.do(_.free) };
+)

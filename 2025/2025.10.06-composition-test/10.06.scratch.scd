@@ -59,6 +59,67 @@ Pdef(\glissb, Pbind(
 
 Pdef(\glissb).stop;
 
+// My test!!!
+(
+var amps = [0, 1, 5, -7, 1, 0];
+~b = Buffer.allocConsecutive(4, s, 16384);
+// ~wt = [
+//   // Signal.chebyFill(8192, Array.rand(7, -7, 7), false, true),
+//   // Signal.chebyFill(8192, Array.rand(7, -7, 7), false, true),
+//   // Signal.chebyFill(8192, Array.rand(7, -7, 7), false, true),
+//   // Signal.chebyFill(8192, Array.rand(7, -7, 7), false, true),
+//   // Signal.chebyFill(8192, Array.rand(7, -7, 7), false, true),
+//   Signal.sineFill(8192, amps.scramble, false, true),
+//   Signal.chebyFill(8192, amps.scramble, true, true),
+//   Signal.sineFill(8192, amps.scramble, false, false),
+//   Signal.chebyFill(8192, amps.scramble, true, false)
+// ];
+~wt
+
+~b.do({| buf, i| buf.loadCollection(~wt[1].asWavetable)});
+)
+~wt.plot;
+(
+SynthDef(\wavtab, { | out=0, freq=0, amp=1 |
+	var sig1, sig2, bufmod;
+	bufmod = SinOsc.ar(0.1, 3pi/2).unipolar(2.999);
+	// bufmod = LFSaw.kr(0.05).unipolar(2.999);
+	sig1 = VOsc.ar(~b[0].bufnum + bufmod, freq) * amp;
+	sig2 = VOsc.ar(~b[0].bufnum + bufmod, freq-0.1) * amp;
+	// sig = sig * 0.2 ;
+  Splay.ar([sig1, sig2]);
+}).add;
+)
+Pdef(\wt_pat, Pbind(\degree, Prand([0, 2, 4, 7],inf), \dur, 0.25, \octave, 4, \sustain, 1, \out, ~t2.inbus.index)).play;
+Pdef(\wt_pat).stop;
+
+Ndef(\mod, {SinOsc.kr(1, 3pi/2)});
+~t2_filt = ~t2.playfx({|outbus| BPF.ar(In.ar(outbus, 2), SinOsc.ar(0.05, 3pi/2).unipolar.exprange(100, 1500), 0.1) * 0.5});
+~t2_filt.set(\level, 1);
+~t2_filt.set(\wet, 0.5);
+~t2_filt.free;
+FreqScope.new;
+(
+Ndef(\wavtab, { | freq=0 |
+	var sig1, sig2, bufmod;
+	bufmod = SinOsc.ar(0.1, 3pi/2).unipolar(2.999);
+	// bufmod = LFSaw.kr(0.05).unipolar(2.999);
+	sig1 = VOsc.ar(~b[0].bufnum + bufmod, freq);
+	sig2 = VOsc.ar(~b[0].bufnum + bufmod, freq-0.1);
+	// sig = sig * 0.2 ;
+  Splay.ar([sig1, sig2], 1, 3.3);
+});
+Ndef(\wavtab)[1] = Pbind(\degree, Prand([0, 2, 4, 7],inf), \dur, 0.25, \octave, 4, \sustain, 1);
+Ndef(\wavtab)[2] = \filter -> {|in| BPF.ar(in, SinOsc.ar(0.05, 3pi/2).unipolar.exprange(100, 1500), 0.1)};
+)
+Ndef(\wavtab)[2] = nil;
+Ndef(\wavtab).set(\bmod, Ndef(\mod));
+Ndef(\wavtab).play;
+Ndef(\wavtab).clear;
+Ndef(\mod, {SinOsc.kr(1, 3pi/2)});
+
+
+
 Quarks.uninstall("https://github.com/triss/ChordSymbol");
 Quarks.install("https://github.com/madskjeldgaard/HarmonicToolkitSC");Quarks.install("Bjorklund");
 // 2025-10-07
