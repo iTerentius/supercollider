@@ -30,7 +30,7 @@ s.waitForBoot {
     // "_includes/mixer-channel-gui.scd".loadRelative;
     "Setup done!".postln;
 
-    "_includes/_midi-ctrl/apc40/apc_device_group_bind_fix.scd".loadRelative;
+    // "_includes/_midi-ctrl/apc40/apc_device_group_bind_fix.scd".loadRelative;
     // ~apcArmGrid.();
 };
 )
