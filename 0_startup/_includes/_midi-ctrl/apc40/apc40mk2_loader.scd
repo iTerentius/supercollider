@@ -20,4 +20,3 @@
 //
 // ~apcBindParam.(\b0_d1, { |x| ("b0_d1:" ++ x).postln});            // User row: your custom
 // ~apcBindParam.(\b1_d2, { |x| ("b1_d2:" ++ x).postln});            // User row: your custom
-//

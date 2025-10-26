@@ -1,12 +1,15 @@
-// 2025-10-05 19:50 CDT  stemDiskStart v3a  fixes padLeft char bug and improves ffmpeg lookup  no numbered parens in comments
-
 (
+// 2025-10-26 21:45 CDT  stemDiskStart v8  single block, Routine-based finalize, manual ~stemStopNow, robust split
+
 ~stemDiskStart = { |tracks=#[], returns=#[], fileBase="take", dirPath="", clock=nil, addAction=\addToTail, autoSplit=true, splitCodec=\pcm_s24le|
     var tIdx, rIdx, idxs, numChans, buf, defName, d, dstr, fullPath, baseName, baseDir, c, startBeat, synth;
     var names, sidecarPath, stemsDir, ffmpegPath, ffprobePath;
-    var sanitize, writeSidecar, doSplit, mkDirIfNeeded, findBin;
+    var sanitize, writeSidecar, doSplit, mkDirIfNeeded, findBin, debug, makeFinalize, finalize, didFinalize;
 
-    // helper to sanitize key names for filenames
+    debug = true;         // set false to quiet logs
+    didFinalize = false;  // guard against double finalize
+
+    // sanitize keys for filenames
     sanitize = { |str|
         var s;
         s = str.asString;
@@ -14,11 +17,11 @@
         s
     };
 
-    // collect the printed key names in the order they will be written
-    names = (tracks.collect({ |mc| var n; n = { mc.name }.try({ nil }); (n ?? { mc.asString }).asString })) ++
-            (returns.collect({ |mc| var n; n = { mc.name }.try({ nil }); (n ?? { mc.asString }).asString }));
+    // key names in write order
+    names = (tracks.collect({ |mc| var n; n = { mc.name }.try({ nil }); (n ?? { mc.asString }).asString }))
+          ++ (returns.collect({ |mc| var n; n = { mc.name }.try({ nil }); (n ?? { mc.asString }).asString }));
 
-    // resolve dry indices using .inbus.index
+    // input bus indices
     tIdx = tracks.collect({ |mc| { mc.inbus.index }.try({ nil }) }).reject(_.isNil);
     rIdx = returns.collect({ |mc| { mc.inbus.index }.try({ nil }) }).reject(_.isNil);
     idxs = tIdx ++ rIdx;
@@ -28,12 +31,12 @@
         ^{ |beats=0| nil };
     };
 
-    // destination path
+    // destination folder
     if(dirPath.isNil or: { dirPath == "" }) { dirPath = Platform.userHomeDir +/+ "recordings" };
     if(File.exists(dirPath).not) { File.mkdir(dirPath); ("created " ++ dirPath).postln; };
 
+    // timestamped base
     d = Date.getDate;
-    // use "0" string for pad
     dstr = d.year.asString
         ++ "-" ++ d.month.asString.padLeft(2, "0")
         ++ "-" ++ d.day.asString.padLeft(2, "0")
@@ -48,6 +51,7 @@
     sidecarPath = baseDir +/+ (baseName ++ ".stemnames.txt");
     stemsDir = baseDir +/+ (baseName ++ "-stems");
 
+    // utils
     mkDirIfNeeded = { |path| if(File.exists(path).not) { File.mkdir(path) } };
 
     writeSidecar = {
@@ -58,17 +62,12 @@
         ("wrote stem name sidecar: " ++ sidecarPath).postln;
     };
 
-    // find binaries either by absolute path or via `which`
     findBin = { |cands|
-        var p;
+        var p, whichPath;
         p = cands.detect { |p0| File.exists(p0) };
         if(p.isNil) {
-            var whichPath;
-            whichPath = Pipe.read("which " ++ cands.last, "r", 1.0);
-            if(whichPath.notNil) {
-                whichPath = whichPath.trim;
-                if(whichPath.size > 0 and: { File.exists(whichPath) }) { p = whichPath };
-            };
+            whichPath = ("which " ++ cands.last).unixCmdGetStdOut.tryPerform(\trim);
+            if(whichPath.notNil and: { whichPath.size > 0 } and: { File.exists(whichPath) }) { p = whichPath };
         };
         p
     };
@@ -77,18 +76,19 @@
     ffprobePath = findBin.([ "/opt/homebrew/bin/ffprobe", "/usr/local/bin/ffprobe", "/usr/bin/ffprobe", "ffprobe" ]);
 
     doSplit = {
-        var probeCmd, chCountStr, chCount, pairs, i, key, keySafe, lch, rch, outName, codec;
-
+        var probeCmd, chCountStr, chCount, pairs, i, key, keySafe, lch, rch, outName, codec, cmd;
         if(ffmpegPath.isNil or: { ffprobePath.isNil }) {
             "autoSplit: ffmpeg or ffprobe not found on PATH; skipped".warn;
+            ("ffmpeg: " ++ ffmpegPath.asString ++ "  ffprobe: " ++ ffprobePath.asString).postln;
             ^nil
         };
 
         probeCmd = ffprobePath ++ " -v error -select_streams a:0 -show_entries stream=channels -of default=nw=1:nk=1 " ++ fullPath.escapeChar($ );
-        chCountStr = Pipe.read(probeCmd, "r", 2.0).trim;
-        if(chCountStr.isNil or: { chCountStr.isEmpty }) { "autoSplit: could not read channel count; skipped".warn; ^nil };
+        if(debug) { ("[split] probeCmd: " ++ probeCmd).postln; };
+        chCountStr = probeCmd.unixCmdGetStdOut.tryPerform(\trim) ?? { "" };
+        if(chCountStr.isEmpty) { "[split] could not read channel count; skipped".warn; ^nil };
         chCount = chCountStr.asInteger;
-        if(chCount.odd) { ("autoSplit: odd channel count " ++ chCount ++ " last channel will be ignored").warn };
+        if(chCount.odd) { ("[split] odd channel count " ++ chCount ++ " last channel ignored").warn };
         pairs = chCount div: 2;
 
         mkDirIfNeeded.(stemsDir);
@@ -102,15 +102,17 @@
             keySafe = sanitize.(key);
             outName = stemsDir +/+ (baseName ++ "_t" ++ (i+1).asString ++ "__" ++ keySafe ++ ".wav");
 
-            Pipe.read(
-                ffmpegPath ++ " -y -i " ++ fullPath.escapeChar($ ) ++
-                " -filter_complex " ++ ("\"pan=stereo|FL=c" ++ lch ++ "|FR=c" ++ rch ++ "\"") ++
-                " -c:a " ++ codec ++
-                " -metadata title=" ++ key.asString.escapeChar($ ) ++
-                " " ++ outName.escapeChar($ ),
-                "r", 120.0
-            );
+            cmd = ffmpegPath
+                ++ " -y -i " ++ fullPath.escapeChar($ )
+                ++ " -filter_complex 'pan=stereo|FL=c" ++ lch ++ "|FR=c" ++ rch ++ "'"
+                ++ " -c:a " ++ codec
+                ++ " -metadata title=" ++ key.asString.escapeChar($ )
+                ++ " " ++ outName.escapeChar($ );
+
+            if(debug) { ("[split] cmd: " ++ cmd).postln; };
+            cmd.unixCmd; // stderr prints in post window
             (" → wrote " ++ outName ++ "  L=c" ++ lch ++ " R=c" ++ rch ++ " key=" ++ key).postln;
+
             i = i + 1;
         };
 
@@ -118,13 +120,44 @@
         nil
     };
 
-    // choose clock and schedule start on next bar
+    // builds a finalize closure captured to current buf and synth
+    makeFinalize = {
+        finalize = {
+            if(didFinalize) { "[finalize] already ran, skipping".postln; ^nil };
+            didFinalize = true;
+            Routine({
+                ("[finalize] stopping writer").postln;
+                if(synth.notNil) { synth.free };
+                s.sync;
+
+                ("[finalize] closing buffer").postln;
+                if(buf.notNil) { buf.close };
+                s.sync;     // makes the WAV header safe to open
+
+                if(autoSplit) {
+                    ("[finalize] splitting in 0.3s").postln;
+                    0.3.wait;
+                    doSplit.();
+                }{
+                    ("autoSplit false; stems not split. Sidecar at " ++ sidecarPath).postln;
+                };
+
+                ("[finalize] freeing buffer").postln;
+                if(buf.notNil) { buf.free };
+                ("[finalize] done").postln;
+            }).play(AppClock);
+            nil
+        };
+        nil
+    };
+
+    // schedule writer on next bar
     c = clock ?? { thisThread.clock ?? TempoClock.default };
-    startBeat = (c.beats.ceil(1.0)); // next bar
+    startBeat = c.beats.ceil(1.0);
 
     defName = \__stemDiskOut__;
     SynthDef(defName, { |bufnum=0|
-        var sig, ins, i;
+        var sig, ins;
         ins = Array.fill(idxs.size, { |j| In.ar(idxs[j], 2) });
         sig = ins.flat; // interleaved stereo pairs
         DiskOut.ar(bufnum, sig);
@@ -144,31 +177,40 @@
         );
         mkDirIfNeeded.(baseDir);
         writeSidecar.();
-
         synth = Synth.new(defName, [\bufnum, buf], s, addAction);
-
+        makeFinalize.();  // bind finalize to current buf and synth
         ("stemDisk start " ++ startBeat ++ " → " ++ fullPath ++ "  chans " ++ numChans).postln;
+
+        // stash a tiny context for manual helpers
+        ~stemRec = (
+            baseName: baseName,
+            fullPath: fullPath,
+            stemsDir: stemsDir,
+            sidecarPath: sidecarPath,
+            finalize: { finalize.() }   // safe callable
+        );
         nil
     });
 
-    // return a stopper
+    // return a scheduled stopper
     ^{ |beats=1|
         var stopBeat;
         stopBeat = c.beats + beats;
+        ("stemDisk stop scheduled at " ++ stopBeat ++ " on " ++ c).postln;
         c.schedAbs(stopBeat, {
-            ("stemDisk stop " ++ stopBeat).postln;
-            if(synth.notNil) { synth.free };
-            buf.close;
-            buf.free;
-
-            if(autoSplit) {
-                AppClock.sched(0.2, { doSplit.(); nil });
-            }{
-                ("autoSplit is false; stems not split. Sidecar at " ++ sidecarPath).postln;
-            };
+            ("stemDisk stop firing at " ++ stopBeat).postln;
+            finalize.();
             nil
         })
     };
+};
+
+// manual immediate stop helper, safe from the interpreter
+~stemStopNow = {
+    if(~stemRec.isNil) { "stemStopNow: no active stem recording".warn; ^nil };
+    ("stemStopNow called").postln;
+    if(~stemRec[\finalize].notNil) { ~stemRec[\finalize].value } { "stemStopNow: no finalize closure".warn };
+    nil
 };
 )
 

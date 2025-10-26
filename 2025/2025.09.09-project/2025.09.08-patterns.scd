@@ -1,6 +1,6 @@
 (
 Pdef(\pats1, Pbind(
-  \instrument, \syn1,
+  \instrument, \bass8,
   \scale, Scale.minor,
   \octave, 4,
   \degree, Prand([1, -1, 5, 3, 7, Rest(2)]/2, inf),

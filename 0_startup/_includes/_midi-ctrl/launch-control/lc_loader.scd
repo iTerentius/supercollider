@@ -1,10 +1,11 @@
 
-"cc_bind_hub.scd".loadRelative;
-"midi_router_cleanup.scd".loadRelative;
-"lcn_param_router.locked.uid.v4.scd".loadRelative;
-"lcxl_param_router.locked.uid.v9.scd".loadRelative;
-"rearm_all_locked_uid.v2.scd".loadRelative;
-"lcxl_force_rearm.v1.scd".loadRelative;
+// "cc_bind_hub.scd".loadRelative;
+// "midi_router_cleanup.scd".loadRelative;
+// "lcn_param_router.locked.uid.v4.scd".loadRelative;
+// "lcxl_param_router.locked.uid.v9.scd".loadRelative;
+// "rearm_all_locked_uid.v2.scd".loadRelative;
+// "lcxl_force_rearm.v1.scd".loadRelative;
+"lc-lcxl-router-revamp.scd".loadRelative;
 
 
 // // map a couple pads to patterns

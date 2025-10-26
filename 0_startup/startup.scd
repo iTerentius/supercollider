@@ -13,10 +13,10 @@ s.waitForBoot {
     "_includes/sample_loader.scd".loadRelative;
     // "_includes/_midi-ctrl/midi-device-loader.scd".loadRelative; // Launch-controls for just params.
     // APC40mk2
-    "_includes/_midi-ctrl/apc40/apc40mk2_loader.scd".loadRelative; // Launch-controls for just params.
+    // "_includes/_midi-ctrl/apc40/apc40mk2_loader.scd".loadRelative; // Launch-controls for just params.
     // Launch Controls
-    // "_includes/midi-setup.scd".loadRelative;
-    // "_includes/_midi-ctrl/launch-control/lc_loader.scd".loadRelative; // Launch-controls for just params.
+    "_includes/midi-setup.scd".loadRelative;
+    "_includes/_midi-ctrl/launch-control/lc_loader.scd".loadRelative; // Launch-controls for just params.
 
     "_includes/mixer-channel-16s.scd".loadRelative;
     "_includes/mixer-channel-stem-record.scd".loadRelative;
@@ -28,6 +28,8 @@ s.waitForBoot {
    // s.plotTree;
    // ServerMeter(s);
     // "_includes/mixer-channel-gui.scd".loadRelative;
+    ~link = LinkClock(1).latency_(Server.default.latency);
+
     "Setup done!".postln;
 
     // "_includes/_midi-ctrl/apc40/apc_device_group_bind_fix.scd".loadRelative;

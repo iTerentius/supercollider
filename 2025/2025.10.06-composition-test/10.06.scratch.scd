@@ -74,7 +74,7 @@ var amps = [0, 1, 5, -7, 1, 0];
 //   Signal.sineFill(8192, amps.scramble, false, false),
 //   Signal.chebyFill(8192, amps.scramble, true, false)
 // ];
-~wt
+~wt = {rrand(-7, 7)}!50;
 
 ~b.do({| buf, i| buf.loadCollection(~wt[1].asWavetable)});
 )
@@ -149,3 +149,16 @@ Pbind(
     \amp, 0.16
 ).play;
 )
+
+
+Ndef(\t1, {|freq=110| SinOsc.ar([freq, freq+0.01], 3pi/2) * LFPulse.ar(3, 1) * 0.2});
+Ndef(\t1).xset(\freq,100); 
+Ndef(\t1).play(out: 0);
+Ndef(\t1).stop;
+
+Ndef(\t2, {|freq=110| Pulse.ar([freq, freq+0.01], 3pi/2) * LFSaw.ar(3) * 0.1});
+Ndef(\t2).xset(\freq,100); 
+Ndef(\t2).play(out: 2);
+Ndef(\t2).stop;
+
+Ndef.clear;

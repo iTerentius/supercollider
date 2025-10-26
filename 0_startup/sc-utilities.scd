@@ -1,45 +1,34 @@
 // Recording
-(
-~prepRecord = {
-  ~recPath = Platform.userHomeDir +/+ "Music/SuperCollider\ Recordings";
-  // ~recPath = Platform.userHomeDir +/+ "/Volumes/Hypostatic\ Work/Hypostatic\ Sound/sc_recordings/";
-  ~recFileName = "jam";
-  ~recChannels = 4;
-}
-// Example (using your ~vars set above):
+// (
+// ~prepRecord = {
+//   ~recPath = Platform.userHomeDir +/+ "Music/SuperCollider\ Recordings";
+//   // ~recPath = Platform.userHomeDir +/+ "/Volumes/Hypostatic\ Work/Hypostatic\ Sound/sc_recordings/";
+//   ~recFileName = "jam";
+//   ~recChannels = 4;
+// }
+// // Example (using your ~vars set above):
+//
+// // start on the next bar; stop manually whenever you want
+// ~quantRecord.(nil, ~recChannels, ~recPath, ~recFileName);
+// ) 
 
-// start on the next bar; stop manually whenever you want
-~quantRecord.(nil, ~recChannels, ~recPath, ~recFileName);
-) 
+// s.stopRecording; // stop recording
 
-s.stopRecording; // stop recording
+// don’t pass sends; just pass channels you actually want stems for
+~stopStems = ~stemDiskStart.(
+  [~t2, ~t3, ~t4],   // track stems (dry)
+  [~r1],            // return stem (this is the reverb bus)
+  "songB"           // file base name
+);
 
-// Launch Control XL learn and bind
-// Run these in order if starting fresh
-~lcxl_config[\midiChan] = 9
-~installCCByNameRouter.();
-~setBank.(1);
-~learnFaders.();
-~learnRow1.();
-~learnRow2.();
-~learnRow3.();
-~printMapAll.();
-~ccSanity.();
+// when you want to stop, on a musical offset
+~stopStems.(1);
 
-~lcStartLearnRow.(1);
+~lcnBindParam.(\b0_s1_r1, {|x| ("[LC] \b0_s1_r1: "++x).postln;});
 
-// Example bind
-~ccBindParam.(\b0_f1, \track, \amp, ControlSpec(0, 0.5, \lin, 0, 0));
+~lcxlBindParam.(\b0_s1_r1, {|x| ("[LCXL] \b0_s1_r1: "++x).postln;});
+~lcxlBindPdef.(\b0_s5_p, \yesorno);
 
-// Persist
-~ccSave.();
-~ccLoad.();
-
-// Sample Loader
-~loadSamplesRecursive.("~/Music/supercollider/_samples/Field/");
-
-~printTree.();
-
-NodeTreeView(s).start;
-s.queryAllNodes;
-
+~apcBindParam.(\b0_s1_r1, {|x| ("[APC] \b0_s1_r1: "++x).postln;});
+~apcBindParam.(\b0_d2, {|x| ("[APC] \b0_d2: "++x).postln;});
+~apcBindParam.(\b0_s1_f, {|x| ("[APC] \b0_s1_f: "++x).postln;});
