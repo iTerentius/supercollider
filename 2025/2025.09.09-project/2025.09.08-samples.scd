@@ -1,7 +1,9 @@
- ~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
+(
+~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
+~loadSamplesRecursive.("~/Music/supercollider/_samples/Neutron_12/");
+~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/");
+)
  ~loadSamplesRecursive.("~/Music/supercollider/_samples/Field/");
- ~loadSamplesRecursive.("~/Music/supercollider/_samples/Neutron_12/");
- ~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/");
  ~loadSamplesRecursive.("~/Music/supercollider/_samples/AKWF/AKWF_0001/");
  ~loadSamplesRecursive.("~/Music/supercollider/_samples/Cat-Water/");
 
@@ -54,6 +56,7 @@ Pdef(\bd1,
     )
 );
 ~apcAssignPad.(32, \bd1);
+~lcxlBindPdef.(\b0_s1_p, \bd1);
 )
 Pdef(\bd1).play;
 Pdef(\bd1).stop(3);
@@ -79,6 +82,7 @@ Pdef(\bd2,
   )
 );
 ~apcAssignPad.(33, \bd2);
+~lcxlBindPdef.(\b0_s2_p, \bd2);
 )
 Pdef(\bd2).play;
 Pdef(\bd2).stop;
@@ -116,6 +120,7 @@ Pdef(\hh1,
   )
 );
 ~apcAssignPad.(34, \hh1);
+~lcxlBindPdef.(\b0_s3_p, \hh1);
 )
 Pdef(\hh1).play;
 Pdef(\hh1).clear;
@@ -167,7 +172,7 @@ Pdef.clear;
 
 ~perc_reverb = ~perc.newPostSend(~r1, 0.5);
 ~perc_reverb.free;
-~r1.level_(0.2);
+~r1.level_(0.3);
 ~r2.level_(0.5);
 
 ~r2_fx.set(\mdt, 1,\dlt, 1, \dct, 1);
@@ -211,15 +216,24 @@ Ndef(\mod_bot, {SinOsc.ar(0.5).range(20, 100)});
 ~slice_mix.set(1);
 ~slice_pan.set(0);
 
+Pdef(\bd1).play;
+Pdef(\bd1).stop;
+Pdef(\bd2).play;
+Pdef(\bd2).stop;
+Pdef(\hh1).play;
+Pdef(\hh1).stop;
+Pdef(\yesorno).play;
+Pdef(\yesorno).stop;
 (
 // don’t pass sends; just pass channels you actually want stems for
 ~stopStems = ~stemDiskStart.(
-  [~m1, ~t1, ~t2, ~t3, ~phh1],   // track stems (dry)
+  [~m1, ~t1, ~t5, ~phh1, ~perc],   // track stems (dry)
   [~r1, ~r2],            // return stem (this is the reverb bus)
-  "songC"           // file base name
+  "test"           // file base name
 );
 )
 // when you want to stop, on a musical offset
 ~stopStems.(1);
+~stemStopNow.();
 
 Pdef.clear;

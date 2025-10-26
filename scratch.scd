@@ -188,3 +188,35 @@ Pdef(\wtStep,
 ~wtStop = { Pdef(\wtScan).stop; Pdef(\wtStep).stop };
 ~wtFree = { ~wtStop.(); ~wtBufs.do(_.free) };
 )
+
+// 1. Boot the server and install quark if necessary
+s.boot;
+
+// If not already installed:
+// Quarks.install("ddwMixerChannel");
+// Server.quit;
+// Server.local.reboot;
+
+// 2. Define a new ddwMixerChannel for the Ndef
+MixerChannel.new(\mySine, s, 2, 2);
+(
+// 3. Define the Ndef with your synth logic
+Ndef(\mySine, {
+    var freq = MouseX.kr(100, 1000, 1);
+    var pan = MouseY.kr(-1, 1, 1);
+    Pan2.ar(LFPulse.ar(freq, 0, 0.2), pan);
+});
+)
+// 4. Play the Ndef through the ddwMixerChannel
+~t1.play(Ndef(\mySine));
+
+// 5. Control the mixer channel (adjust volume, pan, etc.)
+~t1.level = 0.5;
+~t1.pan = -0.8;
+(
+// 6. Stop and free everything when finished
+CmdPeriod.doOnce({
+    // ~t1.free;
+    Ndef(\mySine).clear;
+});
+)

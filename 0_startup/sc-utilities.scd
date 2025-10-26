@@ -1,20 +1,8 @@
-// Recording
-// (
-// ~prepRecord = {
-//   ~recPath = Platform.userHomeDir +/+ "Music/SuperCollider\ Recordings";
-//   // ~recPath = Platform.userHomeDir +/+ "/Volumes/Hypostatic\ Work/Hypostatic\ Sound/sc_recordings/";
-//   ~recFileName = "jam";
-//   ~recChannels = 4;
-// }
-// // Example (using your ~vars set above):
-//
-// // start on the next bar; stop manually whenever you want
-// ~quantRecord.(nil, ~recChannels, ~recPath, ~recFileName);
-// ) 
+// **************************************************************** //
+// RECORDING
+// **************************************************************** //
 
-// s.stopRecording; // stop recording
-
-// don’t pass sends; just pass channels you actually want stems for
+// --- ddwMixerChannel Stem Recording --- //
 ~stopStems = ~stemDiskStart.(
   [~t2, ~t3, ~t4],   // track stems (dry)
   [~r1],            // return stem (this is the reverb bus)
@@ -23,12 +11,155 @@
 
 // when you want to stop, on a musical offset
 ~stopStems.(1);
+// or manual immediate stop at any time
+~stemStopNow.();
 
-~lcnBindParam.(\b0_s1_r1, {|x| ("[LC] \b0_s1_r1: "++x).postln;});
+// --- Normal Output Quant Recording (needs include enabled) --- //
+(
+~prepRecord = {
+  ~recPath = Platform.userHomeDir +/+ "Music/SuperCollider\ Recordings";
+  // ~recPath = Platform.userHomeDir +/+ "/Volumes/Hypostatic\ Work/Hypostatic\ Sound/sc_recordings/";
+  ~recFileName = "jam";
+  ~recChannels = 4;
+}
+// Example (using your ~vars set above):
 
-~lcxlBindParam.(\b0_s1_r1, {|x| ("[LCXL] \b0_s1_r1: "++x).postln;});
-~lcxlBindPdef.(\b0_s5_p, \yesorno);
+// start on the next bar; stop manually whenever you want
+~quantRecord.(nil, ~recChannels, ~recPath, ~recFileName);
+) 
 
-~apcBindParam.(\b0_s1_r1, {|x| ("[APC] \b0_s1_r1: "++x).postln;});
-~apcBindParam.(\b0_d2, {|x| ("[APC] \b0_d2: "++x).postln;});
-~apcBindParam.(\b0_s1_f, {|x| ("[APC] \b0_s1_f: "++x).postln;});
+s.stopRecording; // stop recording
+
+
+// **************************************************************** //
+// MIDI DEVICE BINDING
+// **************************************************************** //
+
+// map a couple pads to patterns
+Pdef(\kick2, Pbind(\instrument, \default, \degree, 0, \dur, 0.25, \amp, 0.15, \out, ~t1.inbus.index));
+Pdef(\hat2,  Pbind(\instrument, \default, \degree, 7, \dur, 0.125, \amp, 0.12, \out, ~t2.inbus.index));
+
+// --- APC40mkII --- //
+~apcBindParam.(\b1_s1_r1, {|x| ("[APC] \b1_s1_r1: "++x).postln;});
+~apcBindParam.(\b1_d2, {|x| ("[APC] \b1_d2: "++x).postln;});
+~apcBindParam.(\b1_s1_f, {|x| ("[APC] \b1_s1_f: "++x).postln;});
+~apcAssignPad.(32, \kick2);
+
+// --- LC/LCXL --- //
+~lcn[\b1_s1_r2] = { |val| ("LC strip 1, row2: %\n".format(val)).post };
+~lcxlParam[\b3_s5_r3] = { |val| ("LCXL b3_s5_r3: %\n".format(val)).post };
+~lcxlParam[\b1_s1_f] = { |val| ("LCXL b1_s1_f: %\n".format(val)).post };
+~lcxlBindPdef.(\b1_s3_p, \kick2);  // maps bank 0, button 3 to Pdef(\drums)
+
+
+// **************************************************************** //
+// SAMPLE LOADING & USAGE
+// **************************************************************** //
+~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
+~loadSamplesRecursive.("~/Music/supercollider/_samples/Neutron_12/");
+~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/");
+
+~loadSamplesRecursive.("~/Music/supercollider/_samples/Field/");
+~loadSamplesRecursive.("~/Music/supercollider/_samples/AKWF/AKWF_0001/");
+~loadSamplesRecursive.("~/Music/supercollider/_samples/Cat-Water/");
+
+~samp = ~samplesTree[\bass_drums][\SHD_808BD_03];
+~samp = ~samplesTree[\field][\cat_food];
+~samp = ~samplesTree[\neutron_12][\121];
+~samples = ~samplesTree.at(\neutron_12);
+~samples = ~samplesTree.at(\hoarder);
+~samples = ~samplesTree.at(\bass_drums);
+~samples = ~samplesTree.at(\cat_water);
+~samples = ~samplesTree.at(\akwf_0001);
+~samples.postln; 
+
+// --- Pdef with multiple samples --- //
+~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
+(
+~bd1 = ~samplesTree.at(\bass_drums).asArray;
+Pdef(\bd1).quant = 1;
+Pdef(\bd1,
+    ~pBuf.(
+        Pbind(
+            \buf,   Prand(~bd1, inf),          // your Buffer object
+            \bufnum, Pkey(\buf),   // SC uses the Buffer’s bufnum
+            \dur,    Pbjorklund2(3, 8)/4,
+            \amp,   2.0,
+            \rate,  1,
+            \out,   ~pbd1.inbus.index
+        )
+    )
+);
+~apcAssignPad.(32, \bd1);
+~lcxlBindPdef.(\b0_s1_p, \bd1);
+)
+Pdef(\bd1).play;
+Pdef(\bd1).stop(3);
+Pdef(\bd1).clear;
+
+// --- Pdef End --- //
+
+// **************************************************************** //
+// MIXER CHANNEL SETUP
+// **************************************************************** //
+
+// Set up main channels (see mixer-channel-16s.scd)
+
+// Channel to Send (~r1 is Reverb, ~t2 is Delay)
+~yesorno_reverb = ~t5.newPostSend(~r1, 1.0);
+~yesorno_reverb.free; // <-- Important to do before changing the above
+
+~yesorno_delay = ~t5.newPostSend(~r2, 1.0);
+~yesorno_delay.free;
+
+~perc_reverb = ~perc.newPostSend(~r1, 0.5);
+~perc_reverb.free;
+
+// They don't take effect until you set the mix level
+~r1.level_(0.3);
+~r2.level_(0.5);
+
+// This uses the handel var assigned to ~r2 to set params (might be possible to set on ~r2 as well)
+~r2_fx.set(\mdt, 1,\dlt, 1, \dct, 1);
+// Change the send amount
+~perc_reverb.level_(0.5);
+
+// Adding an inline fx insert
+(
+~t5_fx = ~t5.playfx{ | outbus, bot=30, wet=0.5|
+  var sig = In.ar(outbus, 2);
+  sig * Pulse.ar(bot) * wet;
+};
+)
+~t5_fx.free;
+
+Ndef(\mod_bot).fadeTime = 3;
+Ndef(\mod_bot, {SinOsc.ar(0.5).range(20, 100)});
+~t5_fx.set(\bot, Ndef(\mod_bot));
+~t5_fx.set(\wet, 1.4);
+
+(
+~r4.playfx(\slice_s, [
+    \bufSecs, 2,     // length of rolling buffer in seconds
+    \nSlices, 64,     // number of slices across that window
+    \mix, 1,         // 0 dry  1 wet
+    \spread, 0.5,    // alternating pan offset
+    \rate, 0.5,        // playback rate per slice
+    \rev, 0,         // 0 forward  1 reverse
+    \pan, 0,
+    \amp, 1
+]);
+)
+
+~perc_slice = ~t1.newPostSend(~r4, 1.0);
+~perc_slice.free;
+~r4.level_(1.0);
+~perc_slice.level_(1);
+~r1.set(\room, 0.1);
+~slice_idx.set(0);
+~slice_rev.set(0);      // 0 or 1
+~slice_sp.set(0.5);     // spread amount
+~slice_rate.set(0.5);
+~slice_mix.set(1);
+~slice_pan.set(0);
+

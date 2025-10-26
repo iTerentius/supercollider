@@ -32,7 +32,9 @@
     };
 
     // destination folder
-    if(dirPath.isNil or: { dirPath == "" }) { dirPath = Platform.userHomeDir +/+ "recordings" };
+    if(dirPath.isNil or: { dirPath == "" }) {
+        dirPath = (~stemBaseDir ? (Platform.userHomeDir +/+ "recordings"));
+    };
     if(File.exists(dirPath).not) { File.mkdir(dirPath); ("created " ++ dirPath).postln; };
 
     // timestamped base

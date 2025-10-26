@@ -1,3 +1,5 @@
+~link = LinkClock(1).latency_(Server.default.latency);
+
 // GUI to watch status
 (
 var win = Window("LinkClock", Rect(200, 200, 500, 100)).front,

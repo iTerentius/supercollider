@@ -8,14 +8,12 @@
 "lc-lcxl-router-revamp.scd".loadRelative;
 
 
-// // map a couple pads to patterns
+/ // map a couple pads to patterns
 // Pdef(\kick2, Pbind(\instrument, \default, \degree, 0, \dur, 0.25, \amp, 0.15, \out, ~t1.inbus.index));
 // Pdef(\hat2,  Pbind(\instrument, \default, \degree, 7, \dur, 0.125, \amp, 0.12, \out, ~t2.inbus.index));
-// ~lcnBindParam.(\b0_r1, {|x| ~t1.level_(x)});
-// ~lcnBindParam.(\b0_r2, {|x| ~t1.pan_(x.linlin(0, 1, -1, 1))});
-// ~lcnBindParam.(\b0_s1_r2, {|x| ("lcn \b0_s1_r2: ".postln)});
 //
-// ~lcxlBindParam.(\b0_s1_f, {|x| ~t1.level_(x)});
-// ~lcxlBindParam.(\b0_s1_r3, {|x| ~t1.pan_(x.linlin(0, 1, -1, 1))});
-// ~lcxlBindPdef.(\b0_s1_p, {|x| ("\b0_s1_p: " ++ x).postln;});
-//
+// ~lcn[\b1_s1_r2] = { |val| ("LC strip 1, row2: %\n".format(val)).post };
+// ~lcxlParam[\b3_s5_r3] = { |val| ("LCXL b3s5r3: %\n".format(val)).post };
+// ~lcxlParam[\b1_s1_f] = { |val| ("LCXL b1_s1_f: %\n".format(val)).post };
+// ~lcxlBindPdef.(\b1_s3_p, \kick2);  // maps bank 0, button 3 to Pdef(\drums)
+
