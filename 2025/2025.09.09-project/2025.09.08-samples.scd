@@ -56,7 +56,7 @@ Pdef(\bd1,
     )
 );
 ~apcAssignPad.(32, \bd1);
-~lcxlBindPdef.(\b0_s1_p, \bd1);
+~lcxlBindPdef.(\b1_s1_p, \bd1);
 )
 Pdef(\bd1).play;
 Pdef(\bd1).stop(3);
@@ -82,7 +82,7 @@ Pdef(\bd2,
   )
 );
 ~apcAssignPad.(33, \bd2);
-~lcxlBindPdef.(\b0_s2_p, \bd2);
+~lcxlBindPdef.(\b1_s2_p, \bd2);
 )
 Pdef(\bd2).play;
 Pdef(\bd2).stop;
@@ -120,7 +120,7 @@ Pdef(\hh1,
   )
 );
 ~apcAssignPad.(34, \hh1);
-~lcxlBindPdef.(\b0_s3_p, \hh1);
+~lcxlBindPdef.(\11_s3_p, \hh1);
 )
 Pdef(\hh1).play;
 Pdef(\hh1).clear;
@@ -153,7 +153,7 @@ Pdef(\yesorno, Pbind(
     \rate, 0.9,
     \out, ~t5.inbus.index
 ));
-~lcxlBindPdef.(\b0_s5_p, \yesorno);
+~lcxlBindPdef.(\b1_s5_p, \yesorno);
 ~apcAssignPad.(24, \yesorno);
 Ndef(\slicePan, {SinOsc.kr(5)});
 Ndef(\slicePan).fadeTime_(3);

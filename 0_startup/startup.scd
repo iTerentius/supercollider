@@ -30,14 +30,15 @@ s.waitForBoot {
     // "_includes/ndef-mixer.scd".loadRelative; Helpers
     // "_includes/_helpers/peuc.scd".loadRelative;
 
-   s.plotTree;
-   ServerMeter.new;
-   FreqScope.new;
-   Stethoscope.new;
-   HelpBrowser.new;
+   // s.plotTree;
+   // ServerMeter.new;
+   // FreqScope.new;
+   // Stethoscope.new;
+   // HelpBrowser.new;
  
    // Ableton LinkClock
-   "_includes/ableton-link-gui.scd".loadRelative;
+   // "_includes/ableton-link-gui.scd".loadRelative;
+  ~link = LinkClock(1).latency_(Server.default.latency);
 
     "[Setup done!]".postln;
 };

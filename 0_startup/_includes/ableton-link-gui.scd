@@ -1,4 +1,4 @@
-~link = LinkClock(1).latency_(Server.default.latency);
+// ~link = LinkClock(1).latency_(Server.default.latency);
 
 // GUI to watch status
 (
