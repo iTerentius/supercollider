@@ -31,11 +31,12 @@ s.waitForBoot {
     //"_includes/midi-setup.scd".loadRelative;
     //"_includes/_midi-ctrl/launch-control/lc_loader.scd".loadRelative; // Launch-controls for just params.
 
-    //"_includes/mixer-channel-16s.scd".loadRelative;
-    //"_includes/mixer-channel-stem-record.scd".loadRelative;
+    "_includes/mixer-channel-16s.scd".loadRelative;
+    "_includes/mixer-channel-stem-record.scd".loadRelative;
+    "_includes/ndef2mixer-channel.scd".loadRelative;
     // "_includes/ndef-mixer.scd".loadRelative; Helpers
     // "_includes/_helpers/peuc.scd".loadRelative;
-    "_includes/ndef-mixer.scd".loadRelative;
+    //"_includes/ndef-mixer.scd".loadRelative;
     //"_includes/ndef-mixer-copilot.scd".loadRelative;
 
     //MIDI Controllers
@@ -48,11 +49,11 @@ s.waitForBoot {
     //"_includes/history-simple.scd".loadRelative;
     //"_includes/history-automation.scd".loadRelative;
 
-   //s.plotTree;
-   //ServerMeter.new;
-   //FreqScope.new;
-   //Stethoscope.new;
-   //HelpBrowser.new;
+   s.plotTree;
+   ServerMeter.new;
+   FreqScope.new;
+   Stethoscope.new;
+   HelpBrowser.new;
  
    // Ableton LinkClock
    //"_includes/ableton-link-gui.scd".loadRelative;

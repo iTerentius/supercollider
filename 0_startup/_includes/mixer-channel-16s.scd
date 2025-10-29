@@ -1,8 +1,8 @@
 // Main Out
 (
 ~m1 = MixerChannel.new(\m1, s, 2, 2, outbus: 0);
-~lcxlParam[\b8_s8_f] = {|x| ~m1.level_(x)};
-~lcxlParam[\b8_s8_r3] = {|x| ~m1.pan_(x.linlin(0, 1, -1, 1))};
+//~lcxlParam[\b8_s8_f] = {|x| ~m1.level_(x)};
+//~lcxlParam[\b8_s8_r3] = {|x| ~m1.pan_(x.linlin(0, 1, -1, 1))};
 ~apcBindParam.(\master_f, {|x| ~m1.level_(x)});
 
 // Instrument Tracks
@@ -84,39 +84,39 @@
 ~apcBindParam.(\b1_s5_f, {|x| ~r1.level_(x)});
 ~apcBindParam.(\b1_s5_r1, {|x| ~r1.pan_(x.linlin(0, 1, -1, 1))});
 
-~r2 = MixerChannel.new(\r2, s, 2, 2, \outbus, ~m1);
+~r2 = MixerChannel.new(\r2, s, 2, 2, \outbus, ~m1.inbus);
 ~lcxlBindParam.(\b2_s6_f, {|x| ~r2.level_(x)});
 ~lcxlbindparam.(\b2_s6_r3, {|x| ~r2.pan_(x.linlin(0, 1, -1, 1))});
 ~apcBindParam.(\b1_s6_f, {|x| ~r2.level_(x)});
 ~apcBindParam.(\b1_s6_r1, {|x| ~r2.pan_(x.linlin(0, 1, -1, 1))});
 
-~r3 = MixerChannel.new(\r3, s, 2, 2, \outbus, ~m1);
+~r3 = MixerChannel.new(\r3, s, 2, 2, \outbus, ~m1.inbus);
 ~lcxlBindParam.(\b2_s7_f, {|x| ~r3.level_(x)});
 ~lcxlbindparam.(\b2_s7_r3, {|x| ~r3.pan_(x.linlin(0, 1, -1, 1))});
 ~apcBindParam.(\b1_s7_f, {|x| ~r3.level_(x)});
 ~apcBindParam.(\b1_s7_r1, {|x| ~r3.pan_(x.linlin(0, 1, -1, 1))});
 
-~r4 = MixerChannel.new(\r4, s, 2, 2, \outbus, ~m1);
+~r4 = MixerChannel.new(\r4, s, 2, 2, \outbus, ~m1.inbus);
 ~lcxlBindParam.(\b2_s8_f, {|x| ~r4.level_(x)});
 ~lcxlbindparam.(\b2_s8_r3, {|x| ~r4.pan_(x.linlin(0, 1, -1, 1))});
 ~apcBindParam.(\b1_s8_f, {|x| ~r4.level_(x)});
 ~apcBindParam.(\b1_s8_r1, {|x| ~r4.pan_(x.linlin(0, 1, -1, 1))});
 
-~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t1);
+~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t1.inbus);
 
-~pbd1 = MixerChannel.new(\pbd1, s, 2, 2, outbus: ~perc);
+~pbd1 = MixerChannel.new(\pbd1, s, 2, 2, outbus: ~perc.inbus);
 ~lcxlBindParam.(\b5_s1_f, {|x| ~pbd1.level_(x)});
 ~lcxlBindParam.(\b5_s1_r3, {|x| ~pbd1.pan_(x.linlin(0, 1, -1, 1))});
 ~apcBindParam.(\b4_s1_f, {|x| ~pbd1.level_(x)});
 ~apcBindParam.(\b4_s1_r1, {|x| ~pbd1.pan_(x.linlin(0, 1, -1, 1))});
 
-~pbd2 = MixerChannel.new(\pbd2, s, 2, 2, outbus: ~perc);
+~pbd2 = MixerChannel.new(\pbd2, s, 2, 2, outbus: ~perc.inbus);
 ~lcxlBindParam.(\b5_s2_f, {|x| ~pbd2.level_(x)});
 ~lcxlBindParam.(\b5_s2_r3, {|x| ~pbd2.pan_(x.linlin(0, 1, -1, 1))});
 ~apcBindParam.(\b4_s2_f, {|x| ~pbd2.level_(x)});
 ~apcBindParam.(\b4_s2_r1, {|x| ~pbd2.pan_(x.linlin(0, 1, -1, 1))});
 
-~phh1 = MixerChannel.new(\phh1, s, 2, 2, outbus: ~perc);
+~phh1 = MixerChannel.new(\phh1, s, 2, 2, outbus: ~perc.inbus);
 ~lcxlBindParam.(\b5_s3_f, {|x| ~phh1.level_(x)});
 ~lcxlBindParam.(\b5_s3_r3, {|x| ~phh1.pan_(x.linlin(0, 1, -1, 1))});
 ~apcBindParam.(\b4_s3_f, {|x| ~phh1.level_(x)});
@@ -124,19 +124,22 @@
 
 // Default FX
 // -- Reverb
-~r1_fx = ~r1.playfx( { |outbus|
-			var sig = In.ar(outbus, 2);
-			FreeVerb2.ar(sig[0], sig[1], mix: 1, room: 0.8, damp: 0.2);
-		}
-);
+~r1fx = SynthDef(\r1verb, { |inbus, outbus|
+    var sig, wet;
+    sig = In.ar(inbus, 2);
+    wet = FreeVerb2.ar(sig[0], sig[1], mix: 1, room: 0.8, damp: 0.2);
+    ReplaceOut.ar(outbus, wet);   // replace = insert-style, keeps channel structure valid
+}).add;
+~r1.addPostSend(\verb, \r1verb, [\inbus, ~r1.inbus, \outbus, ~r1.outbus]);
 
 // -- Delay
-~r2_fx = ~r2.playfx( { |outbus, mdt=0.2, dlt=0.2, dct=1|
-			var sig = In.ar(outbus, 2);
-			CombL.ar(sig, maxdelaytime: mdt, delaytime: dlt, decaytime: dct);
-		}
-);
-
+~r2fx = SynthDef(\r1delay, { |inbus, outbus|
+    var sig, wet;
+    sig = In.ar(inbus, 2);
+    wet = CombL.ar(sig, maxdelaytime: mdt, delaytime: dlt, decaytime: dct);
+    ReplaceOut.ar(outbus, wet);   // replace = insert-style, keeps channel structure valid
+}).add;
+~r2.addPostSend(\delay, \r1delay, [\inbus, ~r2.inbus, \outbus, ~r2.outbus]);
 
 )
 // ~r2.set(\dct, 1, \dlt, 0.1);

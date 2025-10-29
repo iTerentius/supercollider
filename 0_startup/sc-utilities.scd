@@ -163,3 +163,21 @@ Ndef(\mod_bot, {SinOsc.ar(0.5).range(20, 100)});
 ~slice_mix.set(1);
 ~slice_pan.set(0);
 
+// ——— Convenience: many keys to one channel ———
+~ndefAttachMany = { |ndefKeys, chan, chans = 2|
+	var keys;
+	keys = ndefKeys.collect(_.asSymbol);
+	keys.do({ |k| ~ndefAttachToChan.(k, chan, chans) });
+};
+)
+// make sure your Ndef is audio-rate
+Ndef(\droneA, { VarSaw.ar(110, 0, 0.2) ! 2 });   // stereo at audio rate
+
+// your ddwMixerChannel
+~t2 = ~t2 ? MixerChannel(\t2, s, 2, 2, outbus: 0);
+
+// attach
+~ndefAttachToChan.(\droneA, ~t2, 2);
+
+// detach later
+~ndefDetach.(\droneA);
