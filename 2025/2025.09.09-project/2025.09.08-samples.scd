@@ -120,7 +120,7 @@ Pdef(\hh1,
   )
 );
 ~apcAssignPad.(34, \hh1);
-~lcxlBindPdef.(\11_s3_p, \hh1);
+~lcxlBindPdef.(\b1_s3_p, \hh1);
 )
 Pdef(\hh1).play;
 Pdef(\hh1).clear;
@@ -130,6 +130,7 @@ FreqScope.new(s);
 // Pdef(\hh1).play;
 // Ndef(\hh1).stop(3);
 // Pdef(\hh1).clear;
+// 2025-10-29 — ensure ordering + FX return using playfx (return the signal, no Out/ReplaceOut)
 
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/"); 
  ~loadSamplesRecursive.("~/Music/supercollider/_samples/Neutron_12/");
@@ -164,7 +165,7 @@ Pdef(\yesorno).play;
 Pdef(\yesorno).stop;
 Pdef.clear;
 
-~yesorno_reverb = ~t5.newPostSend(~r1, 1.0);
+~yesorno_reverb = ~t5.newPostSend(~r1, 0.9);
 ~yesorno_reverb.free;
 
 ~yesorno_delay = ~t5.newPostSend(~r2, 1.0);
@@ -172,8 +173,10 @@ Pdef.clear;
 
 ~perc_reverb = ~perc.newPostSend(~r1, 0.5);
 ~perc_reverb.free;
-~r1.level_(0.3);
+~r1.level_(0.9);
 ~r2.level_(0.5);
+
+~nd1_reverb = ~t2.newPostSend(~r1, 1.0);
 
 ~r2_fx.set(\mdt, 1,\dlt, 1, \dct, 1);
 ~perc_reverb.level_(0.5);
