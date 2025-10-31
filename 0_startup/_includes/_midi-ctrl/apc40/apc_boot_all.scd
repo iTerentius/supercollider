@@ -1,11 +1,12 @@
-/* 2025-10-19 12:53 — APC40 mkII ALL-IN-ONE v6: add Pan/Sends/User knob rows + knob CCs + LEDs
-   - New: knob-row buttons (Pan=87, Sends=88, User=89) select virtual row r1..r3 with LED feedback
-   - New: top-row knobs CC48..55 map to \b{bank}_s{strip}_r{row} via ~apcBindParam
-   - Keeps: pads, scenes, stop-by-col, stop-all, banks, faders, panic recovery */
-/* single () block, vars at top, no ) in comments */
+/* 2025-10-31 08:22 America-Chicago — APC40 mkII ALL-IN-ONE v7
+   - Typed pad binds: ~apcAssignPad.(note, key, kind) where kind is \p Pdef or \n Ndef
+   - Grid uses MIDIFunc with strict source and channel filtering, press only when vel 127
+   - Ndefs toggle on press, LEDs update after state change
+   - Keeps your banks, faders, knob rows, scenes, stop, repaint, panic recovery */
 
+/* single block start */
 (
-/* ---------- normalize APC namespaces (avoid Event put errors) ---------- */
+/* ---------- helpers to normalize state ---------- */
 var ensureID, ensureArray;
 
 ensureID = { |sym|
@@ -36,34 +37,39 @@ ensureArray = { |sym, fallback|
     };
 };
 
-/* these are all used below; make sure they are IdentityDictionary */
-ensureID.(\apcPadMap);
-ensureID.(\apcIsDown);
-ensureID.(\apcLedState);
-ensureID.(\apcSceneMap);
-ensureID.(\apcStopColChanMap);
-ensureID.(\apcParamBindings);
+/* ensure bags used below */
+ensureID.(\apcPadMap);         // note -> key
+ensureID.(\apcPadTypes);       // note -> \p or \n
+ensureID.(\apcIsDown);         // note -> Bool
+ensureID.(\apcLedState);       // note -> color velocity
+ensureID.(\apcSceneMap);       // scene button note -> row index
+ensureID.(\apcStopColChanMap); // chan -> col
+ensureID.(\apcParamBindings);  // param key -> Function
 
-/* colors bag */
+/* color table */
 if(~apcColors.isNil or: { ~apcColors.isKindOf(IdentityDictionary).not }) {
-    ~apcColors = IdentityDictionary[\off -> 0, \amber -> 126, \green -> 21];
+    ~apcColors = IdentityDictionary[
+        \off -> 0,   // black
+        \amber -> 126,
+        \green -> 21
+    ];
 };
 
-/* config bag */
+/* config */
 ensureID.(\apcCfg);
-if(~apcCfg[\gridChan].isNil) { ~apcCfg[\gridChan] = 0 };
+if(~apcCfg[\gridChan].isNil) { ~apcCfg[\gridChan] = 0 };   // grid is on MIDI channel 0 by default
 
 /* ---------- base state ---------- */
 ~apcStopAllNote   = ~apcStopAllNote   ? nil;
 ~apcBank          = ~apcBank          ? 0;
 
-/* knob-row state and mapping from your probe */
+/* knob row mapping */
 ~apcKnobRow       = ~apcKnobRow       ? 1;         // 1 pan, 2 sends, 3 user
 ~apcKnobRowNotes  = ~apcKnobRowNotes  ? [87, 88, 89];
-~apcKnobCCBase    = ~apcKnobCCBase    ? 48;        // 48..55 are 8 knobs
+~apcKnobCCBase    = ~apcKnobCCBase    ? 48;        // CC 48..55
 ~apcKnobCCCount   = ~apcKnobCCCount   ? 8;
 
-/* grid rows 0..4 top→bottom */
+/* grid rows 0..4 top to bottom */
 ~apcRowNotes = ~apcRowNotes ? [
     [32,33,34,35,36,37,38,39],
     [24,25,26,27,28,29,30,31],
@@ -72,21 +78,21 @@ if(~apcCfg[\gridChan].isNil) { ~apcCfg[\gridChan] = 0 };
     [ 0, 1, 2, 3, 4, 5, 6, 7]
 ];
 
-/* columns 0..7 from rows */
+/* columns 0..7 derived from rows */
 ~apcColNotes = ~apcColNotes ? Array.fill(8, { Array.fill(5, { 0 }) });
 8.do { |c| 5.do { |r| ~apcColNotes[c][r] = ~apcRowNotes[r][c] } };
 
-/* bank button and fader mapping based on your probe */
-~apcBankBtnNote     = ~apcBankBtnNote     ? 50;   // small bank buttons are note 50
+/* bank button and faders */
+~apcBankBtnNote     = ~apcBankBtnNote     ? 50;
 ensureArray.(\apcBankBtnChans, (0..7).asArray);
-~apcStripFaderCC    = ~apcStripFaderCC    ? 7;    // strips CC7 on ch 0..7
-~apcMasterFaderCC   = ~apcMasterFaderCC   ? 14;   // master CC14 on ch 0
+~apcStripFaderCC    = ~apcStripFaderCC    ? 7;
+~apcMasterFaderCC   = ~apcMasterFaderCC   ? 14;
 ~apcMasterFaderChan = ~apcMasterFaderChan ? 0;
 
-/* ---------- MIDI Out + Generic Mode ---------- */
+/* ---------- MIDI Out and APC source detection ---------- */
 ~apcForceAPCOut = {
     var out, dev, nam;
-    if(MIDIClient.initialized.not) { MIDIClient.init; };
+    if(MIDIClient.initialized.not) { MIDIClient.init };
     MIDIIn.connectAll;
     out = nil;
     MIDIClient.destinations.do { |ep|
@@ -105,17 +111,50 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
             };
         };
     };
-    if(out.isNil) { "[APC] could not open APC out".warn } { ~apcOut = out };
+    if(out.isNil) { "[APC] could not open APC MIDIOut".warn } { ~apcOut = out };
     ~apcOut
 };
 
+/* find the APC input endpoint uid so we can bind precisely */
+~apcEnsureSrc = {
+    var uid;
+    if(MIDIClient.initialized.not) { MIDIClient.init };
+    MIDIIn.connectAll;
+    uid = nil;
+    MIDIClient.sources.do { |ep|
+        var dev, nam;
+        dev = ep.device !? { ep.device.asString } ?? "";
+        nam = ep.name !? { ep.name.asString } ?? "";
+        if(uid.isNil and: { (dev == "APC40 mkII") and: { nam == "APC40 mkII" } }) {
+            uid = ep.uid;
+        };
+    };
+    if(uid.isNil) {
+        MIDIClient.sources.do { |ep|
+            var dev, nam;
+            dev = ep.device !? { ep.device.asString } ?? "";
+            nam = ep.name !? { ep.name.asString } ?? "";
+            if(uid.isNil and: { dev.contains("APC") or: { nam.contains("APC") } }) {
+                uid = ep.uid;
+            };
+        };
+    };
+    if(uid.isNil) {
+        "[APC] WARNING could not find APC input source uid, falling back to nil src filter".warn;
+    }{
+        ["[APC] using src uid", uid].postln;
+    };
+    ~apcSrc = uid;
+    uid
+};
+
+/* basic LED out for grid */
 ~apcPadLED = { |note, color, chan = (~apcCfg[\gridChan] ? 0)|
     var out;
     out = ~apcOut ?? { ~apcForceAPCOut.() };
     if(out.notNil) {
         out.latency = 0.0;
         out.noteOn(chan, note, color);
-        out.noteOn(1, note, color);
     };
 };
 
@@ -140,7 +179,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     "[APC] set Generic Mode".postln; true
 };
 
-/* ---------- pads and scenes helpers ---------- */
+/* ---------- Pdef and Ndef helpers ---------- */
 ~apcPadPlay = { |key| Pdef(key).play };
 ~apcPadStop = { |key| Pdef(key).stop };
 
@@ -151,31 +190,55 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     ~apcLEDSet.(note, want);
 };
 
-~apcAssignPad = { |note, key|
-    var colors; colors = ~apcColors;
-    ~apcPadMap[note] = key;
-    ~apcLEDSet.(note, colors[\amber]);
-    ["map[" ++ note ++ "], " ++ key].postln;
+~apcLEDByStateNdef = { |note, key|
+    var colors, on;
+    colors = ~apcColors;
+    on = try { Ndef(key).isPlaying } { false };
+    ~apcLEDSet.(note, on.if(colors[\green], colors[\amber]));
 };
 
+/* typed assign, third arg kind accepts "p" or "n" or \p \n, defaults to \p */
+~apcAssignPad = { |note, key, kind=\p|
+    var colors, ksym, ksymKind;
+    colors = ~apcColors;
+    ksym = key.asSymbol;
+    ksymKind = case
+    { kind == "n" } { \n }
+    { kind == "p" } { \p }
+    { kind == \n }  { \n }
+    { kind == \p }  { \p }
+    { true }        { \p };
+    ~apcPadMap[note]   = ksym;
+    ~apcPadTypes[note] = ksymKind;
+    if(ksymKind == \n) {
+        ~apcLEDByStateNdef.(note, ksym);
+    }{
+        ~apcLEDSet.(note, colors[\amber]);
+    };
+    ["map[" ++ note ++ "], " ++ ksym ++ " kind " ++ ksymKind].postln;
+};
+
+/* rows and scenes treat only Pdef pads to avoid side effects on Ndefs */
 ~apcPadsInRow = { |row| var notes; notes = ~apcRowNotes.wrapAt(row); notes };
 
 ~apcRowPlaying = { |row|
     var anyOn; anyOn = false;
     ~apcPadsInRow.(row).do { |n|
-        var key = ~apcPadMap[n];
-        if(key.notNil and: { Pdef(key).isPlaying }) { anyOn = true };
+        var key = ~apcPadMap[n], kind = ~apcPadTypes[n] ? \p;
+        if(kind == \p and: { key.notNil and: { Pdef(key).isPlaying } }) { anyOn = true };
     };
     anyOn
 };
 
 ~apcSetRowState = { |row, wantPlay|
-    var notes; notes = ~apcPadsInRow.(row);
+    var notes;
+    notes = ~apcPadsInRow.(row);
     notes.do { |n|
-        var key = ~apcPadMap[n];
-        if(key.notNil) {
-            if(wantPlay) { if(Pdef(key).isPlaying.not) { ~apcPadPlay.(key) } }
-            { if(Pdef(key).isPlaying) { ~apcPadStop.(key) } };
+        var key = ~apcPadMap[n], kind = ~apcPadTypes[n] ? \p;
+        if(kind == \p and: { key.notNil }) {
+            if(wantPlay) { if(Pdef(key).isPlaying.not) { ~apcPadPlay.(key) } } {
+                if(Pdef(key).isPlaying) { ~apcPadStop.(key) }
+            };
             ~apcLEDByState.(n, key);
         };
     };
@@ -207,14 +270,14 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     };
 };
 
-/* ---------- columns and stops ---------- */
+/* ---------- columns and stops act on Pdef pads only ---------- */
 ~apcPadsInCol = { |col| var notes; notes = ~apcColNotes.wrapAt(col); notes };
 
 ~apcColPlaying = { |col|
     var anyOn; anyOn = false;
     ~apcPadsInCol.(col).do { |n|
-        var key = ~apcPadMap[n];
-        if(key.notNil and: { Pdef(key).isPlaying }) { anyOn = true };
+        var key = ~apcPadMap[n], kind = ~apcPadTypes[n] ? \p;
+        if(kind == \p and: { key.notNil and: { Pdef(key).isPlaying } }) { anyOn = true };
     };
     anyOn
 };
@@ -222,8 +285,9 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 ~apcAnyGridPlaying = {
     var anyOn; anyOn = false;
     if(~apcPadMap.notNil) {
-        ~apcPadMap.values.do { |key|
-            if(key.notNil and: { Pdef(key).isPlaying }) { anyOn = true };
+        ~apcPadMap.keysValuesDo { |note, key|
+            var kind = ~apcPadTypes[note] ? \p;
+            if(kind == \p and: { key.notNil and: { Pdef(key).isPlaying } }) { anyOn = true };
         };
     };
     anyOn
@@ -231,8 +295,8 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 
 ~apcStopColumn = { |col|
     ~apcPadsInCol.(col).do { |n|
-        var key = ~apcPadMap[n];
-        if(key.notNil and: { Pdef(key).isPlaying }) {
+        var key = ~apcPadMap[n], kind = ~apcPadTypes[n] ? \p;
+        if(kind == \p and: { key.notNil and: { Pdef(key).isPlaying } }) {
             ~apcPadStop.(key);
             ~apcLEDByState.(n, key);
         };
@@ -242,8 +306,9 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 ~apcStopAll = {
     if(~apcPadMap.notNil) {
         ~apcPadMap.keysValuesDo { |n, k|
-            if(Pdef(k).isPlaying) { ~apcPadStop.(k) };
-            ~apcLEDByState.(n, k);
+            var kind = ~apcPadTypes[n] ? \p;
+            if(kind == \p and: { Pdef(k).isPlaying }) { ~apcPadStop.(k) };
+            if(kind == \p) { ~apcLEDByState.(n, k) } { ~apcLEDByStateNdef.(n, k) };
         };
     };
     if(~apcStopAllNote.notNil) { ~apcStopAllLED.() };
@@ -277,7 +342,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     ["stopAll[" ++ stopNote ++ "]"].postln;
 };
 
-/* ---------- bank buttons and faders ---------- */
+/* ---------- param helpers and bindings ---------- */
 ~apcParamKeyFor = { |bank, strip|
     var b, s; b = bank.clip(0, 7); s = strip.clip(1, 8);
     ("b" ++ b ++ "_s" ++ s ++ "_f").asSymbol
@@ -312,9 +377,9 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 
 ~apcPaintAllBanks = { 8.do { |i| ~apcPaintBankBtn.(i) } };
 
-/* knob row LED painters */
+/* knob row painters and changes */
 ~apcPaintKnobRow = {
-    var notes, colors, i;
+    var notes, colors;
     notes = ~apcKnobRowNotes; colors = ~apcColors;
     3.do { |i|
         var want;
@@ -324,13 +389,15 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 };
 
 ~apcChangeBank = { |idx|
-    var old; old = ~apcBank; ~apcBank = idx.clip(0, 7);
+    var old;
+    old = ~apcBank; ~apcBank = idx.clip(0, 7);
     ["[APC PARAM] bank change", "old", old, "new", ~apcBank].postln;
     ~apcPaintAllBanks.();
 };
 
 ~apcChangeKnobRow = { |row|
-    var old; old = ~apcKnobRow; ~apcKnobRow = row.clip(1, 3);
+    var old;
+    old = ~apcKnobRow; ~apcKnobRow = row.clip(1, 3);
     ["[APC PARAM] knob row change", "old", old, "new", ~apcKnobRow].postln;
     ~apcPaintKnobRow.();
 };
@@ -338,8 +405,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 /* bank buttons listener */
 ~apcInstallBankButtons = {
     var nameOn, nameOff, note, chans;
-    nameOn = \apc_bank_on; nameOff = \apc_bank_off;
-    note = ~apcBankBtnNote; chans = ~apcBankBtnChans.asArray;
+    nameOn = \apc_bank_on; nameOff = \apc_bank_off; note = ~apcBankBtnNote; chans = ~apcBankBtnChans.asArray;
     MIDIdef.free(nameOn); MIDIdef.free(nameOff);
     MIDIdef.noteOn(nameOn, { |vel, num, chan, src|
         if(num == note and: { chans.includes(chan) }) {
@@ -348,15 +414,12 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
         };
     });
     MIDIdef.noteOff(nameOff, { |vel, num, chan, src|
-        if(num == note and: { chans.includes(chan) }) {
-            ["[BANK BTN off]", "num", num, "chan", chan, "vel", vel].postln;
-            ~apcPaintBankBtn.(chan);
-        };
+        if(num == note and: { chans.includes(chan) }) { ~apcPaintBankBtn.(chan) };
     });
     "[APC PARAM] bank button listener armed".postln; true
 };
 
-/* knob-row buttons listener (Pan=87, Sends=88, User=89) */
+/* knob-row buttons listener */
 ~apcInstallKnobRowButtons = {
     var nameOn, nameOff, notes;
     nameOn = \apc_knobrow_on; nameOff = \apc_knobrow_off; notes = ~apcKnobRowNotes;
@@ -365,42 +428,34 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
         var idx;
         if(notes.includes(num)) {
             idx = (notes.indexOf(num) + 1);
-            ["[KNOBROW on]", "note", num, "row", idx, "vel", vel].postln;
             if(vel > 0) { ~apcChangeKnobRow.(idx) } { ~apcPaintKnobRow.() };
         };
     });
     MIDIdef.noteOff(nameOff, { |vel, num, chan, src|
-        if(~apcKnobRowNotes.includes(num)) { ~apcPaintKnobRow.() };
+        if(notes.includes(num)) { ~apcPaintKnobRow.() };
     });
-    "[APC PARAM] knob-row button listener armed".postln; true
+    "[APC PARAM] knob row button listener armed".postln; true
 };
 
-/* faders CC */
+/* faders CC listener */
 ~apcInstallFaderCC = {
     var name, stripCC, masterCC, masterCh;
-    name = \apc_faders_cc;
-    stripCC = ~apcStripFaderCC;
-    masterCC = ~apcMasterFaderCC;
-    masterCh = ~apcMasterFaderChan;
+    name = \apc_faders_cc; stripCC = ~apcStripFaderCC; masterCC = ~apcMasterFaderCC; masterCh = ~apcMasterFaderChan;
     MIDIdef.free(name);
     MIDIdef.cc(name, { |val, num, chan, src|
         var x, stripIdx, key;
         if(num == masterCC and: { chan == masterCh }) {
-            x = ~apcNorm7.(val);
-            ~apcApplyParam.(\master_f, x);
-            ^nil;
+            x = ~apcNorm7.(val); ~apcApplyParam.(\master_f, x); ^nil;
         };
         if(num == stripCC and: { chan >= 0 } and: { chan <= 7 }) {
-            stripIdx = chan + 1;
-            key = ~apcParamKeyFor.(~apcBank, stripIdx);
-            x = ~apcNorm7.(val);
-            ~apcApplyParam.(key, x);
+            stripIdx = chan + 1; key = ~apcParamKeyFor.(~apcBank, stripIdx);
+            x = ~apcNorm7.(val); ~apcApplyParam.(key, x);
         };
     });
     "[APC PARAM] Fader CC listener armed".postln; true
 };
 
-/* knobs CC (CC48..55 on chan 0) */
+/* knobs CC listener */
 ~apcInstallKnobCC = {
     var name, base, count;
     name = \apc_knobs_cc; base = ~apcKnobCCBase; count = ~apcKnobCCCount;
@@ -408,11 +463,9 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     MIDIdef.cc(name, { |val, num, chan, src|
         var idx, stripIdx, key, x;
         if((num >= base) and: { num < (base + count) }) {
-            idx = num - base;         // 0..7
-            stripIdx = idx + 1;       // 1..8
+            idx = num - base; stripIdx = idx + 1;
             key = ~apcParamKeyForKnob.(~apcBank, stripIdx, ~apcKnobRow);
             x = ~apcNorm7.(val);
-            ["[KNOB CC]", "cc", num, "strip", stripIdx, "row", ~apcKnobRow, "bank", ~apcBank, "x", x.round(0.001)].postln;
             ~apcApplyParam.(key, x);
         };
     });
@@ -429,7 +482,10 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 
 ~apcRepaintAll = {
     if(~apcPadMap.notNil and: { ~apcPadMap.size > 0 }) {
-        ~apcPadMap.keysValuesDo { |n, k| ~apcLEDByState.(n, k) };
+        ~apcPadMap.keysValuesDo { |n, k|
+            var kind = ~apcPadTypes[n] ? \p;
+            if(kind == \p) { ~apcLEDByState.(n, k) } { ~apcLEDByStateNdef.(n, k) };
+        };
     };
     ~apcRepaintScenes.();
     ~apcRepaintStops.();
@@ -438,60 +494,105 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     "[APC] LEDs repainted".postln;
 };
 
-/* ---------- grid listener ---------- */
+/* ---------- GRID LISTENER with MIDIFunc, filtered by src and chan ---------- */
+/* free any prior MIDIFuncs so we do not stack listeners across recompiles */
+~apcFreeGridFuncs = {
+    var f;
+    f = ~apcNoteOnFunc;  if(f.notNil) { f.free; ~apcNoteOnFunc = nil };
+    f = ~apcNoteOffFunc; if(f.notNil) { f.free; ~apcNoteOffFunc = nil };
+    "[APC grid] MIDIFunc freed".postln;
+};
+
 ~apcInstallGridListener = {
-    var nameOn, nameOff;
-    nameOn = \apc40_grid_any_on; nameOff = \apc40_grid_any_off;
-    MIDIdef.free(nameOn); MIDIdef.free(nameOff);
-    MIDIdef.noteOn(nameOn, { |vel, num, chan, src|
-        var key, row, colByChan;
-        key = ~apcPadMap[num];
-        row = ~apcSceneMap[num];
-        colByChan = if(num == 52) { ~apcStopColChanMap[chan] } { nil };
-        if(key.notNil) {
-            if(vel > 0) {
+    var gridChan, srcUid;
+
+    gridChan = ~apcCfg[\gridChan] ? 0;
+    srcUid   = ~apcEnsureSrc.();
+
+    ~apcFreeGridFuncs.();
+
+    /* only react to real pad presses, per APC protocol note on vel 127 */
+    ~apcNoteOnFunc = MIDIFunc.noteOn(
+        { |vel, num, chan, src|
+            var key, kind, row, colByChan, wasOn;
+
+            if(vel != 127) { ^nil };
+            if(chan != gridChan) { ^nil };
+
+            key  = ~apcPadMap[num];
+            kind = ~apcPadTypes[num] ? \p;
+
+            if(kind == \n and: { key.notNil }) {
+                ~apcIsDown[num] = true;
+                wasOn = try { Ndef(key).isPlaying } { false };
+                wasOn.if({ Ndef(key).stop }, { Ndef(key).play });
+                AppClock.sched(0.02, { ~apcLEDByStateNdef.(num, key); ~apcRepaintStops.(); nil });
+                ^nil
+            };
+
+            if(key.notNil) {
                 ~apcIsDown[num] = true;
                 if(Pdef(key).isPlaying) { ~apcPadStop.(key) } { ~apcPadPlay.(key) };
                 ~apcLEDByState.(num, key);
                 ~apcRepaintStops.();
             }{
-                ~apcIsDown[num] = false;
-                ~apcLEDByState.(num, key);
-            };
-        }{
-            if(row.notNil) {
-                if(vel > 0) { ~apcToggleRow.(row); ~apcSceneLEDByState.(num); ~apcRepaintStops.(); }
-                { ~apcSceneLEDByState.(num) };
-            }{
-                if(colByChan.notNil) {
-                    if(vel > 0) { ~apcStopColumn.(colByChan); ~apcStopColLEDByChan.(chan); ~apcStopAllLED.(); }
-                    { ~apcStopColLEDByChan.(chan) };
+                row = ~apcSceneMap[num];
+                colByChan = if(num == 52) { ~apcStopColChanMap[chan] } { nil };
+                if(row.notNil) {
+                    ~apcToggleRow.(row); ~apcSceneLEDByState.(num); ~apcRepaintStops.();
                 }{
-                    if(~apcStopAllNote.notNil and: { num == ~apcStopAllNote }) {
-                        if(vel > 0) { ~apcStopAll.() } { ~apcStopAllLED.() };
+                    if(colByChan.notNil) {
+                        ~apcStopColumn.(colByChan); ~apcStopColLEDByChan.(chan); ~apcStopAllLED.();
+                    }{
+                        if(~apcStopAllNote.notNil and: { num == ~apcStopAllNote }) { ~apcStopAll.() };
                     };
                 };
             };
-        };
-    });
-    MIDIdef.noteOff(nameOff, { |vel, num, chan, src|
-        var key, row, colByChan, hadDown;
-        key = ~apcPadMap[num];
-        row = ~apcSceneMap[num];
-        colByChan = if(num == 52) { ~apcStopColChanMap[chan] } { nil };
-        if(key.notNil) {
-            hadDown = ~apcIsDown[num] ? false;
-            if(hadDown.not) { if(Pdef(key).isPlaying) { ~apcPadStop.(key) } { ~apcPadPlay.(key) } };
-            ~apcIsDown[num] = false;
-            ~apcLEDByState.(num, key);
-            ~apcRepaintStops.();
-        }{
-            if(row.notNil) { ~apcSceneLEDByState.(num) };
-            if(colByChan.notNil) { ~apcStopColLEDByChan.(chan); ~apcStopAllLED.() };
-            if(~apcStopAllNote.notNil and: { num == ~apcStopAllNote }) { ~apcStopAllLED.() };
-        };
-    });
-    "[APC grid note-mode armed]".postln; true
+        },
+        nil,                 // any note
+        gridChan,            // channel filter
+        srcUid               // APC source uid, may be nil if not found, which means any source
+    );
+
+    ~apcNoteOffFunc = MIDIFunc.noteOff(
+        { |vel, num, chan, src|
+            var key, kind, row, colByChan, hadDown;
+
+            if(chan != gridChan) { ^nil };
+
+            key  = ~apcPadMap[num];
+            kind = ~apcPadTypes[num] ? \p;
+
+            if(kind == \n and: { key.notNil }) {
+                hadDown = ~apcIsDown[num] ? false;
+                if(hadDown.not) {
+                    var wasOn = try { Ndef(key).isPlaying } { false };
+                    wasOn.if({ Ndef(key).stop }, { Ndef(key).play });
+                };
+                ~apcIsDown[num] = false;
+                AppClock.sched(0.02, { ~apcLEDByStateNdef.(num, key); ~apcRepaintStops.(); nil });
+                ^nil
+            };
+
+            if(key.notNil) {
+                hadDown = ~apcIsDown[num] ? false;
+                if(hadDown.not) { if(Pdef(key).isPlaying) { ~apcPadStop.(key) } { ~apcPadPlay.(key) } };
+                ~apcIsDown[num] = false;
+                ~apcLEDByState.(num, key);
+                ~apcRepaintStops.();
+            }{
+                row = ~apcSceneMap[num];
+                colByChan = if(num == 52) { ~apcStopColChanMap[chan] } { nil };
+                if(row.notNil) { ~apcSceneLEDByState.(num) };
+                if(colByChan.notNil) { ~apcStopColLEDByChan.(chan); ~apcStopAllLED.() };
+                if(~apcStopAllNote.notNil and: { num == ~apcStopAllNote }) { ~apcStopAllLED.() };
+            };
+        },
+        nil, gridChan, srcUid
+    );
+
+    "[APC grid] MIDIFunc armed chan ".post; gridChan.postln;
+    true
 };
 
 /* ---------- auto-assigns ---------- */
@@ -499,6 +600,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     [82,83,84,85,86].do { |sn, i| ~apcAssignScene.(sn, i) };
     "[APC] default scenes 82..86 -> rows 0..4 assigned".postln;
 };
+
 ~apcAutoAssignStops = {
     8.do { |c| ~apcAssignStopColByChan.(c, c) };
     ~apcAssignStopAll.(81);
@@ -509,11 +611,11 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 CmdPeriod.remove(~apcCmdPeriodHook);
 ~apcCmdPeriodHook = {
     AppClock.sched(0.0, {
-        if(MIDIClient.initialized.not) { MIDIClient.init; };
+        if(MIDIClient.initialized.not) { MIDIClient.init };
         MIDIIn.connectAll;
         ~apcForceAPCOut.();
         ~apcIntroGenericMode.();
-        ~apcInstallGridListener.();
+        ~apcInstallGridListener.();     // MIDIFunc
         ~apcInstallBankButtons.();
         ~apcInstallKnobRowButtons.();
         ~apcInstallFaderCC.();
@@ -529,13 +631,13 @@ CmdPeriod.add(~apcCmdPeriodHook);
 /* ---------- boot actions ---------- */
 ~apcForceAPCOut.();
 ~apcIntroGenericMode.();
-~apcInstallGridListener.();
+~apcInstallGridListener.();    // MIDIFunc
 ~apcInstallBankButtons.();
 ~apcInstallKnobRowButtons.();
 ~apcInstallFaderCC.();
 ~apcInstallKnobCC.();
 
-/* clear all LEDs then repaint and auto-assign defaults */
+/* clear then repaint and auto-assign defaults */
 if(~apcOut.notNil) {
     0.to(127).do { |n| ~apcPadLED.(n, ~apcColors[\off]) };
     "[APC] LEDs cleared".postln;
@@ -543,5 +645,6 @@ if(~apcOut.notNil) {
 ~apcAutoAssignScenes.();
 ~apcAutoAssignStops.();
 AppClock.sched(0.25, { ~apcRepaintAll.() });
+
 )
 
