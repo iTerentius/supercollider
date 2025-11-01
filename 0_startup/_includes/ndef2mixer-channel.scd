@@ -72,4 +72,10 @@
 	keys = ndefKeys.collect(_.asSymbol);
 	keys.do({ |k| ~ndefAttachToChan.(k, chan, chans) });
 };
+
+CmdPeriod.doOnce({
+    // ~t1.free;
+    Ndef.clear;
+});
+
 )

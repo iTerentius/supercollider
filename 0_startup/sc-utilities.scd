@@ -175,3 +175,27 @@ Ndef(\droneA).set(\mod, 50);
 
 // detach later
 ~ndefDetach.(\droneA);
+
+// This also works but Ndef needs to be cleared or won't play again
+Ndef(\mySine, {
+    var freq = MouseX.kr(100, 1000, 1);
+    var pan = MouseY.kr(-1, 1, 1);
+    Pan2.ar(SinOsc.ar(freq, 0, 0.2), pan);
+});
+)
+Ndef(\mySine).clear;
+// 4. Play the Ndef through the ddwMixerChannel
+~t1.play(Ndef(\mySine));
+~t1.stop(Ndef(\mySine)); // doesn't work
+
+// 5. Control the mixer channel (adjust volume, pan, etc.)
+~t1.level = 0.5;
+~t1.pan = -0.8;
+(
+// 6. Stop and free everything when finished
+CmdPeriod.doOnce({
+    // ~t1.free;
+    Ndef(\mySine).clear;
+});
+)
+
