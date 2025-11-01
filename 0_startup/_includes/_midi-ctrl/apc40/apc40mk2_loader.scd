@@ -24,74 +24,103 @@
 //
 //
 //
-////
-//Pdef(\kick2, Pbind(\dur, 0.25, \degree, 0, \amp, 0.15));
-//~apcAssignPad.(32, \kick2);                  // default kind is \p
 //
-//// Ndef path, typed bind
-//Ndef(\droneA, { LFTri.ar(70).dup * 0.08 });
-//~apcAssignPad.(24, \droneA, "n");            // Ndef type
-//Ndef(\droneA).play;
-//Ndef(\droneA).stop;
-//
-//(
-///* 2025-10-31 10:47 — minimal Ndef toggler: uses isPlaying only */
-//~dbgNdefToggle3 !? { ~dbgNdefToggle3 = nil };
-//~dbgNdefToggle3 = { |key|
-//    var k, p, was;
-//    k = key.asSymbol;
-//    p = Ndef(k);
-//    was = p.isPlaying;
-//    ["[DBG3 BEFORE]", k, \isPlaying, was].postln;
-//    if(was) { p.pause } { p.play };
-//    AppClock.sched(0.05, {
-//        ["[DBG3 AFTER]", k, \isPlaying, p.isPlaying].postln; nil
-//    });
-//};
-//
-//)
-//Ndef(\droneA, { LFTri.ar(70).dup * 0.08 });
-//~dbgNdefToggle3.(\droneA);   // expect AFTER true and sound
-//~dbgNdefToggle3.(\droneA);   // expect AFTER true but paused silence
-//~dbgNdefToggle3.(\droneA);   // expect AFTER true resume and sound
-//(
-///* 2025-10-31 — free grid handlers only */
-//[\apc40_grid_any_on, \apc40_grid_any_off].do { |nm| MIDIdef.free(nm) };
-//~apcNoteOnFunc  !? { ~apcNoteOnFunc.free;  ~apcNoteOnFunc  = nil };
-//~apcNoteOffFunc !? { ~apcNoteOffFunc.free; ~apcNoteOffFunc = nil };
-//"[DBG3] grid handlers freed".postln;
-//)
-//
-//(
-///* 2025-10-31 — direct note→Ndef toggles for isolation */
-//MIDIdef.free(\dbg3_n24_on); MIDIdef.free(\dbg3_n24_off);
-//MIDIdef.free(\dbg3_n25_on); MIDIdef.free(\dbg3_n25_off);
-//
-//MIDIdef.noteOn(\dbg3_n24_on, { |vel, num, chan, src|
-//    ["[DBG3 24 on]", \vel, vel, \chan, chan].postln;
-//    if(vel > 0) { ~dbgNdefToggle3.(\droneA) };
-//}, 24);
-//
-//MIDIdef.noteOff(\dbg3_n24_off, { |vel, num, chan, src|
-//    ["[DBG3 24 off]", \vel, vel, \chan, chan].postln;
-//}, 24);
-//
-//MIDIdef.noteOn(\dbg3_n25_on, { |vel, num, chan, src|
-//    ["[DBG3 25 on]", \vel, vel, \chan, chan].postln;
-//    if(vel > 0) { ~dbgNdefToggle3.(\droneA) };
-//}, 25);
-//
-//MIDIdef.noteOff(\dbg3_n25_off, { |vel, num, chan, src|
-//    ["[DBG3 25 off]", \vel, vel, \chan, chan].postln;
-//}, 25);
-//
-//"[DBG3] direct 24 and 25 armed".postln;
-//
-//)
-///* quick direct route test */
-//Ndef(\droneA, { LFTri.ar(70).dup * 0.08 }).play(out: 0);  // try out 0/1 explicitly
-//// stop afterwards
-//Ndef(\droneA).stop;
-//
-///* if you use a mixer bus, make sure Ndef goes there */
-//~m1 !? { Ndef(\droneA).play(out: ~m1.inbus) };  // adjust mixer var as in your setup
+// Pdef as before
+Pdef(\kick2, Pbind(\dur, 0.25, \degree, 0, \amp, 0.15));
+~apcAssignPad.(32, \kick2, "p");
+
+// Ndef using stop/play toggle
+Ndef(\droneA, { LFTri.ar(70).dup * 0.08 });
+Ndef(\droneA).fadeTime = 0.01;
+// prime the output bus once if you route through a mixer, e.g.
+// Ndef(\droneA).play(out: ~m1.inbus); Ndef(\droneA).stop;
+
+~apcAssignPad.(24, \droneA, "n");  // press 24 to start, press again to stop
+// set a global default so all Ndefs go to your mixer by default
+~apcNdefDefaultOut = ~m1.inbus;
+
+// or per-ndef, optional
+~apcSetNdefOut.(\droneA, ~m1.inbus);
+// If you route through a mixer, prime once so future .play() uses the same bus
+ Ndef(\droneA).play(out: ~m1.inbus); Ndef(\droneA).stop;
+// make sure the Ndef exists
+Ndef(\droneA, { LFTri.ar(70).dup * 0.08 });
+Ndef(\droneA).fadeTime = 0.01;
+
+// bind pad as Ndef
+~apcAssignPad.(24, \droneA, "n");
+Ndef(\droneA)
+(
+/* 2025-11-01 10:58 — APC Ndef pad fix: binder + assign w/ kind + LED refresh
+   one-shot patch; safe to eval. Add these permanently to apc_boot_all.scd. */
+
+/* ensure dict exists */
+~apcNdefPadBinds = ~apcNdefPadBinds ?? IdentityDictionary.new;
+
+/* LED helper compatible with your file */
+~apcPadLEDCompat = ~apcPadLEDCompat ?? { |note, isOn=true, onColor=\green, offColor=\off|
+	var want, did, outChan, vel;
+	want = isOn.if(onColor, offColor);
+	outChan = ~apcCfg!?\gridChan ? 0;
+	did = false;
+	if(~apcPadLED.notNil) { ~apcPadLED.(note, want, outChan); did = true }{
+		if(~apcSetGridLED.notNil) { ~apcSetGridLED.(note, isOn.if(\on, \off)); did = true };
+	};
+	if(did.not and: { ~apcColors.notNil }) {
+		vel = ~apcColors[want] ? 0;
+		(~apcOut ? MIDIOut.default).noteOn(outChan, note, vel);
+	};
+};
+
+/* binder for Ndef pads (note -> {key,onColor,offColor}) */
+~apcBindNdefPad = { |note, key, onColor=\green, offColor=\amber|
+	var k = key.asSymbol, playing;
+	~apcNdefPadBinds[note.asInteger] = (key: k, onColor: onColor, offColor: offColor);
+	playing = try { Ndef(k).isPlaying } { false };
+	~apcPadLEDCompat.(note.asInteger, playing, onColor, offColor);
+	("[APC ndef bound] note: " ++ note ++ "  ->  " ++ k).postln;
+	note.asInteger
+};
+
+/* repaint all Ndef pad LEDs (call on recompile or panic) */
+~apcRefreshNdefPadLEDs = {
+	~apcNdefPadBinds.keysValuesDo { |n, meta|
+		var k = meta[\key], onC = meta[\onColor], offC = meta[\offColor], on;
+		on = try { Ndef(k).isPlaying } { false };
+		~apcPadLEDCompat.(n, on, onC, offC);
+	};
+	"apc_ndef_pads repainted".postln;
+};
+
+/* REPLACE your existing 2-arg ~apcAssignPad with this 3-arg version.
+   It keeps Pdef behavior, and for kind 'n' also writes ~apcNdefPadBinds. */
+~apcAssignPad = { |note, key, kind=\p|
+	var colors, ksym, kindSym, n;
+	colors  = ~apcColors;
+	ksym    = key.asSymbol;
+	kindSym = case
+	{ kind == "n" } { \n }
+	{ kind == "p" } { \p }
+	{ kind == \n  } { \n }
+	{ kind == \p  } { \p }
+	{ true }        { \p };
+	n = note.asInteger;
+
+	// always remember the logical key mapping for Pdef side features
+	~apcPadMap[n] = ksym;
+
+	if(kindSym == \n) {
+		// also register in the Ndef map so your grid listener hits the Ndef branch
+		~apcNdefPadBinds[n] = (key: ksym, onColor: \green, offColor: \amber);
+
+		// LED reflects current Ndef state
+		~apcPadLEDCompat.(n, try { Ndef(ksym).isPlaying } { false }, \green, \amber);
+	} {
+		// Pdef: keep your previous amber-on-assign then row/stop painters refresh state
+		~apcLEDSet !? { ~apcLEDSet.(n, colors[\amber]) };
+	};
+
+	["map[" ++ n ++ "], " ++ ksym ++ " kind " ++ kindSym].postln;
+	n
+};
+)

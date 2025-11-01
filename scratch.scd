@@ -204,11 +204,13 @@ MixerChannel.new(\mySine, s, 2, 2);
 Ndef(\mySine, {
     var freq = MouseX.kr(100, 1000, 1);
     var pan = MouseY.kr(-1, 1, 1);
-    Pan2.ar(LFPulse.ar(freq, 0, 0.2), pan);
+    Pan2.ar(SinOsc.ar(freq, 0, 0.2), pan);
 });
 )
+Ndef(\mySine).clear;
 // 4. Play the Ndef through the ddwMixerChannel
 ~t1.play(Ndef(\mySine));
+~t1.stop(Ndef(\mySine));
 
 // 5. Control the mixer channel (adjust volume, pan, etc.)
 ~t1.level = 0.5;
