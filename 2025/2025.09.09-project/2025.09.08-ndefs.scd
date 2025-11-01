@@ -14,6 +14,7 @@ Ndef(\i1, { |freq = 110, amp = 0.15|
 )
 Ndef(\i1)[1] = \filter -> {|in| Gate.ar(in, LFPulse.kr(0.5))};
 Ndef(\11).set(\wet1, 1);
+Ndef.clear;
 
 (
 Ndef(\i3, { |amp = 0.28, freq = 90, dur = 1|
