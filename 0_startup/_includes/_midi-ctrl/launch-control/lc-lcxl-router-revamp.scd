@@ -178,4 +178,3 @@ MIDIdef.noteOn(\lcxl_pdef_triggers, { |vel, num, chan, src|
 
 "[LC/LCXL routers armed]".postln;
 )
-

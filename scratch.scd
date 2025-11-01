@@ -220,3 +220,20 @@ CmdPeriod.doOnce({
     Ndef(\mySine).clear;
 });
 )
+(
+// 2025-10-06
+
+Pdef(\midiNotes,
+    Pbind(
+        \type, \midi,
+        \midiout, Pfunc { ~mOut },
+        \chan, 0,                 // MIDI channel 0..15
+        \octave, 3,
+        \degree, Prand([0, 1, 4, 7], inf),
+        \dur, 0.25,               // pattern step duration
+        \sustain, 1.22,           // note length
+        \amp, 0.9                 // 0..1 mapped to velocity 1..127
+    )
+).play;
+)
+Ndef(\mySine).clear;

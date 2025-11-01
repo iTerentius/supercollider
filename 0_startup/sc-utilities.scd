@@ -126,12 +126,12 @@ Pdef(\bd1).clear;
 
 // Adding an inline fx insert
 (
+~t5_fx.free;
 ~t5_fx = ~t5.playfx{ | outbus, bot=30, wet=0.5|
   var sig = In.ar(outbus, 2);
   sig * Pulse.ar(bot) * wet;
 };
 )
-~t5_fx.free;
 
 Ndef(\mod_bot).fadeTime = 3;
 Ndef(\mod_bot, {SinOsc.ar(0.5).range(20, 100)});
@@ -165,14 +165,18 @@ Ndef(\mod_bot, {SinOsc.ar(0.5).range(20, 100)});
 
 // --- Ndefs to mixer-channel-16s
 // make sure your Ndef is audio-rate
-Ndef(\droneA, {|mod=1, freq=200, amp=0.2, in=0| VarSaw.ar([freq+(mod*0.2), freq+(mod*0.1)], 0, Pulse.ar(mod/2)) * amp ! 2 });   // stereo at audio rate
+Ndef(\droneA, {|mod=1, freq=200, amp=0.2, in=0| SinOsc.ar([freq+(mod*0.2), freq+(mod*0.1)], 0, PinkNoise.ar(mod * 0.2)) * amp ! 2 });   // stereo at audio rate
 ~apcBindParam.(\b0_d1, {|x| Ndef(\droneA).set(\mod, x.linlin(0, 1, 50, 200))});
+~lcxlBindParam.(\b1_s2_r1, {|x| Ndef(\droneA).set(\mod, x.linlin(0, 127, 50, 200))});
+~lcxlParam[\b1_s2_r1] = {|x| Ndef(\droneA).set(\mod, x.linlin(0, 127, 50, 200))};
 Ndef(\droneA).set(\mod, 50);
 ~droneA_verb = ~r1.newPostSend(~t2, 1.0);
 ~droneA_delay = ~r2.newPostSend(~t2, 1.0);
 // attach
 ~ndefAttachToChan.(\droneA, ~t2, 2);
-
+Ndef(\sin, {|x=110| SinOsc.ar(x)!2});
+~ndefAttachToChan.(\sin, ~t3, 2);
+~lcxlParam[\b1_s3_r1] = {|x| Ndef(\sin).set(\x, x.linlin(0, 127, 100, 1400))}
 // detach later
 ~ndefDetach.(\droneA);
 

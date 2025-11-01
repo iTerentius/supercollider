@@ -1,20 +1,20 @@
 (
 // Normal Usage
-//s.options.numBuffers = 1024 * 16;
-//s.options.memSize = 8192 * 256;
-//s.options.numOutputBusChannels = 36;
-//s.options.numInputBusChannels = 0;
+s.options.numBuffers = 1024 * 16;
+s.options.memSize = 8192 * 256;
+s.options.numOutputBusChannels = 36;
+s.options.numInputBusChannels = 0;
 
 // Scarlett 18i20 Usage
-s.options.numOutputBusChannels = 20;    // Scarlett 18i20 → 10 stereo outs
-s.options.numInputBusChannels  = 20;    // up to 10 stereo ins
-s.options.sampleRate = 48000;
-s.options.memSize = 8192;
-s.options.numBuffers = 1024;
-s.options.maxNodes = 1024;
-s.options.blockSize = 64;
-s.options.hardwareBufferSize = 128;     // match JACK frames/period
-s.options.device = "JACK";              // route through JACK
+// s.options.numOutputBusChannels = 20;    // Scarlett 18i20 → 10 stereo outs
+// s.options.numInputBusChannels  = 20;    // up to 10 stereo ins
+// s.options.sampleRate = 48000;
+// s.options.memSize = 8192;
+// s.options.numBuffers = 1024;
+// s.options.maxNodes = 1024;
+// s.options.blockSize = 64;
+// s.options.hardwareBufferSize = 128;     // match JACK frames/period
+// s.options.device = "JACK";              // route through JACK
 if (s.serverRunning.not) { s.boot };
 
 s.waitForBoot {
@@ -25,11 +25,11 @@ s.waitForBoot {
     // "_includes/_midi-ctrl/midi-device-loader.scd".loadRelative; // Launch-controls for just params.
 
     // --- APC40mk2 ----
-     "_includes/_midi-ctrl/apc40/apc40mk2_loader.scd".loadRelative; // Launch-controls for just params.
+     // "_includes/_midi-ctrl/apc40/apc40mk2_loader.scd".loadRelative; // Launch-controls for just params.
 
     // --- Launch Controls ---
-    //"_includes/midi-setup.scd".loadRelative;
-    //"_includes/_midi-ctrl/launch-control/lc_loader.scd".loadRelative; // Launch-controls for just params.
+    "_includes/midi-setup.scd".loadRelative;
+    "_includes/_midi-ctrl/launch-control/lc_loader.scd".loadRelative; // Launch-controls for just params.
 
     "_includes/mixer-channel-16s.scd".loadRelative;
     "_includes/mixer-channel-stem-record.scd".loadRelative;
@@ -49,11 +49,11 @@ s.waitForBoot {
     //"_includes/history-simple.scd".loadRelative;
     //"_includes/history-automation.scd".loadRelative;
 
-   s.plotTree;
-   ServerMeter.new;
-   FreqScope.new;
-   Stethoscope.new;
-   HelpBrowser.new;
+   // s.plotTree;
+   // ServerMeter.new;
+   // FreqScope.new;
+   // Stethoscope.new;
+   // HelpBrowser.new;
  
    // Ableton LinkClock
    //"_includes/ableton-link-gui.scd".loadRelative;

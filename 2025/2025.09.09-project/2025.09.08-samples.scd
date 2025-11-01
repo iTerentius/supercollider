@@ -136,10 +136,10 @@ FreqScope.new(s);
  ~loadSamplesRecursive.("~/Music/supercollider/_samples/Neutron_12/");
 (
 // ~yesorno_samp = ~samplesTree.at(\neutron_12).asArray;
-// ~sample = ~samplesTree.at(\hoarder).asArray[rrand(0, 20)];
+// ~yesorno_samp = ~samplesTree.at(\hoarder).asArray[rrand(0, 20)];
 ~yesorno_samp = ~samplesTree.at(\hoarder).asArray;
-// ~sample = ~samplesTree.at(\cat_water).asArray;
-// ~sample = ~samplesTree.at(\storm);
+// ~yesorno_samp = ~samplesTree.at(\field).asArray;
+// ~yesorno_samp = ~samplesTree.at(\storm);
 ~slices = 32;
 Pdef(\yesorno, Pbind(
     \instrument, \slice_s,
@@ -182,15 +182,17 @@ Pdef.clear;
 ~perc_reverb.level_(0.5);
 
 (
-~t5_fx = ~t5.playfx{ | outbus, bot=30, wet=0.5|
+~t5_fx = ~t5.playfx{ | outbus, bot=30, wet=0.5, amp=0.5 |
   var sig = In.ar(outbus, 2);
-  sig * Pulse.ar(bot) * wet;
+  sig = sig * SinOsc.ar(bot) * wet;
+  // sig = sig / 0.2;
 };
 )
 ~t5_fx.free;
+~t5_fx.set(\bot)
 
 Ndef(\mod_bot).fadeTime = 3;
-Ndef(\mod_bot, {SinOsc.ar(0.5).range(20, 100)});
+Ndef(\mod_bot, {LFPulse.ar(0.5).range(120, 1000)});
 ~t5_fx.set(\bot, Ndef(\mod_bot));
 ~t5_fx.set(\wet, 1.4);
 
