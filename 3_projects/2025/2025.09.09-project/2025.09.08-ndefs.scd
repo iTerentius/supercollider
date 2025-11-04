@@ -10,22 +10,25 @@ Ndef(\i1, { |freq = 110, amp = 0.15|
     var sig;
     sig = SinOsc.ar(Pulse.kr(32!2) * freq) * amp * 0.6;
     sig
-}).play(out: 4, vol: 1);
+});
 )
 Ndef(\i1)[1] = \filter -> {|in| Gate.ar(in, LFPulse.kr(0.5))};
 Ndef(\11).set(\wet1, 1);
 Ndef.clear;
 
 (
+Ndef(\i3).fadeTime_(5);
 Ndef(\i3, { |amp = 0.28, freq = 90, dur = 1|
     var sig;
     sig = SinOsc.ar(LFPulse.ar(dur) * freq ! 2) * amp;
-    LPF.ar(sig, 1000)
+    LPF.ar(sig, MouseY.kr(100, 1400))
 });
-Ndef(\i3)[1] = \pset -> Pbind(\freq, Pseq([90, 120, 440, Rest(0.5)], inf), \dur, Prand([0.25, Rest(0.5)], inf), \amp, 0.3);
 )
-~lcxlBindPdef.(\b0_s7_p, \i3);
-Ndef(\i3).stop;
+Ndef(\i3)[1] = \pset -> Pbind(\degree, Pseq([0, 4, 2, 1], inf), \octave, 4, \dur, 0.25, \amp, 0.3);
+// ~ndefAssignToChan.(\i3, ~t2, 2);
+~t2.play(Ndef(\i3));
+Ndef(\i3).play;
+Ndef(\i3).clear;
 Ndef(\i3)[2] = \filter -> {|in, rate=32, dur=0.5 | Gate.ar(in, LFPulse.kr(rate*dur))};
 Ndef(\i3).set(\wet2, 1);
 Ndef(\13)[1] = nil;

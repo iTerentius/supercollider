@@ -149,7 +149,7 @@ Pdef(\yesorno, Pbind(
     \rev, Prand([1, 0], inf),
     \sliceIndex, Prand((0..~slices-1), inf),
     \pan, Ndef(\slicePan),
-    \dur, 0.125,
+    \dur, 0.25,
     \amp, Pwhite(0.5, 1.5, inf),
     \rate, 0.9,
     \out, ~t5.inbus.index
@@ -182,19 +182,19 @@ Pdef.clear;
 ~perc_reverb.level_(0.5);
 
 (
-~t5_fx = ~t5.playfx{ | outbus, bot=30, wet=0.5, amp=0.5 |
+~t2_fx = ~t2.playfx{ | outbus, bot=30, wet=0.5, amp=0.5 |
   var sig = In.ar(outbus, 2);
   sig = sig * SinOsc.ar(bot) * wet;
   // sig = sig / 0.2;
 };
 )
-~t5_fx.free;
+~t2_fx.free;
 ~t5_fx.set(\bot)
 
 Ndef(\mod_bot).fadeTime = 3;
 Ndef(\mod_bot, {LFPulse.ar(0.5).range(120, 1000)});
 ~t5_fx.set(\bot, Ndef(\mod_bot));
-~t5_fx.set(\wet, 1.4);
+~t5_fx.set(\wet, 0.7);
 
 (
 ~r4.playfx(\slice_s, [

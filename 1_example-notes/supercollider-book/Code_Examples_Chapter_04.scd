@@ -492,14 +492,16 @@ x.release(2);
 // Code Example 4.29
 
 b = Buffer.read(s, Platform.resourceDir ++ "/sounds/a11wlk01.wav");
+b = Buffer.readChannel(s, "/Users/isaaclinder/Music/supercollider/_samples/Field/Bambu/bambu-1.wav.wav", channels: 0);
 
 (
 {
 	GrainBuf.ar(
 		numChannels: 2,
 		trigger: Impulse.kr(8),
-		dur: 0.05,
-		sndbuf: b
+		dur: 0.125,
+		sndbuf: b,
+    pos: 0.25
 	);
 }.play;
 )
@@ -530,7 +532,7 @@ b = Buffer.read(s, Platform.resourceDir ++ "/sounds/a11wlk01.wav");
 	GrainBuf.ar(
 		numChannels: 2,
 		trigger: Impulse.kr(8),
-		dur: 0.05,
+		dur: 0.25,
 		sndbuf: b,
 		rate: 7.midiratio,
 		pos: Line.kr(0, 1, BufDur.ir(b))
@@ -544,24 +546,45 @@ b = Buffer.read(s, Platform.resourceDir ++ "/sounds/a11wlk01.wav");
 
 (
 var env = Env.new([0, 1, 0], [0.01, 1], [0, -4]);
+// env.plot;
 ~grainenv = Buffer.loadCollection(s, env.discretize(8192));
 )
 
+b = Buffer.readChannel(s, "/Users/isaaclinder/Music/supercollider/_samples/Field/Bambu/bambu-1.wav", channels: [0]);
+~loadSamplesRecursive.("~/Music/supercollider/_samples/_mono/");
+b = ~samplesTree[\_mono][\are_you_guys_hungry];
 (
-{
+Ndef(\gb1).fadeTime_(2);
+Ndef(\gb1, { | trig_rate=8, grain_dur=0.05, sndbuf=0, rate=1, pan_rate=10 | 
 	GrainBuf.ar(
 		numChannels: 2,
-		trigger: Impulse.kr(8),
-		dur: 0.05,
+		trigger: Impulse.kr(trig_rate),
+		dur: grain_dur,
 		sndbuf: b,
-		rate: 7.midiratio,
+		rate: rate.midiratio,
 		pos: Line.kr(0, 1, BufDur.ir(b)),
 		interp: 2,
-		pan: LFNoise1.kr(10),
+		pan: LFNoise1.kr(pan_rate),
 		envbufnum: ~grainenv
 	);
-}.play;
+});
+// Ndef(\gb1)[1] = \pset -> Pbind(\dur, Prand((0.05..1.0), inf), \rate, Pseq([1, 3, 2], inf));
 )
+Ndef(\gb1).play;
+Ndef(\gb1).stop(3);
+Ndef(\gb1).clear;
+~t1.play(Ndef(\gb1));
+Ndef(\gb1).xset(\trig_rate, 10);
+Ndef(\gb1).xset(\pan_rate, 100);
+Ndef(\gb1).xset(\grain_dur, 0.25);
+Ndef(\gb1).xset(\rate, -8);
+Ndef(\bg1)[1] = nil;
+
+~t1_verb = ~t1.newPostSend(~r1, 2);
+~t1_delay = ~t1.newPostSend(~r2, 2);
+~r1.level_(1)
+
+
 
 
 
@@ -573,10 +596,10 @@ var env = Env.new([0, 1, 0], [0.01, 1], [0, -4]);
 		numChannels: 2,
 		trigger: Impulse.kr(8),
 		bufnum: b,
-		rate: 7.midiratio,
+		// rate: 7.midiratio,
 		centerPos: Line.kr(0, BufDur.ir(b), BufDur.ir(b)),
 		dur: 0.05,
-		pan: LFNoise1.kr(10),
+		pan: LFNoise1.kr(20),
 		amp: 1,
 		interp: 2
 	);
@@ -595,7 +618,7 @@ var env = Env.new([0, 1, 0], [0.01, 1], [0, -4]);
 		bufnum: b,
 		pointer: Line.kr(0, 1, BufDur.ir(b)),
 		freqScale: 7.midiratio,
-		windowSize: 0.05,
+		windowSize: 0.25,
 		envbufnum: -1,
 		overlaps: 0.4,
 		windowRandRatio: 0,
