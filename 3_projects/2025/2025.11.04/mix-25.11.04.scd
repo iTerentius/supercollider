@@ -8,6 +8,15 @@
 
 // Inline sends
 (
+~t1_fx = ~t1.playfx{ | outbus, bot=30, wet=0.5, amp=0.5 |
+  var sig = In.ar(outbus, 2);
+  sig = sig * SinOsc.ar(bot) * wet;
+  // sig = sig / 0.2;
+};
+)
+~t1_fx.free;
+~t1_fx.set(\bot)
+(
 ~t5_fx = ~t5.playfx{ | outbus, bot=30, wet=0.5, amp=0.5 |
   var sig = In.ar(outbus, 2);
   sig = sig * SinOsc.ar(bot) * wet;
