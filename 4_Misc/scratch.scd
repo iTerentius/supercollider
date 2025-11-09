@@ -318,12 +318,13 @@ Ndef(\gb1, { | amp=1, freq=220, trig_rate=8, grain_dur=0.05, buf, env, rate=1, p
 	);
   sig 
 });
-Ndef(\gb1)[1] = \pset -> Pbind(\grain_dur, Prand((0.05..1.0), inf), \rate, Pseq([-12, -3, 2], inf));
+Ndef(\gb1)[1] = \pset -> Pbind(\instrument, \gb1, \dur, 0.5, \amp, 1.5, \buf, ~samp2, \env, ~grainenv, \grain_dur, Prand([0.125, 0.25, 0.5],inf), \rate, Prand([-8, 2, -4],inf), \out, ~t2.inbus.index));
 )
 Ndef(\gb1).play;
 Ndef(\gb1).stop(3);
 Ndef(\gb1).clear;
-~t1.play(Ndef(\gb1));
+~gb1 = ~t2.play(Ndef(\gb1));
+~t2.tryPerform(\free);
 Ndef(\gb1).xset(\trig_rate, 10);
 Ndef(\gb1).xset(\pan_rate, 100);
 Ndef(\gb1).xset(\grain_dur, 0.25);
