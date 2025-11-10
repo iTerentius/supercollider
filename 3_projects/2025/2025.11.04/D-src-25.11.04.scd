@@ -161,8 +161,9 @@ Ndef(\gb1, { | amp=1, freq=220, trig_rate=8, grain_dur=0.05, buf, env, rate=1, p
 	);
   sig 
 });
-Ndef(\gb1)[1] = \pset -> Pbind(\dur, Pseq([3, Rest()],inf), \amp, 0.8, \trig_rate, 16, \buf, Pfunc({~samp1.choose;}), \env, ~grainenv, \grain_dur, Prand([0.05, 0.125, 0.25, 0.5],inf), \rate, Prand([-4, 2, -1, 2],inf));
-Ndef(\gb1)[2] = \filter -> {|in, trig_rate, rate| Gate.ar(in, SinOsc.ar(LFPulse.kr(trig_rate)/2))};
+Ndef(\gb1)[1] = \pset -> Pbind(\dur, Pseq([3, Rest()],inf), \amp, 0.8, \trig_rate, 4, \buf, Pfunc({~samp1.choose;}), \env, ~grainenv, \grain_dur, Prand([0.05, 0.125, 0.25, 0.5],inf), \rate, Prand([-4, 2, -1, 2],inf));
+Ndef(\gb1)[2] = \filter -> {|in, trig_rate, rate| Gate.ar(in, LFPulse.ar(SinOsc.kr(trig_rate))/2)};
+Ndef(\gb1)[3] = \filter -> {|in, mod=10| in + SinOsc.ar(mod)};
 // Ndef(\gb1)[2] = nil;
 )
 Ndef(\gb1).play;
