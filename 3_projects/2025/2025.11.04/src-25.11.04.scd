@@ -87,13 +87,13 @@ Ndef(\dkPluck).clear;
 //////////////////////////////////////////////////////////////////////////////////////
 (
 Ndef(\dynklanks).fadeTime_(3.0);
-Ndef(\dynklanks, { | freqs = #[200, 671, 1153, 1723], mod=8, amp=0.3, dur=1, freq=100 |
+Ndef(\dynklanks, { | freqs = #[200, 671, 1153, 1723], mod=8, amp=0.2, dur=1, freq=100 |
   var sig;
 	//DynKlank.ar(`[freqs, nil, [1, 1, 1, 1]], PinkNoise.ar([0.007,0.007]))
-  sig = DynKlank.ar(`[freqs, nil, [0.9, 0.9, 0.5, 0.5]], Impulse.ar(dur)); 
+  sig = DynKlank.ar(`[freqs, nil, [0.9, 0.9, 0.5, 0.5]], LFPulse.ar(freq: 0.05, phase: 0.5, width: 0.5, mul:0.1 )); 
   sig!2 * amp;
 });
-// Ndef(\dynklanks)[1] = \pset -> Pbind(\amp, 0.6, \dur, Pseq([1, 2, 4, 8, 16, 1], inf), \mod, Pseq((10..1), inf));
+// Ndef(\dynklanks)[1] = \pset -> Pbind(\amp, 0.2, \dur, Pseq([1, 2, 4, 8, 16, 1], inf), \mod, Pseq((10..1), inf));
 // Ndef(\dynklanks)[1] = \pset -> Pbind(\amp, 0.3, \dur, .25, \mod, Pseq((10..1), inf));
 )
 Ndef(\dynklanks)[1] = nil;
@@ -136,11 +136,44 @@ Pdef(\gpat).stop;
 ~grain_rev = ~t2.newPostSend(~r1, 0.5);
 ~grain_rev.free;
 
-~
-
 ~samp1 = Buffer.readChannel(s, "/Users/isaaclinder/Music/supercollider/_samples/Field/Bambu/bambu-1.wav", channels: [0]);
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/_mono/");
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/_mono/hoarder_mono/");
 ~samp2 = ~samplesTree[\hoarder_mono][\n04_6_rats];
 
+ServerMeter(s);
 ~printTree.();
+//////////////////////////////////////////////////////////////////////////////////////
+(
+Ndef(\gb1).fadeTime_(2);
+Ndef(\gb1, { | amp=1, freq=220, trig_rate=8, grain_dur=0.05, buf, env, rate=1, pan_rate=10, trig_enabled=1 | 
+  var sig;
+	sig = GrainBuf.ar(
+		numChannels: 2,
+		trigger: Impulse.kr(trig_rate) * trig_enabled,
+		dur: grain_dur,
+		sndbuf: buf,
+		rate: rate.midiratio,
+		pos: Line.kr(0, 1, BufDur.ir(buf)),
+		interp: 2,
+		pan: LFNoise1.kr(pan_rate),
+		envbufnum: env
+	);
+  sig 
+});
+Ndef(\gb1)[1] = \pset -> Pbind(\dur, Pseq([3, Rest()],inf), \amp, 0.8, \trig_rate, 16, \buf, Pfunc({~samp1.choose;}), \env, ~grainenv, \grain_dur, Prand([0.05, 0.125, 0.25, 0.5],inf), \rate, Prand([-4, 2, -1, 2],inf));
+Ndef(\gb1)[2] = \filter -> {|in, trig_rate, rate| Gate.ar(in, SinOsc.ar(LFPulse.kr(trig_rate)/2))};
+// Ndef(\gb1)[2] = nil;
+)
+Ndef(\gb1).play;
+Ndef(\gb1).stop(3);
+Ndef(\gb1).clear;
+
+Ndef(\gb1).set(\wet2, 1.0);
+~gb1 = ~t2.play(Ndef(\gb1));
+~gb1.tryPerform(\free);
+
+~gb1_rev = ~t2.newPostSend(~r1, 2);
+~gb1_rev.free;
+~gb1_delay = ~t2.newPostSend(~r2, 2);
+~gb1_delay.free;
