@@ -125,8 +125,8 @@ var env = Env.new([0, 1, 0], [0.01, 1], [0, -4]);
 ~samp1 = ~getSample.(\_mono, \Ya_Ya_125bpm_Vox);
 ~samp1 = ~getSample.(\hoarder_mono, \n);
 
-Pdef(\gpat, Pbind(\instrument, \gb1, \dur, Pseq([3, Rest()],inf), \amp, 0.8, \trig_rate, 32, \buf, ~samp1, \env, ~grainenv, \grain_dur, Prand([0.05, 0.125, 0.25, 0.5],inf), \rate, Prand([-4, 2, -1, 2],inf), \out, ~t2.inbus.index)).play;
-Pdef(\gpat).stop;
+Pdef(\gpat, Pbind(\instrument, \gb1, \dur, Pseq([3, Rest()],inf), \amp, 0.8, \trig_rate, 32, \buf, ~samp1, \env, ~grainenv, \grain_dur, Prand([0.05, 0.125, 0.25, 0.5],inf), \rate, Prand([-3, 2, -1, 2],inf), \out, ~t2.inbus.index)).play;
+Pdef(\gpat).clear;
 ~t2_src = ~t2.play(\gb1, [\buf, ~samp1, \env, ~grainenv] );
 ~t2_src.tryPerform(\free);
 ~t2_src.set(\trig_enabled, 1, \pos, 0.5);
@@ -159,9 +159,9 @@ Ndef(\gb1, { | amp=1, freq=220, trig_rate=8, grain_dur=0.05, buf, env, rate=1, p
 		pan: LFNoise1.kr(pan_rate),
 		envbufnum: env
 	);
-  sig 
+ sig * 1.2  
 });
-Ndef(\gb1)[1] = \pset -> Pbind(\dur, Pseq([3, Rest()],inf), \amp, 0.8, \trig_rate, 4, \buf, Pfunc({~samp1.choose;}), \env, ~grainenv, \grain_dur, Prand([0.05, 0.125, 0.25, 0.5],inf), \rate, Prand([-4, 2, -1, 2],inf));
+Ndef(\gb1)[1] = \pset -> Pbind(\dur, Pseq([3, Rest()],inf), \amp, 1, \trig_rate, 32, \buf, Pfunc({~samp1.choose;}), \env, ~grainenv, \grain_dur, Prand([0.05, 0.125, 0.25, 0.5],inf), \rate, Prand([-4, 2, -1, 2],inf));
 Ndef(\gb1)[2] = \filter -> {|in, trig_rate, rate| Gate.ar(in, LFPulse.ar(SinOsc.kr(trig_rate))/2)};
 Ndef(\gb1)[3] = \filter -> {|in, mod=10| in + SinOsc.ar(mod)};
 // Ndef(\gb1)[2] = nil;
@@ -173,8 +173,20 @@ Ndef(\gb1).clear;
 Ndef(\gb1).set(\wet2, 1.0);
 ~gb1 = ~t2.play(Ndef(\gb1));
 ~gb1.tryPerform(\free);
+(
+~gb1_fx = ~t5.playfx(\duck, [
+  \side, ~pbd1.inbus.index,
+  \thresh, 0.12,
+  \ratio, 10,
+  \attack, 0.01,
+  \release, 0.1
+]);
+)
 
-~gb1_rev = ~t2.newPostSend(~r1, 2);
+~gb1_rev = ~t2.newPostSend(~r1, 1);
 ~gb1_rev.free;
-~gb1_delay = ~t2.newPostSend(~r2, 2);
+~gb1_delay = ~t2.newPostSend(~r2, 1);
 ~gb1_delay.free;
+
+~r1.level_(1);
+~r2.level_(1);

@@ -13,7 +13,7 @@ Pdef(\kit_1,
   ], inf);
 );
 ~lcxlBindPdef.(\b2_s1_p, \kit_1);
-~apcAssignPad.(32, \kit_1);
+// ~apcAssignPad.(32, \kit_1);
 )
 Pdef(\kit_1).play;
 Pdef(\kit_1).stop;
