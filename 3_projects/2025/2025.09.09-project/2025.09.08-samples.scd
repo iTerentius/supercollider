@@ -41,12 +41,13 @@ Ndef(\i2).clear(3);
 
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
 (
-~bd1 = ~samplesTree.at(\bass_drums).asArray;
+~bd1 = ~samplesTree.at(\bass_drums).asArray[2];
 Pdef(\bd1).quant = 1;
 Pdef(\bd1,
     ~pBuf.(
         Pbind(
-            \buf,   Prand(~bd1, inf),          // your Buffer object
+            // \buf,   Prand(~bd1, inf),          // your Buffer object
+            \buf,   ~bd1,          // your Buffer object
             \bufnum, Pkey(\buf),   // SC uses the Buffer’s bufnum
             \dur,    Pbjorklund2(3, 8)/4,
             \amp,   2.0,

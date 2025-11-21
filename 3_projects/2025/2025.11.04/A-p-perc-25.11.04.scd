@@ -5,9 +5,9 @@ TempoClock.default.tempo = 80/60;
 
 (
 ~sbd1 = [
-  ~samplesTree.at(\bass_drums).asArray[2],
-  ~samplesTree.at(\bass_drums).asArray[0],
-  ~samplesTree.at(\bass_drums).asArray[4]
+  ~samplesTree.at(\bass_drums).asArray[1],
+  ~samplesTree.at(\bass_drums).asArray[3],
+  ~samplesTree.at(\bass_drums).asArray[2]
 ];
 
 ~ssd1 = ~samplesTree.at(\snare_drums).asArray[6];
