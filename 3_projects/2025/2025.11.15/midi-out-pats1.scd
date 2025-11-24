@@ -26,6 +26,7 @@ Pdef(\doom, Pbind(
   \sustain, Pdefn(\doom_sus),
   \dur,     Pdefn(\doom_dur) 
 )).quant_(4);
+~apcAssignPad.(32, \doom);
 )
 Pdef(\doom).play(quant: 4);
 Pdef(\doom).stop;
