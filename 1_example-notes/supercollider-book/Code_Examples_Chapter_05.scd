@@ -816,8 +816,10 @@ Pbindef(\seqA, \amp, Pgeom(0.05, 0.85, 30));
 
 (
 Pbindef(\seqB,
+  \scale,  Scale.minor, 
+  \octave,   1, 
 	\dur, 0.2,
-	\sustain, 0.02,
+	\sustain, 0.2,
 	\freq, Pexprand(500, 1200, inf)
 ).play;
 )
@@ -827,3 +829,19 @@ Pbindef(\seqB, \degree, Pwhite(0, 7, inf));
 
 // degree values take effect:
 Pbindef(\seqB, \freq, nil, \degree, Pwhite(0, 7, inf));
+
+Pbindef(\seqB,   \instrument,  \bass8, \dur,   1/2,  \sustain,   Pwhite(0.2,   1,  inf),   \octave,  0, \scale,  Scale.minor);
+Pbindef(\seqB).stop;
+
+(
+Pbindef(\basst,
+  \instrument,   \bass8,  
+  \scale,  Scale.minor, 
+  \octave,   4, 
+  \dur,  1, 
+  \degree,   Pwhite(0,  7,   inf),  
+).play;
+)
+Pbindef(\basst).stop;
+Pbindef(\basst,  \octave, Prand([4,  5], inf));
+Pbindef(\basst,  \dur, Pseq([1/4,  1/2,  1,  Rest(1/4)],  inf));
