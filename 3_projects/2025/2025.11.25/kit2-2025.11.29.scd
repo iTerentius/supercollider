@@ -8,8 +8,8 @@ Pdefn(\k2_kick1_deg1,   Pseq(
 
 Pdefn(\k2_kick1_deg2,   Pseq(
   [
-    0,  \,  2,  \,  \,  \,  \,  \,  \,  \,  \,    \,  0,  \,   0,  \,
-    0,  \,  \,  \,  \,  \,  2,   \,  0,  \,  0,   \,  \,  \,   0,   0,
+    0,  \,  \,  \,  \,  \,  \,  \,  \,  \,  \,    \,  0,  \,   0,  \,
+    0,  \,  \,  \,  \,  \,  \,   \,  0,  \,  0,   \,  \,  \,   0,   0,
   ], 1));
 
 
@@ -26,7 +26,7 @@ Pdefn(\k2_hh1_deg2,   Pseq(
 (
 Pdefn(\k2_deg,  Pseq([
   Pn(Pdefn(\k2_kick1_deg1),  1),  
-  // Pn(Pdefn(\k2_kick1_deg2),  4),  
+  Pn(Pdefn(\k2_kick1_deg2),  4),  
 ],  inf));
 )
 Pdefn(\k2_dur,   \dur,       Pseq([1/2],  inf));
@@ -34,7 +34,7 @@ Pdefn(\k2_dur,   \dur,       Pseq([1/2],  inf));
 Pbindef(\k2_kick1, \type, \midi, \midiout, ~mOut, \scale, Scale.chromatic, \chan, 0, \octave,    3,
   \amp,  0.7, 
   \degree,    Pdefn(\k2_deg),
-  \dur,  1/4, 
+  \dur,  1/2, 
 );
 )
 Pbindef(\k2_kick1,  \degree,  Pn(Pdefn(\k2_kick1_deg1)));
@@ -46,7 +46,6 @@ Pbindef(\k2_hh1, \type, \midi, \midiout, ~mOut, \scale, Scale.chromatic, \chan, 
   \dur,  1/4, 
 );
 )
-Pbindef()
 (
 Pdef(\k2_kit, 
   Ptpar([
