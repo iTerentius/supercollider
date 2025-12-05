@@ -15,12 +15,12 @@ Pdefn(\k2_kick1_deg2,   Pseq(
 
 Pdefn(\k2_hh1_deg1,   Pseq(
   [
-    6,  6,  \,  \,    \, 6,  \,  \,    \,  6,  10,  \,    6,  \,  10,  \,
+    6,  6,  \,  \,  \, 6,  \,  \,  \,  6,  10,  \,  6,  \,  10,  \,
   ], inf));
 
 Pdefn(\k2_hh1_deg2,   Pseq(
   [
-    6,  \,      6,  \,  6,  \,  6,  \,  6,  \,  6,  \,  6,  \,  6,  10,
+    6,  \,  6,  \,  6,  \,  6,  \,  6,  \,  6,  \,  6,  \,  6,  10,
   ],  inf));
 )
 (
@@ -43,7 +43,7 @@ Pbindef(\k2_kick1,  \degree,  Pn(Pdefn(\k2_kick1_deg2)));
 Pbindef(\k2_hh1, \type, \midi, \midiout, ~mOut, \scale, Scale.chromatic, \chan, 0, \octave,    3,
   \amp,  0.5, 
   \degree,    Pn(Pdefn(\k2_hh1_deg2), inf),
-  \dur,  1/4, 
+  \dur,  Pbjorklund2(7, 8,  inf)/4, 
 );
 )
 (

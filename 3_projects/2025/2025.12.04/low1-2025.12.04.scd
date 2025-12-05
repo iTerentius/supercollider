@@ -1,11 +1,14 @@
+// words
 (
 Pdefn(\k1_deg0, Pseq([0!4, Pn(Rest(), 1)].flat,  1));
 Pdefn(\k1_deg1, Pseq([0!4, Prand((0..7),  8),  \,  3].flat,  1));
 Pdefn(\k1_deg2, Pseq([0!4, Pxrand((0..7),  2),  Pn(Rest(), 4)].flat,  1));
 
-Pdefn(\k1_dur0, Pseq([1/4!4].flat,  1));
+Pdefn(\k1_dur0, Pseq([1/2!2,   1/4!4,  1/2,  1/8!4, Pn(Rest(), 1)].flat,  1));
 Pdefn(\k1_dur1, Pseq([1/4!4,   1/8!8,  Pn(Rest(), 2)].flat,  1));
 )
+
+// phrases
 (
 Pdefn(\k1_degs, Pseq([
   Pn(Pdefn(\k1_deg0), 4), 
@@ -18,10 +21,13 @@ Pdefn(\k1_durs, Pseq([
   Pn(Pdefn(\k1_dur1), 1), 
 ],  inf));
 )
+
+// voices
 (
 Pbindef(\k1,
-  \type,  \midi,  \midiout,  ~mOut, \chan,  0,  \scale,  Scale.dorian, 
-  \octave,  Pseq(#[3, 4,  2], inf),  
+  \type,  \midi,  \midiout,  ~mOut, \chan,  1,  \scale,  Scale.dorian, 
+  // \octave,  Pseq(#[3, 4,  2], inf),  
+  \octave,  3,  
   \degree,  Pdefn(\k1_degs),
   \dur,     Pdefn(\k1_durs),
 );
