@@ -22,7 +22,8 @@ Pdefn(\k2_hh1_deg2,   Pseq(
   [
     6,  \,      6,  \,  6,  \,  6,  \,  6,  \,  6,  \,  6,  \,  6,  10,
   ],  inf));
-
+)
+(
 Pdefn(\k2_deg,  Pseq([
   Pn(Pdefn(\k2_kick1_deg1),  1),  
   Pn(Pdefn(\k2_kick1_deg2),  4),  
