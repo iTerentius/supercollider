@@ -41,6 +41,7 @@ Ndef(\i2).clear(3);
 
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
 (
+// ~bd1 = ~samplesTree.at(\bass_drums).asArray[2];
 ~bd1 = ~samplesTree.at(\bass_drums).asArray[2];
 Pdef(\bd1).quant = 1;
 Pdef(\bd1,
@@ -134,16 +135,18 @@ FreqScope.new(s);
 // 2025-10-29 — ensure ordering + FX return using playfx (return the signal, no Out/ReplaceOut)
 
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/Hoarder/hoarder/"); 
- ~loadSamplesRecursive.("~/Music/supercollider/_samples/Neutron_12/");
+~loadSamplesRecursive.("~/Music/supercollider/_samples/Neutron_12/");
+~loadSamplesRecursive.("~/Music/supercollider/_samples/_mono/jttcot");
 (
 // ~yesorno_samp = ~samplesTree.at(\neutron_12).asArray;
 // ~yesorno_samp = ~samplesTree.at(\hoarder).asArray[rrand(0, 20)];
-~yesorno_samp = ~samplesTree.at(\hoarder).asArray;
+// ~yesorno_samp = ~samplesTree.at(\hoarder).asArray;
+~yesorno_samp = ~samplesTree.at(\jttcot).asArray;
 // ~yesorno_samp = ~samplesTree.at(\field).asArray;
 // ~yesorno_samp = ~samplesTree.at(\storm);
-~slices = 32;
+~slices = 12;
 Pdef(\yesorno, Pbind(
-    \instrument, \slice_s,
+    \instrument, \slice_m,
     \bufnum, Prand(~yesorno_samp, inf),
     \nSlices, ~slices,
     \spread, 0.75,
@@ -162,7 +165,7 @@ Ndef(\slicePan).fadeTime_(3);
 )
 ~apcBindPdef.(7, \yesorno);
 
-Pdef(\yesorno).play;
+Pdef(\yesorno).play(~link,  quant:4);
 Pdef(\yesorno).stop;
 Pdef.clear;
 
