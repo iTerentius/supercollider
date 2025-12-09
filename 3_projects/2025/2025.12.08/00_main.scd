@@ -8,19 +8,21 @@
     var dir;
     dir = thisProcess.nowExecutingPath.dirname;
 
-    (dir +/+ "10_track_defs.scd").load;
-    (dir +/+ "20_track_patterns.scd").load;
-    (dir +/+ "30_track_live.scd").load;
+    (dir +/+ "10_defs.scd").load;
+    (dir +/+ "20_patterns.scd").load;
+    (dir +/+ "30_live.scd").load;
 };
 
 ~startTrack = {
     var clock;
     clock = TempoClock.default;
     clock.tempo = 120 / 60;  // set track tempo here
-    Pdef(\bd_main_2025_12_08).play(clock);
+    Pdef(\bd_main).play(clock);
 };
 
 ~stopTrack = {
-    Pdef(\bd_main_2025_12_08).stop;
+    Pdef(\bd_main).stop;
 };
 )
+
+~loadTrack.();
