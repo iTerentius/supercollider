@@ -122,17 +122,19 @@ var env = Env.new([0, 1, 0], [0.01, 1], [0, -4]);
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/_mono/");
 ~samp1 = ~samplesTree.at(\hoarder_mono).asArray[4];
 ~samp1 = ~samplesTree.at(\hoarder_mono).asArray;
+~samp1 = ~samplesTree.at(\jttcot).asArray;
 ~samp1 = ~samplesTree.at(\_mono).asArray;
 ~samp1 = ~getSample.(\_mono, \Ya_Ya_125bpm_Vox);
 ~samp1 = ~getSample.(\hoarder_mono, \n);
+~samp1 = ~samplesTree[\jttcot][\00];
 (
 Pdef(\gpat, 
   Pbind(
     \instrument, \gb1, 
     \dur, Pseq([4, Rest()],inf), 
-    \amp, 0.8, 
+    \amp, 2, 
     \trig_rate, 32, 
-    \buf, ~samp1, 
+    \buf, Pseq(~samp1,  inf).stutter(1), 
     \env, ~grainenv, 
     \grain_dur, Prand([0.05, 0.125, 0.25, 0.5],inf), 
     \rate, Prand([-3, 2, -1, 2],inf), 
@@ -141,7 +143,7 @@ Pdef(\gpat,
 );
 )
 s.plotTree;
-Pdef(\gpat).play;
+Pdef(\gpat).play(~link,  quant:4);
 Pdef(\gpat).stop;
 ~t2_src = ~t2.play(\gb1, [\buf, ~samp1, \env, ~grainenv] );
 ~t2_src.tryPerform(\free);

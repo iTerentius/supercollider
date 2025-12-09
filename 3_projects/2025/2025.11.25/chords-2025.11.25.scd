@@ -47,21 +47,22 @@ Pdef(\chordLine,
     Pbind(
         \type,    \midi,
         \midiout, ~mOut,
-        \chan,    2,
+        \chan,    3,
         \scale,  Scale.dorian,
         \root,  5, 
         \octave,  4,  
-        \degree, Pseq([
-                \E.asDegrees(Scale.dorian), \,   
-                \B.asDegrees(Scale.dorian), \,  
-                \C.asDegrees(Scale.dorian), \, 
-                \A.asDegrees(Scale.dorian), \,   
-                // Pn(Rest(),  4), 
-            ],  inf).flatten,  
-
+        // \degree, Pseq([
+        //         \Em7.asDegrees(Scale.dorian), \,   
+        //         \B7.asDegrees(Scale.dorian), \,  
+        //         \C.asDegrees(Scale.dorian), \, 
+        //         \A.asDegrees(Scale.dorian), \,   
+        //         // Pn(Rest(),  4), 
+        //     ],  inf).flatten.stutter(8),  
+        \degree,  Pn(Pdefn(\harm),  inf),  
+        // \degree,  Pseq([0,  3,  7,  \],  inf).stutter(1), 
         \amp,     0.8,
-        \dur,     1/2,
-        // \sustain, 4
+        \dur,     2,
+        // \sustain, 8.1,  
     )
 );
 )
@@ -71,18 +72,22 @@ Pdef(\chordLine).clear;
 
 
 Pbindef(\chord).play(~link,  quant:1);
-Pbindef(\chord).stop;
+Pbindef(\chord).clear;
 
 Pbindef(\chord, \octave,  3);
-Pbindef(\chordLine, \dur,  Pseq([Pn(Pseq[1/2],18), Pn(Rest(), 6)],  inf),    \sustain,  3/4);
+Pbindef(\chordLine, \dur,  Pseq([1/8,  1/4,  1/8, 1/2],  inf));
 
 (
 Pdefn(\harm, Pseq([
-    PHarmony(\minor7),     // i7
-    PHarmony(\dominant7),        // V7
-    PHarmony(\major7),     // bVImaj7
+    PHarmony(\minor7), 
+    // Rest(),      // i7
+    PHarmony(\dominant7),
+    // Rest(),        // V7
+    PHarmony(\major7),
+    // Rest(),       // bVImaj7
     PHarmony(\major),        // IV
-], inf));
+    // Pn(Rest(),  4), 
+],   1));
 )
 
 // Simple chord progression
@@ -177,7 +182,14 @@ b;
 // b = Buffer.read(s, "/Users/isaaclinder/Music/supercollider/_samples/_mono/hoarder_mono/04-6-rats.wav");
 b = Buffer.read(s, "/Users/isaaclinder/Music/supercollider/_samples/_mono/are-you-guys-hungry.wav");
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/_mono/");
+~loadSamplesRecursive.("~/Music/supercollider/_samples/_mono/hoarder_mono/");
+~loadSamplesRecursive.("~/Music/supercollider/_samples/Codeine_Drum_Kit/DrumLoops/");
 ~samp= ~samplesTree[\_mono][\Ya_Ya_125bpm_Vox];
+~samp= ~samplesTree[\jttcot][\04];
+~samp= ~samplesTree.at(\jttcot).asArray;
+~samp= ~samplesTree.at(\hoarder_mono).asArray[20];
+~samp= ~samplesTree[\drumloops][\DrumLoop_DeepSea_93BPM];
+~samp= ~samplesTree[\drumloops][\DrumLoop_Sprite1_120BPM];
 (
 SynthDef(\stretchedFragments, { |out, bufnum, start, time = 1, stretch = 1, amp = 1, attack = 0.01, decay = 0.05|
     var sig = PlayBuf.ar(1, bufnum, rate: stretch.reciprocal, startPos: start), eg;
@@ -188,20 +200,21 @@ SynthDef(\stretchedFragments, { |out, bufnum, start, time = 1, stretch = 1, amp 
 )
 
 (
-TempoClock.default.tempo = 1;
+// TempoClock.default.tempo = 1;
 
-p = Pbind(
+~samp= ~samplesTree[\jttcot][\00];
+Pbindef(\st,  
     \instrument, \stretchedFragments,
     \bufnum, ~samp,   
     \start, Pwhite(0, (~samp.numFrames * 0.7).asInteger, inf),
-    \delta, Pexprand(0.2, 1.5, inf),
+    \delta, Pexprand(0.2, 2.5, inf),
     \time, Pkey(\delta),
-    \stretch, Pexprand(1.0, 4.0, inf),
+    \stretch, Pexprand(1.0, 2.0, inf),
     \amp, 0.5,
     \attack, 0.1,
     \decay, 0.2
-).play;
+);
 )
-
-p.stop;
-b.free;    // be tidy! remember to clean up your Buffer
+Pbindef(\st).play(~link,   quant:4);
+Pbindef(\st).stop;
+Pbindef(\st).clear;
