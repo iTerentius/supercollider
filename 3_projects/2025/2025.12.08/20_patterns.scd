@@ -93,13 +93,13 @@ Pdef(\bd1).stop;
 
 // words
 
-Pdefn(\sd1_durm,  1/2);
+Pdefn(\sd1_durm,  Ptpar(1/4,  Pseq([1/2].flat,  1)));
 Pdefn(\sd1_dur0,
     // Pseq([Pn(Rest(),  7/8),  1/8, Pn(Rest(),  1.25)].flat, 1)
     Ptpar(1/8,  [Pseq([Pbjorklund2(5,  16,  1)/2],  1)])
 );
 
-Pdefn(\sd1_idx,
+Pdefn(\sd1_idxt,
     Pseq([2, ], inf), 
     // 2,  
 );
@@ -109,7 +109,7 @@ Pdefn(\sd1_idx,
 
 Pdefn(\sd1_phr1,
     Pseq([
-        // Pn(Pdefn(\sd1_durm), 4), 
+        Pn(Pdefn(\sd1_durm), 1), 
         Pn(Pdefn(\sd1_dur0), 2),
         // Pn(Pdefn(\sd1_dur1), 1),
     ], inf)
@@ -126,7 +126,7 @@ Pdefn(\sd1_phr2,
 (
 Pbindef(\sd1_m,  \type,  \midi, \midiout, ~mOut,  \chan,  0,  \scale, Scale.chromatic,  \octave,  3,  
   \amp, 0.8,
-  \degree,  1,  
+  \degree,  Pseq([1!7,  5].flat,  inf),  
   \dur, Pdefn(\sd1_phr1),
 );
 )
@@ -152,7 +152,7 @@ Pdef(\sd1,
 ~apcAssignPad.(33, \sd1);
 ~lcxlBindPdef.(\b1_s2_p, \sd1);
 )
-Pdef(\sd1).play(~link,  quant:[1/4, 1/8]);
+Pdef(\sd1).play(~link,  quant:4);
 Pdef(\sd1).stop;
 
 (
@@ -163,7 +163,7 @@ Pdef(\sd1).stop;
 
 // words
 
-Pdefn(\hh1_durm,  Pseq([1/8].flat,  1));
+Pdefn(\hh1_durm,  Ptpar(1/8,  Pseq([1/8].flat,  1)));
 Pdefn(\hh1_dur0,
     // Pseq([Pn(Rest(),  7/8),  1/8, Pn(Rest(),  1.25)].flat, 1)
     Pseq([Pbjorklund2(13,  16,  inf)]/4,  1)
@@ -181,7 +181,7 @@ Pdefn(\hh1_idx,
 Pdefn(\hh1_phr1,
     Pseq([
         Pn(Pdefn(\hh1_durm), 4), 
-        // Pn(Pdefn(\hh1_dur0), 2),
+        Pn(Pdefn(\hh1_dur0), 2),
         // Pn(Pdefn(\hh1_dur1), 1),
     ], inf)
 );
@@ -197,7 +197,7 @@ Pdefn(\hh1_phr2,
 (
 Pbindef(\hh1_m,  \type,  \midi, \midiout, ~mOut,  \chan,  0,  \scale, Scale.chromatic,  \octave,  3,  
   \amp, Pdefn(\hh1_ampm),
-  \degree,  2,  
+  \degree,  Pseq([6!3,  2].flat,  inf),  
   \dur, Pdefn(\hh1_phr1),
 );
 )
@@ -223,5 +223,5 @@ Pdef(\hh1,
 ~apcAssignPad.(34, \hh1);
 ~lcxlBindPdef.(\b1_s3_p, \hh1);
 )
-Pdef(\sd1).play(~link,  quant:4);
-Pdef(\sd1).stop;
+Pdef(\hh1).play(~link,  quant:4);
+Pdef(\hh1).stop;

@@ -41,39 +41,51 @@ Pbindef(\k1).clear;
 // Bass Thing
 // words
 (
-Pdefn(\b1_deg0, Pseq([
-  \E.asDegrees(Scale.dorian), \,   
-  \B.asDegrees(Scale.dorian), \,  
-  \C.asDegrees(Scale.dorian), \, 
-  \A.asDegrees(Scale.dorian), \,   
-                // Pn(Rest(),  4), 
-            ],  1).flatten);
-Pdefn(\b1_deg1,  Pseq([0, 3,  7,  \], 1));
-Pdefn(\b1_dur0,  Pseq([1/4!7, Pn(Rest(),  1)],  1));
+// Pdefn(\b1_deg0, Pseq([
+//   \E.asDegrees(Scale.dorian), \,   
+//   \B.asDegrees(Scale.dorian), \,  
+//   \C.asDegrees(Scale.dorian), \, 
+//   \A.asDegrees(Scale.dorian), \,   
+//                 // Pn(Rest(),  4), 
+//             ],  1).flatten);
+Pdefn(\b1_deg1,  Pseq([0, 2,  3,  2], 1).stutter(8));
+Pdefn(\b1_deg2,  Pseq([0, 3, 4,  2], 1).stutter(4));
+
+Pdefn(\b1_dur0,  Pseq([1/4,  ].flat,  1));
+// Pdefn(\b1_dur0,  Pseq([1/4!7, 1/8!2].flat,  1));
+Pdefn(\b1_dur1,  Pseq([1/8!7, 1/2!2].flat,  1));
 )
 // phrases
 (
 Pdefn(\b1_degs, Pseq([
-  Pn(Pdefn(\b1_deg0), 4), 
+  // Pn(Pdefn(\b1_deg0), 4), 
   Pn(Pdefn(\b1_deg1), 4), 
+  Pn(Pdefn(\b1_deg2), 4), 
 ],  inf));
 
 Pdefn(\b1_durs, Pseq([
-  Pn(Pdefn(\b0_dur0)/4, 1), 
+  Pn(Pdefn(\b1_dur0), 1), 
+  // Pn(Pdefn(\b1_dur1), 1), 
 ],  inf));
 )
 // voices
 (
-Pbindef(\b1,
+Pbindef(\b1_m,
   \type,  \midi,  \midiout,  ~mOut, \chan,  2,  \scale,  Scale.dorian, 
-  \octave,  Pseq(#[3, 4,  2], inf),  
-  // \octave,  3,  
-  \amp,  0.9, 
-  \degree,  Pdefn(\b1_degs),
-  \dur,     Pdefn(\b1_durs),
+  \root,  5,  
+  \octave,  Prand([3!3, 4].flat,  inf),   
+  \amp,  Pseq([0.8, 0.7,   0.6],  inf), 
+  \degree,  Pn(Pdefn(\b1_degs), inf),
+  // \degree,  Pseq([0,  2,  4,  7], inf), 
+  // \legato,  Pn(Pdefn(\bd1_durs),  inf),
+  // \sustain, 1,  
+  \dur,     Pn(Pdefn(\b1_durs), inf),
 );
 )
-Pbindef(\b1).play;
-Pbindef(\b1).stop;
-Pbindef(\b1).clear;
+(
+Pdef(\b1, Pbindef(\b1_m));
+)
+Pdef(\b1).play(~link, quant:1);
+Pdef(\b1).stop;
+Pdef(\b1).clear;
 
