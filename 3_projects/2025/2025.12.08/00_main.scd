@@ -25,5 +25,5 @@
 };
 )
 
-TempoClock.default.tempo_(90/60);
+~link.tempo_(120/60/4);
 ~loadTrack.();
