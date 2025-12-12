@@ -48,44 +48,46 @@ Pbindef(\k1).clear;
 //   \A.asDegrees(Scale.dorian), \,   
 //                 // Pn(Rest(),  4), 
 //             ],  1).flatten);
-Pdefn(\b1_deg1,  Pseq([0, 2,  3,  2], 1).stutter(8));
-Pdefn(\b1_deg2,  Pseq([0, 3, 4,  2], 1).stutter(4));
+Pdefn(\bass1_deg1,  Pseq([0, 2,  3,  2], 1).stutter(8));
+Pdefn(\bbas1_deg2,  Pseq([0, 3, 4,  2], 1).stutter(4));
 
-Pdefn(\b1_dur0,  Pseq([1/4,  ].flat,  1));
+Pdefn(\bass1_dur0,  Pseq([1/4,  ].flat,  1));
 // Pdefn(\b1_dur0,  Pseq([1/4!7, 1/8!2].flat,  1));
-Pdefn(\b1_dur1,  Pseq([1/8!7, 1/2!2].flat,  1));
-)
+Pdefn(\bass1_dur1,  Pseq([1/8!7, 1/2!2].flat,  1));
+
 // phrases
-(
-Pdefn(\b1_degs, Pseq([
+
+Pdefn(\bass1_degs, Pseq([
   // Pn(Pdefn(\b1_deg0), 4), 
-  Pn(Pdefn(\b1_deg1), 4), 
-  Pn(Pdefn(\b1_deg2), 4), 
+  Pn(Pdefn(\bass1_deg1), 4), 
+  Pn(Pdefn(\bass1_deg2), 4), 
 ],  inf));
 
-Pdefn(\b1_durs, Pseq([
-  Pn(Pdefn(\b1_dur0), 1), 
+Pdefn(\bass1_durs, Pseq([
+  Pn(Pdefn(\bass1_dur0), 1), 
   // Pn(Pdefn(\b1_dur1), 1), 
 ],  inf));
-)
+
 // voices
-(
-Pbindef(\b1_m,
+
+Pbindef(\bass1_m,
   \type,  \midi,  \midiout,  ~mOut, \chan,  2,  \scale,  Scale.dorian, 
   \root,  5,  
   \octave,  Prand([3!3, 4].flat,  inf),   
   \amp,  Pseq([0.8, 0.7,   0.6],  inf), 
-  \degree,  Pn(Pdefn(\b1_degs), inf),
+  \degree,  Pn(Pdefn(\bass1_degs), inf),
   // \degree,  Pseq([0,  2,  4,  7], inf), 
   // \legato,  Pn(Pdefn(\bd1_durs),  inf),
   // \sustain, 1,  
-  \dur,     Pn(Pdefn(\b1_durs), inf),
+  \dur,     Pn(Pdefn(\bass1_durs), inf),
 );
 )
 (
-Pdef(\b1, Pbindef(\b1_m));
+Pdef(\bass1, Pbindef(\bass1_m));
+// ~apcAssignPad.(35, \hh1);
+// ~lcxlBindPdef.(\b1_s4_p, \hh1);
 )
-Pdef(\b1).play(~link, quant:1);
-Pdef(\b1).stop;
-Pdef(\b1).clear;
+Pdef(\bass1).play(~link, quant:1);
+Pdef(\bass1).stop;
+Pdef(\bass1).clear;
 
