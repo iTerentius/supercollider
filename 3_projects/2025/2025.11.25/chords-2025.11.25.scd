@@ -181,11 +181,14 @@ p.stop;
 b;
 // b = Buffer.read(s, "/Users/isaaclinder/Music/supercollider/_samples/_mono/hoarder_mono/04-6-rats.wav");
 b = Buffer.read(s, "/Users/isaaclinder/Music/supercollider/_samples/_mono/are-you-guys-hungry.wav");
-~loadSamplesRecursive.("~/Music/supercollider/_samples/_mono/");
+~loadSamps.("~/Music/supercollider/_samples/_mono/");
+~sTree;
+~fbufs;
+
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/_mono/hoarder_mono/");
 ~loadSamplesRecursive.("~/Music/supercollider/_samples/Codeine_Drum_Kit/DrumLoops/");
 ~samp= ~samplesTree[\_mono][\Ya_Ya_125bpm_Vox];
-~samp= ~samplesTree[\jttcot][\04];
+~samp= ~sTree[\jttcot][\04];
 ~samp= ~samplesTree.at(\jttcot).asArray;
 ~samp= ~samplesTree.at(\hoarder_mono).asArray[20];
 ~samp= ~samplesTree[\drumloops][\DrumLoop_DeepSea_93BPM];
@@ -199,22 +202,24 @@ SynthDef(\stretchedFragments, { |out, bufnum, start, time = 1, stretch = 1, amp 
 }).add; // note add! Without this, arguments won't work
 )
 
+~samp= ~fbufs[\jttcot][0].postln;
 (
 // TempoClock.default.tempo = 1;
 
-~samp= ~samplesTree[\jttcot][\00];
-Pbindef(\st,  
+~buffers = ~fbufs[\jttcot][0];
+Pdef(\st,  
     \instrument, \stretchedFragments,
-    \bufnum, ~samp,   
+    \bufnum, ~buffers,   
     \start, Pwhite(0, (~samp.numFrames * 0.7).asInteger, inf),
     \delta, Pexprand(0.2, 2.5, inf),
     \time, Pkey(\delta),
     \stretch, Pexprand(1.0, 2.0, inf),
-    \amp, 0.5,
+    \amp, 0.9,
     \attack, 0.1,
     \decay, 0.2
 );
 )
-Pbindef(\st).play(~link,   quant:4);
-Pbindef(\st).stop;
-Pbindef(\st).clear;
+Pdef(\st).plsTresTreeeay(~link,   quant:4);
+Pdef(\st).stop;
+Pdef(\st).clear;
+Pdef.clear;

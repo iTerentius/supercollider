@@ -119,14 +119,14 @@ Ndef(\dynklanks).set(\freqs, [333, 444, 555, 666].rand);
 var env = Env.new([0, 1, 0], [0.01, 1], [0, -4]);
 ~grainenv = Buffer.loadCollection(s, env.discretize(8192));
 )
-~loadSamplesRecursive.("~/Music/supercollider/_samples/_mono/");
-~samp1 = ~samplesTree.at(\hoarder_mono).asArray[4];
-~samp1 = ~samplesTree.at(\hoarder_mono).asArray;
-~samp1 = ~samplesTree.at(\jttcot).asArray;
-~samp1 = ~samplesTree.at(\_mono).asArray;
+~loadSamps.("~/Music/supercollider/_samples/_mono/");
+~samp1 = ~sTree.at(\hoarder_mono).asArray[4];
+~samp1 = ~sTree.at(\hoarder_mono).asArray;
+~samp1 = ~sTree.at(\jttcot).asArray;
+~samp1 = ~sTree.at(\_mono).asArray;
 ~samp1 = ~getSample.(\_mono, \Ya_Ya_125bpm_Vox);
 ~samp1 = ~getSample.(\hoarder_mono, \n);
-~samp1 = ~samplesTree[\jttcot][\00];
+~samp1 = ~sTree[\jttcot][\00];
 (
 Pdef(\gpat, 
   Pbind(
@@ -155,9 +155,9 @@ Pdef(\gpat).stop;
 ~grain_rev.free;
 
 ~samp1 = Buffer.readChannel(s, "/Users/isaaclinder/Music/supercollider/_samples/Field/Bambu/bambu-1.wav", channels: [0]);
-~loadSamplesRecursive.("~/Music/supercollider/_samples/_mono/");
-~loadSamplesRecursive.("~/Music/supercollider/_samples/_mono/hoarder_mono/");
-~samp2 = ~samplesTree[\hoarder_mono][\n04_6_rats];
+~loadSamps.("~/Music/supercollider/_samples/_mono/");
+~loadSamps.("~/Music/supercollider/_samples/_mono/hoarder_mono/");
+~samp2 = ~sTree[\hoarder_mono][\n04_6_rats];
 
 ServerMeter(s);
 ~printTree.();
