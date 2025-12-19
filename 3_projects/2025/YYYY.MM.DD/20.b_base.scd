@@ -16,6 +16,6 @@ Pdef(\b000_m, Pbind(
 ));
 
 Pdef(\b000, Pdef(\b000_m));
-~apcAssignPad.(35, \b0);
-~lcxlBindPdef.(\b1_s5_p, \b0);
+~apcAssignPad.(35, \b000);
+~lcxlBindPdef.(\b1_s5_p, \b000);
 )

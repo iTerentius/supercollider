@@ -33,8 +33,8 @@ Pdefn(\a000_phr1,
 
 Pdefn(\a000_phr2,
     Pseq([
-        Pn(Pdefn(\a000_dur0), 1),
-        Pn(Pdefn(\a000_dur1), 1),
+        Pn(Pdefn(\a000_durm), 1),
+        // Pn(Pdefn(\a000_dur1), 1),
         Pn(Pdefn(\a000_dur2), 1)
     ], 1));
 

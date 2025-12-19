@@ -1,6 +1,6 @@
 
-~link.tempo_(120/60/4);
-~link.tempo_(1.5);
+~link.tempo_(80/60);
+~link.tempo;
 ~setBpm.(90);
 
 Pdef(\b000).play;

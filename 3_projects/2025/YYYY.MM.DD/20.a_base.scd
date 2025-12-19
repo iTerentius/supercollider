@@ -85,5 +85,5 @@ Pdef(\a0,
     Pdef(\a200),
   ],  inf), 
 );
-~lcxlBindPdef.(\b2_s1_p, \a0);
+~lcxlBindPdef.(\b1_s1_p, \a0);
 )
