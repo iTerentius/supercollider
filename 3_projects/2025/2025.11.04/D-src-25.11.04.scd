@@ -132,18 +132,18 @@ Pdef(\gpat,
   Pbind(
     \instrument, \gb1, 
     \dur, Pseq([4, Rest()],inf), 
-    \amp, 2, 
+    \amp, 1, 
     \trig_rate, 32, 
     \buf, Pseq(~samp1,  inf).stutter(1), 
     \env, ~grainenv, 
     \grain_dur, Prand([0.05, 0.125, 0.25, 0.5],inf), 
     \rate, Prand([-3, 2, -1, 2],inf), 
-    \out, ~t2.inbus.index
+    \out, 2,  
   )
 );
 )
 s.plotTree;
-Pdef(\gpat).play(~link,  quant:4);
+Pdef(\gpat).play(~link,  quant:4, out: 2);
 Pdef(\gpat).stop;
 ~t2_src = ~t2.play(\gb1, [\buf, ~samp1, \env, ~grainenv] );
 ~t2_src.tryPerform(\free);

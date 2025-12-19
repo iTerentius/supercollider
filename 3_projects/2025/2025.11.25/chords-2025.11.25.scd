@@ -175,9 +175,9 @@ p = Pbind(
 )
 
 p.stop;
-~samp = ~samplesTree.at(\_mono).asArray[0];
+~samp = ~sTree.at(\_mono).asArray[0];
 ~samp.bufnum;
-~samplesTree[\_mono][0];
+~sTree[\_mono][0];
 b;
 // b = Buffer.read(s, "/Users/isaaclinder/Music/supercollider/_samples/_mono/hoarder_mono/04-6-rats.wav");
 b = Buffer.read(s, "/Users/isaaclinder/Music/supercollider/_samples/_mono/are-you-guys-hungry.wav");
@@ -185,17 +185,17 @@ b = Buffer.read(s, "/Users/isaaclinder/Music/supercollider/_samples/_mono/are-yo
 ~sTree;
 ~fbufs;
 
-~loadSamplesRecursive.("~/Music/supercollider/_samples/_mono/hoarder_mono/");
-~loadSamplesRecursive.("~/Music/supercollider/_samples/Codeine_Drum_Kit/DrumLoops/");
-~samp= ~samplesTree[\_mono][\Ya_Ya_125bpm_Vox];
+~loadSamps.("~/Music/supercollider/_samples/_mono/hoarder_mono/");
+~loadSamps.("~/Music/supercollider/_samples/Codeine_Drum_Kit/DrumLoops/");
+~samp= ~sTree[\_mono][\Ya_Ya_125bpm_Vox];
 ~samp= ~sTree[\jttcot][\04];
-~samp= ~samplesTree.at(\jttcot).asArray;
-~samp= ~samplesTree.at(\hoarder_mono).asArray[20];
-~samp= ~samplesTree[\drumloops][\DrumLoop_DeepSea_93BPM];
-~samp= ~samplesTree[\drumloops][\DrumLoop_Sprite1_120BPM];
+~samp= ~sTree.at(\jttcot).asArray;
+~samp= ~sTree.at(\hoarder_mono).asArray[20];
+~samp= ~sTree[\drumloops][\DrumLoop_DeepSea_93BPM];
+~samp= ~sTree[\drumloops][\DrumLoop_Sprite1_120BPM];
 (
-SynthDef(\stretchedFragments, { |out, bufnum, start, time = 1, stretch = 1, amp = 1, attack = 0.01, decay = 0.05|
-    var sig = PlayBuf.ar(1, bufnum, rate: stretch.reciprocal, startPos: start), eg;
+SynthDef(\stretchedFragments, { |out, buf, start, time = 1, stretch = 1, amp = 1, attack = 0.01, decay = 0.05|
+    var sig = PlayBuf.ar(1, buf, rate: stretch.reciprocal, startPos: start), eg;
     sig = PitchShift.ar(sig, pitchRatio: stretch);
     eg = EnvGen.kr(Env.linen(attack, time, decay), sig.abs > 0, doneAction: Done.freeSelf);
     Out.ar(out, (sig * eg) ! 2)
@@ -203,23 +203,30 @@ SynthDef(\stretchedFragments, { |out, bufnum, start, time = 1, stretch = 1, amp 
 )
 
 ~samp= ~fbufs[\jttcot][0].postln;
+~buffers.postln;
+~sTree[\jttcot][\01];
 (
 // TempoClock.default.tempo = 1;
 
-~buffers = ~fbufs[\jttcot][0];
-Pdef(\st,  
+// ~buffers = ~sTree[\jttcot][\00];
+~buffers = ~sTree.at(\jttcot).asArray;
+// ~bufnums = ~fbufs[\jtccot];
+Pdef(\st, Pbind( 
     \instrument, \stretchedFragments,
-    \bufnum, ~buffers,   
-    \start, Pwhite(0, (~samp.numFrames * 0.7).asInteger, inf),
-    \delta, Pexprand(0.2, 2.5, inf),
+    \buf,  Pseq(~buffers, inf),   
+    \bufnum,  Pfunc{|ev| ev[\buf].bufnum},
+    \start, Pfunc{|ev| (ev[\buf].numFrames * 0.7).rand},
+    \delta, Pwhite(0.2, 2.5, inf),
     \time, Pkey(\delta),
-    \stretch, Pexprand(1.0, 2.0, inf),
-    \amp, 0.9,
+    \stretch, Pexprand(1.0, 1.4, inf),
+    \amp, 0.6,
     \attack, 0.1,
-    \decay, 0.2
+    \decay, 0.2,  
+    \out,  2, 
+  )
 );
 )
-Pdef(\st).plsTresTreeeay(~link,   quant:4);
+Pdef(\st).play(~link,   quant:4,  out:2);
 Pdef(\st).stop;
 Pdef(\st).clear;
 Pdef.clear;
