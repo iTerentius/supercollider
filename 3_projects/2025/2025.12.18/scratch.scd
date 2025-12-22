@@ -1,32 +1,41 @@
 ~link.tempo = 120/60;
 (
 Pdefn(\b000_durs, Pn(Pdefn(\a000_durs), 1));
+// Pdef(\b000_m, Pbind(
+//   \type,  \midi,  \midiout,  ~mOut, \chan,  2,  \scale,  Scale.minor,
+//   \root,  0,
+//   \octave,  Pn(Pstep(Pseq([4,   5], 1),  1),  inf),
+//   // \octave,  Pn(Pseq([4].flat, 1),  inf),
+//   \amp,     Pn(Pstep(Pseq([0.8, 0.7],   1),  1),  inf),
+//   // \degree,  Place([0,[7,  4,  2,  ],  1,  4,  \,  ].stutter(8), inf),
+//   \degree,  Pn(Pstep(Pseq([0,  2,   4, 2],  inf),  Pseq([4], inf), inf)),
+//   \legato,  Pn(Pstep(Pkey(\dur)*Pkey(\amp), 4), inf), 
+//   // \dur,     Pn(Pseq([1/4!2, 1/2,  1,  1/8!2,  1/2,   1/4].flat,   1), inf),
+//   // \dur,     Pn(Pseq([1/4!2, 1/2!2, Pn(Rest(), 1.25)].flat,   1)*2, inf),
+//   \dur_mult,  Pn(Pstep(Pseq([4, 2,  ],  inf),  Pseq([2],  inf)), inf), 
+//   \dur,     Pn(Pdefn(\b000_durs)  
+//   *Pkey(\dur_mult)
+//   , inf), 
+// ));
+//
 Pdef(\b000_m, Pbind(
   \type,  \midi,  \midiout,  ~mOut, \chan,  2,  \scale,  Scale.minor,
-  \root,  0,
-  \octave,  Pn(Pseq([4!2,   5].flat, 1),  inf),
-  // \octave,  Pn(Pseq([4].flat, 1),  inf),
-  \amp,     Pn(Pseq([0.8, 0.7],   1),  inf).stutter(4),
-  // \degree,  Place([0,[7,  4,  2,  ],  1,  4,  \,  ].stutter(8), inf),
-  \degree,  Pseq([0,  2,   4, ],  inf).stutter(12),
-  \legato,  Pkey(\dur)*Pkey(\amp).stutter(8), 
-  // \dur,     Pn(Pseq([1/4!2, 1/2,  1,  1/8!2,  1/2,   1/4].flat,   1), inf),
-  // \dur,     Pn(Pseq([1/4!2, 1/2!2, Pn(Rest(), 1.25)].flat,   1)*2, inf),
-  \dur_mult,  Pseq([4, 2  ],  inf).stutter(1), 
-  \dur,     Pn(Pdefn(\b000_durs)
-  *Pkey(\dur_mult)
-  , inf), 
+  \root,    Pn(Pstep(Pseq([0,  -2, -4, 5], inf), 8),  inf), 
+  \octave,  Pn(Pstep(Pseq([4!3, 5,  ].flat, 1),  1), inf),  
+  \amp,     Pn(Pxrand([0.7, 0.6],   1),  inf),
+  \degree,  Pn(Pstep(Place([0, [4,  2,  j]], 1),  8), inf),
+  \legato,  Pn(Pdefn(\a000_dur1)/Pkey(\amp), inf), 
+  \dur,     Pn(Pstep(Pdefn(\b000_durs)*Pseq([2, 3,  1], inf), Pseq([8,  2], inf)), inf),  
 ));
 
 Pdef(\m000_m, Pbind(
   \type,  \midi,  \midiout,  ~mOut, \chan,  3,  \scale,  Scale.minor,
-  \root,    Pstep(Pseq([0,  -2, -4, 5], inf), j), 
-  \octave,  Pn(Pseq([4!3, 5,  ].flat, 1).stutter(4),  inf),
+  \root,    Pn(Pstep(Pseq([0,  -2, -4, 5], inf), 8),  inf), 
+  \octave,  Pn(Pstep(Pseq([4!3, 5,  ].flat, 1),  4), inf),  
   \amp,     Pn(Pxrand([0.7, 0.6],   1),  inf),
-  \degree,  Pn(Place([0, [4,  2,  7]], inf).stutter(8), inf),
-  // \legato,  Pn(Pdefn(\a000_dur1)*(Pkey(\amp)+2), inf), 
+  \degree,  Pn(Pstep(Place([0, [4,  2,  7]], 1),  8), inf),
   // \dur,     Pn(Pseq([1/3!2, 3/4,  2,  1/6!2,  Pn(Rest(), 1.75)].flat,   1), inf)/3,
-  \dur,     Pn(Pdefn(\b000_durs)*2, inf), 
+  \dur,     Pn(Pstep(Pdefn(\b000_durs)*2, Pseq([4,  8], inf)), inf),  
 ));
 
 // Pdefn(\a000_deg0, Pseq([[4, 2], [0,  15,  6],  [0, 4,  15], [0, 6, 15]], 4));
