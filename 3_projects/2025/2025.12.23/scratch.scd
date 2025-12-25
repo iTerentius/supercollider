@@ -1,6 +1,6 @@
 ~link.tempo = 120/60;
 (
-Pdefn(\b000_durs, Pn(Pdefn(\a000_durs), 1));
+Pdefn(\b000_durs, Pn(Pdefn(\a000_durm0), 1));
 // Pdef(\b000_m, Pbind(
 //   \type,  \midi,  \midiout,  ~mOut, \chan,  2,  \scale,  Scale.minor,
 //   \root,  0,
@@ -20,12 +20,13 @@ Pdefn(\b000_durs, Pn(Pdefn(\a000_durs), 1));
 //
 Pdef(\b000_m, Pbind(
   \type,  \midi,  \midiout,  ~mOut, \chan,  2,  \scale,  Scale.dorian,
-  \root,    Pn(Pstep(Pseq([0,  -4, -2, 5], inf), 8),  inf), 
-  \octave,  Pn(Pstep(Pseq([4!3, 5,  ].flat, 1),  1), inf),  
+  // \octave,  Pn(Pstep(Pseq([4!3, 5,  ].flat, 1),  1), inf),  
+  \octave,  Pseq([3!3,   4,   ].flat,  inf),  
+  \root,  0, 
   \amp,     Pn(Pxrand([0.7, 0.6],   1),  inf),
-  \degree,  Pn(Pstep(Place([0, [4,  2,  ]], 1),  8), inf),
-  \legato,  Pn(Pdefn(\dur)/Pkey(\amp), inf), 
-  \dur,     Pn(Pstep(Pdefn(\b000_durs)*Pseq([2, 3,  1,  0.5], inf), Pseq([8,  2,  1,  1/2], inf)), inf),  
+  \degree,  Pn(Pstep(Place([8, [\,  4,  2,  5,  ]], inf),  1), inf),
+  \legato, Pkey(\dur)*2.2,  
+  \dur,     Pn(Pstep(Pdefn(\b000_durs)/2, 2), inf),  
 ));
 
 Pdef(\m000_m, Pbind(
@@ -35,7 +36,7 @@ Pdef(\m000_m, Pbind(
   \amp,     Pn(Pxrand([0.7, 0.6],   1),  inf),
   \degree,  Pn(Pstep(Place([0, [4,  2,  ]], 1),  8), inf),
   // \dur,     Pn(Pseq([1/3!2, 3/4,  2,  1/6!2,  Pn(Rest(), 1.75)].flat,   1), inf)/3,
-  \dur,     Pn(Pstep(Pdefn(\a000_durm0)*2, Pseq([4,  8], inf)), inf),  
+  \dur,     Pn(Pstep(Pdefn(\a000_durm0)*1, Pseq([4,  8], inf)), inf),  
   // \dur,     Pn(Pstep(Pdefn(\b000_durs)*Pseq([2, 3,  1,  0.5].reverse, inf), Pseq([8,  2,  1,  1/2].reverse, inf)), inf),  
 ));
 
@@ -45,7 +46,7 @@ Pdefn(\a000_deg1, Place([5, [0, 6],  [1,  8,  ],  [0, 5, ],  [3, 4, 0]], 1));
 Pdefn(\a000_deg1, Place([6, [8, 6],  [0,  8,  6],  [8, 6, 13],  [13, 9, ]], 1));
 
 Pdefn(\a000_duri0, Pseq([1/4!2, Rest(1/2), 1/2, 1/8!4].flat,  1));
-Pdefn(\a000_durm0, Pseq([1/4].flat,   1));
+Pdefn(\a000_durm0, Pseq([1/2].flat,   1));
 Pdefn(\a000_durm1, Pseq([1/2].flat,   8)/Pseq([4,  2,  1], 1).stutter(4));
 Pdefn(\a000_durm2, Pseq([1/4].flat,   8)*Pseq([1,  2,  4], 1).stutter(4));
 Pdefn(\a000_dur0, Pser([1/4,  1/2,  1,  Pn(Rest(),  1)].flat,   Pseq([1, 3,  4], 1).stutter(4))/Pseq([1,  2,  4], 1)); 
@@ -96,16 +97,16 @@ Pdefn(\a000_phr, Pseq([
 
 Pdefn(\a000_deg_k0, 
   Pseq([
-    [0, 5], [0, \],  [\], [\], [0, \], [  \ ],  [3,  \], [1,  \],  
-    [0, ], [ \],  [1], [\], [0, \], [\ ],  [6,  1], [5,  \],  
+    [0,  ], [ \],  [\], [0], [ 0], [4 ],  [1,  \], [5,  \],  
+    [\ ], [ 1],  [\], [\], [0, \], [1,   ],  [0,   ], [3,  \],  
   ], inf));  
   
 Pdefn(\a000_deg_hh0, 
   Pseq([
-    [\], [3],  [\], [3],  
-    [\], [3],  [3], [2],  
+    [\], [2],  [\], [2],  
+    [\], [2],  [2], [3],  
   ], 
-  1));  
+  inf));  
 
 Pdef(\a000_m, Ppar([
   Pbind(
@@ -114,14 +115,14 @@ Pdef(\a000_m, Ppar([
     \degree, Pn(Pdefn(\a000_deg_k0),  inf), 
     \amp,    Pn(Pseq([0.99, 0.6, 0.8, 0.7], 1), inf),  
     // \amp,  0.8, 
-    \dur,    Pn(Pdefn(\a000_durm0), inf), 
+    \dur,    Pn(Pdefn(\b000_durs), inf), 
   ),
   Pbind(
     \type, \midi, \midiout, ~mOut, \chan, 0,
     \scale, Scale.chromatic, \octave, 3,
-    \degree, Pn(Pdefn(\a000_deg_hh0), inf), 
-    \amp,    Pn(Pseq([0.99, 0.6, 0.8, 0.7], 1), inf),  
-    \dur,    Pn(Pdefn(\a000_durm0)*2,  inf), 
+    \degree, Pn(Pstep(Pdefn(\a000_deg_hh0),  Pkey(\dur)/2), inf), 
+    \amp,    Pn(Pseq([0.99, 0.6, 0.8, 0.7], inf), inf),  
+    \dur,    Pn(Pdefn(\b000_durs),  inf), 
   )
 ]));
 
