@@ -1,82 +1,18 @@
-(
-Pdefn(\r000_deg_0, Place([0, 1, [2, -1] ], 1));
-// Pdefn(\a000_deg_0, Pseq([\C3, \G3, \F3, \Eb3 ].flatten, 1));
-Pdefn(\r000_deg_1, Pseq([2!2, 5, 7].flat, 1));
+Pdef(\voices).play(~link); Pdef(\perc_1_m).play(~link); Pdef(\cc_mod_1).play(~link); Pdef(\cc_mod_2).play(~link);
+Pdef(\voices).stopQ(8); Pdef(\perc_1_m).stopQ(4); Pdef(\cc_mod_1).stopQ(4); Pdef(\cc_mod_2).stopQ(4);
+Pdef.clear;
 
-Pdefn(\r000_root_degs,  Pseq([
-  Pn(Pdefn(\r000_deg_0),  1), 
-  // Pn(Pdefn(\a000_deg_1),  1), 
-],  inf));
-~b1 = { |e|
-  var delta = e[\delta];
-  var div = e[\div];
-  var root = e[\root];
-  var trig = e[\trig];
-  Pbind(
-    \type,   \midi, \midiout, ~mOut,  \chan,  1,  
-    // \octave,  Pstep(Pseq([4,  3], 1), 1,  4/div),  
-    \octave,  Pser([ 3!6, 4!2].flat, delta/div + 1),   
-    \root, e[\root],
-    \scale, e[\scale],
-    // \legato,  Pkey(\dur)/(div/delta), 
-    \degree, root , 
-    \amp, 0.1,
-    // \dur, 2/(4*div),      
-    // \dur, 1/2/div,      
-    \dur,  Pbjorklund2(trig, 8,  1)/2, 
-  ).finDur(e[\delta]);
-};
+Pdef(\voices).play(~link);
+Pdef(\voices).stopQ(8);
+Pdef(\perc_1_m).play(~link);
+Pdef(\perc_1_m).stopQ(4);
+Pdef(\cc_mod_1).play(~link);
+Pdef(\cc_mod_1).stopQ(4);
+Pdef(\cc_mod_2).play(~link);
+Pdef(\cc_mod_2).stopQ(4);
 
-~i1 = { |e|
-  var delta = e[\delta];
-  var div = e[\div];
-  var root = e[\root];
-  var trig = e[\trig];
-  Pbind(
-    \type,   \midi, \midiout, ~mOut,  \chan,  2,  
-    // \octave,  Pstep(Pseq([4,  3], 1), 1,  4/div),  
-    \octave,  Pseq([5, ], trig +2),   
-    // \root, e[\root],
-    \root, 0,
-    \scale, e[\scale],
-    // \legato,  Pkey(\dur)/(div/delta), 
-    // \sustain,  delta, 
-    \degree, Pser([4, 2,  0,  -2, 0,  1,  0   ],  delta),   
-    \amp, Pwhite(0.1, 0.3,  delta),
-    \vel, Pkey(\amp), 
-    \dur, 1/4,      
-    // \dur, 1/2/div,      
-  ).finDur(e[\delta]);
-};
-)
-(
-// 2. The Master Spawner
-Pdef(\b_root_01, Pspawn(
-  Pbindef(\b_root_pbd,  
-    \root, Pn(Pdefn(\r000_root_degs), inf), 
-    \scale, Scale.minor, 
-    \div, Pseq([1,].flat.reverse, inf),  
-    \trig,  Pseq([3,  5,  7, 9].reverse.stutter(4),  inf), 
-    \delta, Pseq([8], inf),  
-    \dur, 1,  
-    \method, \par, 
-    
-    // Generate the child pattern, passing 'e' (the current event with root/delta)
-    \pattern, Pfunc { |e| Ppar([
-      ~b1.value(e),  
-      ~i1.value(e),  
-    ]) },  
-  )
-));
-)
+~mOut.control(15, 21, 127);
 
-Pdef(\b_root_01).play(~link);
-Pdef(\b_root_01).stopQ(8);
-
-Pdef(\a000_m).play(~link);
-Pdef(\a000_m).stopQ(4);
-
-~mOut.control(15, 20, 127);
 (
 Pdef(\cc_mod_1, Pbind(
   \type,  \midi,  \midiout, ~mOut,  \chan,  15,  \midicmd, \control, 
@@ -91,85 +27,197 @@ Pdef(\cc_mod_2, Pbind(
   \dur, 1/4,            // High resolution (32 messages per beat)
   \control, Pseg([0, 127, 0], [1, 4,], \sin, inf)
 ));
-)
-Pdef(\cc_mod_1).play(~link);
-Pdef(\cc_mod_1).stopQ(4);
-Pdef(\cc_mod_2).play(~link);
-Pdef(\cc_mod_2).stopQ(4);
 
-(
-Pdefn(\a000_deg_k0, 
+Pdefn(\root_1_deg_0, Place([0, 1, [2, -1] ], 1));
+// Pdefn(\a000_deg_0, Pseq([\C3, \G3, \F3, \Eb3 ].flatten, 1));
+Pdefn(\root_1_deg_1, Pseq([2, 1,  0, 1 ], 1));
+
+Pdefn(\root_root_degs,  Pseq([
+  // Pn(Pdefn(\root_1_deg_0),  1), 
+  Pn(Pdefn(\root_1_deg_1),  1), 
+],  1));
+
+Pdefn(\kit_1_deg_0, 
   Pseq([
     [0], [\],  [\], [0], [\], [\],  [\], [\],
     [\], [\],  [\], [0], [1], [\],  [\], [\],
   ], 1));  
 
-Pdefn(\a000_deg_k1, 
+Pdefn(\kit_1_deg_1, 
   Pseq([
     [0], [\],  [\], [0], [0], [4],  [1], [4],  
     [\], [1],  [\], [\], [0], [1],  [0], [3],  
   ], 1));  
 
-Pdefn(\a000_deg_k2, 
+Pdefn(\kit_1_deg_k2, 
   Pseq([
     [0], [\],  [\], [\], [0], [\],  [\], [\],  
     [\], [\],  [\], [\], [0], [\],  [0], [\],  
   ], 1));  
   
-Pdefn(\a000_deg_hh0, 
+Pdefn(\hats_1_deg_0, 
   Pseq([
     [2], [\],  [2], [\],  
     [\], [2],  [\], [3],  
   ], 
   1));  
 
-Pdefn(\a000_deg_hh1, 
+Pdefn(\hats_1_deg_1, 
   Pseq([
     [2], [2],  [3], [\],  
     [\], [\],  [2], [2],  
   ], 
   1));  
 
-Pdefn(\a000_deg_hh2, 
+Pdefn(\hats_1_deg_2, 
   Pseq([
     [2], [\],  [\], [\],  
     [2], [\],  [\], [\],  
   ], 
   1));  
 
-Pdefn(\a000_hh_degs,  
+Pdefn(\kit_1_degs,  
 Pseq([
-  Pn(Pdefn(\a000_deg_hh1),  4),  
-  Pn(Pdefn(\a000_deg_hh0),  4), 
-  Pn(Pdefn(\a000_deg_hh2),  4), 
+  Pn(Pdefn(\kit_1_deg_1),  4),  
+  Pn(Pdefn(\kit_1_deg_0),  4), 
+  Pn(Pdefn(\kit_1_deg_2),  4), 
 ],  1));
 
-Pdef(\a000_m, Ppar([
-  Pbind(
-    \type, \midi, \midiout, ~mOut, \chan, 0,
+Pdefn(\hats_1_degs,  
+Pseq([
+  Pn(Pdefn(\hats_1_deg_1),  4),  
+  Pn(Pdefn(\hats_1_deg_0),  4), 
+  Pn(Pdefn(\hats_1_deg_2),  4), 
+],  1));
+
+Pdef(\perc_1_m, Ppar([
+  Pbindef(\kit_1_pbd,  
+    \type, \midi, \midiout, ~mOut, \chan, [0,/*  1,  2,  */],
     \scale, Scale.chromatic, \octave, 3,
-    \degree, Pn(Pdefn(\a000_degs),  inf), 
+    \degree, Pn(Pdefn(\kit_1_degs),  inf), 
     \amp,    Pn(Pseq([0.99, 0.6, 0.8, 0.7], 1), inf),  
     // \amp,  0.8, 
     \dur,    1/2, 
   ),
-  Pbind(
-    \type, \midi, \midiout, ~mOut, \chan, 0,
+  Pbindef(\hats_1_pbd, 
+    \type, \midi, \midiout, ~mOut, \chan, [0,/*  3,  0,*/], 
     \scale, Scale.chromatic, \octave, 3,
-    \degree, Pn(Pdefn(\a000_hh_degs), inf), 
+    \degree, Pn(Pdefn(\hats_1_degs), inf), 
     \amp,    Pn(Pseq([0.8, 0.6, 0.8, 0.7], inf), inf),  
     // \dur,    Pn(Pdefn(\a000_durm0),  inf), 
     \dur,  1/4, 
   )
 ]));
 
-Pdef(\a100_m, Pbind(
-  \type,  \midi,  \midiout,  ~mOut, \chan,  5,  \scale,  Scale.dorian,
-  \root,   0,  
-  \octave,  Pn(Pstep(Pseq([3,4], inf),  Pseq([1/2,  1], inf), 1), inf),   
-  \amp,     Pn(Pstep(Place([9.0, [0.7,  0.5]], inf), 2), inf),
-  \degree,  Pn(Pstep(Place([0, [4,  2,  ]], inf),  4),  inf),  
-  \dur,     Pn(Pstep(Pdefn(\b000_durs), Pseq([7,  4, 1/2], inf)), inf),  
-));
+// Define the melodic child
+Pdef(\mel_1, 
+  Pbindef(\mel_1_pbd, 
+    \type, \midi, \midiout, ~mOut, \chan, [2,/* 1, 3*/], 
+    
+    \octave,  Pseq([6, ], inf),   
+    // "Look Up" to the conductor for these values:
+    \root, Pkey(\root), 
+    \scale, Pkey(\scale),
+    
+    // Internal Logic
+    \degree, Pseq([4, 2,  0,  -2, 0,  1,  0   ],  1),   
+    \amp, Pwhite(0.1, 0.1,  inf),
+    \vel, Pkey(\amp), 
+    \dur, 1/4,      
+  )
+);
+
+Pdef(\mel_2, 
+  Pbindef(\mel_2_pbd, 
+    \type, \midi, \midiout, ~mOut, \chan, [3,/* 2, 1 */],
+    
+    \octave,  Pser([ 4!6, 5!2].flat, inf),   
+    // "Look Up" to the conductor for these values:
+    \root, Pkey(\root), 
+    \scale, Pkey(\scale),
+    
+    // Internal Logic
+    \degree, Pseq([0!3, 4,  2].flat, inf), 
+    \amp, 0.3,
+    \vel,  Pkey(\amp),  
+    \dur, Pseq([1,  2, ], 1)/(Pkey(\div)),      
+  )
+);
+
+// Define the bass child
+Pdef(\bass_1, 
+  Pbindef(\bass_1_pbd,  
+    \type, \midi, \midiout, ~mOut, \chan, [1,/*  3,  2,  0*/],
+    // \octave,  Pseq([ 3, 4].flat, 4),     
+    // \octave,  2,  
+    \root, Pkey(\root),
+    \scale, Pkey(\scale),
+    
+    \degree, Pseq([4, 0!4, 2].flat, inf), 
+    \octave, 3,
+    // Example: Use parent's 'div' to control speed
+    \amp, Pwhite(0.2, 0.6,  inf),
+    \vel, Pkey(\amp),
+    // \dur, 1 / Pkey(\div), 
+    \dur, Pbjorklund2(Pkey(\step1), 8,  inf)/Pkey(\div),  
+  )
+);
+
+Pdef(\layers_1, Ppar([
+    Pdef(\bass_1),
+  ]), 
+);
+
+Pdef(\layers_2, Ppar([
+    Pdef(\bass_1),
+    Pdef(\mel_1),
+  ]), 
+);
+
+Pdef(\layers_3, Ppar([
+    Pdef(\bass_1),
+    Pdef(\mel_1),
+    Pdef(\mel_2),
+  ]), 
+);
+
+
+// Pbindef(\bass_1_pbd,  \degree,  Pseq((0..7),  inf));
+
+Pdef(\voices, 
+    Pbindef(\voices_pbd,  
+        // MAGIC LINE: This tells SC to trigger patterns, not synths
+        \type, \phrase, 
+        
+        // 1. GLOBAL CONTEXT (Passed to all children)
+        \scale, Scale.minor,
+        \root, Pseq([0, 2, -2, 0], inf), // Change root every step
+        \div,  Pseq([2, 4], inf),        // Change subdivision every step
+        \step1, Pseq([9,  7,  5,  3], inf),
+        \dur,  8,   //<---- Everything lasts N beats
+        
+        // 2. ORCHESTRATION (Which children play?)
+        \instrument, Pseq([
+            \layers_1,    
+            \layers_2,   
+            \layers_3,  
+        ], inf),  
+    )
+);
 )
 
+Pdef(\voices).play(~link); Pdef(\perc_1_m).play(~link); Pdef(\cc_mod_1).play(~link); Pdef(\cc_mod_2).play(~link);
+Pdef(\voices).stopQ(8); Pdef(\perc_1_m).stopQ(4); Pdef(\cc_mod_1).stopQ(4); Pdef(\cc_mod_2).stopQ(4);
+Pdef.clear;
+\E4.asDegree.postln;
+Pdef(\b_root_01).play(~link);
+Pdef(\b_root_01).stopQ(8);
+
+Pdef(\perc_1_m).play(~link);
+Pdef(\perc_1_m).stopQ(4);
+
+Pdef(\cc_mod_1).play(~link);
+Pdef(\cc_mod_1).stopQ(4);
+Pdef(\cc_mod_2).play(~link);
+Pdef(\cc_mod_2).stopQ(4);
+~mOut.control(15, 21, 127);
