@@ -28,13 +28,12 @@ Pdef(\cc_mod_2, Pbind(
   \control, Pseg([0, 127, 0], [1, 4,], \sin, inf)
 ));
 
-// Pdefn(\root_1_deg_0, Place([0, 1, [2, -1] ], 1));
-Pdefn(\root_1_deg_0, Place([4, ], 1));
+Pdefn(\root_1_deg_0, Place([0, 1, [2, -1] ], 1));
 // Pdefn(\a000_deg_0, Pseq([\C3, \G3, \F3, \Eb3 ].flatten, 1));
 Pdefn(\root_1_deg_1, Pseq([2, 1,  0, 1 ], 1));
 
-Pdefn(\root_degs,  Pseq([
-  Pn(Pdefn(\root_1_deg_0),  1), 
+Pdefn(\root_root_degs,  Pseq([
+  // Pn(Pdefn(\root_1_deg_0),  1), 
   Pn(Pdefn(\root_1_deg_1),  1), 
 ],  1));
 
@@ -192,8 +191,7 @@ Pdef(\voices,
         
         // 1. GLOBAL CONTEXT (Passed to all children)
         \scale, Scale.minor,
-        // \root, Pseq([0, 2, -2, 0], inf), // Change root every step
-        \root,  Pn(Pdefn(\root_degs), inf), 
+        \root, Pseq([0, 2, -2, 0], inf), // Change root every step
         \div,  Pseq([2, 4], inf),        // Change subdivision every step
         \step1, Pseq([9,  7,  5,  3], inf),
         \dur,  8,   //<---- Everything lasts N beats
