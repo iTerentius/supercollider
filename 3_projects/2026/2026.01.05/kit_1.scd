@@ -56,6 +56,7 @@ Pseq([
 Pdef(\perc_1_m, Ppar([
   Pbindef(\kit_1_pbd,  
     \type, \midi, \midiout, ~mOut, \chan, [0,/*  1,  2,  */],
+    \root,  0,  
     \scale, Scale.chromatic, \octave, 3,
     \degree, Pn(Pdefn(\kit_1_degs),  inf), 
     \amp,    Pn(Pseq([0.99, 0.6, 0.8, 0.7], 1), inf),  
@@ -64,6 +65,7 @@ Pdef(\perc_1_m, Ppar([
   ),
   Pbindef(\hats_1_pbd, 
     \type, \midi, \midiout, ~mOut, \chan, [0,/*  3,  0,*/], 
+    \root,  0,  
     \scale, Scale.chromatic, \octave, 3,
     \degree, Pn(Pdefn(\hats_1_degs), inf), 
     \amp,    Pn(Pseq([0.8, 0.6, 0.8, 0.7], inf), inf),  
@@ -78,3 +80,4 @@ if(~lpMini.notNil){
 }
 
 )
+Pbindef(\mel_2).clear;
