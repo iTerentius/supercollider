@@ -1,10 +1,10 @@
 ~link.tempo = 110/60;
-Pdef(\voices).play(~link); Pdef(\perc_1_m).play(~link); Pdef(\cc_mod_1).play(~link); Pdef(\cc_mod_2).play(~link);
-Pdef(\voices).stopQ(8); Pdef(\perc_1_m).stopQ(4); Pdef(\cc_mod_1).stopQ(4); Pdef(\cc_mod_2).stopQ(4);
+Pdef(\v1).play(~link); Pdef(\perc_1_m).play(~link); Pdef(\cc_mod_1).play(~link); Pdef(\cc_mod_2).play(~link);
+Pdef(\v1).stopQ(8); Pdef(\perc_1_m).stopQ(4); Pdef(\cc_mod_1).stopQ(4); Pdef(\cc_mod_2).stopQ(4);
 Pdef.clear;
 
-Pdef(\voices).play(~link);
-Pdef(\voices).stopQ(8);
+Pdef(\v1).play(~link);
+Pdef(\v1).stopQ(8);
 Pdef(\perc_1_m).play(~link);
 Pdef(\perc_1_m).stopQ(4);
 Pdef(\cc_mod_1).play(~link);
@@ -42,6 +42,34 @@ Pdefn(\root_degs,  Pseq([
 ],  1));
 
 // Define the melodic child
+Pdef(\drone,   Pbind(
+    \type, \midi, \midiout, ~mOut, \chan, 4,  
+    \root,  Pn(Pdefn(\root_degs), inf),  
+    // \delta, Pseg(Pseq([1/2, 1/4], inf), Pseq([1, 1/2], inf), \step, inf),   
+    // \delta, Pseq([1/4!4, 1/2, Rest(3.5), ].flat, inf),  
+    // \delta, 2, 
+    \scale, Scale.minor, 
+    \octave,  Pseq([6, 5, Rest()], inf),   
+    \degree,  Place([0, [2, 4,  7]], inf),  
+    \dur, Pkey(\dur) / Pseq([1/4,  1/3,   ], inf),    
+    // \type,  Pif(Prand([0, 1], \midi,  \rest), inf);
+));
+
+Pdefn(\harms,  PHarmony(
+  [\minor, \minor,  \major, \major],  
+  // \blossomup, 
+));
+
+Pdef(\chords, Pbind(
+ \scale,   Scale.minor,
+ // \delta,  1,  
+ // \root,  Pn(Pdefn(\root_degs), inf), 
+ \degree, Pn(Pdefn(\root_degs), inf), 
+ \type, \midi, \midiout, ~mOut, \chan, 4,  
+ \ctranspose,  Pn(Pdefn(\harms), inf),
+ \dur, Pkey(\dur),  
+));
+
 Pdef(\mel_1, 
   Pbindef(\mel_1_pbd, 
     \type, \midi, \midiout, ~mOut, \chan, [2,/* 1, 3*/], 
@@ -73,7 +101,9 @@ Pdef(\mel_2,
     \degree, Pseq([0!3, 4,  2].flat, inf), 
     \amp, 0.3,
     \vel,  Pkey(\amp),  
-    \dur, Pn(Pseq([1,  2, ], 1)/(Pkey(\div))).fitToBar(8),       
+    // \dur, Pn(Pseq([1,  2, ], 1)/(Pkey(\div))).fitToBar(8),       
+    // \delta, 4,  
+    \dur,  1/4, 
   )
 );
 
@@ -115,8 +145,14 @@ Pdef(\layers_3, Ppar([
   ]), 
 );
 
-Pdef(\voices, 
-    Pbindef(\voices_pbd,  
+// Pdef(\v1, Pseq([
+//   Pn(Pdef(\layers_1), 4),   
+//   Pn(Pdef(\layers_2), 4),   
+//   Pn(Pdef(\layers_3), 4),    
+// ]));
+
+Pdef(\v1, 
+    Pbindef(\v1_pbd,  
         \type, \phrase, 
         \scale, Scale.minor,
         // \root, Pseq([0, 2, -2, 0], inf), // Change root every step
@@ -124,8 +160,8 @@ Pdef(\voices,
         \div,  Pseq([4], inf),        // Change subdivision every step
         \step1, Pseq([9,  7,  5,  3], inf),
         \legato,  1, 
-        // \dur,  4,   //<---- Everything lasts N beats
-        \dur, Pfunc { Pdefn(\kit_1_degs).source.list.size / 4}, 
+        \dur,  4,   //<---- Everything lasts N beats
+        // \dur, Pfunc { Pdefn(\kit_1_degs).source.list.size / 4}, 
         
         \instrument, Pseq([
             \layers_1,    
@@ -136,8 +172,19 @@ Pdef(\voices,
     )
 );
 
+Pdef(\v2, 
+  Pbindef(\v2_pbd,  
+    \type,  \phrase,  
+    \dur, 4,  
+    \instrument,  Pseq([
+      \drone, 
+      \chords,  
+    ], inf);
+  )
+);
+
 Pdef(\all,  Ppar([
-  Pdef(\voices),
+  Pdef(\v1),
   Pdef(\perc_1_m),
   Pdef(\cc_mod_1),  
   Pdef(\cc_mod_2),
@@ -145,7 +192,7 @@ Pdef(\all,  Ppar([
 
 // Bindings
 if(~lpMini.notNil){
-  ~lpBind.([1, 2], \voices, 20, ~link, 4);
+  ~lpBind.([1, 2], \v1, 20, ~link, 4);
   ~lpBind.([8, 1], \cc_mod_1, 45, ~link, 4);
   ~lpBind.([8, 2], \cc_mod_2, 45, ~link, 4);
   ~lpBind.([8, 8], \all, 9, ~link, 4);
@@ -155,12 +202,12 @@ if(~lpMini.notNil){
 }
 )
 
-Pdef(\voices).play(~link); Pdef(\perc_1_m).play(~link); Pdef(\cc_mod_1).play(~link); Pdef(\cc_mod_2).play(~link);
-Pdef(\voices).stopQ(8); Pdef(\perc_1_m).stopQ(4); Pdef(\cc_mod_1).stopQ(4); Pdef(\cc_mod_2).stopQ(4);
+Pdef(\v1).play(~link); Pdef(\perc_1_m).play(~link); Pdef(\cc_mod_1).play(~link); Pdef(\cc_mod_2).play(~link);
+Pdef(\v1).stopQ(8); Pdef(\perc_1_m).stopQ(4); Pdef(\cc_mod_1).stopQ(4); Pdef(\cc_mod_2).stopQ(4);
 Pdef.clear;
 \E4.asDegree.postln;
-Pdef(\voices).play(~link);
-Pdef(\voices).stopQ(8);
+Pdef(\v1).play(~link);
+Pdef(\v1).stopQ(8);
 
 Pdef(\perc_1_m).play(~link);
 Pdef(\perc_1_m).stopQ(4);
@@ -188,11 +235,12 @@ Pdef(\drone,   Pbind(
     \root,  Pn(Pdefn(\root_degs), inf),  
     // \delta, Pseg(Pseq([1/2, 1/4], inf), Pseq([1, 1/2], inf), \step, inf),   
     // \delta, Pseq([1/4!4, 1/2, Rest(3.5), ].flat, inf),  
-    \delta, 1/6,  
+    // \delta, 2, 
     \scale, Scale.minor, 
-    \octave,  Pseq([6, 5,   ], inf),   
+    \octave,  Pseq([6, 5, Rest()], inf),   
     \degree,  Place([0, [2, 4,  7]], inf),  
-    \dur, Pseq([2,  4], inf),   
+    \dur, Pkey(\dur) / Pseq([1/4,  1/3,   ], inf),    
+    // \type,  Pif(Prand([0, 1], \midi,  \rest), inf);
 ));
 )
 Pdef(\drone).play(~link);
@@ -210,8 +258,22 @@ Pdef(\chords, Pbind(
  \degree, Pn(Pdefn(\root_degs), inf), 
  \type, \midi, \midiout, ~mOut, \chan, 4,  
  \ctranspose,  Pn(Pdefn(\harms), inf),
- \dur, 4,  
+ \dur, Pkey(\dur),  
 ));
 )
 Pdef(\chords).play(~link);
 Pdef(\chords).stopQ(4);
+
+(
+Pdef(\v2, 
+Pbindef(\v2_pbd,  
+  \type,  \phrase,  
+  \dur, 4,  
+  \instrument,  Pseq([
+    \drone, 
+    \chords,  
+  ], inf);
+));
+)
+Pdef(\v2).play(~link);
+Pdef(\v2).stopQ(4);

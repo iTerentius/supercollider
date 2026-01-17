@@ -1,11 +1,17 @@
 (
 Pdef(\score,
     Pseq([
-      Psection([\perc_1_m, \voices], 32, sync: true),
-      // SECTION B: The Rest (Transition/Bridge)
-      Psection([\perc_1_m, ], { Pdefn(\kit_1_deg_1).source.list.size / 4 }, {
-        Pbindef(\kit_1_pbd, \degree, Pdefn(\kit_1_deg_1));
-        }, sync: true),
+      Psection([\perc_1_m, \v1], 32, sync: true),  
+      Psection([\perc_1_m, \v2], 16, sync: true),
+      Psection([\v2], 16, sync: true),
+      Psection([\kit_1_pbd, ], 8, 
+      { Pbindef(\kit_1_pbd, \degree, Pn(Pdefn(\kit_1_deg_2),  inf)); },
+      sync: true),
+
+      Psection([\perc_1_m, \v1, \v2], 32, 
+      { Pbindef(\kit_1_pbd,   \degree, Pn(Pdefn(\kit_1_degs),  inf)); },  
+      sync: true),
+
     ], inf)
 );
 )
@@ -15,3 +21,8 @@ Pdef(\score).stopQ(4);
 // (
 // Pbindef(\kit_1_pbd, \degree,  Pn(Pdefn(\kit_1_deg_0), inf));
 // )
+Pdefn(\kit_1_degs).source.list.size 
+
+Pdef(\perc_1_m).play(~link);
+Pdef(\perc_1_m).stop;
+Pbindef(\kit_1_pbd, \degree, Pdefn(\kit_1_deg_2));
