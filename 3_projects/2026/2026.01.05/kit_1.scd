@@ -55,9 +55,9 @@ Pseq([
 
 Pdefn(\hats_1_degs,  
 Pseq([
-  Pn(Pdefn(\hats_1_deg_1),  4),  
+  Pn(Pdefn(\hats_1_deg_2),  16),  
   Pn(Pdefn(\hats_1_deg_0),  4), 
-  Pn(Pdefn(\hats_1_deg_2),  4), 
+  Pn(Pdefn(\hats_1_deg_1),  16), 
 ],  1));
 
 Pbindef(\kit_1_pbd,  
@@ -92,4 +92,4 @@ if(~lpMini.notNil){
 }
 
 )
-Pbindef(\mel_2).clear;
+// Pbindef(\mel_2).clear;

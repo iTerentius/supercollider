@@ -1,4 +1,9 @@
+// evals
 (
+~link.tempo = 110/60;
+"kit_1.scd".loadRelative;
+"melodic.scd".loadRelative;
+
 Pdef(\score,
     Pseq([
       Psection([\perc_1_m, \v1], 32, sync: true),  

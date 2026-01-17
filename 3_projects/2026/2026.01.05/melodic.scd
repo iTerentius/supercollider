@@ -1,20 +1,20 @@
-~link.tempo = 110/60;
-Pdef(\v1).play(~link); Pdef(\perc_1_m).play(~link); Pdef(\cc_mod_1).play(~link); Pdef(\cc_mod_2).play(~link);
-Pdef(\v1).stopQ(8); Pdef(\perc_1_m).stopQ(4); Pdef(\cc_mod_1).stopQ(4); Pdef(\cc_mod_2).stopQ(4);
-Pdef.clear;
-
-Pdef(\v1).play(~link);
-Pdef(\v1).stopQ(8);
-Pdef(\perc_1_m).play(~link);
-Pdef(\perc_1_m).stopQ(4);
-Pdef(\cc_mod_1).play(~link);
-Pdef(\cc_mod_1).stopQ(4);
-Pdef(\cc_mod_2).play(~link);
-Pdef(\cc_mod_2).stopQ(4);
-
-~mOut.control(15, 21, 127);
-
-Pdef(\bass_1).play(~link);
+// ~link.tempo = 110/60;
+// Pdef(\v1).play(~link); Pdef(\perc_1_m).play(~link); Pdef(\cc_mod_1).play(~link); Pdef(\cc_mod_2).play(~link);
+// Pdef(\v1).stopQ(8); Pdef(\perc_1_m).stopQ(4); Pdef(\cc_mod_1).stopQ(4); Pdef(\cc_mod_2).stopQ(4);
+// Pdef.clear;
+//
+// Pdef(\v1).play(~link);
+// Pdef(\v1).stopQ(8);
+// Pdef(\perc_1_m).play(~link);
+// Pdef(\perc_1_m).stopQ(4);
+// Pdef(\cc_mod_1).play(~link);
+// Pdef(\cc_mod_1).stopQ(4);
+// Pdef(\cc_mod_2).play(~link);
+// Pdef(\cc_mod_2).stopQ(4);
+//
+// ~mOut.control(15, 21, 127);
+//
+// Pdef(\bass_1).play(~link);
 
 (
 Pdef(\cc_mod_1, Pbind(
@@ -127,29 +127,23 @@ Pdef(\bass_1,
   )
 );
 
-Pdef(\layers_1, Ppar([
+Pdef(\v1_stack_1, Ppar([
     Pdef(\bass_1),
   ],  1), 
 );
 
-Pdef(\layers_2, Ppar([
+Pdef(\v1_stack_2, Ppar([
     Pdef(\bass_1),
     Pdef(\mel_1),
   ]), 
 );
 
-Pdef(\layers_3, Ppar([
+Pdef(\v1_stack_3, Ppar([
     Pdef(\bass_1),
     Pdef(\mel_1),
     Pdef(\mel_2),
   ]), 
 );
-
-// Pdef(\v1, Pseq([
-//   Pn(Pdef(\layers_1), 4),   
-//   Pn(Pdef(\layers_2), 4),   
-//   Pn(Pdef(\layers_3), 4),    
-// ]));
 
 Pdef(\v1, 
     Pbindef(\v1_pbd,  
@@ -164,10 +158,9 @@ Pdef(\v1,
         // \dur, Pfunc { Pdefn(\kit_1_degs).source.list.size / 4}, 
         
         \instrument, Pseq([
-            \layers_1,    
-            \layers_2,   
-            \layers_3,
-            \chords,  
+            \v1_stack_1,    
+            \v1_stack_2,   
+            \v1_stack_3,
         ], inf),  
     )
 );
@@ -202,78 +195,38 @@ if(~lpMini.notNil){
 }
 )
 
-Pdef(\v1).play(~link); Pdef(\perc_1_m).play(~link); Pdef(\cc_mod_1).play(~link); Pdef(\cc_mod_2).play(~link);
-Pdef(\v1).stopQ(8); Pdef(\perc_1_m).stopQ(4); Pdef(\cc_mod_1).stopQ(4); Pdef(\cc_mod_2).stopQ(4);
-Pdef.clear;
-\E4.asDegree.postln;
-Pdef(\v1).play(~link);
-Pdef(\v1).stopQ(8);
+// Pdef(\v1).play(~link); Pdef(\perc_1_m).play(~link); Pdef(\cc_mod_1).play(~link); Pdef(\cc_mod_2).play(~link);
+// Pdef(\v1).stopQ(8); Pdef(\perc_1_m).stopQ(4); Pdef(\cc_mod_1).stopQ(4); Pdef(\cc_mod_2).stopQ(4);
+// Pdef.clear;
+// \E4.asDegree.postln;
+// Pdef(\v1).play(~link);
+// Pdef(\v1).stopQ(8);
+//
+// Pdef(\perc_1_m).play(~link);
+// Pdef(\perc_1_m).stopQ(4);
+//
+// Pdef(\cc_mod_1).play(~link);
+// Pdef(\cc_mod_1).stopQ(4);
+// Pdef(\cc_mod_2).play(~link);
+// Pdef(\cc_mod_2).stopQ(4);
+// ~mOut.control(15, 21, 127);
+//
+// ~link.tempo = 110/60;
 
-Pdef(\perc_1_m).play(~link);
-Pdef(\perc_1_m).stopQ(4);
-
-Pdef(\cc_mod_1).play(~link);
-Pdef(\cc_mod_1).stopQ(4);
-Pdef(\cc_mod_2).play(~link);
-Pdef(\cc_mod_2).stopQ(4);
-~mOut.control(15, 21, 127);
-
-~link.tempo = 110/60;
-
-(
-Pdef(\tempoUp,  Pbind(
-  \tempo, Pseg((880..110)/60, 1),
-  \dur, (1/16),    
-));
-)
-Pdef(\tempoUp).play(~link);
-
-
-(
-Pdef(\drone,   Pbind(
-    \type, \midi, \midiout, ~mOut, \chan, 4,  
-    \root,  Pn(Pdefn(\root_degs), inf),  
-    // \delta, Pseg(Pseq([1/2, 1/4], inf), Pseq([1, 1/2], inf), \step, inf),   
-    // \delta, Pseq([1/4!4, 1/2, Rest(3.5), ].flat, inf),  
-    // \delta, 2, 
-    \scale, Scale.minor, 
-    \octave,  Pseq([6, 5, Rest()], inf),   
-    \degree,  Place([0, [2, 4,  7]], inf),  
-    \dur, Pkey(\dur) / Pseq([1/4,  1/3,   ], inf),    
-    // \type,  Pif(Prand([0, 1], \midi,  \rest), inf);
-));
-)
-Pdef(\drone).play(~link);
-Pdef(\drone).stop;
-
-(
-Pdefn(\harms,  PHarmony(
-  [\minor, \minor,  \major, \major],  
-  // \blossomup, 
-));
-Pdef(\chords, Pbind(
- \scale,   Scale.minor,
- // \delta,  1,  
- // \root,  Pn(Pdefn(\root_degs), inf), 
- \degree, Pn(Pdefn(\root_degs), inf), 
- \type, \midi, \midiout, ~mOut, \chan, 4,  
- \ctranspose,  Pn(Pdefn(\harms), inf),
- \dur, Pkey(\dur),  
-));
-)
-Pdef(\chords).play(~link);
-Pdef(\chords).stopQ(4);
-
-(
-Pdef(\v2, 
-Pbindef(\v2_pbd,  
-  \type,  \phrase,  
-  \dur, 4,  
-  \instrument,  Pseq([
-    \drone, 
-    \chords,  
-  ], inf);
-));
-)
-Pdef(\v2).play(~link);
-Pdef(\v2).stopQ(4);
+// (
+// Pdef(\tempoUp,  Pbind(
+//   \tempo, Pseg((880..110)/60, 1),
+//   \dur, (1/16),    
+// ));
+// )
+// Pdef(\tempoUp).play(~link);
+//
+//
+// Pdef(\drone).play(~link);
+// Pdef(\drone).stop;
+//
+// Pdef(\chords).play(~link);
+// Pdef(\chords).stopQ(4);
+//
+// Pdef(\v2).play(~link);
+// Pdef(\v2).stopQ(4);
