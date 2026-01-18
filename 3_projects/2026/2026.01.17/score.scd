@@ -86,3 +86,6 @@ Pdef(\score,
     ], inf)
 );
 )
+
+Pdef(\score).play(~link);
+Pdef(\score).stopQ(4);

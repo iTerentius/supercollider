@@ -107,7 +107,6 @@ Pdef(\mel_2,
   )
 );
 
-// Define the bass child
 Pdef(\bass_1, 
   Pbindef(\bass_1_pbd,  
     \type, \midi, \midiout, ~mOut, \chan, 1,/*  3,  2,  0*/
