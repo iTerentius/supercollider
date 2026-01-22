@@ -17,7 +17,15 @@ Pdefn(\kit_deg_0b,
     ], 1));
 
 Pdefn(\kit_deg_0b,
-  Pif((Pbjorklund(3,  8,  1)*8) > 0, 2, [4, 0]));
+    Ptuple([
+      Pser([0, 4, 0, \, ], 8), 
+      Pser([\,  2, \,  3, ], 8), 
+      // Pseq([5, 6, ],  4),  
+    ],  1)
+  );
+  // Pif((Pbjorklund(3,  16,  1)*8) > 0, Pseq([[2,  4],  0], inf), Pseq([\],  inf)));
+  // Place([2, [[0, ], [9, 2,  3],  [3,  1],  ], Pn(Rest(), 2)],  
+  // 8));
 
 Pdefn(\kit_deg_1,
     Pseq([
@@ -33,14 +41,24 @@ Pdefn(\kit_deg_2,
         [4], [\], [\], [\], [4], [\], [4], [\],
     ], 1));
 
+
 Pdefn(\kit_degs, Pseq([
     // Pn(Pdefn(\kit_deg_0), 4),
     // Pn(Pdefn(\kit_deg_0a), 4),
-    Pn(Rest(),  4), 
+    // Pn(Rest(),  4), 
     Pn(Pdefn(\kit_deg_0b), 2),
     // Pn(Pdefn(\kit_deg_1), 4),
     // Pn(Pdefn(\kit_deg_2), 2),
 ], 1));
+
+Pdefn(\kit_dur_0, Pseq([1/3].flat,  1));
+
+Pdefn(\kit_dur_1,  Pbjorklund(3,  8,  1)/4);
+
+Pdefn(\kit_durs,  Pseq([
+  Pn(Pdefn(\kit_dur_0),  8), 
+  // Pn(Pdefn(\kit_dur_1),  8), 
+],  1));
 
 Pdef(\perc,
     Pbindef(\perc_pbd,
@@ -49,8 +67,8 @@ Pdef(\perc,
         \root, 0,
         \octave, 3,
         \degree, Pn(Pdefn(\kit_degs), inf),
-        \amp, Pwhite(0.7, 0.7,  inf),
-        \dur, 1/8,
+        \amp, Pwhite(0.5, 0.7,  inf),
+        \dur, Pn(Pdefn(\kit_durs),  inf),
     )
 );
 )

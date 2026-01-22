@@ -39,7 +39,7 @@ Pdef(\v1,
         \dur, 2,
         \instrument, Pseq([
           \v1_stack_0,  
-          // \v1_stack_1,  
+          \v1_stack_1,  
           \v1_stack_2,  
         ], inf),
     )
@@ -50,10 +50,11 @@ Pdef(\v1,
 (
 Pdef(\score,
     Pseq([
-        Psection([\perc], 16, sync: true),
-        // Psection([\perc, \v1], 32, sync: true),
+        // Psection([\perc], 16, sync: true),
+        Psection([\perc, \v1], 32, sync: true),
     ], inf)
 );
 )
 Pdef(\score).play(~link);
 Pdef(\score).stopQ(4);
+Pdef(\score).clear;
