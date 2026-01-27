@@ -15,5 +15,5 @@
     )
 );
 
-~link.tempo = ~cfg.tempo;
+if(~link.notNil) { ~link.tempo = ~cfg.tempo };
 )

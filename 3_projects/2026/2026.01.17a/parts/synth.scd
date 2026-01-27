@@ -18,7 +18,7 @@ SynthDef(\lead_synth, {
     sig = RLPF.ar(sig, freq * 4, 0.3);
     Out.ar(out, sig.dup * env);
 }).add;
-)
+);
 
 // Composite pattern - sends to MIDI AND plays SC synth
 (
