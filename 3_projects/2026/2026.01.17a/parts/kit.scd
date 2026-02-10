@@ -18,8 +18,8 @@ Pdefn(\kit_deg_0b,
 
 Pdefn(\kit_deg_0b,
     Ptuple([
-      Pser([0, 4, 0, \, 0,  \], 8), 
-      Pser([\,  2, \,  3, ], 8), 
+      Pseq([0, 4, 0, \, 0,  \], 8), 
+      Pseq([\,  2, \,  3, ], 8), 
       // Pseq([5, 6, ],  4),  
     ],  1)
   );
@@ -29,7 +29,7 @@ Pdefn(\kit_deg_0b,
 Pdefn(\kit_deg_0c,
     Ptuple([
       Place([0, [4,  1,  6], [5, 8], [\, 4]], Pxrand((1..16), 1)), 
-      Place(#[2,  [2,  3]], 1).stutter(2),  
+      // Place([2,  [2,  3]], 1),  
     ], 1));
 
 Pdefn(\kit_deg_1,
@@ -51,6 +51,7 @@ Pdefn(\kit_degs, Pseq([
     // Pn(Pdefn(\kit_deg_0), 4),
     // Pn(Pdefn(\kit_deg_0a), 4),
     // // Pn(Rest(),  4), 
+    Pn(Pdefn(\kit_deg_0b), 8),
     Pn(Pdefn(\kit_deg_0c), 8),
     // Pn(Pdefn(\kit_deg_1), 4), 
     // Pn(Pdefn(\kit_deg_2), 4),
@@ -65,6 +66,16 @@ Pdefn(\kit_durs,  Prand([
   Pn(Pdefn(\kit_dur_0),  8), 
 ],  1));
 
+Pdef(\hats, Pbindef(\hats_pbd,  
+  \type, \midi, \midiout, ~mOut, \chan, ~cfg.ch.kit,
+  \scale, Scale.chromatic,
+  \root, 0,
+  \octave, 3,
+  \amp, 0.7,  
+  \degree,  Pseq([2,  2,  3], inf),  
+  \dur, 1/3,  
+));
+
 Pdef(\perc,
     Pbindef(\perc_pbd,
         \type, \midi, \midiout, ~mOut, \chan, ~cfg.ch.kit,
@@ -77,4 +88,3 @@ Pdef(\perc,
     )
 );
 )
-

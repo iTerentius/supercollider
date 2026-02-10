@@ -46,18 +46,37 @@ Pdef(\v1,
 );
 )
 
+Pdef(\cc_mod_3).play;
+Pdef(\bass).clear;
 // Arrangement
 (
 Pdef(\score,
     Pseq([
-        // Psection([\perc], 64, sync: true),
-        Psection([\perc, \v1], 64, sync: true),
+      Psection([\perc,  \cc_mod_2,  \cc_mod_3], 16, sync: true),
+      Psection([\perc, \hats, \cc_mod_3 ], 16, sync: true),
+      Psection([\perc,  \hats,  \cc_mod_2], 8, sync: true),
+      Psection([\perc, \hats,  \cc_mod_2,  \cc_mod_3], 16, sync: true),
+      Psection([\perc, \hats, \v1,  \cc_mod_2,  \cc_mod_3], 64, sync: true),
+      Psection([\perc, \greewl,  \hats,  \cc_mod_2,  \cc_mod_3], 16, sync: true),
+      Psection([\hats, \greewl,  \cc_mod_2,  \cc_mod_3], 16, sync: true),
+      Psection([\greewl], 8, sync: true),  
+      Psection([\perc, \greewl, \hats, \cc_mod_3 ], 16, sync: true),
+
     ], inf)
 );
 )
 Pdef(\score).play(~link);
 Pdef(\score).stopQ(4);
 Pdef(\score).clear;
+
+Pdef(\hats).stop;
+
+~mOut.control(~cfg.ch.cc, ~cfg.cc.mod4, 127);
+Pbindef.clear;
+
+
+
+
 
 (
 Tdef(\conductor, {

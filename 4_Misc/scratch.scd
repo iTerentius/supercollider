@@ -331,4 +331,69 @@ Ndef(\gb1).xset(\grain_dur, 0.25);
 Ndef(\gb1).xset(\rate, -8);
 Ndef(\bg1)[1] = nil;
 
+(
+  // --- LC diagnostic trace ---
+  "=== LC TRACE ===".postln;
 
+  // 1. is ~lcOut alive?
+  "~lcOut: %".format(~lcOut).postln;
+  "~lcSrc: %".format(~lcSrc).postln;
+  "~lcUID: %".format(~lcUID).postln;
+
+  // 2. what does MIDIClient see?
+  "--- MIDI sources with 'Launch Control'
+  ---".postln;
+  MIDIClient.sources.do { |ep, i|
+      if(ep.device.containsi("Launch Control")) {
+          [i, ep.device, ep.name, ep.uid].postln;
+      };
+  };
+  "--- MIDI destinations with 'Launch Control'
+  ---".postln;
+  MIDIClient.destinations.do { |ep, i|
+      if(ep.device.containsi("Launch Control")) {
+          [i, ep.device, ep.name, ep.uid].postln;
+      };
+  };
+
+  // 3. try sending LEDs on channels 0-15
+  "--- sending noteOn(chan, note 9, vel 127) on all
+   16 channels ---".postln;
+  16.do { |ch|
+      ~lcOut.noteOn(ch, 9, 127);
+  };
+
+  // 4. listen for any CC/note from the LC
+  MIDIdef.cc(\lc_trace_cc, { |val, num, chan, src|
+      "LC CC: num=% val=% chan=% src=%".format(num,
+   val, chan, src).postln;
+  });
+  MIDIdef.noteOn(\lc_trace_note, { |vel, num, chan,
+   src|
+      "LC noteOn: num=% vel=% chan=%
+  src=%".format(num, vel, chan, src).postln;
+  });
+  "--- now move a knob or press a button on the LC
+  ---".postln;
+  "=== END TRACE ===".postln;
+  )
+  (
+  // catch-all: noteOn, noteOff, CC, and sysex
+  MIDIdef.noteOn(\lc_tr_on, { |vel, num, chan, src|
+      "noteOn: num=% vel=% chan=%
+  src=%".format(num, vel, chan, src).postln;
+  });
+  MIDIdef.noteOff(\lc_tr_off, { |vel, num, chan,
+  src|
+      "noteOff: num=% vel=% chan=%
+  src=%".format(num, vel, chan, src).postln;
+  });
+  MIDIdef.cc(\lc_tr_cc, { |val, num, chan, src|
+      "CC: num=% val=% chan=% src=%".format(num,
+  val, chan, src).postln;
+  });
+  MIDIFunc.sysex({ |data, src|
+      "sysex: % src=%".format(data, src).postln;
+  });
+  "--- press a button on the LC ---".postln;
+  )
