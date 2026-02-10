@@ -1,6 +1,6 @@
 
 
-TempoClock.default.tempo = 80/60;
+TempoClock.default.tempo = 120/60;
 ~loadSamps.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
 ~loadSamps.("~/Music/supercollider/_samples/Cat-Water/");
 
