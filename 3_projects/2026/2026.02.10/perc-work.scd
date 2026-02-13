@@ -26,13 +26,16 @@ Pdefn()
 ~loadSamps.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
 ~sTree
 (
-~samps = ~sTree[\bass_drums].values[0..3];
+~samps = ~sTree[\bass_drums].values[8..8];
 Pdef(\bash, ~pBuf.(
   Pbind(
   // \buf, Prand(~samps, inf),  
   \buf, Pseq(~samps,  inf),     
   \bufnum,  Pkey(\buf), 
+  \scale, Scale.minor,  
   // \delta,  Pkey(\dur)*2/Pxrand([4,  3,  2], inf), 
+  \octave,  5,  
+  \degree,  Pshuf([0,  4,  7,  \], inf), 
   \dur, Pbjorklund2(5,  8,  inf)/4,  
   \amp, 0.3,  
   \out,  ~pbd1.inbus.index, 
@@ -54,13 +57,14 @@ Pdef(\bash).stop;
 ~bash_gin.tryPerform(\free);
 ~bash_gin.level_(0.1);
 ~bash_t = ~ensurePostSend.(~pbd1, ~r4,  1);
-~bash_t.level_(1);
+~bash_t.tryPerform(\free);
+~bash_t.level_(0.6);
 (
 ~r4_fx.free;
 ~r4_fx = ~r4.playfx({ |in|
-  var sig = SinOsc.ar([220,  222], mul: SinOsc.ar([1,  2, 3])  );
+  var sig = LFTri.ar([220,  222], mul: SinOsc.ar([1,  2, 3])  );
   sig = sig * In.ar(~r4.inbus.index, 2);
-  sig = Decimator.ar(sig, LFTri.ar(0.5).range(100, 1900), LFPulse.kr(0.5,  0.5).range(8,  16)) - sig ;
+  sig = Decimator.ar(sig, LFTri.ar(0.5).range(30, 1900), LFPulse.kr(0.5,  0.5).range(8,  16)) - sig ;
   sig;
 })
 )
@@ -72,18 +76,21 @@ ServerMeter(s);
 ~loadSamps.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
 ~loadSamps.("~/Music/supercollider/_samples/goldbaby/Cassette808/");
 (
-~samps = ~sTree[\hats].values[4..8];
-Pdef(\bashat, ~pBuf.(
-  Pbind(
-  // \buf, Prand(~samps, inf),  
-  \buf, Pstep(Pseq(~samps,  inf), 2),     
-  // \buf,  ~samps,  
-  \bufnum,  Pkey(\buf), 
-  // \delta,  Pkey(\dur)*2/Pxrand([  8,  4,  2], inf), 
-  // \dur, Pseq([1/3,  1/6!2,  Pn(Rest(),  1)].flat,  inf), 
-  \dur, Pbjorklund2(5,  8,  inf),  
-  \amp, Pwhite(0.25,  0.2,  inf),  
-  \out,  ~phh1.inbus.index, 
+~samps = ~sTree[\hats].values[0..8];
+
+Pdef(\bashat, 
+  ~pBuf.(
+    Pbind(
+    // \buf, Prand(~samps, inf),  
+    \buf, Pstep(Pseq(~samps,  inf), 2),     
+    // \buf,  ~samps,  
+    \bufnum,  Pkey(\buf), 
+    // \delta,  Pkey(\dur)*2/Pxrand([  8,  4,  2], inf), 
+    // \dur, Pseq([1/3,  1/6!2,  Pn(Rest(),  1)].flat,  inf), 
+    \rate,  1.25,  
+    \dur, Pbjorklund2(5,  8,  inf),  
+    \amp, Pwhite(0.45,  0.2,  inf),  
+    \out,  ~phh1.inbus.index, 
   );
 ));
 ~lpBind.([1,  3], \bashat);
@@ -93,4 +100,8 @@ Pdef(\bashat).stop;
 
 ~bhat_del = ~ensurePostSend.(~phh1,  ~r2,  1);
 ~bhat_gin = ~ensurePostSend.(~phh1,  ~r4,  1);
-
+~bhat_gin.tryPerform(\free);
+~lumiPlay.(\bass8, out: ~busOf.(~t3), args: [\amp,  0.1]);
+~bass8_t = ~ensurePostSend.(~t3,  ~r4,  1);
+~lumiPlay.(\pBs, out: ~busOf.(~t3), args: [\bufnum, ~sTree[\bass_drums].values[4],  \amp, 0.5]);
+~lumiStop.();
