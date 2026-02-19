@@ -52,3 +52,12 @@ Pdef(\roll_fx_ctl).play;
 )
 ~r4_fx_rev = ~r4.newPostSend(~r1,  1);
 
+Pdef(\ms20).play;
+Pdef(\ms20).stop;
+
+~ms20_rev = ~ensurePostSend.(~t2,  ~r1,  1);
+~ms20_rev.tryPerform(\free);
+~ms20_del = ~ensurePostSend.(~t2,  ~r2,  1);
+~ms20_del.tryPerform(\free);
+~ms20_t = ~ensurePostSend.(~t2, ~r4,  1);
+~ms20_t.tryPerform(\free);

@@ -1,6 +1,6 @@
 
 (
-~sBash = ~sTree[\bass_drums].values[1..6];
+~sBash = ~sTree[\bass_drums].values[0..4];
 Pdef(\bash, ~pBuf.(
   Pbindef(\bash_pbd,  
   // \buf, Prand(~samps, inf),  
@@ -8,10 +8,10 @@ Pdef(\bash, ~pBuf.(
   \bufnum,  Pkey(\buf), 
   \scale, Scale.minor,  
   // \delta,  Pkey(\dur)*2/Pxrand([4,  3,  2], inf), 
-  \octave,  Pseq([4,  5], inf),   
+  // \octave,  pseq([4,  5], inf),  /*  */ 
   \degree,  Pseq([0,  1,  \,  3, \,  0], inf), 
   // \dur, Pbjorklund(5,  8,  inf)/2,  
-  \dur, Pseq([1/4!2, 1/2].flat, inf),    
+  \dur, Pseq([1/4!2, 1/2!3,  ].flat, inf),    
   \amp, 0.7,  
   \out,  ~pbd1.inbus.index, 
   )
@@ -68,4 +68,26 @@ Pdef(\roll,
   );
 );
 ~lpBind.([1,  3], \roll,  30);
+
+//--------------------------------------------------
+// MS-20 style bass
+Pdef(\ms20,
+    Pbind(
+        \instrument, \ms20Bass,
+        \scale, Scale.minor,
+        // \degree, Pseq([0, 0, 3, 5,  Pn(Rest(), 8)], inf),
+        \degree, Place([0, [2, 1, 0, -4]], inf),
+        \octave, Pstep(Pseq([3, 4,  ],  inf), 7),  
+        \amp, 0.7,  
+        \dur, Pseq([1/4!7,  ].flat,  inf), 
+        // \legato, 0.6,
+        \hpfCutoff, 80, 
+        \lpfCutoff, 800,  
+        \lpfRes, Pwhite(0.4,  0.9, inf),  
+        \filterEnvAmt, Pseg([100, 2000,  100],  [2, 2],  \step, inf), 
+        \ringMod, 0.2,  
+        \out,  ~t2.inbus.index, 
+    )
+);
+~lpBind.([1,  4], \ms20,  40);
 )
