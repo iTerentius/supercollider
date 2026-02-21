@@ -8,4 +8,5 @@ TempoClock.default.tempo = 110/60;
 "fx_def.scd".loadRelative;
 "voice_def.scd".loadRelative;
 "voice_pat.scd".loadRelative;
+"pdefnA.scd".loadRelative;
 )
