@@ -37,15 +37,6 @@
   sig * wet * amp * 8;
 };
 
-Pdef(\roll_fx_ctl,  Pbindef(\roll_fx_ctl_pbd, 
-  \type,  \set, 
-  \id,   Pfunc({~roll_fx1.nodeID }),  
-  \args, #[\mod1, \amp, \dur],  
-  \amp, 0.9,  
-  // \mod1,  Pseq([1, 50], inf), 
-  // \delta, 1/32, 
-  \mod1,  Pseg([1,  50,  1], [Pkey(\dur) * 8, Pkey(\dur) * 2], \sin, inf), 
-  // \dur, Pbjorklund2(5,  8,  inf)/4, 
-  \dur, 1/8, 
-));
+~r4_fx = ~r4.playfx(~glitch);
+
 )

@@ -6,7 +6,7 @@ TempoClock.default.tempo = 110/60;
 ~loadSamps.("~/Music/supercollider/_samples/Neutron_12/");
 ~loadSamps.("~/Music/supercollider/_samples/_mono/jttcot/");
 "fx_def.scd".loadRelative;
+"pdefnA.scd".loadRelative;
 "voice_def.scd".loadRelative;
 "voice_pat.scd".loadRelative;
-"pdefnA.scd".loadRelative;
 )

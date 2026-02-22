@@ -3,6 +3,8 @@
 Pdef(\bash).play;
 Pdef(\bash).stop;
 
+~setR1.set(\room, 1.8,  \damp,  0.5,  \mix, 1.5);
+~setR2.set(\maxdt,  0.7,  \dt, 1.1,  \dec, 1.1);
 ~bash_rev = ~ensurePostSend.(~pbd1, ~r1, 0.7);
 ~bash_rev.tryPerform(\free);
 ~bash_rev.level_(1);
@@ -51,6 +53,7 @@ Pdef(\roll_fx_ctl).play;
 ~r4_fx = ~r4.playfx(~glitch);
 )
 ~r4_fx_rev = ~r4.newPostSend(~r1,  1);
+~r4_fx_rev.tryPerform(\free);
 
 Pdef(\ms20).play;
 Pdef(\ms20).stop;
