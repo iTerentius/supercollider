@@ -11,29 +11,39 @@ Pdefn(\ntron_scale, Scale.minor);
 ///////////////////////////////////////////////////////////////
 // OCTAVE
 Pdefn(\ntron_oct_0, 4);              // 0..8
+Pdefn(\ntron_oct_1, Pseq([3, 4,  ], 1)); 
 Pdefn(\ntron_octs, Pseq([
-  Pn(Pdefn(\ntron_oct_0),  4),
+  // Pn(Pdefn(\ntron_oct_0),  4),
+  Pn(Pdefn(\ntron_oct_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////
 // DEGREE
 Pdefn(\ntron_deg_0, 0);
+Pdefn(\ntron_deg_1, Prand((0..7),  1));
 Pdefn(\ntron_degs, Pseq([
-  Pn(Pdefn(\ntron_deg_0),  4),
+  // Pn(Pdefn(\ntron_deg_0),  4),
+  Pn(Pdefn(\ntron_deg_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////
 // DUR
 Pdefn(\ntron_dur_0, 1);
+Pdefn(\ntron_dur_1, Pseq([1/4!2, 1/2].flat, 1));
+Pdefn(\ntron_dur_2, Pbjorklund(5,  8,  1)/2);
 Pdefn(\ntron_durs, Pseq([
-  Pn(Pdefn(\ntron_dur_0),  4),
+  // Pn(Pdefn(\ntron_dur_0),  4),
+  Pn(Pdefn(\ntron_dur_1),  4),
+  // Pn(Pdefn(\ntron_dur_2),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////
 // STRETCH
 Pdefn(\ntron_str_0, 1);
+Pdefn(\ntron_str_1, Pseq([1!3, 2,  1/2!2].flat, 1));
 Pdefn(\ntron_strs, Pseq([
-  Pn(Pdefn(\ntron_str_0),  4),
+  // Pn(Pdefn(\ntron_str_0),  4),
+  Pn(Pdefn(\ntron_str_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////
@@ -53,13 +63,17 @@ Pdefn(\ntron_amps, Pseq([
 ///////////////////////////////////////////////////////////////
 // OSC 1
 Pdefn(\ntron_osc1Blend_0, 0.0);      // 0=saw  1=pulse
+Pdefn(\ntron_osc1Blend_1, Pstep(Pseq([0,1],  1), 1));      // 0=saw  1=pulse
 Pdefn(\ntron_osc1Blend, Pseq([
   Pn(Pdefn(\ntron_osc1Blend_0),  4),
+  // Pn(Pdefn(\ntron_osc1Blend_1),  4),
 ],  1));
 
 Pdefn(\ntron_osc1PW_0, 0.5);         // 0.01..0.99
+Pdefn(\ntron_osc1PW_1, Pseg([0.1, 0.9,  0.1], [1, 2], \sin, inf));         // 0.01..0.99
 Pdefn(\ntron_osc1PW, Pseq([
-  Pn(Pdefn(\ntron_osc1PW_0),  4),
+  // Pn(Pdefn(\ntron_osc1PW_0),  4),
+  Pn(Pdefn(\ntron_osc1PW_1),  4),
 ],  1));
 
 Pdefn(\ntron_osc1Oct_0, 0);          // -3..+3
@@ -166,8 +180,10 @@ Pdefn(\ntron_lfoToFilt, Pseq([
 ///////////////////////////////////////////////////////////////
 // FILTER
 Pdefn(\ntron_cutoff_0, 2000);        // 20..20000 Hz
+Pdefn(\ntron_cutoff_0, Pseg([500, 100,  2000],  [1, 4],  \sin, 1)); 
 Pdefn(\ntron_cutoff, Pseq([
   Pn(Pdefn(\ntron_cutoff_0),  4),
+  Pn(Pdefn(\ntron_cutoff_1),  4),
 ],  1));
 
 Pdefn(\ntron_res_0, 0.2);            // 0..1  (self-osc above ~0.88)
@@ -176,8 +192,10 @@ Pdefn(\ntron_res, Pseq([
 ],  1));
 
 Pdefn(\ntron_filterMode_0, 0);       // 0=LP  1=BP  2=HP
+Pdefn(\ntron_filterMode_1, Pseq((0..2), inf));
 Pdefn(\ntron_filterMode, Pseq([
   Pn(Pdefn(\ntron_filterMode_0),  4),
+  Pn(Pdefn(\ntron_filterMode_1),  4),
 ],  1));
 
 Pdefn(\ntron_keyTrack_0, 0.0);       // 0..1

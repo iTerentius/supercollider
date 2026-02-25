@@ -1,22 +1,22 @@
 
 (
-~r3_fx.free;
-~g1env = Env([0, 1, 0], [0.05, 1.0], [0, -4]);
-~g1envbuf = Buffer.sendCollection(s, ~g1env.discretize, 1);
-// ~r3_fx = ~r3.playfx(Ndef(\gin1));
-~r3_fx = ~r3.playfx({ |in, gate = 1, pan=0.0, amp = 0.3, envbuf |
-  var sig, env, wet;
-  // use mouse x to control panning
-  env = EnvGen.kr(
-    Env([0, 1, 0], [1, 1], \sin, 1),
-    gate,
-    levelScale: amp,
-    doneAction: Done.freeSelf);
-
-  sig = In.ar(~r3.inbus.index, 2);
-  wet = GrainIn.ar(2, Impulse.kr(200), LFTri.kr(2), Mix.ar(sig), pan, ~g1envbuf); 
-  wet * amp;
-});
+// ~r3_fx.free;
+// ~g1env = Env([0, 1, 0], [0.05, 1.0], [0, -4]);
+// ~g1envbuf = Buffer.sendCollection(s, ~g1env.discretize, 1);
+// // ~r3_fx = ~r3.playfx(Ndef(\gin1));
+// ~r3_fx = ~r3.playfx({ |in, gate = 1, pan=0.0, amp = 0.3, envbuf |
+//   var sig, env, wet;
+//   // use mouse x to control panning
+//   env = EnvGen.kr(
+//     Env([0, 1, 0], [1, 1], \sin, 1),
+//     gate,
+//     levelScale: amp,
+//     doneAction: Done.freeSelf);
+//
+//   sig = In.ar(~r3.inbus.index, 2);
+//   wet = GrainIn.ar(2, Impulse.kr(200), LFTri.kr(2), Mix.ar(sig), pan, ~g1envbuf); 
+//   wet * amp;
+// });
 
 // FX Functions
 ~glitch = { |in|
@@ -37,6 +37,15 @@
   sig * wet * amp * 8;
 };
 
-~r4_fx = ~r4.playfx(~glitch);
+// ~r4_fx = ~r4.playfx(~glitch);
 
+{
+    s.sync;
+    ~r3_fx = Synth(\biscuit, [
+        \in,      ~r3.inbus.index,
+        \out,     ~r3.inbus.index,
+        \naked,   0.0,
+        \dressed, 1.0
+    ], ~r3.effectgroup);
+}.fork;
 )
