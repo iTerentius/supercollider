@@ -15,7 +15,7 @@ Pdef(\bash).stop;
 ~bash_b.tryPerform(\free);
 ~bash_b.level_(1);
 Pdef(\bCtl).play;
-~bash_b.level_(0.1);
+~bash_b.level_(1);
 ~bash_t = ~ensurePostSend.(~pbd1, ~r4,  1);
 ~bash_t.tryPerform(\free);
 
@@ -59,6 +59,8 @@ Pdef(\roll_fx_ctl).play;
 
 Pdef(\neutron).play;
 Pdef(\neutron).stop;
+Pdef(\modelD).play;
+Pdef(\modelD).stop;
 
 Pdef(\ms20).play;
 Pdef(\ms20).stop;

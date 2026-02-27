@@ -9,7 +9,7 @@ TempoClock.default.tempo = 110/60;
 "pdefnA.scd".loadRelative;
 "pdefn_neutron.scd".loadRelative;
 "pdefn_model_d.scd".loadRelative;
-"pdefn_buscuit.scd".loadRelative;
+"pdefn_model_d.scd".loadRelative;
 "fx_buscuit-pat.scd".loadRelative;
 "voice_def.scd".loadRelative;
 "voice_pat.scd".loadRelative;

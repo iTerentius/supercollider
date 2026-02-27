@@ -32,7 +32,7 @@ Pdefn(\ntron_dur_0, 1);
 Pdefn(\ntron_dur_1, Pseq([1/4!2, 1/2].flat, 1));
 Pdefn(\ntron_dur_2, Pbjorklund(5,  8,  1)/2);
 Pdefn(\ntron_durs, Pseq([
-  // Pn(Pdefn(\ntron_dur_0),  4),
+  Pn(Pdefn(\ntron_dur_0),  4),
   Pn(Pdefn(\ntron_dur_1),  4),
   // Pn(Pdefn(\ntron_dur_2),  4),
 ],  1));
@@ -42,8 +42,8 @@ Pdefn(\ntron_durs, Pseq([
 Pdefn(\ntron_str_0, 1);
 Pdefn(\ntron_str_1, Pseq([1!3, 2,  1/2!2].flat, 1));
 Pdefn(\ntron_strs, Pseq([
-  // Pn(Pdefn(\ntron_str_0),  4),
-  Pn(Pdefn(\ntron_str_1),  4),
+  Pn(Pdefn(\ntron_str_0),  4),
+  // Pn(Pdefn(\ntron_str_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////

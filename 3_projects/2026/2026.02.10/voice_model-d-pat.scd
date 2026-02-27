@@ -64,6 +64,6 @@ Pdef(\modelD, Pbind(
     \modToFilter,  Pn(Pdefn(\mD_modToFilter), inf),
     \modSource,    Pn(Pdefn(\mD_modSource),  inf),
 ));
+~lpBind.([1,  7], \modelD,  12);
 )
 
-Pdef(\modelD).stop;
