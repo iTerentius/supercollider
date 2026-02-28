@@ -1,28 +1,69 @@
 
 (
 Pdefn(\mD_deg_0, 0);
-Pdefn(\mD_deg_1, Pslide([-4,  (0..7)], 3,  4,  1));
+Pdefn(\mD_deg_1, Pslide([-4,  Pxrand((0..-7),  1)], 3,  4,  0));
 Pdefn(\mD_deg_2, Pslide((0..-3), 2, 3,  1, 0));
 Pdefn(\mD_deg_3, Pslide((-4..7), 2, 3,  1, 0));
 Pdefn(\mD_degs, Pseq([
-  // Pn(Pdefn(\mD_deg_0),  4),
-  // Pn(Pdefn(\mD_deg_1),  1),
-  Pn(Pdefn(\mD_deg_2),  8),
-  Pn(Rest(),  1/2),  
-  Pn(Pdefn(\mD_deg_3),  8),
-  Pn(Rest(),  1/2),  
+  Pseq([
+    Pn(Pdefn(\mD_deg_0),  1),
+    // Pn(Pdefn(\mD_deg_1),  1),
+    Pn(Pdefn(\mD_deg_2),  1),
+    // Pn(Rest(),  1),  
+    // Pn(Pdefn(\mD_deg_3),  1),
+  ],  1), 
+  Pseq([
+    // Pn(Pdefn(\mD_deg_0),  1),
+    Pn(Pdefn(\mD_deg_1),  2),
+    // Pn(Pdefn(\mD_deg_2),  1),
+    // Pn(Rest(),  1),  
+    Pn(Pdefn(\mD_deg_3),  2),
+  ],  1), 
 ],  1));
 )
 (
 Pdef(\test, Pbind(
-  \instrument,  \default, 
-  \dur,  1/4, 
+  \instrument,  \neutron, 
+  \octave,  4,  
+  // \delta, Pkey(\dur)/2,  
+  \amp, 0.6,  
+  \dur,  Pseq([1/8!4, 1/4!4, 1,  1/2!4].flat, inf),  
   \degree,  Pn(Pdefn(\mD_degs), inf), 
+  \osc1Blend, 0,  
+  // \osc1PW,  Pseg([0.1,  1.0], [4],  \lin, inf),    
+  // \osc1Oct, Pstep(Pseq([0,  1,  ], inf), 4),  
+  \osc2Blend, 1,  
+  // \osc2PW,  Pseg([0.1,  1.0,  0.1], [2, 4],  \lin, inf),    
+  \osc2Oct, -1,  
+  \osc2Track, 1,  
+  // \lfoShape,  Pstep(Pxrand((2..4),  inf), 8),  
+  \lfoShape,  4,  
+  \lfoRate, Pseg([50.0,  5.0],  [16], \cub, inf), 
+  \lfoToPW2, 1,  
+  \lfoToFilt, 0.7,  
+  \cutoff,     Pseg([800, 1500, 50],  [8, 16],  \sin, inf), 
+  // \drive,  0.5, 
+      // --- delay ---
+      \delTime,    Pseg([0.0, 0.3], [16], \sin, inf),
+      \delFB,      0.5,
+      \delMix,     0.5,
+
+      // --- cv / patch bay ---
+      \cvOsc1,     0.0,
+      \cvOsc2,     1.0,
+      \cvFilt,     0.0,
+      \cvPW1,      0.0,
+      \cvPW2,      0.0,
+      \cvAmp,      1.0,
+  \out, ~t2.inbus.index,  
 ));
 )
 
 Pdef(\test).play;
 Pdef(\test).stop;
+~test_rev = ~ensurePostSend.(~t2, ~r1,  0.8);
+~test_rev.tryPerform(\tree);
+~test_rev = ~ensurePostSend.(~t1, ~r3,  0.8);
 //
 //  Pdef(\neutron, Pmono(                                                   
 //       \instrument, \neutron,
