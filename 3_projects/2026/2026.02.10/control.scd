@@ -1,3 +1,4 @@
+TempoClock.default.tempo = 90/60;
 "start.scd".loadRelative;
 // Instruments
 Pdef(\bash).play;
@@ -25,9 +26,14 @@ Pdef(\bCtl).play;
 Pdef(\bashat).play;
 Pdef(\bashat).stop;
 
+~bhat_rev = ~ensurePostSend.(~phh1,  ~r1,  1);
+~bhat_rev.tryPerform(\free);
 ~bhat_del = ~ensurePostSend.(~phh1,  ~r2,  1);
-~bhat_gin = ~ensurePostSend.(~phh1,  ~r4,  1);
-~bhat_gin.tryPerform(\free);
+~bhat_del.tryPerform(\free);
+~bhat_b = ~ensurePostSend.(~phh1,  ~r3,  1);
+~bhat_b.tryPerform(\free);
+~bhat_t = ~ensurePostSend.(~phh1,  ~r4,  1);
+~bhat_t.tryPerform(\free);
 
 ~lumi_t = ~ensurePostSend.(~t3,  ~r4,  1);
 ~lumiStop.();
@@ -49,8 +55,10 @@ Pdef(\roll_fx_ctl).play;
 ~roll_glitch.tryPerform(\free);
 
 // FX
-~r3_fx.free;
+~r3_fx_rev = ~r3.newPostSend(~r1,  0.5);
+~r3_fx_rev.tryPerform(\free);
 ~r3.level_(1);
+~r1_fx_r3 = ~r1.newPostSend(~r3,  0.2);
 
 
 ~r4_fx.free;
@@ -62,6 +70,12 @@ Pdef(\neutron).stop;
 
 Pdef(\modelD).play;
 Pdef(\modelD).stop;
+~mD_rev = ~ensurePostSend.(~t3,  ~r1,  1);
+~mD_rev.tryPerform(\free);
+~mD_del = ~ensurePostSend.(~t3,  ~r2,  1);
+~mD_del.tryPerform(\free);
+~mD_t = ~ensurePostSend.(~t3, ~r3,  1);
+~mD_t.tryPerform(\free);
 
 Pdef(\ms20).play;
 Pdef(\ms20).stop;

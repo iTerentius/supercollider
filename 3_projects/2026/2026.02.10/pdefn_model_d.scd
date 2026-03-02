@@ -20,25 +20,27 @@ Pdefn(\mD_octs, Pseq([
 ///////////////////////////////////////////////////////////////
 // DEGREE
 Pdefn(\mD_deg_0, 0);
-Pdefn(\mD_deg_1, Pslide([-4,  (0..7)], 3,  4,  1));
+Pdefn(\mD_deg_1, Pslide([-3,  [7,  2]], 8,  1,  0, 1));
 Pdefn(\mD_deg_2, Pslide((0..-3), 1, 3,  1, 0));
 Pdefn(\mD_deg_3, Pslide((-4..7), 2, 3,  1, 0));
 Pdefn(\mD_degs, Pseq([
   // Pn(Pdefn(\mD_deg_0),  4),
-  // Pn(Pdefn(\mD_deg_1),  1),
-  Pn(Pdefn(\mD_deg_2),  8),
+  Pn(Pdefn(\mD_deg_1),  1),
+  Pn(Pdefn(\mD_deg_2),  4),
   Pn(Rest(),  1/2),  
-  Pn(Pdefn(\mD_deg_3),  8),
+  Pn(Pdefn(\mD_deg_3),  4),
   Pn(Rest(),  1/2),  
 ],  1));
 
 ///////////////////////////////////////////////////////////////
 // DUR
 Pdefn(\mD_dur_0, 1);
-Pdefn(\mD_dur_1, Pseq([1/4!4, Rest(0.25), 1/4!2,  Rest(0.25)].flat, 1));
+Pdefn(\mD_dur_1, Pseq([1/4!3, Rest(0.25), 1/4!2,  Rest(0.25)].flat, 1));
 Pdefn(\mD_durs, Pseq([
   // Pn(Pdefn(\mD_dur_0),  4),
   Pn(Pdefn(\mD_dur_1),  4),
+  // Pn(Pdefn(\bash_durs),  4),
+  Pn(Rest(),  4), 
 ],  1));
 
 ///////////////////////////////////////////////////////////////
@@ -54,12 +56,12 @@ Pdefn(\mD_leg_0, 0.8);            // 0..2+
 Pdefn(\mD_leg_1, Pwhite(0.6,  1.0, 1));            // 0..2+
 Pdefn(\mD_legs, Pseq([
   Pn(Pdefn(\mD_leg_0),  4),
-  // Pn(Pdefn(\mD_leg_1),  4),
+  Pn(Pdefn(\mD_leg_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////
 // AMP
-Pdefn(\mD_amp_0, 0.7);            // 0..1
+Pdefn(\mD_amp_0, 1.0);            // 0..1
 Pdefn(\mD_amp_1, 0.5);            // 0..1
 Pdefn(\mD_amps, Pseq([
   Pn(Pdefn(\mD_amp_0),  4),
@@ -72,19 +74,21 @@ Pdefn(\mD_glide_0, 0.0);          // 0..10 sec  portamento
 Pdefn(\mD_glide_1, 0.5);          // 0..10 sec  portamento
 Pdefn(\mD_glides, Pseq([
   Pn(Pdefn(\mD_glide_0),  4),
-  Pn(Pdefn(\mD_glide_1),  4),
+  // Pn(Pdefn(\mD_glide_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////
 // OSC 1
-Pdefn(\mD_osc1Wave_0, 5);         // 0=tri 1=inv-saw 2=saw 3=sq 4=wide 5=narrow
+Pdefn(\mD_osc1Wave_0, 3);         // 0=tri 1=inv-saw 2=saw 3=sq 4=wide 5=narrow
 Pdefn(\mD_osc1Wave, Pseq([
   Pn(Pdefn(\mD_osc1Wave_0),  4),
 ],  1));
 
 Pdefn(\mD_osc1Oct_0, 0);          // -3..+3
+Pdefn(\mD_osc1Oct_0, Pseq((0..2), 1));          // -3..+3
 Pdefn(\mD_osc1Oct, Pseq([
   Pn(Pdefn(\mD_osc1Oct_0),  4),
+  // Pn(Pdefn(\mD_osc1Oct_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////
@@ -95,8 +99,10 @@ Pdefn(\mD_osc2Wave, Pseq([
 ],  1));
 
 Pdefn(\mD_osc2Oct_0, 0);          // -3..+3
+Pdefn(\mD_osc2Oct_0, Pseq((0..2), 1));          // -3..+3
 Pdefn(\mD_osc2Oct, Pseq([
-  Pn(Pdefn(\mD_osc2Oct_0),  4),
+  // Pn(Pdefn(\mD_osc2Oct_0),  4),
+  Pn(Pdefn(\mD_osc2Oct_1),  4),
 ],  1));
 
 Pdefn(\mD_osc2Fine_0, 0.0);       // ±7 semitones  (hardware fine-tune range)
@@ -150,12 +156,12 @@ Pdefn(\mD_osc3Lvl, Pseq([
   Pn(Pdefn(\mD_osc3Lvl_0),  4),
 ],  1));
 
-Pdefn(\mD_noiseLvl_0, 0.0);       // 0..1
+Pdefn(\mD_noiseLvl_0, 0.5);       // 0..1
 Pdefn(\mD_noiseLvl, Pseq([
   Pn(Pdefn(\mD_noiseLvl_0),  4),
 ],  1));
 
-Pdefn(\mD_noiseType_0, j);         // 0=white  1=pink
+Pdefn(\mD_noiseType_0, 1);         // 0=white  1=pink
 Pdefn(\mD_noiseType, Pseq([
   Pn(Pdefn(\mD_noiseType_0),  4),
 ],  1));
@@ -163,15 +169,17 @@ Pdefn(\mD_noiseType, Pseq([
 ///////////////////////////////////////////////////////////////
 // FILTER
 Pdefn(\mD_cutoff_0, 1000);         // 20..20000 Hz
-Pdefn(\mD_cutoff_1, Pseg([1500, 200], [4],  \sin, 1));         // 20..20000 Hz
+Pdefn(\mD_cutoff_1, Pseg([400, 2000, 400], [8,  16],  \sin, 1));         // 20..20000 Hz
 Pdefn(\mD_cutoff, Pseq([
   // Pn(Pdefn(\mD_cutoff_0),  4),
   Pn(Pdefn(\mD_cutoff_1),  4),
 ],  1));
 
 Pdefn(\mD_emphasis_0, 0.2);        // 0..1  (self-osc above ~0.88)
+Pdefn(\mD_emphasis_1, Pseg([0.2,  0.8,  0.2], [8, 16], \sin, 1));        // 0..1  (self-osc above ~0.88)
 Pdefn(\mD_emphasis, Pseq([
-  Pn(Pdefn(\mD_emphasis_0),  4),
+  // Pn(Pdefn(\mD_emphasis_0),  4),
+  Pn(Pdefn(\mD_emphasis_1),  4),
 ],  1));
 
 Pdefn(\mD_kbdAmt_0, 0.5);          // 0..1
@@ -182,7 +190,7 @@ Pdefn(\mD_kbdAmt, Pseq([
 Pdefn(\mD_contourAmt_0, 0.6);      // 0..1  (filter EG depth, up to +4 oct)
 Pdefn(\mD_contourAmt_1, Pbrown(0.1, 1.0,  0.125,  1));      // 0..1  (filter EG depth, up to +4 oct)
 Pdefn(\mD_contourAmt, Pseq([
-  // Pn(Pdefn(\mD_contourAmt_0),  4),
+  Pn(Pdefn(\mD_contourAmt_0),  4),
   Pn(Pdefn(\mD_contourAmt_1),  4),
 ],  1));
 
@@ -215,7 +223,7 @@ Pdefn(\mD_aAtk, Pseq([
   Pn(Pdefn(\mD_aAtk_0),  4),
 ],  1));
 
-Pdefn(\mD_aDcy_0, 0.3);            // 0.001..10 sec
+Pdefn(\mD_aDcy_0, 0.4);            // 0.001..10 sec
 Pdefn(\mD_aDcy, Pseq([
   Pn(Pdefn(\mD_aDcy_0),  4),
 ],  1));

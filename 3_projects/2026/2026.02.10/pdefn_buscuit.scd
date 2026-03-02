@@ -15,6 +15,7 @@ Pdefn(\bsct_durs, Pseq([
 ///////////////////////////////////////////////////////////////
 // INPUT
 Pdefn(\bsct_drive_0, 1.0);          // 1.0..5.6  (+0 to +15dB)
+Pdefn(\bsct_drive_1, 1.0);          // 1.0..5.6  (+0 to +15dB)
 Pdefn(\bsct_drive, Pseq([
   Pn(Pdefn(\bsct_drive_0),  4),
 ],  1));

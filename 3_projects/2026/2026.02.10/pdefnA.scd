@@ -7,7 +7,7 @@ Pdefn(\bash_scale,  Scale.minor);
 ~sBash = ~sTree[\bass_drums].values;
 Pdefn(\bash_buf_0,  Pseq(~sBash,  1));
 Pdefn(\bash_buf_1,  Ppatlace([
-  Pseq(~sBash[[7]], 2), 
+  Pseq(~sBash[[1]], 2), 
   Pseq(~sBash[[1, 2, 4]], 1), 
   Pseq(~sBash[[0, 10, 12]], 1), 
 ],  1));
@@ -25,32 +25,36 @@ Pdefn(\bash_octs, Pseq([
 
 Pdefn(\bash_amp_0,  0.7);
 Pdefn(\bash_amp_1,  Pwhite(0.5, 0.7,  1));
+Pdefn(\bash_amp_2,  Pseq([0.5!3, 0.8].flat,  1));
 Pdefn(\bash_amps, Pseq([
-  Pn(Pdefn(\bash_amp_0),  4), 
+  // Pn(Pdefn(\bash_amp_0),  4), 
   // Pn(Pdefn(\bash_amp_1),  4), 
+  Pn(Pdefn(\bash_amp_2),  4), 
 ],  1));
 
 Pdefn(\bash_deg_0,  0);
 Pdefn(\bash_deg_1,  Pseq([0,  1,  \,  3, \, 0], 1));
 Pdefn(\bash_degs, Pseq([
   Pn(Pdefn(\bash_deg_0), 4),
-  Pn(Pdefn(\bash_deg_1), 4),
+  // Pn(Pdefn(\bash_deg_1), 4),
 ],  1));
 
 Pdefn(\bash_dur_0,  1);
 Pdefn(\bash_dur_1,  Pseq([1/4!2, 1/2!3,  ].flat, 1));    
 Pdefn(\bash_dur_2,  Pbjorklund(5,  8,  1)/2);  
+Pdefn(\bash_dur_3,  Pseq([1/4!2,  Rest(1/4), 1/4 ].flat,  1));
 Pdefn(\bash_durs, Pseq([
-  // Pn(Pdefn(\bash_dur_0), 4),
+  Pn(Pdefn(\bash_dur_0), 4),
   // Pn(Pdefn(\bash_dur_1), 4),
-  Pn(Pdefn(\bash_dur_2), 4),
+  // Pn(Pdefn(\bash_dur_2), 4),
+  Pn(Pdefn(\bash_dur_3), 4),
 ],  1));
 
 Pdefn(\bash_str_0,  1);    
 Pdefn(\bash_str_1,  Pstep(Pseq([1!4,  2!2].flat, 1)), 4);  
 Pdefn(\bash_strs, Pseq([
-  // Pn(Pdefn(\bash_str_0), 4),
-  Pn(Pdefn(\bash_str_1), 4),
+  Pn(Pdefn(\bash_str_0), 4),
+  // Pn(Pdefn(\bash_str_1), 4),
 ],  1));
 ///////////////////////////////////////////////////////////////
 // BASHAT
@@ -72,35 +76,38 @@ Pdefn(\bashat_amps, Pseq([
 ],  1));
 
 ~sBashat = ~sTree[\hats].values;
-Pdefn(\bashat_buf_0,  Pstep(Pseq(~sBashat,  1), 2));
+Pdefn(\bashat_buf_0,  Pstep(Pseq(~sBashat[[1]],  1), 2));
 Pdefn(\bashat_buf_1,  Pstep(Pseq(~sBashat[[1, 1, 0]],  1),  4));
 Pdefn(\bashat_bufs, Pseq([
-  // Pn(Pdefn(\bashat_buf_0),  4), 
-  Pn(Pdefn(\bashat_buf_1),  4), 
+  Pn(Pdefn(\bashat_buf_0),  4), 
+  // Pn(Pdefn(\bashat_buf_1),  4), 
 ],  1));
 
 Pdefn(\bashat_deg_0,  0);
-Pdefn(\bashat_deg_1,  Place([0,  Pxrand([1,  2,  4],  1)],  1));  
+Pdefn(\bashat_deg_1,  Pseq([-1, 0, -1,  [1, 0] ],  inf));  
 Pdefn(\bashat_degs, Pseq([
-  Pn(Pdefn(\bashat_deg_0), 4),
+  // Pn(Pdefn(\bashat_deg_0), 4),
   Pn(Pdefn(\bashat_deg_1), 4),
 ],  1));
 
-Pdefn(\bashat_dur_0,  1);
+Pdefn(\bashat_dur_0,  1/2);
 Pdefn(\bashat_dur_1,  Pseq([1/2,  1/4!2,  1].flat,  1)); 
-Pdefn(\bashat_dur_2,  Pbjorklund2(5,  8,  1)/4);  
+Pdefn(\bashat_dur_2,  Pbjorklund(3,  8,  1)/4);  
+Pdefn(\bashat_dur_3,  Pseq([Pn(Rest(),  1/2),  1/2],  1)); 
 Pdefn(\bashat_durs, Pseq([
-  // Pn(Pdefn(\bashat_dur_0), 4),
-  // Pn(Pdefn(\bashat_dur_1), 4),
-  Pn(Pdefn(\bashat_dur_2), 4),
+  Pn(Pdefn(\bashat_dur_0), 24),
+  Pn(Pdefn(\bashat_dur_1), 4),
+  Pn(Pdefn(\bashat_dur_2), 2),
+  Pn(Pdefn(\bashat_dur_3), 4),
   // [0], 
 ],  1));
 
 Pdefn(\bashat_str_0,  1);    
-Pdefn(\bashat_str_1,  Pseq([1/4,  1/2,  1,  4], 1));  
+Pdefn(\bashat_str_1,  Pseq([Rest(1/4),  1/4,  1/2,  1,  3].flat, 1));  
+Pdefn(\bashat_str_1,  Pseq([Rest(1/4),  1/4, ].flat, 1));  
 Pdefn(\bashat_strs, Pseq([
   Pn(Pdefn(\bashat_str_0), 4),
-  // Pn(Pdefn(\bashat_str_1), 4),
+  // Pn(Pdefn(\bashat_str_1), 1),
 ],  1));
 
 ///////////////////////////////////////////////////////////////

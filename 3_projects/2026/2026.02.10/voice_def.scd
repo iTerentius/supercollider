@@ -53,3 +53,41 @@ SynthDef(\thingA, {|freq=110, amp=0.1, gate=1, mod1=1, mod2=1, out=0 |
 // ~thingA.free;
 
 // ~thingA_rev = ~ensurePostSent.(~t2, ~r1,  1);
+
+// (
+// Pdefn(\deg_def, 0);
+// Pdefn(\deg_clutch,  Pclutch(Pxrand((0..7),  1), Pseq([0!3,  1].flat,  1))); 
+// Pdefn(\deg_dup,  Pdup(Pwhite(1,  4, 1),  Pxrand((0..7),  1))); 
+// Pdefn(\deg_sub,  Psubdivide(8,  Pxrand((0..7),  inf))); 
+// // Pdefn(\deg_sync,  Psync(Pseq([0,  2,  4], 1), 1,  8), 1);
+// Pdefn(\deg_seg, Pseg(Pseq([0, 2,  4,  7],  inf), [8, 16]/4,  \sin));
+// Pdefn(\degs,  Pseq([
+//   Pn(Pdefn(\deg_def),  4),  
+//   Pn(Pdefn(\deg_clutch),  4),
+//   Pn(Pdefn(\deg_dup),  4),
+//   Pn(Pdefn(\deg_sub),  4),
+//   Pn(Pdefn(\deg_seg),  4),
+// ],  1));
+//
+// Pdefn(\dur_def, 1/2);
+// Pdefn(\dur_clutch,  Pclutch(Prand([1/8,  1/4,  1/2], inf), Pseq([0!3,  1].flat,  inf)));  
+// Pdefn(\dur_dup, Pdup(Pseq([8, 8, 2, 4,  2], 1), Pseq([1/16, 1/8, Rest(), 1/4,  1/2],  inf)));
+// Pdefn(\durs,  Pseq([
+//   Pn(Pdefn(\dur_def),  4),
+//   Pn(Pdefn(\dur_clutch),  4),
+//   Pn(Pdefn(\dur_dup),  4),
+// ],  1));
+//
+// Pdef(\filter_pats,  Pbind(
+//   \instrument,  \modelD,  
+//   \out,  ~t3.inbus.index, 
+//   \octave,  4,  
+//   \degree, Pn(Pdefn(\degs), inf), 
+//   \dur, Pn(Pdefn(\durs),  inf),
+// ));
+// )
+//
+// Pdef(\filter_pats).play;
+// Pdef(\filter_pats).stop;
+//
+// Pbindf
