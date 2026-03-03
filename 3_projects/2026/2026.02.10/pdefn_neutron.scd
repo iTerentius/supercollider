@@ -1,4 +1,5 @@
 (
+"voice_neutron-pat.scd".loadRelative;
 ///////////////////////////////////////////////////////////////
 // NEUTRON — phrase parameter banks
 // _0 = sane default (use to reset). Add _1, _2 for variations.

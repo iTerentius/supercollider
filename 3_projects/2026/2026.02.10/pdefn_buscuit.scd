@@ -1,4 +1,5 @@
 (
+"fx_buscuit-pat.scd".loadRelative;
 ///////////////////////////////////////////////////////////////
 // OTO BISCUIT — phrase parameter banks
 // _0 = sane default (use to reset). Add _1, _2 for variations.

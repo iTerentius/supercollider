@@ -90,4 +90,3 @@ SynthDef(\thingA, {|freq=110, amp=0.1, gate=1, mod1=1, mod2=1, out=0 |
 // Pdef(\filter_pats).play;
 // Pdef(\filter_pats).stop;
 //
-// Pbindf

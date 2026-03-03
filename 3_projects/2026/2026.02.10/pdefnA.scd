@@ -1,4 +1,5 @@
 (
+"voice_pat.scd".loadRelative;
 ///////////////////////////////////////////////////////////////
 // BASH
 ///////////////////////////////////////////////////////////////
@@ -7,13 +8,13 @@ Pdefn(\bash_scale,  Scale.minor);
 ~sBash = ~sTree[\bass_drums].values;
 Pdefn(\bash_buf_0,  Pseq(~sBash,  1));
 Pdefn(\bash_buf_1,  Ppatlace([
-  Pseq(~sBash[[1]], 2), 
+  Pseq(~sBash[[0]], 1), 
   Pseq(~sBash[[1, 2, 4]], 1), 
   Pseq(~sBash[[0, 10, 12]], 1), 
 ],  1));
 Pdefn(\bash_bufs, Pseq([
-  // Pn(Pdefn(\bash_buf_0),  4), 
-  Pn(Pdefn(\bash_buf_1),  4), 
+  Pn(Pdefn(\bash_buf_0),  4), 
+  // Pn(Pdefn(\bash_buf_1),  4), 
 ],  1));
 
 Pdefn(\bash_oct_0,  5);
@@ -27,27 +28,31 @@ Pdefn(\bash_amp_0,  0.7);
 Pdefn(\bash_amp_1,  Pwhite(0.5, 0.7,  1));
 Pdefn(\bash_amp_2,  Pseq([0.5!3, 0.8].flat,  1));
 Pdefn(\bash_amps, Pseq([
-  // Pn(Pdefn(\bash_amp_0),  4), 
+  Pn(Pdefn(\bash_amp_0),  4), 
   // Pn(Pdefn(\bash_amp_1),  4), 
-  Pn(Pdefn(\bash_amp_2),  4), 
+  // Pn(Pdefn(\bash_amp_2),  4), 
 ],  1));
 
 Pdefn(\bash_deg_0,  0);
 Pdefn(\bash_deg_1,  Pseq([0,  1,  \,  3, \, 0], 1));
+Pdefn(\bash_deg_2,  Pseq([0,  14,  \,  \, 14, \,  0, \,  0, \,  \,  0,  14,  \,  \,  \], 1));
 Pdefn(\bash_degs, Pseq([
-  Pn(Pdefn(\bash_deg_0), 4),
+  // Pn(Pdefn(\bash_deg_0), 4),
   // Pn(Pdefn(\bash_deg_1), 4),
+  Pn(Pdefn(\bash_deg_2), 1),
 ],  1));
 
 Pdefn(\bash_dur_0,  1);
 Pdefn(\bash_dur_1,  Pseq([1/4!2, 1/2!3,  ].flat, 1));    
 Pdefn(\bash_dur_2,  Pbjorklund(5,  8,  1)/2);  
 Pdefn(\bash_dur_3,  Pseq([1/4!2,  Rest(1/4), 1/4 ].flat,  1));
+Pdefn(\bash_dur_4,  1/2);
 Pdefn(\bash_durs, Pseq([
-  Pn(Pdefn(\bash_dur_0), 4),
+  // Pn(Pdefn(\bash_dur_0), 4),
   // Pn(Pdefn(\bash_dur_1), 4),
   // Pn(Pdefn(\bash_dur_2), 4),
-  Pn(Pdefn(\bash_dur_3), 4),
+  // Pn(Pdefn(\bash_dur_3), 4),
+  Pn(Pdefn(\bash_dur_4), 1),
 ],  1));
 
 Pdefn(\bash_str_0,  1);    
