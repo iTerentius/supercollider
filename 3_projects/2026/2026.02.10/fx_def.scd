@@ -30,14 +30,14 @@
   var mod1 = \mod1.kr(1);
   var amp = \amp.kr(0.5);
   var dur = \dur.kr(1);
-  var sig = In.ar(~psd1.inbus.index,  2);
+  var sig = In.ar(~t2.inbus.index,  2);
   var r = mod1 / dur;
   // var wet = VarSaw.ar(LFTri.ar(sig * mod1), 0.5,  LFPulse.kr(dur));
   var wet = SinOsc.ar(sig / r * LFSaw.ar(r),  LFTri.ar(mod1,  width:r)) ;
   sig * wet * amp * 8;
 };
 
-// ~r4_fx = ~r4.playfx(~glitch);
+~r4_fx = ~r4.playfx(~glitch);
 
 {
     s.sync;

@@ -2,7 +2,7 @@
 (
 Pdef(\neutron, Pbind(
     \instrument, \neutron,
-    \out,        ~t6.inbus.index,
+    \out,        Pn(Pdefn(\ntron_out),  inf), 
 
     // --- pitch / gate ---
     \scale,      Pn(Pdefn(\ntron_scale),   inf),

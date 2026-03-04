@@ -1,7 +1,7 @@
 (
 Pdef(\modelD, Pbind(
     \instrument,   \modelD,
-    \out,          ~t3.inbus.index,
+    \out,          Pn(Pdefn(\mD_out), inf), 
 
     // --- pitch / gate ---
     \scale,        Pn(Pdefn(\mD_scale), inf),
