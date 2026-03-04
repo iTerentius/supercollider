@@ -8,14 +8,14 @@ Pdefn(\bd1_scale,  Scale.minor);
 
 ~sbd1 = ~sTree[\bass_drums].values;
 Pdefn(\bd1_buf_0,  Pseq(~sbd1,  1));
-Pdefn(\bd1_buf_1,  Ppatlace([
+Pdefn(\bd1_buf_1,  Pseq([
   Pseq(~sbd1[[0]], 1), 
   Pseq(~sbd1[[1, 2, 4]], 1), 
   Pseq(~sbd1[[0, 10, 12]], 1), 
 ],  1));
 Pdefn(\bd1_bufs, Pseq([
-  Pn(Pdefn(\bd1_buf_0),  4), 
-  // Pn(Pdefn(\bd1_buf_1),  4), 
+  // Pn(Pdefn(\bd1_buf_0),  4), 
+  Pn(Pdefn(\bd1_buf_1),  4), 
 ],  1));
 
 Pdefn(\bd1_oct_0,  5);
@@ -36,7 +36,7 @@ Pdefn(\bd1_amps, Pseq([
 
 Pdefn(\bd1_deg_0,  0);
 Pdefn(\bd1_deg_1,  Pseq([0,  1,  \,  3, \, 0], 1));
-Pdefn(\bd1_deg_2,  Pseq([0,  14,  \,  \, 14, \,  0, \,  0, \,  \,  0,  14,  \,  \,  \], 1));
+Pdefn(\bd1_deg_2,  Pseq([0,  \,  \,  \, 14, \,  0, \,  0, \,  \,  0,  14,  \,  \,  \], 1));
 Pdefn(\bd1_degs, Pseq([
   // Pn(Pdefn(\bd1_deg_0), 4),
   // Pn(Pdefn(\bd1_deg_1), 4),
@@ -49,10 +49,10 @@ Pdefn(\bd1_dur_2,  Pbjorklund(5,  8,  1)/2);
 Pdefn(\bd1_dur_3,  Pseq([1/4!2,  Rest(1/4), 1/4 ].flat,  1));
 Pdefn(\bd1_dur_4,  1/2);
 Pdefn(\bd1_durs, Pseq([
-  // Pn(Pdefn(\bd1_dur_0), 4),
-  // Pn(Pdefn(\bd1_dur_1), 4),
-  // Pn(Pdefn(\bd1_dur_2), 4),
-  // Pn(Pdefn(\bd1_dur_3), 4),
+  Pn(Pdefn(\bd1_dur_0), 4),
+  Pn(Pdefn(\bd1_dur_1), 4),
+  Pn(Pdefn(\bd1_dur_2), 4),
+  Pn(Pdefn(\bd1_dur_3), 4),
   Pn(Pdefn(\bd1_dur_4), 1),
 ],  1));
 

@@ -37,7 +37,7 @@
   sig * wet * amp * 8;
 };
 
-~r4_fx = ~r4.playfx(~glitch);
+// ~r4_fx = ~r4.playfx(~glitch);
 
 {
     s.sync;

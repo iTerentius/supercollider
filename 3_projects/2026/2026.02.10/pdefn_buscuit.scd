@@ -8,9 +8,11 @@
 
 ///////////////////////////////////////////////////////////////
 // DUR
-Pdefn(\bsct_dur_0, 4);
+Pdefn(\bsct_dur_0, 1);
+Pdefn(\bsct_dur_1, Pseq([1/4, 1,  1/2!2].flat, 1));
 Pdefn(\bsct_durs, Pseq([
-  Pn(Pdefn(\bsct_dur_0),  4),
+  // Pn(Pdefn(\bsct_dur_0),  4),
+  Pn(Pdefn(\bsct_dur_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////
