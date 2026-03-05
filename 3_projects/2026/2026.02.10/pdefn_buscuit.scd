@@ -26,13 +26,14 @@ Pdefn(\bsct_drive, Pseq([
 ///////////////////////////////////////////////////////////////
 // BITCRUSHER
 Pdefn(\bsct_clock_0, 30000);        // 250..30000 Hz  (30000 = transparent)
-Pdefn(\bsct_clock_1, Pseq([300, 3000, 30000], 1));        // 250..30000 Hz  (30000 = transparent)
+Pdefn(\bsct_clock_1, Pseq([100, 3000, 30000], 1));        // 250..30000 Hz  (30000 = transparent)
+Pdefn(\bsct_clock_2, Pseg([300, 3000, 30000],[2,  4], \sin,  1));        // 250..30000 Hz  (30000 = transparent)
 Pdefn(\bsct_clock, Pseq([
-  // Pn(Pdefn(\bsct_clock_0),  4),
-  Pn(Pdefn(\bsct_clock_1),  4),
+  Pn(Pdefn(\bsct_clock_0),  4),
+  // Pn(Pdefn(\bsct_clock_2),  4),
 ],  1));
 
-Pdefn(\bsct_bits_0, 4);             // 1..8  (8 = transparent)
+Pdefn(\bsct_bits_0, 8);             // 1..8  (8 = transparent)
 Pdefn(\bsct_bits, Pseq([
   Pn(Pdefn(\bsct_bits_0),  4),
 ],  1));
@@ -40,18 +41,20 @@ Pdefn(\bsct_bits, Pseq([
 ///////////////////////////////////////////////////////////////
 // BIT MANIPULATION  (-1=invert  0=mute  1=pass)
 Pdefn(\bsct_b1_0, 1);               // LSB / bit 0  (subtle)
-Pdefn(\bsct_b1_0, Pseq([-1, 0, 1],  1));               // LSB / bit 0  (subtle)
+Pdefn(\bsct_b1_1, Pseq([-1, 0,  1,  0,  -1],  1));               // LSB / bit 0  (subtle)
 Pdefn(\bsct_b1, Pseq([
   // Pn(Pdefn(\bsct_b1_0),  4),
   Pn(Pdefn(\bsct_b1_1),  4),
 ],  1));
 
-Pdefn(\bsct_b2_0, 1);
+Pdefn(\bsct_b2_0, 0);
+Pdefn(\bsct_b2_1, Pseq([-1, 0,  1,  0,  -1] * -1,  1));               // LSB / bit 0  (subtle)
 Pdefn(\bsct_b2, Pseq([
-  Pn(Pdefn(\bsct_b2_0),  4),
+  // Pn(Pdefn(\bsct_b2_0),  4),
+  Pn(Pdefn(\bsct_b2_1),  4),
 ],  1));
 
-Pdefn(\bsct_b3_0, 1);
+Pdefn(\bsct_b3_0, -1);
 Pdefn(\bsct_b3, Pseq([
   Pn(Pdefn(\bsct_b3_0),  4),
 ],  1));
@@ -83,7 +86,7 @@ Pdefn(\bsct_b8, Pseq([
 
 ///////////////////////////////////////////////////////////////
 // FX MODE
-Pdefn(\bsct_fxMode_0, 0);           // 0=waveshaper  1=delay  2=pitch  3=step filter
+Pdefn(\bsct_fxMode_0, 4);           // 0=waveshaper  1=delay  2=pitch  3=step filter
 Pdefn(\bsct_fxMode, Pseq([
   Pn(Pdefn(\bsct_fxMode_0),  4),
 ],  1));
@@ -119,8 +122,12 @@ Pdefn(\bsct_pitchShift, Pseq([
 ///////////////////////////////////////////////////////////////
 // STEP FILTER  (fxMode=3)
 Pdefn(\bsct_stepRate_0, 4.0);       // 0.1..40 Hz
+Pdefn(\bsct_stepRate_1, Pseq([1,  2,  4,  8], 1));       // 0.1..40 Hz
+Pdefn(\bsct_stepRate_2, Pseq((1..8), 1));       // 0.1..40 Hz
 Pdefn(\bsct_stepRate, Pseq([
   Pn(Pdefn(\bsct_stepRate_0),  4),
+  // Pn(Pdefn(\bsct_stepRate_1),  4),
+  // Pn(Pdefn(\bsct_stepRate_2),  4),
 ],  1));
 
 Pdefn(\bsct_sf0_0, 200);            // 20..20000 Hz  step 0 LP cutoff
@@ -151,23 +158,27 @@ Pdefn(\bsct_filterType, Pseq([
 ],  1));
 
 Pdefn(\bsct_filterFreq_0, 15000);   // 20..20000 Hz  (15000 = open)
+Pdefn(\bsct_filterFreq_1, Pseg([500,  1500, 500],  [1,  2], \sin,  1));   // 20..20000 Hz  (15000 = open)
 Pdefn(\bsct_filterFreq, Pseq([
   Pn(Pdefn(\bsct_filterFreq_0),  4),
+  Pn(Pdefn(\bsct_filterFreq_1),  4),
 ],  1));
 
-Pdefn(\bsct_filterQ_0, 0.1);        // 0..1
+Pdefn(\bsct_filterQ_0, 0.2);        // 0..1
+Pdefn(\bsct_filterQ_1, Pseg([0.0,  1.0, 0.0], [2, 4], \step,   1));        // 0..1
 Pdefn(\bsct_filterQ, Pseq([
   Pn(Pdefn(\bsct_filterQ_0),  4),
+  // Pn(Pdefn(\bsct_filterQ_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////
 // WET / DRY
-Pdefn(\bsct_naked_0,   1.0);        // 0..1  dry level
+Pdefn(\bsct_naked_0,   0.5);        // 0..1  dry level
 Pdefn(\bsct_naked, Pseq([
   Pn(Pdefn(\bsct_naked_0),  4),
 ],  1));
 
-Pdefn(\bsct_dressed_0, 1.0);        // 0..1  wet level
+Pdefn(\bsct_dressed_0, 0.5);        // 0..1  wet level
 Pdefn(\bsct_dressed, Pseq([
   Pn(Pdefn(\bsct_dressed_0),  4),
 ],  1));

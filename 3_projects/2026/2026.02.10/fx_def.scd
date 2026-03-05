@@ -34,7 +34,7 @@
   var r = mod1 / dur;
   // var wet = VarSaw.ar(LFTri.ar(sig * mod1), 0.5,  LFPulse.kr(dur));
   var wet = SinOsc.ar(sig / r * LFSaw.ar(r),  LFTri.ar(mod1,  width:r)) ;
-  sig * wet * amp * 8;
+  sig * wet * amp * 3;
 };
 
 // ~r4_fx = ~r4.playfx(~glitch);

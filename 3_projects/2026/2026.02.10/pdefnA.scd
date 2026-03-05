@@ -38,9 +38,9 @@ Pdefn(\bd1_deg_0,  0);
 Pdefn(\bd1_deg_1,  Pseq([0,  1,  \,  3, \, 0], 1));
 Pdefn(\bd1_deg_2,  Pseq([0,  \,  \,  \, 14, \,  0, \,  0, \,  \,  0,  14,  \,  \,  \], 1));
 Pdefn(\bd1_degs, Pseq([
-  // Pn(Pdefn(\bd1_deg_0), 4),
-  // Pn(Pdefn(\bd1_deg_1), 4),
-  Pn(Pdefn(\bd1_deg_2), 1),
+  Pn(Pdefn(\bd1_deg_0), 4),
+  Pn(Pdefn(\bd1_deg_1), 4),
+  Pn(Pdefn(\bd1_deg_2), 4),
 ],  1));
 
 Pdefn(\bd1_dur_0,  1);
@@ -49,10 +49,10 @@ Pdefn(\bd1_dur_2,  Pbjorklund(5,  8,  1)/2);
 Pdefn(\bd1_dur_3,  Pseq([1/4!2,  Rest(1/4), 1/4 ].flat,  1));
 Pdefn(\bd1_dur_4,  1/2);
 Pdefn(\bd1_durs, Pseq([
-  Pn(Pdefn(\bd1_dur_0), 4),
-  Pn(Pdefn(\bd1_dur_1), 4),
-  Pn(Pdefn(\bd1_dur_2), 4),
-  Pn(Pdefn(\bd1_dur_3), 4),
+  // Pn(Pdefn(\bd1_dur_0), 4),
+  // Pn(Pdefn(\bd1_dur_1), 4),
+  // Pn(Pdefn(\bd1_dur_2), 4),
+  // Pn(Pdefn(\bd1_dur_3), 4),
   Pn(Pdefn(\bd1_dur_4), 1),
 ],  1));
 
