@@ -57,6 +57,7 @@ Pdef(\hh1,
   );
 ));
 ~lpBind.([1,  3], \hh1,  20);
+~apcAssignPad.(34,  \hh1);
 
 //--------------------------------------------------
 // ~sRoll = ~sTree[\drumloops].values[3..3];
@@ -83,6 +84,7 @@ Pdef(\roll,
   );
 );
 ~lpBind.([1,  4], \roll,  30);
+~apcAssignPad.(35,  \roll);
 
 //--------------------------------------------------
 // MS-20 style bass
@@ -105,6 +107,7 @@ Pdef(\ms20,
     );
 );
 ~lpBind.([1,  5], \ms20,  40);
+~apcAssignPad.(36,  \ms20);
 
 //--------------------------------------------------
 // thingA 
@@ -122,6 +125,7 @@ Pdef(\thingA, Pbind(
   \out,         Pn(Pdefn(\thingA_out),  inf),
 ));
 ~lpBind.([1,  6], \thingA,  50);
+~apcAssignPad.(37,  \thingA);
 //--------------------------------------------------
 // bd1 Glitch FX
 Pdef(\roll_fx_ctl,  Pbindef(\roll_fx_ctl_pbd, 

@@ -65,5 +65,6 @@ Pdef(\modelD, Pbind(
     \modSource,    Pn(Pdefn(\mD_modSource),  inf),
 ));
 ~lpBind.([1,  7], \modelD,  12);
+~apcAssignPad.(39,  \modelD);
 )
 

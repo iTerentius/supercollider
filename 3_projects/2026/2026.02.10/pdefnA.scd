@@ -10,6 +10,7 @@ Pdefn(\bd1_scale,  Scale.minor);
 Pdefn(\bd1_buf_0,  Pseq(~sbd1,  1));
 Pdefn(\bd1_buf_1,  Pseq([
   Pseq(~sbd1[[5]], 1), 
+  Pseq(~sbd1[[3,  5]], 1), 
   // Pseq(~sbd1[[1, 2, 4]], 1), 
   // Pseq(~sbd1[[0, 10, 12]], 1), 
 ],  1));
@@ -47,13 +48,13 @@ Pdefn(\bd1_dur_0,  1);
 Pdefn(\bd1_dur_1,  Pseq([1/4!2, 1/2!3,  ].flat, 1));    
 Pdefn(\bd1_dur_2,  Pbjorklund(5,  8,  1)/2);  
 Pdefn(\bd1_dur_3,  Pseq([1/4!2,  Rest(1/4), 1/4 ].flat,  1));
-Pdefn(\bd1_dur_4,  1/2);
+Pdefn(\bd1_dur_4,  Pseq([Rest(1/4), 1/4,  1/2].flat, 1));
 Pdefn(\bd1_durs, Pseq([
-  Pn(Pdefn(\bd1_dur_0), 4),
+  Pn(Pdefn(\bd1_dur_0), Pseq([1,  2, ], 1)),
   // Pn(Pdefn(\bd1_dur_1), 4),
   // Pn(Pdefn(\bd1_dur_2), 4),
   // Pn(Pdefn(\bd1_dur_3), 4),
-  // Pn(Pdefn(\bd1_dur_4), 1),
+  Pn(Pdefn(\bd1_dur_4), 1),
 ],  1));
 
 Pdefn(\bd1_str_0,  1);    
@@ -71,7 +72,7 @@ Pdefn(\sd1_scale,  Scale.minor);
 ~ssd1 = ~sTree[\snare_drums].values;
 Pdefn(\sd1_buf_0,  Pseq(~ssd1,  1));
 Pdefn(\sd1_buf_1,  Pseq([
-  Pseq(~ssd1[[5]], 1), 
+  Pseq(~ssd1[[7,  2]], 1), 
   // Pseq(~ssd1[[1, 2, 4]], 1), 
   // Pseq(~ssd1[[0, 10, 12]], 1), 
 ],  1));
@@ -106,13 +107,13 @@ Pdefn(\sd1_degs, Pseq([
 ],  1));
 
 Pdefn(\sd1_dur_0,  2);
-Pdefn(\sd1_dur_1,  Pseq([1/4!2, 1/2!3,  ].flat, 1));    
+Pdefn(\sd1_dur_1,  Pseq([1/2, Rest(2)].flat, 1));    
 Pdefn(\sd1_dur_2,  Pbjorklund(5,  8,  1)/2);  
 Pdefn(\sd1_dur_3,  Pseq([1/4!2,  Rest(1/4), 1/4 ].flat,  1));
 Pdefn(\sd1_dur_4,  1/2);
 Pdefn(\sd1_durs, Pseq([
   Pn(Pdefn(\sd1_dur_0), 4),
-  // Pn(Pdefn(\sd1_dur_1), 4),
+  Pn(Pdefn(\sd1_dur_1), 1),
   // Pn(Pdefn(\sd1_dur_2), 4),
   // Pn(Pdefn(\sd1_dur_3), 4),
   // Pn(Pdefn(\sd1_dur_4), 1),

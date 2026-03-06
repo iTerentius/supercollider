@@ -1,5 +1,5 @@
 (
-TempoClock.default.tempo = 110/60;
+TempoClock.default.tempo = 100/60;
 "start.scd".loadRelative;
 ~setR1.set(\room, 1.0,  \damp,  0.5,  \mix, 1.5);
 ~setR2.set(\maxdt,  0.7,  \dt, 1.1,  \dec, 1.1);
@@ -9,7 +9,7 @@ TempoClock.default.tempo = 110/60;
 Pdef(\bd1).play;
 Pdef(\bd1).stop;
 
-~setR1.set(\room, 0.8,  \damp,  0.5,  \mix, 1.0);
+~setR1.set(\room, 1.0,  \damp,  0.1,  \mix, 0.5);
 ~setR2.set(\maxdt,  1.0,  \dt, 0.8,  \dec, 2.0);
 
 ~bd1_rev = ~ensurePostSend.(~pbd1, ~r1, 0.7);
@@ -97,7 +97,7 @@ Pdef(\neutron).stop;
 
 Pdef(\modelD).play;
 Pdef(\modelD).stop;
-~mD_rev = ~ensurePostSend.(~t5,  ~r1,  1);
+~mD_rev = ~ensurePostSend.(~t5,  ~r1,  0.8);
 ~mD_rev.tryPerform(\free);
 ~mD_del = ~ensurePostSend.(~t5,  ~r2,  1);
 ~mD_del.tryPerform(\free);

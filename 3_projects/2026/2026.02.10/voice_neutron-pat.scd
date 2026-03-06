@@ -72,4 +72,5 @@ Pdef(\neutron, Pbind(
     \delMix,     Pn(Pdefn(\ntron_delMix),  inf),
 ));
 ~lpBind.([1, 6], \neutron, 22);
+~apcAssignPad.(38,  \neutron);
 )

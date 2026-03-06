@@ -60,4 +60,5 @@ Pdef(\bCtl, Pbind(
     \dur,        Pn(Pdefn(\bsct_durs), inf),
 ));
 ~lpBind.([8, 3], \bCtl, 35);
+~apcAssignPad.(7,  \bCtl);
 )

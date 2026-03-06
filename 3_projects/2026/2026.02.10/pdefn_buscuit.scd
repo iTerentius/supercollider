@@ -9,10 +9,10 @@
 ///////////////////////////////////////////////////////////////
 // DUR
 Pdefn(\bsct_dur_0, 1);
-Pdefn(\bsct_dur_1, Pseq([1/4, 1,  1/2!2].flat, 1));
+Pdefn(\bsct_dur_1, Pseq([1/6, 1,  1/3!2].flat, 1));
 Pdefn(\bsct_durs, Pseq([
-  Pn(Pdefn(\bsct_dur_0),  4),
-  // Pn(Pdefn(\bsct_dur_1),  4),
+  // Pn(Pdefn(\bsct_dur_0),  4),
+  Pn(Pdefn(\bsct_dur_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////
@@ -27,15 +27,20 @@ Pdefn(\bsct_drive, Pseq([
 // BITCRUSHER
 Pdefn(\bsct_clock_0, 30000);        // 250..30000 Hz  (30000 = transparent)
 Pdefn(\bsct_clock_1, Pseq([100, 3000, 30000], 1));        // 250..30000 Hz  (30000 = transparent)
-Pdefn(\bsct_clock_2, Pseg([300, 3000, 30000],[2,  4], \sin,  1));        // 250..30000 Hz  (30000 = transparent)
+Pdefn(\bsct_clock_2, Pseg([800, 3000, 30000],[2,  4], \sin,  1));        // 250..30000 Hz  (30000 = transparent)
+Pdefn(\bsct_clock_3,  Pwhite(3500, 20000,  1));
 Pdefn(\bsct_clock, Pseq([
-  // Pn(Pdefn(\bsct_clock_0),  4),
-  Pn(Pdefn(\bsct_clock_2),  4),
+  Pn(Pdefn(\bsct_clock_0),  4),
+  // Pn(Pdefn(\bsct_clock_2),  4),
+  Pn(Pdefn(\bsct_clock_3),  4),
 ],  1));
 
 Pdefn(\bsct_bits_0, 8);             // 1..8  (8 = transparent)
+Pdefn(\bsct_bits_1, Pseq((1..8).mirror,  1));             // 1..8  (8 = transparent)
+Pdefn(\bsct_bits_2, 8);             // 1..8  (8 = transparent)
 Pdefn(\bsct_bits, Pseq([
   Pn(Pdefn(\bsct_bits_0),  4),
+  Pn(Pdefn(\bsct_bits_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////
@@ -86,7 +91,7 @@ Pdefn(\bsct_b8, Pseq([
 
 ///////////////////////////////////////////////////////////////
 // FX MODE
-Pdefn(\bsct_fxMode_0, 4);           // 0=waveshaper  1=delay  2=pitch  3=step filter
+Pdefn(\bsct_fxMode_0, 0);           // 0=waveshaper  1=delay  2=pitch  3=step filter
 Pdefn(\bsct_fxMode, Pseq([
   Pn(Pdefn(\bsct_fxMode_0),  4),
 ],  1));

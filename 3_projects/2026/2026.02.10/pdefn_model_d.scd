@@ -22,24 +22,24 @@ Pdefn(\mD_octs, Pseq([
 Pdefn(\mD_deg_0, 0);
 Pdefn(\mD_deg_1, Pslide([-3,  [7,  2]], 8,  1,  0, 1));
 Pdefn(\mD_deg_2, Pslide((0..-3), 1, 3,  1, 0));
-Pdefn(\mD_deg_3, Pslide((-4..7), 2, 3,  1, 0));
+Pdefn(\mD_deg_3, Pslide((-1..2), 0, 3,  1, 0));
 Pdefn(\mD_degs, Pseq([
    Pn(Pdefn(\mD_deg_0),  4),
   // Pn(Pdefn(\mD_deg_1),  1),
   // Pn(Pdefn(\mD_deg_2),  4),
   // Pn(Rest(),  1/2),  
-  // Pn(Pdefn(\mD_deg_3),  4),
+  Pn(Pdefn(\mD_deg_3),  4),
   // Pn(Rest(),  1/2),  
 ],  1));
 
 ///////////////////////////////////////////////////////////////
 // DUR
-Pdefn(\mD_dur_0, 1/4);
-Pdefn(\mD_dur_1, Pseq([1/4!3, Rest(0.25), 1/4!2,  Rest(0.25)].flat, 1));
+Pdefn(\mD_dur_0, 1);
+Pdefn(\mD_dur_1, Prand([1/4!3, Rest(0.25), 1/4!2,  Rest(0.25)].flat, 1));
 Pdefn(\mD_durs, Pseq([
-  Pn(Pdefn(\mD_dur_0),  4),
+  // Pn(Pdefn(\mD_dur_0),  4),
   // Pn(Pdefn(\mD_dur_1),  4),
-  // Pn(Pdefn(\bash_durs),  4),
+  Pn(Pdefn(\bd1_durs),  4),
   Pn(Rest(),  4), 
 ],  1));
 
@@ -101,8 +101,8 @@ Pdefn(\mD_osc2Wave, Pseq([
 Pdefn(\mD_osc2Oct_0, 0);          // -3..+3
 Pdefn(\mD_osc2Oct_0, Pseq((0..2), 1));          // -3..+3
 Pdefn(\mD_osc2Oct, Pseq([
-  // Pn(Pdefn(\mD_osc2Oct_0),  4),
-  Pn(Pdefn(\mD_osc2Oct_1),  4),
+  Pn(Pdefn(\mD_osc2Oct_0),  4),
+  // Pn(Pdefn(\mD_osc2Oct_1),  4),
 ],  1));
 
 Pdefn(\mD_osc2Fine_0, 0.0);       // ±7 semitones  (hardware fine-tune range)
@@ -115,11 +115,11 @@ Pdefn(\mD_osc2Fine, Pseq([
 Pdefn(\mD_osc3Wave_0, 2);         // 0=tri (LFO default)  2=saw  3=sq
 Pdefn(\mD_osc3Wave_1, Pseq((0..4),  1), 1);         // 0=tri (LFO default)  2=saw  3=sq
 Pdefn(\mD_osc3Wave, Pseq([
-  // Pn(Pdefn(\mD_osc3Wave_0),  4),
-  Pn(Pdefn(\mD_osc3Wave_1),  4),
+  Pn(Pdefn(\mD_osc3Wave_0),  4),
+  // Pn(Pdefn(\mD_osc3Wave_1),  4),
 ],  1));
 
-Pdefn(\mD_osc3Oct_0, 0);          // -3..+3  (kbd mode only)
+Pdefn(\mD_osc3Oct_0, -1);          // -3..+3  (kbd mode only)
 Pdefn(\mD_osc3Oct, Pseq([
   Pn(Pdefn(\mD_osc3Oct_0),  4),
 ],  1));
@@ -169,14 +169,14 @@ Pdefn(\mD_noiseType, Pseq([
 ///////////////////////////////////////////////////////////////
 // FILTER
 Pdefn(\mD_cutoff_0, 1000);         // 20..20000 Hz
-Pdefn(\mD_cutoff_1, Pseg([400, 2000, 400], [8,  16],  \sin, 1));         // 20..20000 Hz
+Pdefn(\mD_cutoff_1, Pseg([400, 2000, 400], [2,  4],  \sin, 1));         // 20..20000 Hz
 Pdefn(\mD_cutoff, Pseq([
   // Pn(Pdefn(\mD_cutoff_0),  4),
   Pn(Pdefn(\mD_cutoff_1),  4),
 ],  1));
 
 Pdefn(\mD_emphasis_0, 0.2);        // 0..1  (self-osc above ~0.88)
-Pdefn(\mD_emphasis_1, Pseg([0.2,  0.8,  0.2], [8, 16], \sin, 1));        // 0..1  (self-osc above ~0.88)
+Pdefn(\mD_emphasis_1, Pseg([0.2,  0.8,  0.2], [2, 4], \sin, 1));        // 0..1  (self-osc above ~0.88)
 Pdefn(\mD_emphasis, Pseq([
   // Pn(Pdefn(\mD_emphasis_0),  4),
   Pn(Pdefn(\mD_emphasis_1),  4),
