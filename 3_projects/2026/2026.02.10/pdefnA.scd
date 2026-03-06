@@ -9,9 +9,9 @@ Pdefn(\bd1_scale,  Scale.minor);
 ~sbd1 = ~sTree[\bass_drums].values;
 Pdefn(\bd1_buf_0,  Pseq(~sbd1,  1));
 Pdefn(\bd1_buf_1,  Pseq([
-  Pseq(~sbd1[[0]], 1), 
-  Pseq(~sbd1[[1, 2, 4]], 1), 
-  Pseq(~sbd1[[0, 10, 12]], 1), 
+  Pseq(~sbd1[[5]], 1), 
+  // Pseq(~sbd1[[1, 2, 4]], 1), 
+  // Pseq(~sbd1[[0, 10, 12]], 1), 
 ],  1));
 Pdefn(\bd1_bufs, Pseq([
   // Pn(Pdefn(\bd1_buf_0),  4), 
@@ -39,8 +39,8 @@ Pdefn(\bd1_deg_1,  Pseq([0,  1,  \,  3, \, 0], 1));
 Pdefn(\bd1_deg_2,  Pseq([0,  \,  \,  \, 14, \,  0, \,  0, \,  \,  0,  14,  \,  \,  \], 1));
 Pdefn(\bd1_degs, Pseq([
   Pn(Pdefn(\bd1_deg_0), 4),
-  Pn(Pdefn(\bd1_deg_1), 4),
-  Pn(Pdefn(\bd1_deg_2), 4),
+  // Pn(Pdefn(\bd1_deg_1), 4),
+  // Pn(Pdefn(\bd1_deg_2), 4),
 ],  1));
 
 Pdefn(\bd1_dur_0,  1);
@@ -49,11 +49,11 @@ Pdefn(\bd1_dur_2,  Pbjorklund(5,  8,  1)/2);
 Pdefn(\bd1_dur_3,  Pseq([1/4!2,  Rest(1/4), 1/4 ].flat,  1));
 Pdefn(\bd1_dur_4,  1/2);
 Pdefn(\bd1_durs, Pseq([
-  // Pn(Pdefn(\bd1_dur_0), 4),
+  Pn(Pdefn(\bd1_dur_0), 4),
   // Pn(Pdefn(\bd1_dur_1), 4),
   // Pn(Pdefn(\bd1_dur_2), 4),
   // Pn(Pdefn(\bd1_dur_3), 4),
-  Pn(Pdefn(\bd1_dur_4), 1),
+  // Pn(Pdefn(\bd1_dur_4), 1),
 ],  1));
 
 Pdefn(\bd1_str_0,  1);    
@@ -61,6 +61,68 @@ Pdefn(\bd1_str_1,  Pstep(Pseq([1!4,  2!2].flat, 1)), 4);
 Pdefn(\bd1_strs, Pseq([
   Pn(Pdefn(\bd1_str_0), 4),
   // Pn(Pdefn(\bd1_str_1), 4),
+],  1));
+///////////////////////////////////////////////////////////////
+// sd1
+///////////////////////////////////////////////////////////////
+Pdefn(\sd1_out,  ~psd1.inbus.index);
+Pdefn(\sd1_scale,  Scale.minor);
+
+~ssd1 = ~sTree[\snare_drums].values;
+Pdefn(\sd1_buf_0,  Pseq(~ssd1,  1));
+Pdefn(\sd1_buf_1,  Pseq([
+  Pseq(~ssd1[[5]], 1), 
+  // Pseq(~ssd1[[1, 2, 4]], 1), 
+  // Pseq(~ssd1[[0, 10, 12]], 1), 
+],  1));
+Pdefn(\sd1_bufs, Pseq([
+  // Pn(Pdefn(\sd1_buf_0),  4), 
+  Pn(Pdefn(\sd1_buf_1),  4), 
+],  1));
+
+Pdefn(\sd1_oct_0,  5);
+Pdefn(\sd1_oct_1,  Pseq([4,  5], 1));
+Pdefn(\sd1_octs, Pseq([
+  Pn(Pdefn(\sd1_oct_0),  4), 
+  // Pn(Pdefn(\sd1_oct_1),  4), 
+],  1));
+
+Pdefn(\sd1_amp_0,  0.3);
+Pdefn(\sd1_amp_1,  Pwhite(0.5, 0.7,  1));
+Pdefn(\sd1_amp_2,  Pseq([0.5!3, 0.8].flat,  1));
+Pdefn(\sd1_amps, Pseq([
+  Pn(Pdefn(\sd1_amp_0),  4), 
+  // Pn(Pdefn(\sd1_amp_1),  4), 
+  // Pn(Pdefn(\sd1_amp_2),  4), 
+],  1));
+
+Pdefn(\sd1_deg_0,  0);
+Pdefn(\sd1_deg_1,  Pseq([0,  1,  \,  3, \, 0], 1));
+Pdefn(\sd1_deg_2,  Pseq([0,  \,  \,  \, 14, \,  0, \,  0, \,  \,  0,  14,  \,  \,  \], 1));
+Pdefn(\sd1_degs, Pseq([
+  Pn(Pdefn(\sd1_deg_0), 4),
+  // Pn(Pdefn(\sd1_deg_1), 4),
+  // Pn(Pdefn(\sd1_deg_2), 4),
+],  1));
+
+Pdefn(\sd1_dur_0,  2);
+Pdefn(\sd1_dur_1,  Pseq([1/4!2, 1/2!3,  ].flat, 1));    
+Pdefn(\sd1_dur_2,  Pbjorklund(5,  8,  1)/2);  
+Pdefn(\sd1_dur_3,  Pseq([1/4!2,  Rest(1/4), 1/4 ].flat,  1));
+Pdefn(\sd1_dur_4,  1/2);
+Pdefn(\sd1_durs, Pseq([
+  Pn(Pdefn(\sd1_dur_0), 4),
+  // Pn(Pdefn(\sd1_dur_1), 4),
+  // Pn(Pdefn(\sd1_dur_2), 4),
+  // Pn(Pdefn(\sd1_dur_3), 4),
+  // Pn(Pdefn(\sd1_dur_4), 1),
+],  1));
+
+Pdefn(\sd1_str_0,  1);    
+Pdefn(\sd1_str_1,  Pstep(Pseq([1!4,  2!2].flat, 1)), 4);  
+Pdefn(\sd1_strs, Pseq([
+  Pn(Pdefn(\sd1_str_0), 4),
+  // Pn(Pdefn(\sd1_str_1), 4),
 ],  1));
 ///////////////////////////////////////////////////////////////
 // hh1
@@ -123,11 +185,11 @@ Pdefn(\hh1_strs, Pseq([
 Pdefn(\roll_out,  ~t2.inbus.index);
 Pdefn(\roll_scale,  Scale.minor);
 
-Pdefn(\roll_oct_0,  5);
+Pdefn(\roll_oct_0,  1);
 Pdefn(\roll_oct_1,  Pseq([1, 3,  7], 1));  
 Pdefn(\roll_octs, Pseq([
   Pn(Pdefn(\roll_oct_0),  4), 
-  Pn(Pdefn(\roll_oct_1),  4), 
+  // Pn(Pdefn(\roll_oct_1),  4), 
 ],  1));
 
 Pdefn(\roll_amp_0,  1.2);
@@ -143,29 +205,29 @@ Pdefn(\roll_bufs, Pseq([
   Pn(Pdefn(\roll_buf_0),  8), 
 ],  1));
 
-Pdefn(\roll_nSlices_0, 8);
+Pdefn(\roll_nSlices_0, 9);
 Pdefn(\roll_nSlices_1, Pseq([1!4, 8,  16!4].flat,  1));
 Pdefn(\roll_nSlices,  Pseq([
-  // Pn(Pdefn(\roll_nSlices_0),  1), 
-  Pn(Pdefn(\roll_nSlices_1),  4), 
+  Pn(Pdefn(\roll_nSlices_0),  1), 
+  // Pn(Pdefn(\roll_nSlices_1),  4), 
 ],  1));
 
-Pdefn(\roll_rate_0, 1);
+Pdefn(\roll_rate_0, 0.8);
 Pdefn(\roll_rate_1, Pseq([1.2,  0.8], 1));
-Pdefn(\roll_rate_2, Pseg([0.4,  1.2,  0.8], [1, 4], \sin,  1));
+Pdefn(\roll_rate_2, Pseg([0.5,  1.5,  0.5], [2, 4], \sin,  1));
 Pdefn(\roll_rates,  Pseq([
   Pn(Pdefn(\roll_rate_0), 1), 
-  Pn(Pdefn(\roll_rate_2), 4), 
+  // Pn(Pdefn(\roll_rate_2), 4), 
 ],  1));
 
 Pdefn(\roll_rev_0,  0);
-Pdefn(\roll_rev_1,  Pstep(Pseq([0,  1], 1), 3));
+Pdefn(\roll_rev_1,  Pstep(Pseq([0,  1], 1), 1));
 Pdefn(\roll_rev,  Pseq([
   // Pn(Pdefn(\roll_rev_0),  1), 
   Pn(Pdefn(\roll_rev_1),  1), 
 ],  1));
 
-Pdefn(\roll_sliceDur_0, 1);
+Pdefn(\roll_sliceDur_0, 4);
 Pdefn(\roll_sliceDur_1, Pseq([1/4, 1/8!2,  1.5].flat, 1));
 Pdefn(\roll_sliceDurs,  Pseq([
   Pn(Pdefn(\roll_sliceDur_0), 4), 
@@ -186,16 +248,16 @@ Pdefn(\roll_sliceIdxs,  Pseq([
   // Pn(Pdefn(\roll_sliceIdx_2), 4), 
 ],  1));
 
-Pdefn(\roll_deg_0,  7);
+Pdefn(\roll_deg_0,  2);
 Pdefn(\roll_deg_1,  Prand([7],  1));  
 Pdefn(\roll_degs, Pseq([
   Pn(Pdefn(\roll_deg_0), 1),
   // Pn(Pdefn(\roll_deg_1), 4),
 ],  1));
 
-Pdefn(\roll_dur_0,  1);
+Pdefn(\roll_dur_0,  2);
 Pdefn(\roll_dur_1,  Pseq([1/3,  1/6!2,  Pn(Rest(),  1)].flat,  1)); 
-Pdefn(\roll_dur_2,  Pbjorklund2(3,  8,  1)/2);  
+Pdefn(\roll_dur_2,  Pbjorklund2(5,  8,  1));  
 Pdefn(\roll_durs, Pseq([
   // Pn(Pdefn(\roll_dur_0), 4),
   Pn(Pdefn(\roll_dur_2), 4),
@@ -204,8 +266,8 @@ Pdefn(\roll_durs, Pseq([
 Pdefn(\roll_str_0,  1);    
 Pdefn(\roll_str_1,  Pseq([1/4,  1/2,  1,  ], 4));  
 Pdefn(\roll_strs, Pseq([
-  // Pn(Pdefn(\roll_str_0), 32),
-  Pn(Pdefn(\roll_str_1), 4),
+  Pn(Pdefn(\roll_str_0), 32),
+  // Pn(Pdefn(\roll_str_1), 4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////

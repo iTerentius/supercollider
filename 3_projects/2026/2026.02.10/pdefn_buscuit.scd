@@ -11,13 +11,13 @@
 Pdefn(\bsct_dur_0, 1);
 Pdefn(\bsct_dur_1, Pseq([1/4, 1,  1/2!2].flat, 1));
 Pdefn(\bsct_durs, Pseq([
-  // Pn(Pdefn(\bsct_dur_0),  4),
-  Pn(Pdefn(\bsct_dur_1),  4),
+  Pn(Pdefn(\bsct_dur_0),  4),
+  // Pn(Pdefn(\bsct_dur_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////
 // INPUT
-Pdefn(\bsct_drive_0, 1.0);          // 1.0..5.6  (+0 to +15dB)
+Pdefn(\bsct_drive_0, 1.5);          // 1.0..5.6  (+0 to +15dB)
 Pdefn(\bsct_drive_1, 1.0);          // 1.0..5.6  (+0 to +15dB)
 Pdefn(\bsct_drive, Pseq([
   Pn(Pdefn(\bsct_drive_0),  4),
@@ -29,8 +29,8 @@ Pdefn(\bsct_clock_0, 30000);        // 250..30000 Hz  (30000 = transparent)
 Pdefn(\bsct_clock_1, Pseq([100, 3000, 30000], 1));        // 250..30000 Hz  (30000 = transparent)
 Pdefn(\bsct_clock_2, Pseg([300, 3000, 30000],[2,  4], \sin,  1));        // 250..30000 Hz  (30000 = transparent)
 Pdefn(\bsct_clock, Pseq([
-  Pn(Pdefn(\bsct_clock_0),  4),
-  // Pn(Pdefn(\bsct_clock_2),  4),
+  // Pn(Pdefn(\bsct_clock_0),  4),
+  Pn(Pdefn(\bsct_clock_2),  4),
 ],  1));
 
 Pdefn(\bsct_bits_0, 8);             // 1..8  (8 = transparent)
@@ -50,8 +50,8 @@ Pdefn(\bsct_b1, Pseq([
 Pdefn(\bsct_b2_0, 0);
 Pdefn(\bsct_b2_1, Pseq([-1, 0,  1,  0,  -1] * -1,  1));               // LSB / bit 0  (subtle)
 Pdefn(\bsct_b2, Pseq([
-  // Pn(Pdefn(\bsct_b2_0),  4),
-  Pn(Pdefn(\bsct_b2_1),  4),
+  Pn(Pdefn(\bsct_b2_0),  4),
+  // Pn(Pdefn(\bsct_b2_1),  4),
 ],  1));
 
 Pdefn(\bsct_b3_0, -1);
@@ -173,12 +173,12 @@ Pdefn(\bsct_filterQ, Pseq([
 
 ///////////////////////////////////////////////////////////////
 // WET / DRY
-Pdefn(\bsct_naked_0,   0.5);        // 0..1  dry level
+Pdefn(\bsct_naked_0,   1.0);        // 0..1  dry level
 Pdefn(\bsct_naked, Pseq([
   Pn(Pdefn(\bsct_naked_0),  4),
 ],  1));
 
-Pdefn(\bsct_dressed_0, 0.5);        // 0..1  wet level
+Pdefn(\bsct_dressed_0, 1.5);        // 0..1  wet level
 Pdefn(\bsct_dressed, Pseq([
   Pn(Pdefn(\bsct_dressed_0),  4),
 ],  1));

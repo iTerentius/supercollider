@@ -20,6 +20,26 @@ Pdef(\bd1, ~pBuf.(
 ~lpBind.([8, 2], { ~bd1_t.tryPerform(\free); });   // evaluated on press
 
 //--------------------------------------------------
+~ssd1 = ~sTree[\bass_drums].values[0..3];
+Pdef(\sd1, ~pBuf.(
+  Pbind(  
+  \buf,     Pn(Pdefn(\sd1_bufs), inf), 
+  \bufnum,  Pkey(\buf), 
+  \scale,   Pn(Pdefn(\sd1_scale), inf), 
+  \octave,  Pn(Pdefn(\sd1_octs), inf), 
+  \stretch, Pn(Pdefn(\sd1_strs), inf), 
+  \degree,  Pn(Pdefn(\sd1_degs), inf),  
+  \dur,     Pn(Pdefn(\sd1_durs), inf), 
+  \amp,     Pn(Pdefn(\sd1_amps),  inf),  
+  \out,     Pn(Pdefn(\sd1_out), inf), 
+  )
+));
+~lpBind.([1,  2], \sd1,  15);
+~apcAssignPad.(33,  \sd1);
+~lpBind.([8, 1], { ~sd1_t.free; ~sd1_t = ~ensurePostSend.(~psd1, ~r4,  1); });   // evaluated on press
+~lpBind.([8, 2], { ~sd1_t.tryPerform(\free); });   // evaluated on press
+
+//--------------------------------------------------
 ~shh1 = ~sTree[\hats].values[7..7];
 // ~samps = ~sTree[\snare_roll].values[0..8];
 Pdef(\hh1, 
@@ -36,7 +56,7 @@ Pdef(\hh1,
     \out,     Pn(Pdefn(\hh1_out), inf), 
   );
 ));
-~lpBind.([1,  2], \hh1,  20);
+~lpBind.([1,  3], \hh1,  20);
 
 //--------------------------------------------------
 // ~sRoll = ~sTree[\drumloops].values[3..3];
@@ -62,7 +82,7 @@ Pdef(\roll,
     \out,       Pn(Pdefn(\roll_out),  inf), 
   );
 );
-~lpBind.([1,  3], \roll,  30);
+~lpBind.([1,  4], \roll,  30);
 
 //--------------------------------------------------
 // MS-20 style bass
@@ -84,7 +104,7 @@ Pdef(\ms20,
         \out,          Pn(Pdefn(\ms20_out), inf), 
     );
 );
-~lpBind.([1,  4], \ms20,  40);
+~lpBind.([1,  5], \ms20,  40);
 
 //--------------------------------------------------
 // thingA 
@@ -101,7 +121,7 @@ Pdef(\thingA, Pbind(
   \dur,         Pn(Pdefn(\thingA_durs), inf),
   \out,         Pn(Pdefn(\thingA_out),  inf),
 ));
-~lpBind.([1,  5], \thingA,  50);
+~lpBind.([1,  6], \thingA,  50);
 //--------------------------------------------------
 // bd1 Glitch FX
 Pdef(\roll_fx_ctl,  Pbindef(\roll_fx_ctl_pbd, 

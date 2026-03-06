@@ -10,7 +10,7 @@ Pdefn(\mD_scale, Scale.minor);
 
 ///////////////////////////////////////////////////////////////
 // OCTAVE
-Pdefn(\mD_oct_0, 3);              // 0..8
+Pdefn(\mD_oct_0, 2);              // 0..8
 Pdefn(\mD_oct_1, Pseq([3, 4], 1));              // 0..8
 Pdefn(\mD_octs, Pseq([
   Pn(Pdefn(\mD_oct_0),  4),
@@ -24,21 +24,21 @@ Pdefn(\mD_deg_1, Pslide([-3,  [7,  2]], 8,  1,  0, 1));
 Pdefn(\mD_deg_2, Pslide((0..-3), 1, 3,  1, 0));
 Pdefn(\mD_deg_3, Pslide((-4..7), 2, 3,  1, 0));
 Pdefn(\mD_degs, Pseq([
-  // Pn(Pdefn(\mD_deg_0),  4),
-  Pn(Pdefn(\mD_deg_1),  1),
-  Pn(Pdefn(\mD_deg_2),  4),
-  Pn(Rest(),  1/2),  
-  Pn(Pdefn(\mD_deg_3),  4),
-  Pn(Rest(),  1/2),  
+   Pn(Pdefn(\mD_deg_0),  4),
+  // Pn(Pdefn(\mD_deg_1),  1),
+  // Pn(Pdefn(\mD_deg_2),  4),
+  // Pn(Rest(),  1/2),  
+  // Pn(Pdefn(\mD_deg_3),  4),
+  // Pn(Rest(),  1/2),  
 ],  1));
 
 ///////////////////////////////////////////////////////////////
 // DUR
-Pdefn(\mD_dur_0, 1);
+Pdefn(\mD_dur_0, 1/4);
 Pdefn(\mD_dur_1, Pseq([1/4!3, Rest(0.25), 1/4!2,  Rest(0.25)].flat, 1));
 Pdefn(\mD_durs, Pseq([
-  // Pn(Pdefn(\mD_dur_0),  4),
-  Pn(Pdefn(\mD_dur_1),  4),
+  Pn(Pdefn(\mD_dur_0),  4),
+  // Pn(Pdefn(\mD_dur_1),  4),
   // Pn(Pdefn(\bash_durs),  4),
   Pn(Rest(),  4), 
 ],  1));
@@ -56,16 +56,16 @@ Pdefn(\mD_leg_0, 0.8);            // 0..2+
 Pdefn(\mD_leg_1, Pwhite(0.6,  1.0, 1));            // 0..2+
 Pdefn(\mD_legs, Pseq([
   Pn(Pdefn(\mD_leg_0),  4),
-  Pn(Pdefn(\mD_leg_1),  4),
+  // Pn(Pdefn(\mD_leg_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////
 // AMP
 Pdefn(\mD_amp_0, 1.0);            // 0..1
-Pdefn(\mD_amp_1, 0.5);            // 0..1
+Pdefn(\mD_amp_1, 0.8);            // 0..1
 Pdefn(\mD_amps, Pseq([
-  Pn(Pdefn(\mD_amp_0),  4),
-  // Pn(Pdefn(\mD_amp_1),  4),
+  // Pn(Pdefn(\mD_amp_0),  4),
+  Pn(Pdefn(\mD_amp_1),  4),
 ],  1));
 
 ///////////////////////////////////////////////////////////////

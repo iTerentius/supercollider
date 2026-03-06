@@ -29,6 +29,26 @@ Pdef(\bd1).stop;
 ~bd1_t.tryPerform(\free);
 ~bd1_t.level_(0.7);
 
+Pdef(\sd1).play;
+Pdef(\sd1).stop;
+
+~sd1_rev = ~ensurePostSend.(~psd1, ~r1, 0.7);
+~sd1_rev.tryPerform(\free);
+~sd1_rev.level_(1);
+~sd1_del = ~ensurePostSend.(~psd1, ~r2,  1);
+~sd1_del.tryPerform(\free);
+
+~sd1_b = ~ensurePostSend.(~psd1, ~r3,  1);
+~sd1_b.tryPerform(\free);
+~sd1_b.level_(1);
+
+~sd1_b.level_(1);
+~sd1_t = ~ensurePostSend.(~psd1, ~r4,  1);
+~sd1_t.tryPerform(\free);
+
+~sd1_t.tryPerform(\free);
+~sd1_t.level_(0.7);
+
 Pdef(\bCtl).play;
 Pdef(\hh1).play;
 Pdef(\hh1).stop;
