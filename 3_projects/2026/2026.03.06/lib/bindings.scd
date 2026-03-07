@@ -1,19 +1,42 @@
 // Bindings — LaunchPad Mini + APC40 Mk2
 (
-// --- row 1: voice launchers ---
-~lpBind.([1, 1], \bd1,     10);
-~lpBind.([1, 2], \sd1,     15);
-~lpBind.([1, 3], \hh1,     20);
-~lpBind.([1, 4], \roll,    30);
-~lpBind.([1, 5], \ms20,    40);
-~lpBind.([1, 6], \thingA,  50);
-~lpBind.([1, 7], \neutron, 22);
-~lpBind.([1, 8], \modelD,  12);
+// --- Bank 1: voice launchers + FX sends ---
+~lpBindB.(1, [1, 1], \bd1,     10);
+~lpBindB.(1, [1, 2], \sd1,     15);
+~lpBindB.(1, [1, 3], \hh1,     20);
+~lpBindB.(1, [1, 4], \roll,    30);
+~lpBindB.(1, [1, 5], \ms20,    40);
+~lpBindB.(1, [1, 6], \thingA,  50);
+~lpBindB.(1, [1, 7], \neutron, 22);
+~lpBindB.(1, [1, 8], \modelD,  12);
+~lpBindB.(1, [3,  1],  \bCtl, 21);
 
-~lpBind.([5, 1], \bd1_fx_1, 41, nil, nil, ~makeFxSendTdef.(\bd1_fx_1, ~pbd1, ~r1));
-~lpBind.([6, 1], \bd1_fx_2, 81, nil, nil, ~makeFxSendTdef.(\bd1_fx_2, ~pbd1, ~r2));
-~lpBind.([7, 1], \bd1_fx_3,  5, nil, nil, ~makeFxSendTdef.(\bd1_fx_3, ~pbd1, ~r3));
-~lpBind.([8, 1], \bd1_fx_4, 35, nil, nil, ~makeFxSendTdef.(\bd1_fx_4, ~pbd1, ~r4));
+~lpBindB.(1, [5, 1], \bd1_fx_1, 41, nil, nil, ~makeFxSendTdef.(\bd1_fx_1, ~pbd1, ~r1));
+~lpBindB.(1, [6, 1], \bd1_fx_2, 81, nil, nil, ~makeFxSendTdef.(\bd1_fx_2, ~pbd1, ~r2));
+~lpBindB.(1, [7, 1], \bd1_fx_3,  5, nil, nil, ~makeFxSendTdef.(\bd1_fx_3, ~pbd1, ~r3));
+~lpBindB.(1, [8, 1], \bd1_fx_4, 35, nil, nil, ~makeFxSendTdef.(\bd1_fx_4, ~pbd1, ~r4));
+
+~lpBindB.(1, [5, 2], \sd1_fx_1, 41, nil, nil, ~makeFxSendTdef.(\sd1_fx_1, ~psd1, ~r1));
+~lpBindB.(1, [6, 2], \sd1_fx_2, 81, nil, nil, ~makeFxSendTdef.(\sd1_fx_2, ~psd1, ~r2));
+~lpBindB.(1, [7, 2], \sd1_fx_3,  5, nil, nil, ~makeFxSendTdef.(\sd1_fx_3, ~psd1, ~r3));
+~lpBindB.(1, [8, 2], \sd1_fx_4, 35, nil, nil, ~makeFxSendTdef.(\sd1_fx_4, ~psd1, ~r4));
+
+~lpBindB.(1, [5, 3], \hh1_fx_1, 41, nil, nil, ~makeFxSendTdef.(\hh1_fx_1, ~phh1, ~r1));
+~lpBindB.(1, [6, 3], \hh1_fx_2, 81, nil, nil, ~makeFxSendTdef.(\hh1_fx_2, ~phh1, ~r2));
+~lpBindB.(1, [7, 3], \hh1_fx_3,  5, nil, nil, ~makeFxSendTdef.(\hh1_fx_3, ~phh1, ~r3));
+~lpBindB.(1, [8, 3], \hh1_fx_4, 35, nil, nil, ~makeFxSendTdef.(\hh1_fx_4, ~phh1, ~r4));
+
+~lpBindB.(1, [5, 4], \roll_fx_1, 41, nil, nil, ~makeFxSendTdef.(\roll_fx_1, ~t2, ~r1));
+~lpBindB.(1, [6, 4], \roll_fx_2, 81, nil, nil, ~makeFxSendTdef.(\roll_fx_2, ~t2, ~r2));
+~lpBindB.(1, [7, 4], \roll_fx_3,  5, nil, nil, ~makeFxSendTdef.(\roll_fx_3, ~t2, ~r3));
+~lpBindB.(1, [8, 4], \roll_fx_4, 35, nil, nil, ~makeFxSendTdef.(\roll_fx_4, ~t2, ~r4));
+
+~lpBindB.(1, [5, 8], \mD_fx_1, 41, nil, nil, ~makeFxSendTdef.(\mD_fx_1, ~t5, ~r1));
+~lpBindB.(1, [6, 8], \mD_fx_2, 81, nil, nil, ~makeFxSendTdef.(\mD_fx_2, ~t5, ~r2));
+~lpBindB.(1, [7, 8], \mD_fx_3,  5, nil, nil, ~makeFxSendTdef.(\mD_fx_3, ~t5, ~r3));
+~lpBindB.(1, [8, 8], \mD_fx_4, 35, nil, nil, ~makeFxSendTdef.(\mD_fx_4, ~t5, ~r4));
+
+~lpBindB.(2, [4, 1], \r3_fx_r1, 41, nil, nil, ~makeFxSendTdef.(\r3_fx_r1, ~r3, ~r1));
 
 
 // --- APC40 Mk2 pads ---

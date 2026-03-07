@@ -87,9 +87,13 @@ Pbind(\out, ~pbd1.inbus.index, ...)
 Reference docs in `0_startup/reference/` for each controller.
 
 ### Launch Pad Mini MK3
-- `~lpBind.(ref, key, color, clock, quant, onStop)` - Bind pad (6 args)
+- `~lpBind.(ref, key, color, clock, quant, onStop)` - Bind pad to active bank (6 args)
+- `~lpBindB.(bank, ref, key, color, clock, quant, onStop)` - Bind to specific bank (1–8)
+- `~lpMini[\switchBank].(n)` - Switch to bank n (1–8); clears grid, repaints
+- `~lpMini[\bank]` - Current bank index
 - `ref` = [row, col] or MIDI note 11-88
 - `onStop` (optional Function) - called instead of `obj.stop` on toggle-off; use for Tdef cleanup
+- **Banking:** Left (CC 93) / Right (CC 94) top buttons navigate banks; lit white when direction available, off at boundary. CC 93/94 excluded from column launch.
 
 ### APC40 Mk2
 - `~apcBind.(note, key, quant, color, playColor)` - Extended binding
