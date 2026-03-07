@@ -6,4 +6,6 @@
 ~loadSamps.("~/Music/supercollider/_samples/Codeine_Drum_Kit/DrumLoops/");
 ~loadSamps.("~/Music/supercollider/_samples/Neutron_12/");
 ~loadSamps.("~/Music/supercollider/_samples/_mono/jttcot/");
+~setR1.set(\room, 1.0,  \damp, 0.5,  \mix, 1.5);
+~setR2.set(\maxdt, 0.7, \dt,   1.1,  \dec, 1.1);
 )

@@ -13,13 +13,13 @@
 (
 Pdefn(\bd1_durs, Pseq([
     Pn(Pdefn(\bd1_durs_A), 4),
-    Pn(Pdefn(\bd1_durs_B), 2),
-    Pn(Pdefn(\bd1_durs_C), 2),
+    // Pn(Pdefn(\bd1_durs_B), 2),
+    // Pn(Pdefn(\bd1_durs_C), 2),
 ], 1));
 
 Pdefn(\bd1_degs, Pseq([
     Pn(Pdefn(\bd1_degs_A), 4),
-    Pn(Pdefn(\bd1_degs_B), 2),
+    // Pn(Pdefn(\bd1_degs_B), 2),
 ], 1));
 )
 
