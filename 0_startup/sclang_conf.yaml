@@ -1,0 +1,30 @@
+includePaths:
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/Vowel
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/SuperDirt
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/Singleton
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/Collapse
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/WindowViewRecall
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/Log
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/UnitTest2
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/Deferred
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/Dirt-Samples
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/LanguageServer
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/Bjorklund
+    -   /Users/isaaclinder/Downloads/SuperDirtMixer-main
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/JSONlib
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/EQui
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/crucial-library
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/ddwCommon
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/ddwGUIEnhancements
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/ddwMixerChannel
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/ChordSymbol
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/fosc
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/JoshMisc
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/XML
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/wslib
+    -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/HarmonicToolkitSC
+    -   /Users/isaaclinder/Music/sc_system/Extensions
+excludePaths:
+    []
+postInlineWarnings: false
+excludeDefaultPaths: false

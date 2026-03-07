@@ -5,7 +5,9 @@
       "WebFetch(domain:codecompanion.olimorris.dev)",
       "WebFetch(domain:fael-downloads-prod.focusrite.com)",
       "Bash(pdftotext:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(rm 0_startup:*)",
+      "Bash(cp:*)"
     ]
   }
 }
