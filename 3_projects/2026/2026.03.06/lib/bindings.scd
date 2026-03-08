@@ -63,6 +63,7 @@
 ~apcBindB.(1, 37, \thingA,   4, \pink);
 ~apcBindB.(1, 38, \neutron,  4, \orange);
 ~apcBindB.(1, 39, \modelD,   4, \yellow);
+~apcBindB.(4, 32, \bCtl,   4, \cyan);
 
 ~apcBindB.(1, 24, \bd1_fx_1, 1, \blue,   nil, ~fxSendStop[\bd1_fx_1]);
 ~apcBindB.(1, 16, \bd1_fx_2, 1, \cyan,   nil, ~fxSendStop[\bd1_fx_2]);
@@ -103,6 +104,8 @@
 ~apcBindB.(1, 23, \mD_fx_2, 1, \cyan,   nil, ~fxSendStop[\mD_fx_2]);
 ~apcBindB.(1, 15, \mD_fx_3, 1, \pink,   nil, ~fxSendStop[\mD_fx_3]);
 ~apcBindB.(1,  7, \mD_fx_4, 1, \purple, nil, ~fxSendStop[\mD_fx_4]);
+
+~apcBindB.(4, 24, \r3_fx_r1, 4, nil, nil, ~fxSendStop[\r3_fx_r1]);
 
 // Refresh APC40 LEDs — clear stale pulse states then repaint
 if(~apcOut.notNil) {

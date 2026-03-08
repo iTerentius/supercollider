@@ -460,7 +460,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
         } {
             if(num == stripCC and: { chan >= 0 } and: { chan <= 7 }) {
                 stripIdx = chan + 1;
-                key = ~apcParamKeyFor.(~apcBank, stripIdx);
+                key = ~apcParamKeyFor.(~apcBank - 1, stripIdx);
                 x = ~apcNorm7.(val);
                 ~apcApplyParam.(key, x);
             };
@@ -479,7 +479,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
         if((num >= base) and: { num < (base + count) }) {
             idx = num - base;         // 0..7
             stripIdx = idx + 1;       // 1..8
-            key = ~apcParamKeyForKnob.(~apcBank, stripIdx, ~apcKnobRow);
+            key = ~apcParamKeyForKnob.(~apcBank - 1, stripIdx, ~apcKnobRow);
             x = ~apcNorm7.(val);
             ["[KNOB CC]", "cc", num, "strip", stripIdx, "row", ~apcKnobRow, "bank", ~apcBank, "x", x.round(0.001)].postln;
             ~apcApplyParam.(key, x);
