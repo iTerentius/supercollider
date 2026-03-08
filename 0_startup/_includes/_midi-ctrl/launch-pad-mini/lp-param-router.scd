@@ -320,16 +320,21 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
 MIDIdef.free(\lpMini_note);
 MIDIdef.free(\lpMini_cc);
 
-MIDIdef.noteOn(\lpMini_note, { |vel, note, chan, src|
-    if(vel > 0) {
-        var bindData = ~lpMini[\bindings][note];
-        if(bindData.notNil) {
-            ~lpMini[\toggle].(note, bindData);
+if(~lpMini[\uid].notNil) {
+    MIDIdef.noteOn(\lpMini_note, { |vel, note, chan, src|
+        if(vel > 0) {
+            var bindData = ~lpMini[\bindings][note];
+            if(bindData.notNil) {
+                ~lpMini[\toggle].(note, bindData);
+            };
         };
-    };
-}, nil, nil, nil);  // nil chan & srcID for cross-platform compatibility
+    }, nil, nil, ~lpMini[\uid]);
+} {
+    "[LP Mini] Not connected — skipping note listener".postln;
+};
 
-MIDIdef.cc(\lpMini_cc, { |val, cc, chan, src|
+if(~lpMini[\uid].notNil) {
+    MIDIdef.cc(\lpMini_cc, { |val, cc, chan, src|
     if(val > 0) {
         // 1. Bank Navigation: Left (CC 93) / Right (CC 94)
         if(cc == 93) { ~lpMini[\switchBank].(~lpMini[\bank] - 1) };
@@ -354,7 +359,10 @@ MIDIdef.cc(\lpMini_cc, { |val, cc, chan, src|
             };
         };
     };
-}, nil, nil, nil);  // nil chan & srcID for cross-platform compatibility
+}, nil, nil, ~lpMini[\uid]);
+} {
+    "[LP Mini] Not connected — skipping CC listener".postln;
+};
 
 // --- RECOVERY ---
 CmdPeriod.add({

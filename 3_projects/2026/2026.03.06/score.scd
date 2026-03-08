@@ -11,6 +11,7 @@
 "parts/neutron.scd".loadRelative;
 "parts/model_d.scd".loadRelative;
 "automation/biscuit.scd".loadRelative;
+"lib/inline_fx.scd".loadRelative;
 "lib/bindings.scd".loadRelative;
 "arrangement.scd".loadRelative;
 )
