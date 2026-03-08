@@ -21,7 +21,7 @@ Pdef(\sd1, ~pBuf.(
 ///////////////////////////////////////////////////////////////
 // PDEFNS
 ///////////////////////////////////////////////////////////////
-Pdefn(\sd1_out,   ~psd1.inbus.index);
+Pdefn(\sd1_out,   ~t2.inbus.index);
 Pdefn(\sd1_scale, Scale.minor);
 
 // BUFS — words
@@ -80,4 +80,20 @@ Pdefn(\sd1_str_0, 1);
 Pdefn(\sd1_str_1, Pstep(Pseq([1!4, 2!2].flat, 1), 4));
 // story
 Pdefn(\sd1_strs, Pseq([Pn(Pdefn(\sd1_str_0), 4)], 1));
+
+
+// ~bd1_ilfx_1.free;
+// ~bd1_ilfx_1 = ~pbd1.playfx({|in|
+//   var sig = In.ar(~pbd1.inbus,  2);
+//   var hpfreq = \hpfreq.kr(400);
+//   var hprq = \hprq.kr(1.0);
+//   var lpfreq = \lpfreq.kr(800);
+//   var lprq = \lprq.kr(1.0);
+//   var lpsig = LPF.ar(sig, lpfreq, lprq);
+//   var hpsig = HPF.ar(sig, hpfreq, hprq); 
+//   var wet = lpsig + hpsig; 
+//   wet; 
+// });
+// ~bd1_ilfx_1.set(\lpfreq,  1000,  \rq, 2.0,  \hpfreq,  500,  \hprq,  2.0);
 )
+

@@ -39,7 +39,7 @@ Pdef(\roll_fx_ctl, Pbindef(\roll_fx_ctl_pbd,
 ///////////////////////////////////////////////////////////////
 // ROLL PDEFNS
 ///////////////////////////////////////////////////////////////
-Pdefn(\roll_out,   ~t2.inbus.index);
+Pdefn(\roll_out,   ~t4.inbus.index);
 Pdefn(\roll_scale, Scale.minor);
 Pdefn(\roll_ins,  \slice_m);
 
@@ -62,7 +62,7 @@ Pdefn(\roll_oct_1, Pseq([1, 3, 7], 1));
 Pdefn(\roll_octs, Pseq([Pn(Pdefn(\roll_oct_0), 4)], 1));
 
 // AMPS — words
-Pdefn(\roll_amp_0, 0.05);
+Pdefn(\roll_amp_0, 1.0);
 Pdefn(\roll_amp_1, Pwhite(0.75, 0.5, 1));
 // story
 Pdefn(\roll_amps, Pseq([Pn(Pdefn(\roll_amp_0), 4)], 1));

@@ -1,7 +1,6 @@
 // 2025-10-29 consolidated mixer include. master, tracks, returns, fx wiring, nil safe helpers
 // Controller bindings are conditional - only applied if the controller is present
 (
-var chan;  // declare vars at top
 
 // ---- Safe binding helpers (call only if controller functions exist) ----
 ~safeBind = { |bindFunc, key, func|
@@ -131,41 +130,52 @@ var chan;  // declare vars at top
 // APC40: knob row 2 (Sends) = HPF 20 Hz–2 kHz, row 3 (User) = LPF 200 Hz–20 kHz
 // LCXL:  knob row r1 (top)  = HPF,              row r2 (mid) = LPF
 
+// ~inlineFXmk: single helper closure — keeps outer block FD count low (SC 255-entry limit)
+~inlineFXmk = { |ch, sym|
+    ~inlineFX[sym] = ch.playfx({ |in|
+        var sig = In.ar(ch.inbus.index, 2);
+        HPF.ar(LPF.ar(sig, \lpfreq.kr(18000)), \hpfreq.kr(40))
+    });
+};
+
 ~inlineFX !? { |d| d.do { |fx| fx.tryPerform(\free) } };
 ~inlineFX = IdentityDictionary.new;
 
-~inlineFX[\t1]   = ~t1.playfx({   |in| HPF.ar(LPF.ar(In.ar(~t1.inbus.index,   2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\t2]   = ~t2.playfx({   |in| HPF.ar(LPF.ar(In.ar(~t2.inbus.index,   2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\t3]   = ~t3.playfx({   |in| HPF.ar(LPF.ar(In.ar(~t3.inbus.index,   2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\t4]   = ~t4.playfx({   |in| HPF.ar(LPF.ar(In.ar(~t4.inbus.index,   2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\t5]   = ~t5.playfx({   |in| HPF.ar(LPF.ar(In.ar(~t5.inbus.index,   2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\t6]   = ~t6.playfx({   |in| HPF.ar(LPF.ar(In.ar(~t6.inbus.index,   2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\t7]   = ~t7.playfx({   |in| HPF.ar(LPF.ar(In.ar(~t7.inbus.index,   2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\t8]   = ~t8.playfx({   |in| HPF.ar(LPF.ar(In.ar(~t8.inbus.index,   2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\t9]   = ~t9.playfx({   |in| HPF.ar(LPF.ar(In.ar(~t9.inbus.index,   2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\t10]  = ~t10.playfx({  |in| HPF.ar(LPF.ar(In.ar(~t10.inbus.index,  2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\t11]  = ~t11.playfx({  |in| HPF.ar(LPF.ar(In.ar(~t11.inbus.index,  2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\t12]  = ~t12.playfx({  |in| HPF.ar(LPF.ar(In.ar(~t12.inbus.index,  2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\r1]   = ~r1.playfx({   |in| HPF.ar(LPF.ar(In.ar(~r1.inbus.index,   2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\r2]   = ~r2.playfx({   |in| HPF.ar(LPF.ar(In.ar(~r2.inbus.index,   2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\r3]   = ~r3.playfx({   |in| HPF.ar(LPF.ar(In.ar(~r3.inbus.index,   2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\r4]   = ~r4.playfx({   |in| HPF.ar(LPF.ar(In.ar(~r4.inbus.index,   2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\perc] = ~perc.playfx({ |in| HPF.ar(LPF.ar(In.ar(~perc.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\pbd1] = ~pbd1.playfx({ |in| HPF.ar(LPF.ar(In.ar(~pbd1.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\pbd2] = ~pbd2.playfx({ |in| HPF.ar(LPF.ar(In.ar(~pbd2.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\psd1] = ~psd1.playfx({ |in| HPF.ar(LPF.ar(In.ar(~psd1.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\psd2] = ~psd2.playfx({ |in| HPF.ar(LPF.ar(In.ar(~psd2.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\phh1] = ~phh1.playfx({ |in| HPF.ar(LPF.ar(In.ar(~phh1.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\phh2] = ~phh2.playfx({ |in| HPF.ar(LPF.ar(In.ar(~phh2.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\pcp1] = ~pcp1.playfx({ |in| HPF.ar(LPF.ar(In.ar(~pcp1.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\pcp2] = ~pcp2.playfx({ |in| HPF.ar(LPF.ar(In.ar(~pcp2.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\ptm1] = ~ptm1.playfx({ |in| HPF.ar(LPF.ar(In.ar(~ptm1.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\ptm2] = ~ptm2.playfx({ |in| HPF.ar(LPF.ar(In.ar(~ptm2.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\ptm3] = ~ptm3.playfx({ |in| HPF.ar(LPF.ar(In.ar(~ptm3.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\pcr1] = ~pcr1.playfx({ |in| HPF.ar(LPF.ar(In.ar(~pcr1.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\pcr2] = ~pcr2.playfx({ |in| HPF.ar(LPF.ar(In.ar(~pcr2.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\pex1] = ~pex1.playfx({ |in| HPF.ar(LPF.ar(In.ar(~pex1.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
-~inlineFX[\pex2] = ~pex2.playfx({ |in| HPF.ar(LPF.ar(In.ar(~pex2.inbus.index, 2), \lpfreq.kr(18000)), \hpfreq.kr(40)) });
+// Tracks
+~inlineFXmk.(~t1, \t1);   ~inlineFXmk.(~t2, \t2);   ~inlineFXmk.(~t3, \t3);   ~inlineFXmk.(~t4, \t4);
+~inlineFXmk.(~t5, \t5);   ~inlineFXmk.(~t6, \t6);   ~inlineFXmk.(~t7, \t7);   ~inlineFXmk.(~t8, \t8);
+~inlineFXmk.(~t9, \t9);   ~inlineFXmk.(~t10, \t10); ~inlineFXmk.(~t11, \t11); ~inlineFXmk.(~t12, \t12);
+// Returns
+~inlineFXmk.(~r1, \r1);   ~inlineFXmk.(~r2, \r2);   ~inlineFXmk.(~r3, \r3);   ~inlineFXmk.(~r4, \r4);
+// Perc submix + sub-channels
+~inlineFXmk.(~perc, \perc);
+~inlineFXmk.(~pbd1, \pbd1); ~inlineFXmk.(~pbd2, \pbd2);
+~inlineFXmk.(~psd1, \psd1); ~inlineFXmk.(~psd2, \psd2);
+~inlineFXmk.(~phh1, \phh1); ~inlineFXmk.(~phh2, \phh2);
+~inlineFXmk.(~pcp1, \pcp1); ~inlineFXmk.(~pcp2, \pcp2);
+~inlineFXmk.(~ptm1, \ptm1); ~inlineFXmk.(~ptm2, \ptm2); ~inlineFXmk.(~ptm3, \ptm3);
+~inlineFXmk.(~pcr1, \pcr1); ~inlineFXmk.(~pcr2, \pcr2);
+~inlineFXmk.(~pex1, \pex1); ~inlineFXmk.(~pex2, \pex2);
+~inlineFXmk = nil;  // release helper
+
+// ~apcMixBind: per-strip helper — 4 bindings (f/r1/r2/r3), pan optional
+// Keeps if-block literal count low (SC ~127-entry per-function limit)
+~apcMixBind = { |bank, strip, chan, sym, pan = true|
+    var b = "b" ++ bank ++ "_s" ++ strip;
+    ~apcBindParam.((b ++ "_f").asSymbol,  { |x| chan.level_(x) });
+    if(pan) { ~apcBindParam.((b ++ "_r1").asSymbol, { |x| chan.pan_(x.linlin(0, 1, -1, 1)) }) };
+    ~apcBindParam.((b ++ "_r2").asSymbol, { |x| ~inlineFX[sym].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.((b ++ "_r3").asSymbol, { |x| ~inlineFX[sym].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+};
+
+// ~lcxlMixBind: analogous helper for LCXL (CC 0-127, exponential mapping)
+~lcxlMixBind = { |bank, strip, chan, sym|
+    var b = "b" ++ bank ++ "_s" ++ strip;
+    ~lcxlParam[(b ++ "_f").asSymbol]  = { |x| chan.level_(x.linlin(0, 127, 0.0, 1.0)) };
+    ~lcxlParam[(b ++ "_r1").asSymbol] = { |x| ~inlineFX[sym].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
+    ~lcxlParam[(b ++ "_r2").asSymbol] = { |x| ~inlineFX[sym].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
+    ~lcxlParam[(b ++ "_r3").asSymbol] = { |x| chan.pan_(x.linlin(0, 127, -1, 1)) };
+};
 
 // ================= CONTROLLER BINDINGS (conditional) =================
 
@@ -173,136 +183,41 @@ var chan;  // declare vars at top
 if(~apcBindParam.notNil) {
     "Binding APC40 mkII controls...".postln;
 
-    // Master fader
     ~apcBindParam.(\master_f, { |x| ~m1.level_(x) });
 
-    // Bank 0: Tracks 1-8 (faders + pan + HPF + LPF)
-    ~apcBindParam.(\b0_s1_f,  { |x| ~t1.level_(x) });
-    ~apcBindParam.(\b0_s1_r1, { |x| ~t1.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b0_s1_r2, { |x| ~inlineFX[\t1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b0_s1_r3, { |x| ~inlineFX[\t1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b0_s2_f,  { |x| ~t2.level_(x) });
-    ~apcBindParam.(\b0_s2_r1, { |x| ~t2.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b0_s2_r2, { |x| ~inlineFX[\t2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b0_s2_r3, { |x| ~inlineFX[\t2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b0_s3_f,  { |x| ~t3.level_(x) });
-    ~apcBindParam.(\b0_s3_r1, { |x| ~t3.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b0_s3_r2, { |x| ~inlineFX[\t3].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b0_s3_r3, { |x| ~inlineFX[\t3].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b0_s4_f,  { |x| ~t4.level_(x) });
-    ~apcBindParam.(\b0_s4_r1, { |x| ~t4.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b0_s4_r2, { |x| ~inlineFX[\t4].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b0_s4_r3, { |x| ~inlineFX[\t4].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b0_s5_f,  { |x| ~t5.level_(x) });
-    ~apcBindParam.(\b0_s5_r1, { |x| ~t5.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b0_s5_r2, { |x| ~inlineFX[\t5].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b0_s5_r3, { |x| ~inlineFX[\t5].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b0_s6_f,  { |x| ~t6.level_(x) });
-    ~apcBindParam.(\b0_s6_r1, { |x| ~t6.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b0_s6_r2, { |x| ~inlineFX[\t6].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b0_s6_r3, { |x| ~inlineFX[\t6].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b0_s7_f,  { |x| ~t7.level_(x) });
-    ~apcBindParam.(\b0_s7_r1, { |x| ~t7.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b0_s7_r2, { |x| ~inlineFX[\t7].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b0_s7_r3, { |x| ~inlineFX[\t7].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b0_s8_f,  { |x| ~t8.level_(x) });
-    ~apcBindParam.(\b0_s8_r1, { |x| ~t8.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b0_s8_r2, { |x| ~inlineFX[\t8].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b0_s8_r3, { |x| ~inlineFX[\t8].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    // Bank 0: Tracks 1-8
+    ~apcMixBind.(0, 1, ~t1, \t1);  ~apcMixBind.(0, 2, ~t2, \t2);
+    ~apcMixBind.(0, 3, ~t3, \t3);  ~apcMixBind.(0, 4, ~t4, \t4);
+    ~apcMixBind.(0, 5, ~t5, \t5);  ~apcMixBind.(0, 6, ~t6, \t6);
+    ~apcMixBind.(0, 7, ~t7, \t7);  ~apcMixBind.(0, 8, ~t8, \t8);
 
-    // Bank 1: Tracks 9-12 + Returns 1-2 (faders + pan + HPF + LPF)
-    ~apcBindParam.(\b1_s1_f,  { |x| ~t9.level_(x) });
-    ~apcBindParam.(\b1_s1_r1, { |x| ~t9.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b1_s1_r2, { |x| ~inlineFX[\t9].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b1_s1_r3, { |x| ~inlineFX[\t9].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b1_s2_f,  { |x| ~t10.level_(x) });
-    ~apcBindParam.(\b1_s2_r1, { |x| ~t10.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b1_s2_r2, { |x| ~inlineFX[\t10].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b1_s2_r3, { |x| ~inlineFX[\t10].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b1_s3_f,  { |x| ~t11.level_(x) });
-    ~apcBindParam.(\b1_s3_r1, { |x| ~t11.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b1_s3_r2, { |x| ~inlineFX[\t11].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b1_s3_r3, { |x| ~inlineFX[\t11].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b1_s4_f,  { |x| ~t12.level_(x) });
-    ~apcBindParam.(\b1_s4_r1, { |x| ~t12.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b1_s4_r2, { |x| ~inlineFX[\t12].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b1_s4_r3, { |x| ~inlineFX[\t12].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b1_s5_f,  { |x| ~r1.level_(x) });
-    ~apcBindParam.(\b1_s5_r2, { |x| ~inlineFX[\r1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b1_s5_r3, { |x| ~inlineFX[\r1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b1_s6_f,  { |x| ~r2.level_(x) });
-    ~apcBindParam.(\b1_s6_r2, { |x| ~inlineFX[\r2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b1_s6_r3, { |x| ~inlineFX[\r2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    // Bank 1: Tracks 9-12, Returns 1-2 (returns: no pan)
+    ~apcMixBind.(1, 1, ~t9,  \t9);   ~apcMixBind.(1, 2, ~t10, \t10);
+    ~apcMixBind.(1, 3, ~t11, \t11);  ~apcMixBind.(1, 4, ~t12, \t12);
+    ~apcMixBind.(1, 5, ~r1, \r1, false);
+    ~apcMixBind.(1, 6, ~r2, \r2, false);
 
-    // Bank 2: Perc submix + perc sub-channels (faders + pan + HPF + LPF)
-    ~apcBindParam.(\b2_s1_f,  { |x| ~perc.level_(x) });
-    ~apcBindParam.(\b2_s1_r1, { |x| ~perc.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b2_s1_r2, { |x| ~inlineFX[\perc].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b2_s1_r3, { |x| ~inlineFX[\perc].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b2_s2_f,  { |x| ~pbd1.level_(x) });
-    ~apcBindParam.(\b2_s2_r1, { |x| ~pbd1.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b2_s2_r2, { |x| ~inlineFX[\pbd1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b2_s2_r3, { |x| ~inlineFX[\pbd1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b2_s3_f,  { |x| ~pbd2.level_(x) });
-    ~apcBindParam.(\b2_s3_r1, { |x| ~pbd2.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b2_s3_r2, { |x| ~inlineFX[\pbd2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b2_s3_r3, { |x| ~inlineFX[\pbd2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b2_s4_f,  { |x| ~psd1.level_(x) });
-    ~apcBindParam.(\b2_s4_r1, { |x| ~psd1.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b2_s4_r2, { |x| ~inlineFX[\psd1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b2_s4_r3, { |x| ~inlineFX[\psd1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b2_s5_f,  { |x| ~psd2.level_(x) });
-    ~apcBindParam.(\b2_s5_r1, { |x| ~psd2.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b2_s5_r2, { |x| ~inlineFX[\psd2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b2_s5_r3, { |x| ~inlineFX[\psd2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b2_s6_f,  { |x| ~phh1.level_(x) });
-    ~apcBindParam.(\b2_s6_r1, { |x| ~phh1.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b2_s6_r2, { |x| ~inlineFX[\phh1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b2_s6_r3, { |x| ~inlineFX[\phh1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b2_s7_f,  { |x| ~phh2.level_(x) });
-    ~apcBindParam.(\b2_s7_r1, { |x| ~phh2.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b2_s7_r2, { |x| ~inlineFX[\phh2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b2_s7_r3, { |x| ~inlineFX[\phh2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b2_s8_f,  { |x| ~pcp1.level_(x) });
-    ~apcBindParam.(\b2_s8_r1, { |x| ~pcp1.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b2_s8_r2, { |x| ~inlineFX[\pcp1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b2_s8_r3, { |x| ~inlineFX[\pcp1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    "APC40 mkII bindings complete (banks 0-1).".postln;
+} {
+    "APC40 mkII not detected, skipping bindings.".postln;
+};
 
-    // Bank 3: Remaining perc sub-channels (faders + pan + HPF + LPF)
-    ~apcBindParam.(\b3_s1_f,  { |x| ~pcp2.level_(x) });
-    ~apcBindParam.(\b3_s1_r1, { |x| ~pcp2.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b3_s1_r2, { |x| ~inlineFX[\pcp2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b3_s1_r3, { |x| ~inlineFX[\pcp2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b3_s2_f,  { |x| ~ptm1.level_(x) });
-    ~apcBindParam.(\b3_s2_r1, { |x| ~ptm1.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b3_s2_r2, { |x| ~inlineFX[\ptm1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b3_s2_r3, { |x| ~inlineFX[\ptm1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b3_s3_f,  { |x| ~ptm2.level_(x) });
-    ~apcBindParam.(\b3_s3_r1, { |x| ~ptm2.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b3_s3_r2, { |x| ~inlineFX[\ptm2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b3_s3_r3, { |x| ~inlineFX[\ptm2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b3_s4_f,  { |x| ~ptm3.level_(x) });
-    ~apcBindParam.(\b3_s4_r1, { |x| ~ptm3.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b3_s4_r2, { |x| ~inlineFX[\ptm3].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b3_s4_r3, { |x| ~inlineFX[\ptm3].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b3_s5_f,  { |x| ~pcr1.level_(x) });
-    ~apcBindParam.(\b3_s5_r1, { |x| ~pcr1.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b3_s5_r2, { |x| ~inlineFX[\pcr1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b3_s5_r3, { |x| ~inlineFX[\pcr1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b3_s6_f,  { |x| ~pcr2.level_(x) });
-    ~apcBindParam.(\b3_s6_r1, { |x| ~pcr2.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b3_s6_r2, { |x| ~inlineFX[\pcr2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b3_s6_r3, { |x| ~inlineFX[\pcr2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b3_s7_f,  { |x| ~pex1.level_(x) });
-    ~apcBindParam.(\b3_s7_r1, { |x| ~pex1.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b3_s7_r2, { |x| ~inlineFX[\pex1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b3_s7_r3, { |x| ~inlineFX[\pex1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
-    ~apcBindParam.(\b3_s8_f,  { |x| ~pex2.level_(x) });
-    ~apcBindParam.(\b3_s8_r1, { |x| ~pex2.pan_(x.linlin(0, 1, -1, 1)) });
-    ~apcBindParam.(\b3_s8_r2, { |x| ~inlineFX[\pex2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
-    ~apcBindParam.(\b3_s8_r3, { |x| ~inlineFX[\pex2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+// ---- APC40 mkII bindings (perc banks 2-3) ----
+if(~apcBindParam.notNil) {
 
-    "APC40 mkII bindings complete.".postln;
+    // Bank 2: Perc submix + sub-channels
+    ~apcMixBind.(2, 1, ~perc, \perc);  ~apcMixBind.(2, 2, ~pbd1, \pbd1);
+    ~apcMixBind.(2, 3, ~pbd2, \pbd2);  ~apcMixBind.(2, 4, ~psd1, \psd1);
+    ~apcMixBind.(2, 5, ~psd2, \psd2);  ~apcMixBind.(2, 6, ~phh1, \phh1);
+    ~apcMixBind.(2, 7, ~phh2, \phh2);  ~apcMixBind.(2, 8, ~pcp1, \pcp1);
+
+    // Bank 3: Remaining perc sub-channels
+    ~apcMixBind.(3, 1, ~pcp2, \pcp2);  ~apcMixBind.(3, 2, ~ptm1, \ptm1);
+    ~apcMixBind.(3, 3, ~ptm2, \ptm2);  ~apcMixBind.(3, 4, ~ptm3, \ptm3);
+    ~apcMixBind.(3, 5, ~pcr1, \pcr1);  ~apcMixBind.(3, 6, ~pcr2, \pcr2);
+    ~apcMixBind.(3, 7, ~pex1, \pex1);  ~apcMixBind.(3, 8, ~pex2, \pex2);
+
+    "APC40 mkII bindings complete (banks 2-3).".postln;
 } {
     "APC40 mkII not detected, skipping bindings.".postln;
 };
@@ -311,147 +226,44 @@ if(~apcBindParam.notNil) {
 if(~lcxlParam.notNil) {
     "Binding Launch Control XL controls...".postln;
 
-    // Bank 1: Tracks 1-8 (faders + HPF + LPF + pan)
-    ~lcxlParam[\b1_s1_f]  = { |x| ~t1.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b1_s1_r1] = { |x| ~inlineFX[\t1].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b1_s1_r2] = { |x| ~inlineFX[\t1].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b1_s1_r3] = { |x| ~t1.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b1_s2_f]  = { |x| ~t2.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b1_s2_r1] = { |x| ~inlineFX[\t2].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b1_s2_r2] = { |x| ~inlineFX[\t2].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b1_s2_r3] = { |x| ~t2.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b1_s3_f]  = { |x| ~t3.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b1_s3_r1] = { |x| ~inlineFX[\t3].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b1_s3_r2] = { |x| ~inlineFX[\t3].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b1_s3_r3] = { |x| ~t3.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b1_s4_f]  = { |x| ~t4.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b1_s4_r1] = { |x| ~inlineFX[\t4].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b1_s4_r2] = { |x| ~inlineFX[\t4].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b1_s4_r3] = { |x| ~t4.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b1_s5_f]  = { |x| ~t5.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b1_s5_r1] = { |x| ~inlineFX[\t5].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b1_s5_r2] = { |x| ~inlineFX[\t5].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b1_s5_r3] = { |x| ~t5.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b1_s6_f]  = { |x| ~t6.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b1_s6_r1] = { |x| ~inlineFX[\t6].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b1_s6_r2] = { |x| ~inlineFX[\t6].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b1_s6_r3] = { |x| ~t6.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b1_s7_f]  = { |x| ~t7.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b1_s7_r1] = { |x| ~inlineFX[\t7].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b1_s7_r2] = { |x| ~inlineFX[\t7].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b1_s7_r3] = { |x| ~t7.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b1_s8_f]  = { |x| ~t8.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b1_s8_r1] = { |x| ~inlineFX[\t8].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b1_s8_r2] = { |x| ~inlineFX[\t8].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b1_s8_r3] = { |x| ~t8.pan_(x.linlin(0, 127, -1, 1)) };
+    // Bank 1: Tracks 1-8
+    ~lcxlMixBind.(1, 1, ~t1, \t1);  ~lcxlMixBind.(1, 2, ~t2, \t2);
+    ~lcxlMixBind.(1, 3, ~t3, \t3);  ~lcxlMixBind.(1, 4, ~t4, \t4);
+    ~lcxlMixBind.(1, 5, ~t5, \t5);  ~lcxlMixBind.(1, 6, ~t6, \t6);
+    ~lcxlMixBind.(1, 7, ~t7, \t7);  ~lcxlMixBind.(1, 8, ~t8, \t8);
 
-    // Bank 2: Tracks 9-12, Returns 1-4 (faders + HPF + LPF + pan)
-    ~lcxlParam[\b2_s1_f]  = { |x| ~t9.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b2_s1_r1] = { |x| ~inlineFX[\t9].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b2_s1_r2] = { |x| ~inlineFX[\t9].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b2_s1_r3] = { |x| ~t9.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b2_s2_f]  = { |x| ~t10.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b2_s2_r1] = { |x| ~inlineFX[\t10].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b2_s2_r2] = { |x| ~inlineFX[\t10].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b2_s2_r3] = { |x| ~t10.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b2_s3_f]  = { |x| ~t11.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b2_s3_r1] = { |x| ~inlineFX[\t11].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b2_s3_r2] = { |x| ~inlineFX[\t11].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b2_s3_r3] = { |x| ~t11.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b2_s4_f]  = { |x| ~t12.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b2_s4_r1] = { |x| ~inlineFX[\t12].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b2_s4_r2] = { |x| ~inlineFX[\t12].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b2_s4_r3] = { |x| ~t12.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b2_s5_f]  = { |x| ~r1.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b2_s5_r1] = { |x| ~inlineFX[\r1].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b2_s5_r2] = { |x| ~inlineFX[\r1].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b2_s5_r3] = { |x| ~r1.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b2_s6_f]  = { |x| ~r2.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b2_s6_r1] = { |x| ~inlineFX[\r2].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b2_s6_r2] = { |x| ~inlineFX[\r2].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b2_s6_r3] = { |x| ~r2.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b2_s7_f]  = { |x| ~r3.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b2_s7_r1] = { |x| ~inlineFX[\r3].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b2_s7_r2] = { |x| ~inlineFX[\r3].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b2_s7_r3] = { |x| ~r3.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b2_s8_f]  = { |x| ~r4.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b2_s8_r1] = { |x| ~inlineFX[\r4].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b2_s8_r2] = { |x| ~inlineFX[\r4].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b2_s8_r3] = { |x| ~r4.pan_(x.linlin(0, 127, -1, 1)) };
+    // Bank 2: Tracks 9-12, Returns 1-4
+    ~lcxlMixBind.(2, 1, ~t9,  \t9);   ~lcxlMixBind.(2, 2, ~t10, \t10);
+    ~lcxlMixBind.(2, 3, ~t11, \t11);  ~lcxlMixBind.(2, 4, ~t12, \t12);
+    ~lcxlMixBind.(2, 5, ~r1,  \r1);   ~lcxlMixBind.(2, 6, ~r2,  \r2);
+    ~lcxlMixBind.(2, 7, ~r3,  \r3);   ~lcxlMixBind.(2, 8, ~r4,  \r4);
 
-    // Bank 3: Perc submix + perc sub-channels (faders + HPF + LPF + pan)
-    ~lcxlParam[\b3_s1_f]  = { |x| ~perc.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b3_s1_r1] = { |x| ~inlineFX[\perc].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b3_s1_r2] = { |x| ~inlineFX[\perc].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b3_s1_r3] = { |x| ~perc.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b3_s2_f]  = { |x| ~pbd1.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b3_s2_r1] = { |x| ~inlineFX[\pbd1].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b3_s2_r2] = { |x| ~inlineFX[\pbd1].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b3_s2_r3] = { |x| ~pbd1.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b3_s3_f]  = { |x| ~pbd2.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b3_s3_r1] = { |x| ~inlineFX[\pbd2].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b3_s3_r2] = { |x| ~inlineFX[\pbd2].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b3_s3_r3] = { |x| ~pbd2.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b3_s4_f]  = { |x| ~psd1.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b3_s4_r1] = { |x| ~inlineFX[\psd1].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b3_s4_r2] = { |x| ~inlineFX[\psd1].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b3_s4_r3] = { |x| ~psd1.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b3_s5_f]  = { |x| ~psd2.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b3_s5_r1] = { |x| ~inlineFX[\psd2].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b3_s5_r2] = { |x| ~inlineFX[\psd2].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b3_s5_r3] = { |x| ~psd2.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b3_s6_f]  = { |x| ~phh1.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b3_s6_r1] = { |x| ~inlineFX[\phh1].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b3_s6_r2] = { |x| ~inlineFX[\phh1].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b3_s6_r3] = { |x| ~phh1.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b3_s7_f]  = { |x| ~phh2.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b3_s7_r1] = { |x| ~inlineFX[\phh2].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b3_s7_r2] = { |x| ~inlineFX[\phh2].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b3_s7_r3] = { |x| ~phh2.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b3_s8_f]  = { |x| ~pcp1.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b3_s8_r1] = { |x| ~inlineFX[\pcp1].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b3_s8_r2] = { |x| ~inlineFX[\pcp1].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b3_s8_r3] = { |x| ~pcp1.pan_(x.linlin(0, 127, -1, 1)) };
+    "Launch Control XL bindings complete (banks 1-2).".postln;
+};
 
-    // Bank 4: Remaining perc sub-channels (faders + HPF + LPF + pan)
-    ~lcxlParam[\b4_s1_f]  = { |x| ~pcp2.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b4_s1_r1] = { |x| ~inlineFX[\pcp2].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b4_s1_r2] = { |x| ~inlineFX[\pcp2].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b4_s1_r3] = { |x| ~pcp2.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b4_s2_f]  = { |x| ~ptm1.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b4_s2_r1] = { |x| ~inlineFX[\ptm1].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b4_s2_r2] = { |x| ~inlineFX[\ptm1].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b4_s2_r3] = { |x| ~ptm1.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b4_s3_f]  = { |x| ~ptm2.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b4_s3_r1] = { |x| ~inlineFX[\ptm2].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b4_s3_r2] = { |x| ~inlineFX[\ptm2].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b4_s3_r3] = { |x| ~ptm2.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b4_s4_f]  = { |x| ~ptm3.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b4_s4_r1] = { |x| ~inlineFX[\ptm3].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b4_s4_r2] = { |x| ~inlineFX[\ptm3].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b4_s4_r3] = { |x| ~ptm3.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b4_s5_f]  = { |x| ~pcr1.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b4_s5_r1] = { |x| ~inlineFX[\pcr1].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b4_s5_r2] = { |x| ~inlineFX[\pcr1].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b4_s5_r3] = { |x| ~pcr1.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b4_s6_f]  = { |x| ~pcr2.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b4_s6_r1] = { |x| ~inlineFX[\pcr2].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b4_s6_r2] = { |x| ~inlineFX[\pcr2].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b4_s6_r3] = { |x| ~pcr2.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b4_s7_f]  = { |x| ~pex1.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b4_s7_r1] = { |x| ~inlineFX[\pex1].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b4_s7_r2] = { |x| ~inlineFX[\pex1].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b4_s7_r3] = { |x| ~pex1.pan_(x.linlin(0, 127, -1, 1)) };
-    ~lcxlParam[\b4_s8_f]  = { |x| ~pex2.level_(x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcxlParam[\b4_s8_r1] = { |x| ~inlineFX[\pex2].tryPerform(\set, \hpfreq, x.clip(1, 127).linexp(1, 127, 20, 2000)) };
-    ~lcxlParam[\b4_s8_r2] = { |x| ~inlineFX[\pex2].tryPerform(\set, \lpfreq, x.clip(1, 127).linexp(1, 127, 200, 20000)) };
-    ~lcxlParam[\b4_s8_r3] = { |x| ~pex2.pan_(x.linlin(0, 127, -1, 1)) };
+// ---- Launch Control XL bindings (perc banks 3-4) ----
+if(~lcxlParam.notNil) {
+
+    // Bank 3: Perc submix + sub-channels
+    ~lcxlMixBind.(3, 1, ~perc, \perc);  ~lcxlMixBind.(3, 2, ~pbd1, \pbd1);
+    ~lcxlMixBind.(3, 3, ~pbd2, \pbd2);  ~lcxlMixBind.(3, 4, ~psd1, \psd1);
+    ~lcxlMixBind.(3, 5, ~psd2, \psd2);  ~lcxlMixBind.(3, 6, ~phh1, \phh1);
+    ~lcxlMixBind.(3, 7, ~phh2, \phh2);  ~lcxlMixBind.(3, 8, ~pcp1, \pcp1);
+
+    // Bank 4: Remaining perc sub-channels
+    ~lcxlMixBind.(4, 1, ~pcp2, \pcp2);  ~lcxlMixBind.(4, 2, ~ptm1, \ptm1);
+    ~lcxlMixBind.(4, 3, ~ptm2, \ptm2);  ~lcxlMixBind.(4, 4, ~ptm3, \ptm3);
+    ~lcxlMixBind.(4, 5, ~pcr1, \pcr1);  ~lcxlMixBind.(4, 6, ~pcr2, \pcr2);
+    ~lcxlMixBind.(4, 7, ~pex1, \pex1);  ~lcxlMixBind.(4, 8, ~pex2, \pex2);
 
     // Bank 8: Master on strip 8
-    ~lcxlParam[\b8_s8_f]  = { |x| ~m1.level_(x.linlin(0, 127, 0.0, 4.0)) };
+    ~lcxlParam[\b8_s8_f] = { |x| ~m1.level_(x.linlin(0, 127, 0.0, 4.0)) };
 
-    "Launch Control XL bindings complete.".postln;
+    "Launch Control XL bindings complete (banks 3-4).".postln;
 };
+
+~apcMixBind = nil;
+~lcxlMixBind = nil;
 
 // ================= DEFAULT LEVELS =================
 
