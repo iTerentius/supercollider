@@ -27,7 +27,7 @@ Pdefn(\bd1_scale, Scale.minor);
 // BUFS — words
 ~sbd1 = ~sTree[\bass_drums].values;
 Pdefn(\bd1_buf_0, Pseq(~sbd1, 1));
-Pdefn(\bd1_buf_1, Pseq(~sbd1[[5,  0,  1]], 1));
+Pdefn(\bd1_buf_1, Pseq(~sbd1[[1, 3]], 1));
 // sentences
 Pdefn(\bd1_bufs_a, Pseq([Pn(Pdefn(\bd1_buf_1), 4)], 1));      // single hit
 Pdefn(\bd1_bufs_b, Pseq([Pn(Pdefn(\bd1_buf_0), 4)], 1));      // all samples
@@ -42,14 +42,14 @@ Pdefn(\bd1_oct_1, Pseq([4, 5], 1));
 Pdefn(\bd1_octs, Pseq([Pn(Pdefn(\bd1_oct_0), 4)], 1));
 
 // AMPS — words
-Pdefn(\bd1_amp_0, 0.8);
+Pdefn(\bd1_amp_0, 1.0);
 Pdefn(\bd1_amp_1, Pwhite(0.5, 0.7, 1));
 Pdefn(\bd1_amp_2, Pseq([0.5!3, 0.8].flat, 1));
 // story
 Pdefn(\bd1_amps, Pseq([Pn(Pdefn(\bd1_amp_0), 4)], 1));
 
 // DEGS — words
-Pdefn(\bd1_deg_0, 0);
+Pdefn(\bd1_deg_0, [0, 1]);
 Pdefn(\bd1_deg_1, Pseq([0, 1, \, 3, \, 0], 1));
 Pdefn(\bd1_deg_2, Pseq([0, \, \, \, 14, \, 0, \, 0, \, \, 0, 14, \, \, \], 1));
 // sentences
@@ -57,7 +57,7 @@ Pdefn(\bd1_degs_a, Pseq([Pn(Pdefn(\bd1_deg_0), 4)], 1));         // root only
 Pdefn(\bd1_degs_b, Pseq([Pn(Pdefn(\bd1_deg_1), 4)], 1));         // short walk
 Pdefn(\bd1_degs_c, Pseq([Pn(Pdefn(\bd1_deg_2), 4)], 1));         // sparse melody
 // story
-Pdefn(\bd1_degs, Pseq([Pn(Pdefn(\bd1_degs_b), 1)], 1));
+Pdefn(\bd1_degs, Pseq([Pn(Pdefn(\bd1_degs_a), 1)], 1));
 
 // DURS — words
 Pdefn(\bd1_dur_0, 1);

@@ -95,7 +95,7 @@ Pdefn(\ntron_octs, Pseq([
 
 // DEGREE — words
 Pdefn(\ntron_deg_0, 0);
-Pdefn(\ntron_deg_1, Pseq([Pslide((-2..4),  3,  7),  Pn(Rest(),  8)],  1));
+Pdefn(\ntron_deg_1, Pseq([Pn(Rest(), 1), Pslide((-2..4),  3,  7),  Pn(Rest(),  8)],  1));
 // sentences
 Pdefn(\ntron_degs_a, Pseq([Pn(Pdefn(\ntron_deg_0), 4)], 1));   // root
 Pdefn(\ntron_degs_b, Pseq([Pn(Pdefn(\ntron_deg_1), 4)], 1));   // random
@@ -247,11 +247,11 @@ Pdefn(\ntron_lfoToFilt, Pseq([
 ], 1));
 
 // FILTER
-Pdefn(\ntron_cutoff_0, Pseg([500, 100, 2000], [1, 4], \sin, 1));  // 20..20000 Hz
+Pdefn(\ntron_cutoff_0, Pseg([500, 2000, 500], [2, 4], \sin, 1));  // 20..20000 Hz
 Pdefn(\ntron_cutoff_1, 2000);
 Pdefn(\ntron_cutoff, Pseq([
     // Pn(Pdefn(\ntron_cutoff_0), 4),
-    Pn(Pdefn(\ntron_cutoff_0), 4),
+    Pn(Pdefn(\ntron_cutoff_1), 4),
 ], 1));
 
 Pdefn(\ntron_res_0, 0.2);            // 0..1  (self-osc above ~0.88)
@@ -266,14 +266,16 @@ Pdefn(\ntron_filterMode, Pseq([
     // Pn(Pdefn(\ntron_filterMode_1), 4),
 ], 1));
 
-Pdefn(\ntron_keyTrack_0, 0.0);       // 0..1
+Pdefn(\ntron_keyTrack_0, 0.5);       // 0..1
 Pdefn(\ntron_keyTrack, Pseq([
     Pn(Pdefn(\ntron_keyTrack_0), 4),
 ], 1));
 
-Pdefn(\ntron_env1Amt_0, 0.5);        // -1..+1
+Pdefn(\ntron_env1Amt_0, 0.0);        // -1..+1
+Pdefn(\ntron_env1Amt_1, Pseg([-1, 1,  -1], [2, 4], \sin, 1));        // -1..+1
 Pdefn(\ntron_env1Amt, Pseq([
-    Pn(Pdefn(\ntron_env1Amt_0), 4),
+    // Pn(Pdefn(\ntron_env1Amt_0), 4),
+    Pn(Pdefn(\ntron_env1Amt_1), 4),
 ], 1));
 
 // ENV 1 (filter)

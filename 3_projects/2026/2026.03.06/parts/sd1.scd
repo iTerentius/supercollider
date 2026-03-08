@@ -29,11 +29,11 @@ Pdefn(\sd1_scale, Scale.minor);
 Pdefn(\sd1_buf_0, Pseq(~ssd1, 1));
 Pdefn(\sd1_buf_1, Pseq(~ssd1[[5]], 1));
 // sentences
-Pdefn(\sd1_bufs_A, Pseq([Pn(Pdefn(\sd1_buf_1), 4)], 1));      // single hit
-Pdefn(\sd1_bufs_B, Pseq([Pn(Pdefn(\sd1_buf_0), 4)], 1));      // all samples
-Pdefn(\sd1_bufs_C, Pseq([Pn(Pdefn(\sd1_buf_1), 2), Pn(Pdefn(\sd1_buf_0), 2)], 1));
+Pdefn(\sd1_bufs_a, Pseq([Pn(Pdefn(\sd1_buf_1), 4)], 1));      // single hit
+Pdefn(\sd1_bufs_b, Pseq([Pn(Pdefn(\sd1_buf_0), 4)], 1));      // all samples
+Pdefn(\sd1_bufs_c, Pseq([Pn(Pdefn(\sd1_buf_1), 2), Pn(Pdefn(\sd1_buf_0), 2)], 1));
 // story
-Pdefn(\sd1_bufs, Pseq([Pn(Pdefn(\sd1_bufs_A), 1)], 1));
+Pdefn(\sd1_bufs, Pseq([Pn(Pdefn(\sd1_bufs_a), 1)], 1));
 
 // OCTS — words
 Pdefn(\sd1_oct_0, 5);
@@ -53,11 +53,11 @@ Pdefn(\sd1_deg_0, 0);
 Pdefn(\sd1_deg_1, Pseq([0, 1, \, 3, \, 0], 1));
 Pdefn(\sd1_deg_2, Pseq([0, \, \, \, 14, \, 0, \, 0, \, \, 0, 14, \, \, \], 1));
 // sentences
-Pdefn(\sd1_degs_A, Pseq([Pn(Pdefn(\sd1_deg_0), 4)], 1));
-Pdefn(\sd1_degs_B, Pseq([Pn(Pdefn(\sd1_deg_1), 4)], 1));
-Pdefn(\sd1_degs_C, Pseq([Pn(Pdefn(\sd1_deg_2), 4)], 1));
+Pdefn(\sd1_degs_a, Pseq([Pn(Pdefn(\sd1_deg_0), 4)], 1));
+Pdefn(\sd1_degs_b, Pseq([Pn(Pdefn(\sd1_deg_1), 4)], 1));
+Pdefn(\sd1_degs_c, Pseq([Pn(Pdefn(\sd1_deg_2), 4)], 1));
 // story
-Pdefn(\sd1_degs, Pseq([Pn(Pdefn(\sd1_degs_A), 1)], 1));
+Pdefn(\sd1_degs, Pseq([Pn(Pdefn(\sd1_degs_a), 1)], 1));
 
 // DURS — words
 Pdefn(\sd1_dur_0, 2);
@@ -66,11 +66,14 @@ Pdefn(\sd1_dur_2, Pbjorklund(5, 8, 1)/2);
 Pdefn(\sd1_dur_3, Pseq([1/4!2, Rest(1/4), 1/4].flat, 1));
 Pdefn(\sd1_dur_4, 1/2);
 // sentences
-Pdefn(\sd1_durs_A, Pseq([Pn(Pdefn(\sd1_dur_0), 4)], 1));         // straight half notes
-Pdefn(\sd1_durs_B, Pseq([Pn(Pdefn(\sd1_dur_0), 2), Pn(Pdefn(\sd1_dur_3), 2)], 1));
-Pdefn(\sd1_durs_C, Pseq([Pn(Pdefn(\sd1_dur_2), 4)], 1));         // euclidean
+Pdefn(\sd1_durs_a, Pseq([Pn(Pdefn(\sd1_dur_0), 4)], 1));         // straight half notes
+Pdefn(\sd1_durs_b, Pseq([Pn(Pdefn(\sd1_dur_0), 2), Pn(Pdefn(\sd1_dur_3), 2)], 1));
+Pdefn(\sd1_durs_c, Pseq([Pn(Pdefn(\sd1_dur_2), 4)], 1));         // euclidean
 // story
-Pdefn(\sd1_durs, Pseq([Pn(Pdefn(\sd1_durs_A), 1)], 1));
+Pdefn(\sd1_durs, Pseq([
+  Pn(Pdefn(\sd1_durs_a), 1),  
+  Pn(Pdefn(\sd1_durs_b), 1),  
+], 1));
 
 // STRS — words
 Pdefn(\sd1_str_0, 1);
