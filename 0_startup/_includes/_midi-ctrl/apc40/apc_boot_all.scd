@@ -385,9 +385,12 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 ~apcChangeBank = { |idx|
     var old; old = ~apcBank; ~apcBank = idx.clip(1, 8);
     ["[APC PARAM] bank change", "old", old, "new", ~apcBank].postln;
-    // Clear old bank pad LEDs
+    // Clear old bank pad LEDs (both static and pulse channels)
     if(~apcPadMap.notNil) {
-        ~apcPadMap.keysDo { |n| ~apcLEDSet.(n, ~apcColors[\off]) };
+        ~apcPadMap.keysDo { |n|
+            ~apcPadLEDch.(n, 0, 0);
+            ~apcPadLEDch.(n, 0, ~apcCfg[\playMode] ? 9);
+        };
     };
     // Switch to new bank's pad map and repaint
     ~apcPadMap = ~apcBanks[~apcBank - 1];
@@ -606,8 +609,11 @@ if(~apcOut.notNil) {
     ~apcInstallFaderCC.();
     ~apcInstallKnobCC.();
 
-    /* clear all LEDs then repaint and auto-assign defaults */
-    0.to(127).do { |n| ~apcPadLED.(n, ~apcColors[\off]) };
+    /* clear all LEDs (both static ch 0 and pulse ch) then repaint */
+    0.to(127).do { |n|
+        ~apcPadLEDch.(n, 0, 0);
+        ~apcPadLEDch.(n, 0, ~apcCfg[\playMode] ? 9);
+    };
     "[APC] LEDs cleared".postln;
     ~apcAutoAssignScenes.();
     ~apcAutoAssignStops.();
