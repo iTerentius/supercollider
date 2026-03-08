@@ -14,7 +14,7 @@
 Pdef(\bd1).play;
 Pdef(\bd1).stop;
 
-~bd1_rev = ~ensurePostSend.(~pbd1, ~r1, 0.7);
+~bd1_rev = ~ensurePostSend.(~t1, ~r1, 0.7);
 ~bd1_rev.tryPerform(\free);
 ~bd1_rev.level_(1);
 
