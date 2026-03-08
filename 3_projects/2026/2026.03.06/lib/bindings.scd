@@ -31,6 +31,11 @@
 ~lpBindB.(1, [7, 4], \roll_fx_3,  5, nil, nil, ~makeFxSendTdef.(\roll_fx_3, ~t2, ~r3));
 ~lpBindB.(1, [8, 4], \roll_fx_4, 35, nil, nil, ~makeFxSendTdef.(\roll_fx_4, ~t2, ~r4));
 
+~lpBindB.(1, [5, 5], \ms20_fx_1, 41, nil, nil, ~makeFxSendTdef.(\ms20_fx_1, ~t2, ~r1));
+~lpBindB.(1, [6, 5], \ms20_fx_2, 81, nil, nil, ~makeFxSendTdef.(\ms20_fx_2, ~t2, ~r2));
+~lpBindB.(1, [7, 5], \ms20_fx_3,  5, nil, nil, ~makeFxSendTdef.(\ms20_fx_3, ~t2, ~r3));
+~lpBindB.(1, [8, 5], \ms20_fx_4, 35, nil, nil, ~makeFxSendTdef.(\ms20_fx_4, ~t2, ~r4));
+
 ~lpBindB.(1, [5, 6], \thingA_fx_1, 41, nil, nil, ~makeFxSendTdef.(\thingA_fx_1, ~t3, ~r1));
 ~lpBindB.(1, [6, 6], \thingA_fx_2, 81, nil, nil, ~makeFxSendTdef.(\thingA_fx_2, ~t3, ~r2));
 ~lpBindB.(1, [7, 6], \thingA_fx_3,  5, nil, nil, ~makeFxSendTdef.(\thingA_fx_3, ~t3, ~r3));
@@ -63,4 +68,45 @@
 ~apcBindB.(1, 16, \bd1_fx_2, 1, \cyan,   nil, ~fxSendStop[\bd1_fx_2]);
 ~apcBindB.(1, 8,  \bd1_fx_3, 1, \pink,   nil, ~fxSendStop[\bd1_fx_3]);
 ~apcBindB.(1, 0,  \bd1_fx_4, 1, \purple, nil, ~fxSendStop[\bd1_fx_4]);
+
+~apcBindB.(1, 25, \sd1_fx_1, 1, \blue,   nil, ~fxSendStop[\sd1_fx_1]);
+~apcBindB.(1, 17, \sd1_fx_2, 1, \cyan,   nil, ~fxSendStop[\sd1_fx_2]);
+~apcBindB.(1, 9,  \sd1_fx_3, 1, \pink,   nil, ~fxSendStop[\sd1_fx_3]);
+~apcBindB.(1, 1,  \sd1_fx_4, 1, \purple, nil, ~fxSendStop[\sd1_fx_4]);
+
+~apcBindB.(1, 26, \hh1_fx_1, 1, \blue,   nil, ~fxSendStop[\hh1_fx_1]);
+~apcBindB.(1, 18, \hh1_fx_2, 1, \cyan,   nil, ~fxSendStop[\hh1_fx_2]);
+~apcBindB.(1, 10, \hh1_fx_3, 1, \pink,   nil, ~fxSendStop[\hh1_fx_3]);
+~apcBindB.(1,  2, \hh1_fx_4, 1, \purple, nil, ~fxSendStop[\hh1_fx_4]);
+
+~apcBindB.(1, 27, \roll_fx_1, 1, \blue,   nil, ~fxSendStop[\roll_fx_1]);
+~apcBindB.(1, 19, \roll_fx_2, 1, \cyan,   nil, ~fxSendStop[\roll_fx_2]);
+~apcBindB.(1, 11, \roll_fx_3, 1, \pink,   nil, ~fxSendStop[\roll_fx_3]);
+~apcBindB.(1,  3, \roll_fx_4, 1, \purple, nil, ~fxSendStop[\roll_fx_4]);
+
+~apcBindB.(1, 28, \ms20_fx_1, 1, \blue,   nil, ~fxSendStop[\ms20_fx_1]);
+~apcBindB.(1, 20, \ms20_fx_2, 1, \cyan,   nil, ~fxSendStop[\ms20_fx_2]);
+~apcBindB.(1, 12, \ms20_fx_3, 1, \pink,   nil, ~fxSendStop[\ms20_fx_3]);
+~apcBindB.(1,  4, \ms20_fx_4, 1, \purple, nil, ~fxSendStop[\ms20_fx_4]);
+
+~apcBindB.(1, 29, \thingA_fx_1, 1, \blue,   nil, ~fxSendStop[\thingA_fx_1]);
+~apcBindB.(1, 21, \thingA_fx_2, 1, \cyan,   nil, ~fxSendStop[\thingA_fx_2]);
+~apcBindB.(1, 13, \thingA_fx_3, 1, \pink,   nil, ~fxSendStop[\thingA_fx_3]);
+~apcBindB.(1,  5, \thingA_fx_4, 1, \purple, nil, ~fxSendStop[\thingA_fx_4]);
+
+~apcBindB.(1, 30, \ntron_fx_1, 1, \blue,   nil, ~fxSendStop[\ntron_fx_1]);
+~apcBindB.(1, 22, \ntron_fx_2, 1, \cyan,   nil, ~fxSendStop[\ntron_fx_2]);
+~apcBindB.(1, 14, \ntron_fx_3, 1, \pink,   nil, ~fxSendStop[\ntron_fx_3]);
+~apcBindB.(1,  6, \ntron_fx_4, 1, \purple, nil, ~fxSendStop[\ntron_fx_4]);
+
+~apcBindB.(1, 31, \mD_fx_1, 1, \blue,   nil, ~fxSendStop[\mD_fx_1]);
+~apcBindB.(1, 23, \mD_fx_2, 1, \cyan,   nil, ~fxSendStop[\mD_fx_2]);
+~apcBindB.(1, 15, \mD_fx_3, 1, \pink,   nil, ~fxSendStop[\mD_fx_3]);
+~apcBindB.(1,  7, \mD_fx_4, 1, \purple, nil, ~fxSendStop[\mD_fx_4]);
+
+// Refresh APC40 LEDs — clear stale pulse states then repaint
+if(~apcOut.notNil) {
+    ~apcPadMap.keysDo { |n| ~apcPadLEDch.(n, 0, ~apcCfg[\playMode] ? 9) };
+    AppClock.sched(0.05, { ~apcRepaintAll.(); nil });
+};
 )
