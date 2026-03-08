@@ -234,6 +234,74 @@ if(~apcBindParam.notNil) {
     ~apcBindParam.(\b1_s6_r2, { |x| ~inlineFX[\r2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
     ~apcBindParam.(\b1_s6_r3, { |x| ~inlineFX[\r2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
 
+    // Bank 2: Perc submix + perc sub-channels (faders + pan + HPF + LPF)
+    ~apcBindParam.(\b2_s1_f,  { |x| ~perc.level_(x) });
+    ~apcBindParam.(\b2_s1_r1, { |x| ~perc.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b2_s1_r2, { |x| ~inlineFX[\perc].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b2_s1_r3, { |x| ~inlineFX[\perc].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b2_s2_f,  { |x| ~pbd1.level_(x) });
+    ~apcBindParam.(\b2_s2_r1, { |x| ~pbd1.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b2_s2_r2, { |x| ~inlineFX[\pbd1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b2_s2_r3, { |x| ~inlineFX[\pbd1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b2_s3_f,  { |x| ~pbd2.level_(x) });
+    ~apcBindParam.(\b2_s3_r1, { |x| ~pbd2.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b2_s3_r2, { |x| ~inlineFX[\pbd2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b2_s3_r3, { |x| ~inlineFX[\pbd2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b2_s4_f,  { |x| ~psd1.level_(x) });
+    ~apcBindParam.(\b2_s4_r1, { |x| ~psd1.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b2_s4_r2, { |x| ~inlineFX[\psd1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b2_s4_r3, { |x| ~inlineFX[\psd1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b2_s5_f,  { |x| ~psd2.level_(x) });
+    ~apcBindParam.(\b2_s5_r1, { |x| ~psd2.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b2_s5_r2, { |x| ~inlineFX[\psd2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b2_s5_r3, { |x| ~inlineFX[\psd2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b2_s6_f,  { |x| ~phh1.level_(x) });
+    ~apcBindParam.(\b2_s6_r1, { |x| ~phh1.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b2_s6_r2, { |x| ~inlineFX[\phh1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b2_s6_r3, { |x| ~inlineFX[\phh1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b2_s7_f,  { |x| ~phh2.level_(x) });
+    ~apcBindParam.(\b2_s7_r1, { |x| ~phh2.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b2_s7_r2, { |x| ~inlineFX[\phh2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b2_s7_r3, { |x| ~inlineFX[\phh2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b2_s8_f,  { |x| ~pcp1.level_(x) });
+    ~apcBindParam.(\b2_s8_r1, { |x| ~pcp1.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b2_s8_r2, { |x| ~inlineFX[\pcp1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b2_s8_r3, { |x| ~inlineFX[\pcp1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+
+    // Bank 3: Remaining perc sub-channels (faders + pan + HPF + LPF)
+    ~apcBindParam.(\b3_s1_f,  { |x| ~pcp2.level_(x) });
+    ~apcBindParam.(\b3_s1_r1, { |x| ~pcp2.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b3_s1_r2, { |x| ~inlineFX[\pcp2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b3_s1_r3, { |x| ~inlineFX[\pcp2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b3_s2_f,  { |x| ~ptm1.level_(x) });
+    ~apcBindParam.(\b3_s2_r1, { |x| ~ptm1.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b3_s2_r2, { |x| ~inlineFX[\ptm1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b3_s2_r3, { |x| ~inlineFX[\ptm1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b3_s3_f,  { |x| ~ptm2.level_(x) });
+    ~apcBindParam.(\b3_s3_r1, { |x| ~ptm2.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b3_s3_r2, { |x| ~inlineFX[\ptm2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b3_s3_r3, { |x| ~inlineFX[\ptm2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b3_s4_f,  { |x| ~ptm3.level_(x) });
+    ~apcBindParam.(\b3_s4_r1, { |x| ~ptm3.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b3_s4_r2, { |x| ~inlineFX[\ptm3].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b3_s4_r3, { |x| ~inlineFX[\ptm3].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b3_s5_f,  { |x| ~pcr1.level_(x) });
+    ~apcBindParam.(\b3_s5_r1, { |x| ~pcr1.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b3_s5_r2, { |x| ~inlineFX[\pcr1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b3_s5_r3, { |x| ~inlineFX[\pcr1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b3_s6_f,  { |x| ~pcr2.level_(x) });
+    ~apcBindParam.(\b3_s6_r1, { |x| ~pcr2.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b3_s6_r2, { |x| ~inlineFX[\pcr2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b3_s6_r3, { |x| ~inlineFX[\pcr2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b3_s7_f,  { |x| ~pex1.level_(x) });
+    ~apcBindParam.(\b3_s7_r1, { |x| ~pex1.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b3_s7_r2, { |x| ~inlineFX[\pex1].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b3_s7_r3, { |x| ~inlineFX[\pex1].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+    ~apcBindParam.(\b3_s8_f,  { |x| ~pex2.level_(x) });
+    ~apcBindParam.(\b3_s8_r1, { |x| ~pex2.pan_(x.linlin(0, 1, -1, 1)) });
+    ~apcBindParam.(\b3_s8_r2, { |x| ~inlineFX[\pex2].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) });
+    ~apcBindParam.(\b3_s8_r3, { |x| ~inlineFX[\pex2].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
+
     "APC40 mkII bindings complete.".postln;
 } {
     "APC40 mkII not detected, skipping bindings.".postln;
