@@ -36,98 +36,56 @@ ensureArray = { |sym, fallback|
     };
 };
 
+/* 8-bank pad grid (1-indexed, like LP Mini) */
+if(~apcBanks.isNil or: { ~apcBanks.size != 8 }) {
+    ~apcBanks = Array.fill(8, { IdentityDictionary.new });
+};
+
 /* these are all used below; make sure they are IdentityDictionary */
-ensureID.(\apcPadMap);
 ensureID.(\apcIsDown);
 ensureID.(\apcLedState);
 ensureID.(\apcSceneMap);
 ensureID.(\apcStopColChanMap);
 ensureID.(\apcParamBindings);
 
-/* colors bag - APC40 MK2 supports 128 colors (0-127) via velocity */
-if(~apcColors.isNil or: { ~apcColors.isKindOf(IdentityDictionary).not }) {
-    ~apcColors = IdentityDictionary[
-        // Basic states
-        \off -> 0,
-        \on -> 1,
-
-        // Grayscale
-        \dimWhite -> 1,
-        \white -> 3,
-
-        // Reds
-        \dimRed -> 5,
-        \red -> 6,
-        \brightRed -> 7,
-
-        // Oranges
-        \dimOrange -> 9,
-        \orange -> 10,
-        \brightOrange -> 11,
-
-        // Yellows
-        \dimYellow -> 13,
-        \yellow -> 14,
-        \brightYellow -> 15,
-
-        // Chartreuse (yellow-green)
-        \dimChartreuse -> 17,
-        \chartreuse -> 18,
-        \brightChartreuse -> 19,
-
-        // Greens
-        \dimGreen -> 21,
-        \green -> 22,
-        \brightGreen -> 23,
-
-        // Cyan/Teal
-        \dimCyan -> 25,
-        \cyan -> 26,
-        \brightCyan -> 27,
-
-        // Light Blue
-        \dimSky -> 29,
-        \sky -> 30,
-        \brightSky -> 31,
-
-        // Blue
-        \dimBlue -> 33,
-        \blue -> 34,
-        \brightBlue -> 35,
-
-        // Purple/Violet
-        \dimPurple -> 37,
-        \purple -> 38,
-        \brightPurple -> 39,
-
-        // Magenta
-        \dimMagenta -> 41,
-        \magenta -> 42,
-        \brightMagenta -> 43,
-
-        // Pink
-        \dimPink -> 45,
-        \pink -> 46,
-        \brightPink -> 47,
-
-        // Hot colors (for playing states)
-        \hotRed -> 72,
-        \hotOrange -> 84,
-        \hotYellow -> 96,
-        \hotGreen -> 87,
-
-        // Legacy compatibility
-        \amber -> 9  // was 126, now using orange for better visibility
-    ];
-};
+/* colors bag - APC40 MK2 supports 128 colors (0-127) via velocity.
+   LED mode is set by MIDI channel, not velocity:
+     ch 0        = static
+     ch 1-5      = oneshot flash (1/24 1/16 1/8 1/4 1/2)
+     ch 6-10     = pulse/breathe (1/24 1/16 1/8 1/4 1/2)
+     ch 11-15    = blink        (1/24 1/16 1/8 1/4 1/2)
+   Colors are saturated base values from the verified RGB palette. */
+~apcColors = IdentityDictionary[
+    \off      -> 0,
+    \white    -> 3,
+    \red      -> 5,
+    \orange   -> 9,
+    \yellow   -> 13,
+    \chartreuse -> 17,
+    \green    -> 21,
+    \cyan     -> 25,
+    \sky      -> 29,
+    \teal     -> 33,
+    \blue     -> 37,
+    \indigo   -> 41,
+    \violet   -> 45,
+    \purple   -> 49,
+    \magenta  -> 53,
+    \pink     -> 57,
+    \amber    -> 62,
+    // Legacy
+    \on       -> 1
+];
 
 /* config bag */
 ensureID.(\apcCfg);
 if(~apcCfg[\gridChan].isNil) { ~apcCfg[\gridChan] = 0 };
+if(~apcCfg[\playMode].isNil)  { ~apcCfg[\playMode]  = 9 };  // PULSE_1X4 for playing pads
 
 /* ---------- base state ---------- */
 ~apcStopAllNote   = ~apcStopAllNote   ? nil;
-~apcBank          = ~apcBank          ? 0;
+~apcBank          = ~apcBank          ? 1;   // 1-indexed (1-8), matches LP Mini convention
+~apcPadMap        = ~apcBanks[~apcBank - 1]; // always points to active bank's dict
 
 /* knob-row state and mapping from your probe */
 ~apcKnobRow       = ~apcKnobRow       ? 1;         // 1 pan, 2 sends, 3 user
@@ -172,6 +130,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
         if(apcInport.notNil) {
             apcSrc = MIDIClient.sources[apcInport];
             MIDIIn.connect(0, apcSrc);
+            ~apcMidiUID = apcSrc.uid;
             ["[APC] MIDIIn connected (port 0 -> index " ++ apcInport ++ "):", apcSrc.device, apcSrc.name].postln;
             ~apcMidiInDone = true;
         } {
@@ -206,7 +165,6 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     if(out.notNil) {
         out.latency = 0.0;
         out.noteOn(chan, note, color);
-        out.noteOn(1, note, color);
     };
 };
 
@@ -216,10 +174,10 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     if(out.notNil) { out.latency = 0.0; out.noteOn(chan, note, color) };
 };
 
-~apcLEDSet = { |note, color|
+~apcLEDSet = { |note, color, chan = 0|
     ~apcLedState[note] = color;
-    ~apcPadLED.(note, color);
-    AppClock.sched(0.03, { ~apcPadLED.(note, color) });
+    ~apcPadLEDch.(note, color, chan);
+    AppClock.sched(0.03, { ~apcPadLEDch.(note, color, chan) });
 };
 
 ~apcIntroGenericMode = {
@@ -406,7 +364,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     var colors, want, chan;
     colors = ~apcColors;
     chan = bankIdx.clip(0, 7);
-    want = (bankIdx == ~apcBank).if(colors[\green], colors[\off]);
+    want = (bankIdx == (~apcBank - 1)).if(colors[\green], colors[\off]);
     ~apcPadLEDch.(~apcBankBtnNote, want, chan);
     AppClock.sched(0.03, { ~apcPadLEDch.(~apcBankBtnNote, want, chan) });
 };
@@ -425,9 +383,16 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 };
 
 ~apcChangeBank = { |idx|
-    var old; old = ~apcBank; ~apcBank = idx.clip(0, 7);
+    var old; old = ~apcBank; ~apcBank = idx.clip(1, 8);
     ["[APC PARAM] bank change", "old", old, "new", ~apcBank].postln;
+    // Clear old bank pad LEDs
+    if(~apcPadMap.notNil) {
+        ~apcPadMap.keysDo { |n| ~apcLEDSet.(n, ~apcColors[\off]) };
+    };
+    // Switch to new bank's pad map and repaint
+    ~apcPadMap = ~apcBanks[~apcBank - 1];
     ~apcPaintAllBanks.();
+    AppClock.sched(0.05, { ~apcRepaintAll.() });
 };
 
 ~apcChangeKnobRow = { |row|
@@ -445,15 +410,15 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     MIDIdef.noteOn(nameOn, { |vel, num, chan, src|
         if(num == note and: { chans.includes(chan) }) {
             ["[BANK BTN on]", "num", num, "chan", chan, "vel", vel].postln;
-            if(vel > 0) { ~apcChangeBank.(chan) } { ~apcPaintBankBtn.(chan) };
+            if(vel > 0) { ~apcChangeBank.(chan + 1) } { ~apcPaintBankBtn.(chan) };
         };
-    });
+    }, nil, nil, ~apcMidiUID);
     MIDIdef.noteOff(nameOff, { |vel, num, chan, src|
         if(num == note and: { chans.includes(chan) }) {
             ["[BANK BTN off]", "num", num, "chan", chan, "vel", vel].postln;
             ~apcPaintBankBtn.(chan);
         };
-    });
+    }, nil, nil, ~apcMidiUID);
     "[APC PARAM] bank button listener armed".postln; true
 };
 
@@ -469,10 +434,10 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
             ["[KNOBROW on]", "note", num, "row", idx, "vel", vel].postln;
             if(vel > 0) { ~apcChangeKnobRow.(idx) } { ~apcPaintKnobRow.() };
         };
-    });
+    }, nil, nil, ~apcMidiUID);
     MIDIdef.noteOff(nameOff, { |vel, num, chan, src|
         if(~apcKnobRowNotes.includes(num)) { ~apcPaintKnobRow.() };
-    });
+    }, nil, nil, ~apcMidiUID);
     "[APC PARAM] knob-row button listener armed".postln; true
 };
 
@@ -497,7 +462,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
                 ~apcApplyParam.(key, x);
             };
         };
-    });
+    }, nil, nil, ~apcMidiUID);
     "[APC PARAM] Fader CC listener armed".postln; true
 };
 
@@ -516,7 +481,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
             ["[KNOB CC]", "cc", num, "strip", stripIdx, "row", ~apcKnobRow, "bank", ~apcBank, "x", x.round(0.001)].postln;
             ~apcApplyParam.(key, x);
         };
-    });
+    }, nil, nil, ~apcMidiUID);
     "[APC PARAM] Knob CC listener armed".postln; true
 };
 
@@ -574,7 +539,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
                 };
             };
         };
-    });
+    }, nil, nil, ~apcMidiUID);
     MIDIdef.noteOff(nameOff, { |vel, num, chan, src|
         var key, row, colByChan, hadDown;
         key = ~apcPadMap[num];
@@ -591,7 +556,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
             if(colByChan.notNil) { ~apcStopColLEDByChan.(chan); ~apcStopAllLED.() };
             if(~apcStopAllNote.notNil and: { num == ~apcStopAllNote }) { ~apcStopAllLED.() };
         };
-    });
+    }, nil, nil, ~apcMidiUID);
     "[APC grid note-mode armed]".postln; true
 };
 

@@ -49,7 +49,18 @@
 ~lpBindB.(2, [4, 1], \r3_fx_r1, 41, nil, nil, ~makeFxSendTdef.(\r3_fx_r1, ~r3, ~r1));
 
 
-// --- APC40 Mk2 pads ---
-~apcAssignPad.(32, \bd1);
-~apcAssignPad.(33, \sd1);
+// --- APC40 Mk2 pads (bank 1) ---
+~apcBindB.(1, 32, \bd1,      4, \orange);
+~apcBindB.(1, 33, \sd1,      4, \yellow);
+~apcBindB.(1, 34, \hh1,      4, \cyan);
+~apcBindB.(1, 35, \roll,     4, \blue);
+~apcBindB.(1, 36, \ms20,     4, \purple);
+~apcBindB.(1, 37, \thingA,   4, \pink);
+~apcBindB.(1, 38, \neutron,  4, \orange);
+~apcBindB.(1, 39, \modelD,   4, \yellow);
+
+~apcBindB.(1, 24, \bd1_fx_1, 1, \blue,   nil, ~fxSendStop[\bd1_fx_1]);
+~apcBindB.(1, 16, \bd1_fx_2, 1, \cyan,   nil, ~fxSendStop[\bd1_fx_2]);
+~apcBindB.(1, 8,  \bd1_fx_3, 1, \pink,   nil, ~fxSendStop[\bd1_fx_3]);
+~apcBindB.(1, 0,  \bd1_fx_4, 1, \purple, nil, ~fxSendStop[\bd1_fx_4]);
 )

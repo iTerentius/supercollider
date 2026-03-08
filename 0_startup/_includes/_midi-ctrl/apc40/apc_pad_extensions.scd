@@ -5,13 +5,17 @@
    Load this AFTER apc_boot_all.scd
 
    Color Usage:
-     ~apcBind.(note, key, quant, color, playColor)
-     - color: Symbol (\red, \blue, \purple, etc.) or Integer (0-127)
-     - playColor: optional, defaults to brighter version of color
+     ~apcBind.(note, key, quant, color, playColor, onStop)
+     - color:     Symbol (\red, \blue, etc.) or Integer (0-127) — LED when stopped
+     - playColor: optional, pad pulses at this color when playing (defaults to color)
+     - onStop:    optional Function called on toggle-off instead of obj.stop
+                  (use with ~makeFxSendTdef for proper FX send cleanup)
 
-   Available colors: \off, \red, \orange, \yellow, \chartreuse, \green,
-     \cyan, \sky, \blue, \purple, \magenta, \pink
-   Each has \dim* and \bright* variants (e.g., \dimRed, \brightRed)
+   Playing pads pulse (MIDI ch ~apcCfg[\playMode], default 9 = PULSE_1X4).
+   Stopped pads are static (ch 0).
+
+   Available colors: \off, \white, \red, \orange, \yellow, \chartreuse, \green,
+     \cyan, \sky, \teal, \blue, \indigo, \violet, \purple, \magenta, \pink, \amber
 
    Run ~apcShowColors.() to list all available color names */
 
@@ -60,7 +64,7 @@
 };
 
 // ---- Enhanced Toggle (replaces simple Pdef toggle) ----
-~apcToggleObj = { |note, key, quant = 4|
+~apcToggleObj = { |note, key, quant = 4, onStop = nil|
     var obj = ~apcGetObj.(key);
     var clock = ~link ?? { TempoClock.default };
 
@@ -97,7 +101,7 @@
         { obj.isKindOf(Tdef) or: { obj.isKindOf(TaskProxy) } } {
             // Tdef: toggle play/stop
             if(obj.isPlaying) {
-                obj.stop;
+                if(onStop.notNil) { onStop.value } { obj.stop };
                 ["[APC] Tdef stopped:", key].postln;
             } {
                 obj.play(clock, quant: quant);
@@ -124,21 +128,18 @@
 };
 
 // ---- Enhanced LED state (shows state for all object types) ----
-// Now supports custom colors per-pad via binding metadata
+// Playing pads pulse (MIDI ch ~apcCfg[\playMode]); stopped pads are static (ch 0).
 // Handles both: ~apcLEDByState.(note, key) and ~apcLEDByState.(note, eventBinding)
 ~apcLEDByStateExt = { |note, keyOrBinding|
-    var colors, obj, want, binding, actualKey, customColor, playColor, isRunning;
+    var colors, obj, wantColor, wantChan, binding, actualKey, customColor, playColor, isRunning;
     colors = ~apcColors;
 
-    // Handle both old-style (just key) and new-style (event binding) calls
-    // Also handle when ~apcRepaintAll passes the binding directly
     if(keyOrBinding.isKindOf(Event)) {
         actualKey = keyOrBinding[\key];
         customColor = keyOrBinding[\color];
         playColor = keyOrBinding[\playColor];
     } {
         actualKey = keyOrBinding;
-        // Look up colors from the binding if we have just the key
         binding = ~apcPadMap[note];
         if(binding.isKindOf(Event)) {
             customColor = binding[\color];
@@ -152,31 +153,27 @@
     if(obj.notNil) {
         case
         { obj.isKindOf(Function) or: { obj.isString } } {
-            // Functions/Strings: use custom color or default amber
-            want = customColor ?? { colors[\amber] };
+            // Functions/Strings: static, use custom color or amber
+            wantColor = customColor ?? { colors[\amber] };
+            wantChan = 0;
         }
         { isRunning } {
-            // Playing: use playColor, or bright version of customColor, or default green
-            want = playColor ?? {
-                if(customColor.notNil) {
-                    // Try to use a brighter version (add 1-2 to get brighter shade)
-                    (customColor + 1).min(127)
-                } {
-                    colors[\green]
-                }
-            };
+            // Playing: pulse at playColor, else pulse at customColor, else pulse green
+            wantColor = playColor ?? { customColor ?? { colors[\green] } };
+            wantChan = ~apcCfg[\playMode] ? 9;
         }
         {
-            // Stopped: use custom color or default amber
-            want = customColor ?? { colors[\amber] };
+            // Stopped: static at custom color or amber
+            wantColor = customColor ?? { colors[\amber] };
+            wantChan = 0;
         };
     } {
-        // No object found - but if we have a color assigned, use it (pad is "ready")
-        // This allows binding before the Pdef/Ndef exists
-        want = customColor ?? { colors[\off] };
+        // No object yet — show custom color if bound (pad is "ready"), else off
+        wantColor = customColor ?? { colors[\off] };
+        wantChan = 0;
     };
 
-    ~apcLEDSet.(note, want);
+    ~apcLEDSet.(note, wantColor, wantChan);
 };
 
 // ---- Override the original LED function ----
@@ -185,7 +182,7 @@
 // ---- Enhanced Assign Pad (accepts any object type + custom colors) ----
 // color: color when stopped (can be Symbol like \red or Integer 0-127)
 // playColor: color when playing (optional, defaults to brighter version of color)
-~apcAssignPadExt = { |note, key, quant = 4, color = nil, playColor = nil|
+~apcAssignPadExt = { |note, key, quant = 4, color = nil, playColor = nil, onStop = nil|
     var colors = ~apcColors;
     var obj = ~apcGetObj.(key);
     var resolvedColor, resolvedPlayColor;
@@ -200,6 +197,7 @@
         quant: quant,
         color: resolvedColor,
         playColor: resolvedPlayColor,
+        onStop: onStop,
         type: case
             { obj.isKindOf(Function) } { \function }
             { obj.isString } { \string }
@@ -225,7 +223,7 @@
     MIDIdef.free(nameOff);
 
     MIDIdef.noteOn(nameOn, { |vel, num, chan, src|
-        var binding, key, row, colByChan, quant;
+        var binding, key, row, colByChan, quant, onStop;
 
         binding = ~apcPadMap[num];
         row = ~apcSceneMap[num];
@@ -236,14 +234,16 @@
             if(binding.isKindOf(Event)) {
                 key = binding[\key];
                 quant = binding[\quant] ?? { 4 };
+                onStop = binding[\onStop];
             } {
                 key = binding;
                 quant = 4;
+                onStop = nil;
             };
 
             if(vel > 0) {
                 ~apcIsDown[num] = true;
-                ~apcToggleObj.(num, key, quant);
+                ~apcToggleObj.(num, key, quant, onStop);
                 ~apcRepaintStops.();
             } {
                 ~apcIsDown[num] = false;
@@ -265,7 +265,7 @@
                 };
             };
         };
-    });
+    }, nil, nil, ~apcMidiUID);
 
     MIDIdef.noteOff(nameOff, { |vel, num, chan, src|
         var binding, key, row, colByChan;
@@ -284,7 +284,7 @@
             if(colByChan.notNil) { ~apcStopColLEDByChan.(chan); ~apcStopAllLED.() };
             if(~apcStopAllNote.notNil and: { num == ~apcStopAllNote }) { ~apcStopAllLED.() };
         };
-    });
+    }, nil, nil, ~apcMidiUID);
 
     "[APC] Extended grid listener installed".postln;
     true
@@ -298,8 +298,43 @@
 //   ~apcBind.(32, \kick, 4, \red);               // red when stopped, bright red when playing
 //   ~apcBind.(32, \kick, 4, \blue, \brightCyan); // blue stopped, bright cyan playing
 //   ~apcBind.(32, \kick, 4, 45);                 // raw color value 45
-~apcBind = { |note, key, quant = 4, color = nil, playColor = nil|
-    ~apcAssignPadExt.(note, key, quant, color, playColor);
+~apcBind = { |note, key, quant = 4, color = nil, playColor = nil, onStop = nil|
+    ~apcAssignPadExt.(note, key, quant, color, playColor, onStop);
+};
+
+// ---- Bank-targeted binding (like ~lpBindB) ----
+// Usage: ~apcBindB.(bank, note, key, quant, color, playColor, onStop)
+// Stores into specific bank regardless of active bank.
+~apcBindB = { |bank, note, key, quant = 4, color = nil, playColor = nil, onStop = nil|
+    var colors = ~apcColors;
+    var obj = ~apcGetObj.(key);
+    var resolvedColor, resolvedPlayColor, storedKey, bindEvent;
+    bank = bank.clip(1, 8);
+
+    if(key.isKindOf(Function) or: { key.isString }) { storedKey = key } { storedKey = key.asSymbol };
+    resolvedColor = if(color.isKindOf(Symbol)) { colors[color] } { color };
+    resolvedPlayColor = if(playColor.isKindOf(Symbol)) { colors[playColor] } { playColor };
+
+    bindEvent = (
+        key: storedKey,
+        quant: quant,
+        color: resolvedColor,
+        playColor: resolvedPlayColor,
+        onStop: onStop,
+        type: case
+            { obj.isKindOf(Function) } { \function }
+            { obj.isString } { \string }
+            { obj.isKindOf(NodeProxy) } { \ndef }
+            { obj.isKindOf(Tdef) or: { obj.isKindOf(TaskProxy) } } { \tdef }
+            { obj.isKindOf(Pdef) or: { obj.isKindOf(EventPatternProxy) } } { \pdef }
+            { \unknown }
+    );
+
+    ~apcBanks[bank - 1][note] = bindEvent;
+
+    // Only update LED if this is the active bank
+    if(bank == ~apcBank) { ~apcLEDByState.(note, storedKey) };
+    ["[APC] Pad", note, "->", storedKey, "(bank:", bank, "type:", bindEvent[\type], ")"].postln;
 };
 
 // ---- Helper to list available colors ----
@@ -325,6 +360,7 @@ CmdPeriod.add(~apcExtPanicHook);
 
 "--- APC40 mkII Pad Extensions Loaded ---".postln;
 "    Supports: Pdef, Tdef, Ndef, Function, String".postln;
-"    Usage: ~apcBind.(note, key, quant, color, playColor)".postln;
+"    Usage: ~apcBind.(note, key, quant, color, playColor, onStop)         -- active bank".postln;
+"           ~apcBindB.(bank, note, key, quant, color, playColor, onStop)  -- specific bank (1-8)".postln;
 "    Colors: ~apcShowColors.() to list available colors".postln;
 )
