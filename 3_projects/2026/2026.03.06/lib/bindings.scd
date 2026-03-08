@@ -31,10 +31,20 @@
 ~lpBindB.(1, [7, 4], \roll_fx_3,  5, nil, nil, ~makeFxSendTdef.(\roll_fx_3, ~t2, ~r3));
 ~lpBindB.(1, [8, 4], \roll_fx_4, 35, nil, nil, ~makeFxSendTdef.(\roll_fx_4, ~t2, ~r4));
 
-~lpBindB.(1, [5, 8], \mD_fx_1, 41, nil, nil, ~makeFxSendTdef.(\mD_fx_1, ~t5, ~r1));
-~lpBindB.(1, [6, 8], \mD_fx_2, 81, nil, nil, ~makeFxSendTdef.(\mD_fx_2, ~t5, ~r2));
-~lpBindB.(1, [7, 8], \mD_fx_3,  5, nil, nil, ~makeFxSendTdef.(\mD_fx_3, ~t5, ~r3));
-~lpBindB.(1, [8, 8], \mD_fx_4, 35, nil, nil, ~makeFxSendTdef.(\mD_fx_4, ~t5, ~r4));
+~lpBindB.(1, [5, 6], \thingA_fx_1, 41, nil, nil, ~makeFxSendTdef.(\thingA_fx_1, ~t3, ~r1));
+~lpBindB.(1, [6, 6], \thingA_fx_2, 81, nil, nil, ~makeFxSendTdef.(\thingA_fx_2, ~t3, ~r2));
+~lpBindB.(1, [7, 6], \thingA_fx_3,  5, nil, nil, ~makeFxSendTdef.(\thingA_fx_3, ~t3, ~r3));
+~lpBindB.(1, [8, 6], \thingA_fx_4, 35, nil, nil, ~makeFxSendTdef.(\thingA_fx_4, ~t3, ~r4));
+
+~lpBindB.(1, [5, 7], \ntron_fx_1, 41, nil, nil, ~makeFxSendTdef.(\ntron_fx_1, ~t5, ~r1));
+~lpBindB.(1, [6, 7], \ntron_fx_2, 81, nil, nil, ~makeFxSendTdef.(\ntron_fx_2, ~t5, ~r2));
+~lpBindB.(1, [7, 7], \ntron_fx_3,  5, nil, nil, ~makeFxSendTdef.(\ntron_fx_3, ~t5, ~r3));
+~lpBindB.(1, [8, 7], \ntron_fx_4, 35, nil, nil, ~makeFxSendTdef.(\ntron_fx_4, ~t5, ~r4));
+
+~lpBindB.(1, [5, 8], \mD_fx_1, 41, nil, nil, ~makeFxSendTdef.(\mD_fx_1, ~t6, ~r1));
+~lpBindB.(1, [6, 8], \mD_fx_2, 81, nil, nil, ~makeFxSendTdef.(\mD_fx_2, ~t6, ~r2));
+~lpBindB.(1, [7, 8], \mD_fx_3,  5, nil, nil, ~makeFxSendTdef.(\mD_fx_3, ~t6, ~r3));
+~lpBindB.(1, [8, 8], \mD_fx_4, 35, nil, nil, ~makeFxSendTdef.(\mD_fx_4, ~t6, ~r4));
 
 ~lpBindB.(2, [4, 1], \r3_fx_r1, 41, nil, nil, ~makeFxSendTdef.(\r3_fx_r1, ~r3, ~r1));
 

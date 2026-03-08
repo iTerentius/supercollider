@@ -91,14 +91,15 @@ Pdefn(\bsct_drive, Pseq([
 
 // BITCRUSHER
 Pdefn(\bsct_clock_0, 30000);        // 250..30000 Hz  (30000=transparent)
-Pdefn(\bsct_clock_1, Pseq([100, 3000, 30000], 1));
-Pdefn(\bsct_clock_2, Pseg([300, 3000, 30000], [2, 4], \sin, 1));
+Pdefn(\bsct_clock_1, Pseq([300, 30000], 1));
+Pdefn(\bsct_clock_2, Pseg([300, 3000, 30000], [1, 2], \sin, 1));
 Pdefn(\bsct_clock, Pseq([
     // Pn(Pdefn(\bsct_clock_0), 4),
     Pn(Pdefn(\bsct_clock_2), 4),
 ], 1));
 
 Pdefn(\bsct_bits_0, 8);             // 1..8  (8=transparent)
+Pdefn(\bsct_bits_1,  Pwhite(1,  8,  1));
 Pdefn(\bsct_bits, Pseq([Pn(Pdefn(\bsct_bits_0), 4)], 1));
 
 // BIT MANIPULATION  (-1=invert  0=mute  1=pass)
@@ -135,11 +136,12 @@ Pdefn(\bsct_b8_0, 1);               // MSB / bit 7  (large tonal impact)
 Pdefn(\bsct_b8, Pseq([Pn(Pdefn(\bsct_b8_0), 4)], 1));
 
 // FX MODE
-Pdefn(\bsct_fxMode_0, 4);           // 0=waveshaper  1=delay  2=pitch  3=step filter
+Pdefn(\bsct_fxMode_0, 3);           // 0=waveshaper  1=delay  2=pitch  3=step filter
+Pdefn(\bsct_fxMode_1, Pwhite(0, 4,  1));           // 0=waveshaper  1=delay  2=pitch  3=step filter
 Pdefn(\bsct_fxMode, Pseq([Pn(Pdefn(\bsct_fxMode_0), 4)], 1));
 
 // WAVESHAPER  (fxMode=0)
-Pdefn(\bsct_shape_0, 0);            // 0=fold  1=bat-fuzz  2=rectify  3=bitswap
+Pdefn(\bsct_shape_0, 1);            // 0=fold  1=bat-fuzz  2=rectify  3=bitswap
                                      // 4=alt-rect  5=biscuit(-5th)  6=synth-saw  7=synth-sq
 Pdefn(\bsct_shape, Pseq([Pn(Pdefn(\bsct_shape_0), 4)], 1));
 
@@ -160,9 +162,9 @@ Pdefn(\bsct_stepRate_0, 4.0);       // 0.1..40 Hz
 Pdefn(\bsct_stepRate_1, Pseq([1, 2, 4, 8], 1));
 Pdefn(\bsct_stepRate_2, Pseq((1..8), 1));
 Pdefn(\bsct_stepRate, Pseq([
-    Pn(Pdefn(\bsct_stepRate_0), 4),
+    // Pn(Pdefn(\bsct_stepRate_0), 4),
     // Pn(Pdefn(\bsct_stepRate_1), 4),
-    // Pn(Pdefn(\bsct_stepRate_2), 4),
+    Pn(Pdefn(\bsct_stepRate_2), 4),
 ], 1));
 
 Pdefn(\bsct_sf0_0, 200);            // 20..20000 Hz  step 0 LP cutoff
@@ -196,7 +198,7 @@ Pdefn(\bsct_filterQ, Pseq([
 ], 1));
 
 // WET / DRY
-Pdefn(\bsct_naked_0,   1.0);        // 0..1  dry level
+Pdefn(\bsct_naked_0,   0.8);        // 0..1  dry level
 Pdefn(\bsct_naked, Pseq([Pn(Pdefn(\bsct_naked_0), 4)], 1));
 
 Pdefn(\bsct_dressed_0, 1.5);        // 0..2  wet level

@@ -1,4 +1,4 @@
-// roll — Slicer + Glitch FX control
+
 // Re-eval this file to reset voice to defaults (story overrides live in arrangement.scd).
 (
 ///////////////////////////////////////////////////////////////
@@ -6,7 +6,7 @@
 ///////////////////////////////////////////////////////////////
 Pdef(\roll,
     Pbind(
-        \instrument,  \slice_m,
+        \instrument,  Pn(Pdefn(\roll_ins),        inf), 
         \buf,         Pn(Pdefn(\roll_bufs),       inf),
         \bufnum,      Pkey(\buf),
         \nSlices,     Pn(Pdefn(\roll_nSlices),    inf),
@@ -41,9 +41,13 @@ Pdef(\roll_fx_ctl, Pbindef(\roll_fx_ctl_pbd,
 ///////////////////////////////////////////////////////////////
 Pdefn(\roll_out,   ~t2.inbus.index);
 Pdefn(\roll_scale, Scale.minor);
+Pdefn(\roll_ins,  \slice_s);
 
 // BUFS — words
-~sRoll = ~sTree[\jttcot].values[0..6];
+// ~sRoll = ~sTree[\jttcot].values[0..6];
+// ~sRoll = ~sTree[\neutron_12].values;
+~sRoll = ~sTree[\drumloops].values;
+// ~sRoll = ~sTree[\_mono].values;
 Pdefn(\roll_buf_0, Pseq(~sRoll, 1));
 // sentences
 Pdefn(\roll_bufs_A, Pseq([Pn(Pdefn(\roll_buf_0), 4)], 1));      // all samples
@@ -58,13 +62,13 @@ Pdefn(\roll_oct_1, Pseq([1, 3, 7], 1));
 Pdefn(\roll_octs, Pseq([Pn(Pdefn(\roll_oct_0), 4)], 1));
 
 // AMPS — words
-Pdefn(\roll_amp_0, 1.2);
+Pdefn(\roll_amp_0, 0.2);
 Pdefn(\roll_amp_1, Pwhite(0.75, 0.5, 1));
 // story
 Pdefn(\roll_amps, Pseq([Pn(Pdefn(\roll_amp_0), 4)], 1));
 
 // NSLICES — words
-Pdefn(\roll_nSlices_0, 9);
+Pdefn(\roll_nSlices_0, 32);
 Pdefn(\roll_nSlices_1, Pseq([1!4, 8, 16!4].flat, 1));
 // story
 Pdefn(\roll_nSlices, Pseq([Pn(Pdefn(\roll_nSlices_0), 1)], 1));
@@ -74,16 +78,16 @@ Pdefn(\roll_rate_0, 0.8);
 Pdefn(\roll_rate_1, Pseq([1.2, 0.8], 1));
 Pdefn(\roll_rate_2, Pseg([0.5, 1.5, 0.5], [2, 4], \sin, 1));
 // story
-Pdefn(\roll_rates, Pseq([Pn(Pdefn(\roll_rate_0), 1)], 1));
+Pdefn(\roll_rates, Pseq([Pn(Pdefn(\roll_rate_1), 1)], 1));
 
 // REV — words
 Pdefn(\roll_rev_0, 0);
-Pdefn(\roll_rev_1, Pstep(Pseq([0, 1], 1), 1));
+Pdefn(\roll_rev_1, Pstep(Pseq([0, 1], 1), 4));
 // story
 Pdefn(\roll_rev, Pseq([Pn(Pdefn(\roll_rev_1), 1)], 1));
 
 // SLICEDUR — words
-Pdefn(\roll_sliceDur_0, 4);
+Pdefn(\roll_sliceDur_0, 1);
 Pdefn(\roll_sliceDur_1, Pseq([1/4, 1/8!2, 1.5].flat, 1));
 // story
 Pdefn(\roll_sliceDurs, Pseq([Pn(Pdefn(\roll_sliceDur_0), 4)], 1));
@@ -118,13 +122,13 @@ Pdefn(\roll_durs_A, Pseq([Pn(Pdefn(\roll_dur_2), 4)], 1));     // euclidean
 Pdefn(\roll_durs_B, Pseq([Pn(Pdefn(\roll_dur_0), 4)], 1));     // whole notes
 Pdefn(\roll_durs_C, Pseq([Pn(Pdefn(\roll_dur_1), 4)], 1));     // triplet feel
 // story
-Pdefn(\roll_durs, Pseq([Pn(Pdefn(\roll_durs_A), 1)], 1));
+Pdefn(\roll_durs, Pseq([Pn(Pdefn(\roll_durs_2), 1)], 1));
 
 // STRS — words
 Pdefn(\roll_str_0, 1);
 Pdefn(\roll_str_1, Pseq([1/4, 1/2, 1], 4));
 // story
-Pdefn(\roll_strs, Pseq([Pn(Pdefn(\roll_str_0), 32)], 1));
+Pdefn(\roll_strs, Pseq([Pn(Pdefn(\roll_str_1), 32)], 1));
 
 ///////////////////////////////////////////////////////////////
 // ROLL FX PDEFNS  (controls ~roll_fx1 = ~t2.playfx(~exp1))
