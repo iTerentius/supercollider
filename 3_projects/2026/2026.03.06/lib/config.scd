@@ -1,6 +1,6 @@
 // Config — tempo + sample loads
 (
-~link.tempo = 110/60;
+~link.tempo = 100/60;
 ~loadSamps.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
 ~loadSamps.("~/Music/supercollider/_samples/goldbaby/Cassette808/");
 ~loadSamps.("~/Music/supercollider/_samples/Codeine_Drum_Kit/DrumLoops/");

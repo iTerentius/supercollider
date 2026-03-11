@@ -10,8 +10,7 @@
 "parts/ms20.scd".loadRelative;
 "parts/neutron.scd".loadRelative;
 "parts/model_d.scd".loadRelative;
-"automation/biscuit.scd".loadRelative;
-// "lib/inline_fx.scd".loadRelative;  // project-specific inline FX overrides (commented — base filters in mixer-channel-16s.scd)
+"automation/biscuit.scd".loadRelative; // "lib/inline_fx.scd".loadRelative;  // project-specific inline FX overrides (commented — base filters in mixer-channel-16s.scd)
 "lib/bindings.scd".loadRelative;
 "arrangement.scd".loadRelative;
 )

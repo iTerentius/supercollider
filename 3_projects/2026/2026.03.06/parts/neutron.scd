@@ -86,7 +86,7 @@ Pdefn(\ntron_out,   ~t7.inbus.index);
 Pdefn(\ntron_scale, Scale.minor);
 
 // OCTAVE
-Pdefn(\ntron_oct_0, 3);              // 0..8
+Pdefn(\ntron_oct_0, 5);              // 0..8
 Pdefn(\ntron_oct_1, Pseq([3, 4, 5], 1));
 Pdefn(\ntron_octs, Pseq([
     // Pn(Pdefn(\ntron_oct_0), 4),
@@ -95,7 +95,7 @@ Pdefn(\ntron_octs, Pseq([
 
 // DEGREE — words
 Pdefn(\ntron_deg_0, 0);
-Pdefn(\ntron_deg_1, Pseq([Pn(Rest(), 1), Pslide((-2..4),  3,  7),  Pn(Rest(),  8)],  1));
+Pdefn(\ntron_deg_1, Pslide((7..0),  1,  3, 1));
 // sentences
 Pdefn(\ntron_degs_a, Pseq([Pn(Pdefn(\ntron_deg_0), 4)], 1));   // root
 Pdefn(\ntron_degs_b, Pseq([Pn(Pdefn(\ntron_deg_1), 4)], 1));   // random
@@ -103,22 +103,22 @@ Pdefn(\ntron_degs_b, Pseq([Pn(Pdefn(\ntron_deg_1), 4)], 1));   // random
 Pdefn(\ntron_degs, Pseq([Pn(Pdefn(\ntron_degs_b), 1)], 1));
 
 // DUR — words
-Pdefn(\ntron_dur_0, 1/4);
-Pdefn(\ntron_dur_1, Pseq([1/4!2, 1/2].flat, 1));
+Pdefn(\ntron_dur_0, 1);
+Pdefn(\ntron_dur_1, Pseq([1/4!2, 1/2, 2,  Rest()].flat, 1));
 Pdefn(\ntron_dur_2, Pbjorklund(5, 8, 1)/2);
 // sentences
 Pdefn(\ntron_durs_a, Pseq([Pn(Pdefn(\ntron_dur_0), 4)], 1));   // quarter notes
 Pdefn(\ntron_durs_b, Pseq([Pn(Pdefn(\ntron_dur_0), 4), Pn(Pdefn(\ntron_dur_1), 4)], 1));
 Pdefn(\ntron_durs_c, Pseq([Pn(Pdefn(\ntron_dur_2), 4)], 1));   // euclidean
 // story
-Pdefn(\ntron_durs, Pseq([Pn(Pdefn(\ntron_durs_a), 1)], 1));
+Pdefn(\ntron_durs, Pseq([Pn(Pdefn(\ntron_durs_b), 1)], 1));
 
 // STRETCH
 Pdefn(\ntron_str_0, 1);
 Pdefn(\ntron_str_1, Pseq([1!3, 2, 1/2!2].flat, 1));
 Pdefn(\ntron_strs, Pseq([
-    // Pn(Pdefn(\ntron_str_0), 4),
     Pn(Pdefn(\ntron_str_0), 4),
+    // Pn(Pdefn(\ntron_str_1), 4),
 ], 1));
 
 // LEGATO
@@ -128,24 +128,24 @@ Pdefn(\ntron_legs, Pseq([
 ], 1));
 
 // AMP
-Pdefn(\ntron_amp_0, 0.2);            // 0..1
+Pdefn(\ntron_amp_0, 0.4);            // 0..1
 Pdefn(\ntron_amps, Pseq([
     Pn(Pdefn(\ntron_amp_0), 4),
 ], 1));
 
 // OSC 1
-Pdefn(\ntron_osc1Blend_0, 0.0);      // 0=saw  1=pulse
+Pdefn(\ntron_osc1Blend_0, 1.0);      // 0=saw  1=pulse
 Pdefn(\ntron_osc1Blend_1, Pstep(Pseq([0, 1], 1), 1));
 Pdefn(\ntron_osc1Blend, Pseq([
     Pn(Pdefn(\ntron_osc1Blend_0), 4),
     // Pn(Pdefn(\ntron_osc1Blend_1), 4),
 ], 1));
 
-Pdefn(\ntron_osc1PW_0, 0.5);         // 0.01..0.99
+Pdefn(\ntron_osc1PW_0, 0.8);         // 0.01..0.99
 Pdefn(\ntron_osc1PW_1, Pseg([0.1, 0.9, 0.1], [1, 2], \sin, inf));
 Pdefn(\ntron_osc1PW, Pseq([
-    // Pn(Pdefn(\ntron_osc1PW_0), 4),
     Pn(Pdefn(\ntron_osc1PW_0), 4),
+    // Pn(Pdefn(\ntron_osc1PW_1), 4),
 ], 1));
 
 Pdefn(\ntron_osc1Oct_0, 0);          // -3..+3
@@ -159,7 +159,7 @@ Pdefn(\ntron_osc2Blend, Pseq([
     Pn(Pdefn(\ntron_osc2Blend_0), 4),
 ], 1));
 
-Pdefn(\ntron_osc2PW_0, 0.5);         // 0.01..0.99
+Pdefn(\ntron_osc2PW_0, 0.9);         // 0.01..0.99
 Pdefn(\ntron_osc2PW, Pseq([
     Pn(Pdefn(\ntron_osc2PW_0), 4),
 ], 1));
@@ -184,7 +184,7 @@ Pdefn(\ntron_osc2Track, Pseq([
     Pn(Pdefn(\ntron_osc2Track_0), 4),
 ], 1));
 
-Pdefn(\ntron_sync_0, 0);             // 0/1  hard sync OSC2→OSC1
+Pdefn(\ntron_sync_0, 1);             // 0/1  hard sync OSC2→OSC1
 Pdefn(\ntron_sync, Pseq([
     Pn(Pdefn(\ntron_sync_0), 4),
 ], 1));
@@ -200,18 +200,18 @@ Pdefn(\ntron_osc2Lvl, Pseq([
     Pn(Pdefn(\ntron_osc2Lvl_0), 4),
 ], 1));
 
-Pdefn(\ntron_subLvl_0, 0.0);         // 0..1  square -1 oct
+Pdefn(\ntron_subLvl_0, 0.5);         // 0..1  square -1 oct
 Pdefn(\ntron_subLvl, Pseq([
     Pn(Pdefn(\ntron_subLvl_0), 4),
 ], 1));
 
-Pdefn(\ntron_noiseLvl_0, 0.0);       // 0..1  white noise
+Pdefn(\ntron_noiseLvl_0, 0.2);       // 0..1  white noise
 Pdefn(\ntron_noiseLvl, Pseq([
     Pn(Pdefn(\ntron_noiseLvl_0), 4),
 ], 1));
 
 // LFO
-Pdefn(\ntron_lfoRate_0, 1.0);        // 0.01..10000 Hz
+Pdefn(\ntron_lfoRate_0, 0.2);        // 0.01..10000 Hz
 Pdefn(\ntron_lfoRate, Pseq([
     Pn(Pdefn(\ntron_lfoRate_0), 4),
 ], 1));
@@ -221,27 +221,27 @@ Pdefn(\ntron_lfoShape, Pseq([
     Pn(Pdefn(\ntron_lfoShape_0), 4),
 ], 1));
 
-Pdefn(\ntron_lfoToOsc1_0, 0.0);      // -1..+1
+Pdefn(\ntron_lfoToOsc1_0, 1.0);      // -1..+1
 Pdefn(\ntron_lfoToOsc1, Pseq([
     Pn(Pdefn(\ntron_lfoToOsc1_0), 4),
 ], 1));
 
-Pdefn(\ntron_lfoToOsc2_0, 0.0);
+Pdefn(\ntron_lfoToOsc2_0, -1.0);
 Pdefn(\ntron_lfoToOsc2, Pseq([
     Pn(Pdefn(\ntron_lfoToOsc2_0), 4),
 ], 1));
 
-Pdefn(\ntron_lfoToPW1_0, 0.0);       // -1..+1
+Pdefn(\ntron_lfoToPW1_0, 1.0);       // -1..+1
 Pdefn(\ntron_lfoToPW1, Pseq([
     Pn(Pdefn(\ntron_lfoToPW1_0), 4),
 ], 1));
 
-Pdefn(\ntron_lfoToPW2_0, 0.0);
+Pdefn(\ntron_lfoToPW2_0, 1.0);
 Pdefn(\ntron_lfoToPW2, Pseq([
     Pn(Pdefn(\ntron_lfoToPW2_0), 4),
 ], 1));
 
-Pdefn(\ntron_lfoToFilt_0, 0.0);      // -1..+1
+Pdefn(\ntron_lfoToFilt_0, 0.5);      // -1..+1
 Pdefn(\ntron_lfoToFilt, Pseq([
     Pn(Pdefn(\ntron_lfoToFilt_0), 4),
 ], 1));
@@ -271,8 +271,8 @@ Pdefn(\ntron_keyTrack, Pseq([
     Pn(Pdefn(\ntron_keyTrack_0), 4),
 ], 1));
 
-Pdefn(\ntron_env1Amt_0, 0.0);        // -1..+1
-Pdefn(\ntron_env1Amt_1, Pseg([-1, 1,  -1], [2, 4], \sin, 1));        // -1..+1
+Pdefn(\ntron_env1Amt_0, 1.0);        // -1..+1
+Pdefn(\ntron_env1Amt_1, Pseg([1, -1,  1], [2, 4], \sin, 1));        // -1..+1
 Pdefn(\ntron_env1Amt, Pseq([
     // Pn(Pdefn(\ntron_env1Amt_0), 4),
     Pn(Pdefn(\ntron_env1Amt_1), 4),
@@ -308,10 +308,10 @@ Pdefn(\ntron_rel2, Pseq([Pn(Pdefn(\ntron_rel2_0), 4)], 1));
 Pdefn(\ntron_drive_0, 0.0);          // 0..1
 Pdefn(\ntron_drive, Pseq([Pn(Pdefn(\ntron_drive_0), 4)], 1));
 
-Pdefn(\ntron_driveTone_0, 1.0);      // 0=dark  1=bright
+Pdefn(\ntron_driveTone_0, 0.5);      // 0=dark  1=bright
 Pdefn(\ntron_driveTone, Pseq([Pn(Pdefn(\ntron_driveTone_0), 4)], 1));
 
-Pdefn(\ntron_driveLevel_0, 0.5);     // 0..1
+Pdefn(\ntron_driveLevel_0, 0.8);     // 0..1
 Pdefn(\ntron_driveLevel, Pseq([Pn(Pdefn(\ntron_driveLevel_0), 4)], 1));
 
 // DELAY
@@ -321,6 +321,6 @@ Pdefn(\ntron_delTime, Pseq([Pn(Pdefn(\ntron_delTime_0), 4)], 1));
 Pdefn(\ntron_delFB_0, 0.3);          // 0..1
 Pdefn(\ntron_delFB, Pseq([Pn(Pdefn(\ntron_delFB_0), 4)], 1));
 
-Pdefn(\ntron_delMix_0, 0.0);         // 0=dry  1=wet
+Pdefn(\ntron_delMix_0, 0.2);         // 0=dry  1=wet
 Pdefn(\ntron_delMix, Pseq([Pn(Pdefn(\ntron_delMix_0), 4)], 1));
 )

@@ -47,7 +47,7 @@
 
 // Per-return fx dictionaries — populated by ~fxSetup calls
 ~r1fx = (); ~r2fx = (); ~r3fx = ();
-~fxSetup[\r1_greyhole].value;
+~fxSetup[\r1_freeVerb].value;
 ~fxSetup[\r2_combDelay].value;
 ~fxSetup[\r2_chorus].value;
 ~fxSetup[\r3_biscuit].value;

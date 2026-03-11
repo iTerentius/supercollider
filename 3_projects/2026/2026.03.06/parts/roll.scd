@@ -50,10 +50,10 @@ Pdefn(\roll_ins,  \slice_m);
 ~sRoll = ~sTree[\_mono].values;
 Pdefn(\roll_buf_0, Pseq(~sRoll, 1));
 // sentences
-Pdefn(\roll_bufs_A, Pseq([Pn(Pdefn(\roll_buf_0), 4)], 1));      // all samples
-Pdefn(\roll_bufs_B, Pseq([Pn(Pdefn(\roll_buf_0), 8)], 1));      // longer cycle
+Pdefn(\roll_bufs_a, Pseq([Pn(Pdefn(\roll_buf_0), 4)], 1));      // all samples
+Pdefn(\roll_bufs_b, Pseq([Pn(Pdefn(\roll_buf_0), 8)], 1));      // longer cycle
 // story
-Pdefn(\roll_bufs, Pseq([Pn(Pdefn(\roll_bufs_A), 1)], 1));
+Pdefn(\roll_bufs, Pseq([Pn(Pdefn(\roll_bufs_a), 1)], 1));
 
 // OCTS — words
 Pdefn(\roll_oct_0, 1);
@@ -62,7 +62,7 @@ Pdefn(\roll_oct_1, Pseq([1, 3, 7], 1));
 Pdefn(\roll_octs, Pseq([Pn(Pdefn(\roll_oct_0), 4)], 1));
 
 // AMPS — words
-Pdefn(\roll_amp_0, 1.0);
+Pdefn(\roll_amp_0, 0.3);
 Pdefn(\roll_amp_1, Pwhite(0.75, 0.5, 1));
 // story
 Pdefn(\roll_amps, Pseq([Pn(Pdefn(\roll_amp_0), 4)], 1));
@@ -108,19 +108,19 @@ Pdefn(\roll_sliceIdxs, Pseq([Pn(Pdefn(\roll_sliceIdx_1), 4)], 1));
 Pdefn(\roll_deg_0, 2);
 Pdefn(\roll_deg_1, Prand([7], 1));
 // sentences
-Pdefn(\roll_degs_A, Pseq([Pn(Pdefn(\roll_deg_0), 1)], 1));     // static
-Pdefn(\roll_degs_B, Pseq([Pn(Pdefn(\roll_deg_1), 4)], 1));     // random
+Pdefn(\roll_degs_a, Pseq([Pn(Pdefn(\roll_deg_0), 1)], 1));     // static
+Pdefn(\roll_degs_b, Pseq([Pn(Pdefn(\roll_deg_1), 4)], 1));     // random
 // story
-Pdefn(\roll_degs, Pseq([Pn(Pdefn(\roll_degs_A), 1)], 1));
+Pdefn(\roll_degs, Pseq([Pn(Pdefn(\roll_degs_a), 1)], 1));
 
 // DURS — words
 Pdefn(\roll_dur_0, 2);
 Pdefn(\roll_dur_1, Pseq([1/3, 1/6!2, Pn(Rest(), 1)].flat, 1));
 Pdefn(\roll_dur_2, Pbjorklund2(5, 8, 1));
 // sentences
-Pdefn(\roll_durs_A, Pseq([Pn(Pdefn(\roll_dur_2), 4)], 1));     // euclidean
-Pdefn(\roll_durs_B, Pseq([Pn(Pdefn(\roll_dur_0), 4)], 1));     // whole notes
-Pdefn(\roll_durs_C, Pseq([Pn(Pdefn(\roll_dur_1), 4)], 1));     // triplet feel
+Pdefn(\roll_durs_a, Pseq([Pn(Pdefn(\roll_dur_2), 4)], 1));     // euclidean
+Pdefn(\roll_durs_b, Pseq([Pn(Pdefn(\roll_dur_0), 4)], 1));     // whole notes
+Pdefn(\roll_durs_c, Pseq([Pn(Pdefn(\roll_dur_1), 4)], 1));     // triplet feel
 // story
 Pdefn(\roll_durs, Pseq([Pn(Pdefn(\roll_durs_2), 1)], 1));
 

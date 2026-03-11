@@ -15,3 +15,23 @@
 )
 
 ~bd1_ilfx_1.set(\lpfreq,  1000,  \rq, 2.0,  \hpfreq,  500,  \hprq,  2.0);
+// Greyhole.ar(in, delayTime: 2.0, damp: 0.0, size: 1.0, diff: 0.707, feedback: 0.9, modDepth: 0.1, modFreq: 2.0) ~
+
+(
+~bd1_revs_fx.free;
+~bd1_revs_fx = ~m1.playfx({|in|
+  var sig = In.ar(~m1.inbus,  2);
+  var wet = Greyhole.ar(
+    in:  sig,
+    delayTime: 2.5,  
+    damp:  0.0,  
+    size:  3.0,  
+    diff:  0.707,  
+    feedback:  0.1,  
+    modDepth:  0.1,  
+    modFreq: 2.0,  
+  );
+  wet;
+});
+)
+~bd1_revs_fx.level_(0.5);
