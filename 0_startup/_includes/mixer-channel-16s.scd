@@ -45,88 +45,9 @@
 ~r3 = MixerChannel.new(\r3, s, 2, 2, outbus: ~m1.inbus);
 ~r4 = MixerChannel.new(\r4, s, 2, 2, outbus: ~m1.inbus);
 
-// r1 reverb. read bus explicitly and return wet. do not call Out or ReplaceOut here
-~r1_fx = ~r1.playfx({ |in|
-    var sig, wet;
-    sig = In.ar(~r1.inbus.index, 1);
-    // wet = FreeVerb2.ar(sig[0], sig[1], \mix.kr(1.0), \room.kr(0.8), \damp.kr(0.2));
-    wet = GVerb.ar(
-      sig, 
-      \roomsize.kr(10), 
-      \revtime.kr(3), 
-      \damping.kr(0.5),  
-      \inputbw.kr(0.5),  
-      \spread.kr(15), 
-      \drylevel.kr(1),  
-      \earlyreflevel.kr(0.7), 
-      \taillevel.kr(0.5), 
-      \maxroomsize.kr(300));
-    wet
-});
-
-// r2 delay. same pattern
-~r2_fx = ~r2.playfx({ |in|
-    var sig, wet;
-    sig = In.ar(~r2.inbus.index, 2);
-    wet = CombL.ar(sig, maxdelaytime: \maxdt.kr(0.4), delaytime: \dt.kr(0.25), decaytime: \dec.kr(0.6));
-    wet
-});
-
-// setters – pass nil to skip a param
-// playfx is async so bus mapping at init time is unreliable; .set on the synth works
-// ~setR1 = { |mix, room, damp|
-//     mix.notNil.if  { ~r1_fx.set(\mix,  mix)  };
-//     room.notNil.if { ~r1_fx.set(\room, room) };
-//     damp.notNil.if { ~r1_fx.set(\damp, damp) };
-// };
-~setR1 = { |roomsize, revtime,  damping,  inputbw,  spread, drylevel, earlyreflevel,  taillevel,  maxroomsize |
-    roomsize.notNil.if  { ~r1_fx.set(\roomsize,  roomsize)  };
-    revtime.notNil.if { ~r1_fx.set(\revtime, revtime) };
-    damping.notNil.if { ~r1_fx.set(\damping, damping) };
-    inputbw.notNil.if { ~r1_fx.set(\inputbw, inputbw) };
-    spread.notNil.if { ~r1_fx.set(\spread, spread) };
-    drylevel.notNil.if { ~r1_fx.set(\drylevel, drylevel) };
-    earlyreflevel.notNil.if { ~r1_fx.set(\earlyreflevel, earlyreflevel) };
-    taillevel.notNil.if { ~r1_fx.set(\taillevel, taillevel) };
-    maxroomsize.notNil.if { ~r1_fx.set(\maxroomsize, maxroomsize) };
-};
-~setR2 = { |dt, dec, maxdt |
-    dt.notNil.if  { ~r2_fx.set(\dt,  dt)  };
-    dt.notNil.if  { ~r2_fx.set(\maxdt, maxdt)  };
-    dec.notNil.if { ~r2_fx.set(\dec, dec) };
-};
-
-~lcn[\b1_s1_r1] = { |x| ~r1_fx.set(\roomsize,  x.linlin(0, 127,  1,  10)); };
-~lcn[\b1_s2_r1] = { |x| ~r1_fx.set(\revtime,  x.linlin(0,  127,  0.0, 5.0)); };
-~lcn[\b1_s3_r1] = { |x| ~r1_fx.set(\damping,  x.linlin(0,  127,  0.1, 1.0)); };
-~lcn[\b1_s4_r1] = { |x| ~r1_fx.set(\inputbw,  x.linlin(0,  127,  0.1, 1.0)); };
-~lcn[\b1_s5_r1] = { |x| ~r1_fx.set(\spread,  x.linlin(0,   127,  0.1, 90)); };
-~lcn[\b1_s1_r2] = { |x| ~r1_fx.set(\drylevel,  x.linlin(0, 127,  0.01, 1.0)); };
-~lcn[\b1_s2_r2] = { |x| ~r1_fx.set(\earlyreflevel,  x.linlin(0,  127, 0.01, 1.0)); };
-~lcn[\b1_s3_r2] = { |x| ~r1_fx.set(\taillevel,  x.linlin(0,  127, 0.01, 1.0)); };
-~lcn[\b1_s4_r2] = { |x| ~r1_fx.set(\maxroomsize,  x.linlin(0,  127, 1, 500)); };
-
-// r3 biscuit. fork + s.sync ensures \biscuit SynthDef has reached server before Synth()
-{
-    s.sync;
-    ~r3_fx = Synth(\biscuit, [
-        \in,      ~r3.inbus.index,
-        \out,     ~r3.inbus.index,
-        \naked,   0.0,
-        \dressed, 1.0
-    ], ~r3.effectgroup);
-}.fork;
-~setR3 = { |drive, clock, bits, fxMode, shape, filterFreq, filterQ, naked, dressed|
-    drive.notNil.if      { ~r3_fx.set(\drive,      drive)      };
-    clock.notNil.if      { ~r3_fx.set(\clock,      clock)      };
-    bits.notNil.if       { ~r3_fx.set(\bits,       bits)       };
-    fxMode.notNil.if     { ~r3_fx.set(\fxMode,     fxMode)     };
-    shape.notNil.if      { ~r3_fx.set(\shape,      shape)      };
-    filterFreq.notNil.if { ~r3_fx.set(\filterFreq, filterFreq) };
-    filterQ.notNil.if    { ~r3_fx.set(\filterQ,    filterQ)    };
-    naked.notNil.if      { ~r3_fx.set(\naked,      naked)      };
-    dressed.notNil.if    { ~r3_fx.set(\dressed,    dressed)    };
-};
+~fxSetup[\r1_greyhole].value;
+~fxSetup[\r2_combDelay].value;
+~fxSetup[\r3_biscuit].value;
 
 // submix example. perc feeds t1
 ~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t1.inbus);
