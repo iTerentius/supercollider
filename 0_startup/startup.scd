@@ -59,6 +59,7 @@ s.waitForBoot {
     "_synthdefs/model_d.scd".loadRelative;
     "_synthdefs/biscuit.scd".loadRelative;
     "_includes/sample_loader.scd".loadRelative;
+    "_synthdefs/fx_defs.scd".loadRelative;
 
     // --- MIDI setup (cross-platform)
     "_includes/midi-setup.scd".loadRelative;

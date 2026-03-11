@@ -45,8 +45,11 @@
 ~r3 = MixerChannel.new(\r3, s, 2, 2, outbus: ~m1.inbus);
 ~r4 = MixerChannel.new(\r4, s, 2, 2, outbus: ~m1.inbus);
 
+// Per-return fx dictionaries — populated by ~fxSetup calls
+~r1fx = (); ~r2fx = (); ~r3fx = ();
 ~fxSetup[\r1_greyhole].value;
 ~fxSetup[\r2_combDelay].value;
+~fxSetup[\r2_chorus].value;
 ~fxSetup[\r3_biscuit].value;
 
 // submix example. perc feeds t1
