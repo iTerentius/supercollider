@@ -124,6 +124,16 @@
     ~apcBindParam.((b ++ "_r3").asSymbol, { |x| ~inlineFX[sym].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) });
 };
 
+// ~toscMixBind: TouchOSC equivalent — values already 0.0-1.0 from TOSC faders/knobs
+// TOSC page = bank, column = strip. Addresses: /tosc/b{n}/s{n}/f|r1|r2|r3
+~toscMixBind = { |bank, strip, chan, sym|
+    var b = "/tosc/b" ++ bank ++ "/s" ++ strip;
+    ~oscParam[(b ++ "/f").asSymbol]  = { |x| chan.level_(x) };
+    ~oscParam[(b ++ "/r1").asSymbol] = { |x| ~inlineFX[sym].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) };
+    ~oscParam[(b ++ "/r2").asSymbol] = { |x| ~inlineFX[sym].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) };
+    ~oscParam[(b ++ "/r3").asSymbol] = { |x| chan.pan_(x.linlin(0, 1, -1, 1)) };
+};
+
 // ~lcxlMixBind: analogous helper for LCXL (CC 0-127, exponential mapping)
 ~lcxlMixBind = { |bank, strip, chan, sym|
     var b = "b" ++ bank ++ "_s" ++ strip;
@@ -218,8 +228,48 @@ if(~lcxlParam.notNil) {
     "Launch Control XL bindings complete (banks 3-4).".postln;
 };
 
+// ---- TouchOSC bindings ----
+if(~oscParam.notNil) {
+    "Binding TouchOSC controls...".postln;
+
+    ~oscParam['/tosc/master/f'] = { |x| ~m1.level_(x.linlin(0, 1, 0.0, 4.0)) };
+
+    // Bank 1: Tracks 1-8
+    ~toscMixBind.(1, 1, ~t1, \t1);  ~toscMixBind.(1, 2, ~t2, \t2);
+    ~toscMixBind.(1, 3, ~t3, \t3);  ~toscMixBind.(1, 4, ~t4, \t4);
+    ~toscMixBind.(1, 5, ~t5, \t5);  ~toscMixBind.(1, 6, ~t6, \t6);
+    ~toscMixBind.(1, 7, ~t7, \t7);  ~toscMixBind.(1, 8, ~t8, \t8);
+
+    // Bank 2: Tracks 9-12, Returns 1-4
+    ~toscMixBind.(2, 1, ~t9,  \t9);   ~toscMixBind.(2, 2, ~t10, \t10);
+    ~toscMixBind.(2, 3, ~t11, \t11);  ~toscMixBind.(2, 4, ~t12, \t12);
+    ~toscMixBind.(2, 5, ~r1,  \r1);   ~toscMixBind.(2, 6, ~r2,  \r2);
+    ~toscMixBind.(2, 7, ~r3,  \r3);   ~toscMixBind.(2, 8, ~r4,  \r4);
+
+    "TouchOSC bindings complete (banks 1-2).".postln;
+};
+
+// ---- TouchOSC bindings (perc banks 3-4) ----
+if(~oscParam.notNil) {
+
+    // Bank 3: Perc submix + sub-channels
+    ~toscMixBind.(3, 1, ~perc, \perc);  ~toscMixBind.(3, 2, ~pbd1, \pbd1);
+    ~toscMixBind.(3, 3, ~pbd2, \pbd2);  ~toscMixBind.(3, 4, ~psd1, \psd1);
+    ~toscMixBind.(3, 5, ~psd2, \psd2);  ~toscMixBind.(3, 6, ~phh1, \phh1);
+    ~toscMixBind.(3, 7, ~phh2, \phh2);  ~toscMixBind.(3, 8, ~pcp1, \pcp1);
+
+    // Bank 4: Remaining perc sub-channels
+    ~toscMixBind.(4, 1, ~pcp2, \pcp2);  ~toscMixBind.(4, 2, ~ptm1, \ptm1);
+    ~toscMixBind.(4, 3, ~ptm2, \ptm2);  ~toscMixBind.(4, 4, ~ptm3, \ptm3);
+    ~toscMixBind.(4, 5, ~pcr1, \pcr1);  ~toscMixBind.(4, 6, ~pcr2, \pcr2);
+    ~toscMixBind.(4, 7, ~pex1, \pex1);  ~toscMixBind.(4, 8, ~pex2, \pex2);
+
+    "TouchOSC bindings complete (banks 3-4).".postln;
+};
+
 ~apcMixBind = nil;
 ~lcxlMixBind = nil;
+~toscMixBind = nil;
 
 // ================= DEFAULT LEVELS =================
 
