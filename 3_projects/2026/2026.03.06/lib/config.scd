@@ -7,7 +7,8 @@
 ~loadSamps.("~/Music/supercollider/_samples/Neutron_12/");
 ~loadSamps.("~/Music/supercollider/_samples/_mono/jttcot/");
 ~loadSamps.("~/Music/supercollider/_samples/_mono/");
-~r1fx[\greyhole].set(\delayTime, 2.0, \damp, 0.1, \size, 3.0, \diff, 0.707, \feedback, 0.2, \modDepth, 0.1, \modFreq, 2.0);
-~r2fx[\combDelay].set(\maxdt, 0.7, \dt, 1.1, \dec, 1.1);
+~r2fx[\combDelay].set(\maxdt, 2.0, \dt, 0.5, \dec, 1.0);
+~r1fx[\freeVerb].set(\mix,  0.5,  \room,  0.5,  \damp,  0.5);
+~fxSetup[\r1_freeVerb].value;
 )
 
