@@ -127,11 +127,22 @@
 // ~toscMixBind: TouchOSC equivalent — values already 0.0-1.0 from TOSC faders/knobs
 // TOSC page = bank, column = strip. Addresses: /tosc/b{n}/s{n}/f|r1|r2|r3
 ~toscMixBind = { |bank, strip, chan, sym|
-    var b = "/tosc/b" ++ bank ++ "/s" ++ strip;
+    var b = "tosc/b" ++ bank ++ "/s" ++ strip;
     ~oscParam[(b ++ "/f").asSymbol]  = { |x| chan.level_(x) };
     ~oscParam[(b ++ "/r1").asSymbol] = { |x| ~inlineFX[sym].tryPerform(\set, \hpfreq, x.linexp(0.001, 1.0, 20, 2000)) };
     ~oscParam[(b ++ "/r2").asSymbol] = { |x| ~inlineFX[sym].tryPerform(\set, \lpfreq, x.linexp(0.001, 1.0, 200, 20000)) };
     ~oscParam[(b ++ "/r3").asSymbol] = { |x| chan.pan_(x.linlin(0, 1, -1, 1)) };
+};
+
+// ~toscMixSync: push current state for one strip to TOSC + populate ~oscState.
+// Reads chan.level / chan.pan; HPF/LPF use SC default Hz converted to normalized 0-1.
+// Call after default levels are set. Also useful mid-session to resync a strip.
+~toscMixSync = { |bank, strip, chan|
+    var b = "tosc/b" ++ bank ++ "/s" ++ strip;
+    ~toscSend.((b ++ "/f").asSymbol,  chan.level.clip(0, 1));
+    ~toscSend.((b ++ "/r3").asSymbol, chan.pan.linlin(-1, 1, 0, 1));
+    ~toscSend.((b ++ "/r1").asSymbol, 40.0.explin(20.0, 2000.0, 0.001, 1.0));    // HPF 40 Hz
+    ~toscSend.((b ++ "/r2").asSymbol, 18000.0.explin(200.0, 20000.0, 0.001, 1.0)); // LPF 18 kHz
 };
 
 // ~lcxlMixBind: analogous helper for LCXL (CC 0-127, exponential mapping)
@@ -232,7 +243,7 @@ if(~lcxlParam.notNil) {
 if(~oscParam.notNil) {
     "Binding TouchOSC controls...".postln;
 
-    ~oscParam['/tosc/master/f'] = { |x| ~m1.level_(x.linlin(0, 1, 0.0, 4.0)) };
+    ~oscParam['tosc/master/f'] = { |x| ~m1.level_(x.linlin(0, 1, 0.0, 4.0)) };
 
     // Bank 1: Tracks 1-8
     ~toscMixBind.(1, 1, ~t1, \t1);  ~toscMixBind.(1, 2, ~t2, \t2);
@@ -291,6 +302,38 @@ if(~oscParam.notNil) {
 ~r2.level_(0.6);
 ~r3.level_(0.6);
 ~r4.level_(0.6);
+
+// ================= TOUCHOSC INITIAL SYNC =================
+// Push default mixer state to TOSC so faders show correct positions on startup.
+if(~toscSend.notNil) {
+    ~toscSend.('tosc/master/f', ~m1.level.linlin(0, 4, 0, 1));
+
+    // Bank 1: Tracks 1-8
+    ~toscMixSync.(1, 1, ~t1);  ~toscMixSync.(1, 2, ~t2);
+    ~toscMixSync.(1, 3, ~t3);  ~toscMixSync.(1, 4, ~t4);
+    ~toscMixSync.(1, 5, ~t5);  ~toscMixSync.(1, 6, ~t6);
+    ~toscMixSync.(1, 7, ~t7);  ~toscMixSync.(1, 8, ~t8);
+
+    // Bank 2: Tracks 9-12, Returns 1-4
+    ~toscMixSync.(2, 1, ~t9);   ~toscMixSync.(2, 2, ~t10);
+    ~toscMixSync.(2, 3, ~t11);  ~toscMixSync.(2, 4, ~t12);
+    ~toscMixSync.(2, 5, ~r1);   ~toscMixSync.(2, 6, ~r2);
+    ~toscMixSync.(2, 7, ~r3);   ~toscMixSync.(2, 8, ~r4);
+
+    // Bank 3: Perc submix + sub-channels
+    ~toscMixSync.(3, 1, ~perc);  ~toscMixSync.(3, 2, ~pbd1);
+    ~toscMixSync.(3, 3, ~pbd2);  ~toscMixSync.(3, 4, ~psd1);
+    ~toscMixSync.(3, 5, ~psd2);  ~toscMixSync.(3, 6, ~phh1);
+    ~toscMixSync.(3, 7, ~phh2);  ~toscMixSync.(3, 8, ~pcp1);
+
+    // Bank 4: Remaining perc sub-channels
+    ~toscMixSync.(4, 1, ~pcp2);  ~toscMixSync.(4, 2, ~ptm1);
+    ~toscMixSync.(4, 3, ~ptm2);  ~toscMixSync.(4, 4, ~ptm3);
+    ~toscMixSync.(4, 5, ~pcr1);  ~toscMixSync.(4, 6, ~pcr2);
+    ~toscMixSync.(4, 7, ~pex1);  ~toscMixSync.(4, 8, ~pex2);
+
+    "TouchOSC: initial mixer state synced.".postln;
+};
 
 "Mixer channels initialized.".postln;
 )
