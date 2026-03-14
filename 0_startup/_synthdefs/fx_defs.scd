@@ -57,17 +57,17 @@
         modFreq.notNil.if   { ~r1fx[\greyhole].set(\modFreq,   modFreq) };
     };
 
-    ~lcn[\b1_s1_r1] = { |x| ~r1fx[\greyhole].set(\delayTime, x.linexp(0, 127, 0.1, 10.0)) };
-    ~lcn[\b1_s2_r1] = { |x| ~r1fx[\greyhole].set(\damp,      x.linexp(0, 127, 0.0, 1.0)) };
-    ~lcn[\b1_s3_r1] = { |x| ~r1fx[\greyhole].set(\size,      x.linexp(0, 127, 0.0, 5.0)) };
-    ~lcn[\b1_s4_r1] = { |x| ~r1fx[\greyhole].set(\diff,      x.linexp(0, 127, 0.0, 1.0)) };
-    ~lcn[\b1_s5_r1] = { |x| ~r1fx[\greyhole].set(\feedback,  x.linexp(0, 127, 0.0, 1.0)) };
-    ~lcn[\b1_s1_r2] = { |x| ~r1fx[\greyhole].set(\modDepth,  x.linexp(0, 127, 0.0, 1.0)) };
-    ~lcn[\b1_s2_r2] = { |x| ~r1fx[\greyhole].set(\modFreq,  x.linexp(0, 127, 0.0, 100.0)) };
+    ~lcn[\b1_s1_r1] = { |x| ~r1fx[\greyhole].set(\delayTime, x.linexp(0, 127, 0.1,  5.0)) };   // linexp OK - no zeros
+    ~lcn[\b1_s2_r1] = { |x| ~r1fx[\greyhole].set(\damp,      x.linlin(0, 127, 0.0,   1.0)) };   // linlin - has 0
+    ~lcn[\b1_s3_r1] = { |x| ~r1fx[\greyhole].set(\size,      x.linlin(0, 127, 0.1,  5.0)) };   // linlin - has 0
+    ~lcn[\b1_s4_r1] = { |x| ~r1fx[\greyhole].set(\diff,      x.linlin(0, 127, 0.1,  0.99)) };  // linlin - has 0
+    ~lcn[\b1_s5_r1] = { |x| ~r1fx[\greyhole].set(\feedback,  x.linlin(0, 127, 0.1,  0.95)) };  // linlin - capped <1
+    ~lcn[\b1_s1_r2] = { |x| ~r1fx[\greyhole].set(\modDepth,  x.linlin(0, 127, 0.0,   1.0)) };   // linlin - has 0
+    ~lcn[\b1_s2_r2] = { |x| ~r1fx[\greyhole].set(\modFreq,   x.linexp(0, 127, 0.5, 100.0)) };   // linexp OK - raised min
 
-    ~apcBindParam.(\b1_d1, { |x| ~r1fx[\greyhole].set(\delayTime, x.linexp(0, 127, 0.1, 10.0)) });   // OK - no zeros
+    ~apcBindParam.(\b1_d1, { |x| ~r1fx[\greyhole].set(\delayTime, x.linexp(0, 127, 0.1, 5.0)) });   // OK - no zeros
     ~apcBindParam.(\b1_d2, { |x| ~r1fx[\greyhole].set(\damp,      x.linlin(0, 127, 0.01, 1.0)) });     // linlin - has 0
-    ~apcBindParam.(\b1_d3, { |x| ~r1fx[\greyhole].set(\size,      x.linlin(0, 127, 0.01, 5.0)) });     // linlin - has 0
+    ~apcBindParam.(\b1_d3, { |x| ~r1fx[\greyhole].set(\size,      x.linlin(0, 127, 0.1, 5.0)) });     // linlin - has 0
     ~apcBindParam.(\b1_d4, { |x| ~r1fx[\greyhole].set(\diff,      x.linlin(0, 127, 0.01, 0.99)) });     // linlin - has 0
     ~apcBindParam.(\b1_d5, { |x| ~r1fx[\greyhole].set(\feedback,  x.linlin(0, 127, 0.01, 0.95)) });     // linlin - has 0
     ~apcBindParam.(\b1_d6, { |x| ~r1fx[\greyhole].set(\modDepth,  x.linlin(0, 127, 0.01, 1.0)) });     // linlin - has 0
@@ -130,24 +130,24 @@
     [\b1_s1_r2, \b1_s2_r2, \b1_s3_r2].do { |k| ~lcn[k] = nil };
 };
 
-~fxSetup[\r2_chorus] = {
-    ~r2fx[\chorus] = ~r2.playfx({ |in| ~fxDefs[\chorus].(in, ~r2.inbus.index) });
+~fxSetup[\r4_chorus] = {
+    ~r4fx[\chorus] = ~r4.playfx({ |in| ~fxDefs[\chorus].(in, ~r4.inbus.index) });
 
-    ~r2fx[\setChorus] = { |rate, depth, mix|
-        rate.notNil.if  { ~r2fx[\chorus].set(\rate,  rate)  };
-        depth.notNil.if { ~r2fx[\chorus].set(\depth, depth) };
-        mix.notNil.if   { ~r2fx[\chorus].set(\mix,   mix)   };
+    ~r4fx[\setChorus] = { |rate, depth, mix|
+        rate.notNil.if  { ~r4fx[\chorus].set(\rate,  rate)  };
+        depth.notNil.if { ~r4fx[\chorus].set(\depth, depth) };
+        mix.notNil.if   { ~r4fx[\chorus].set(\mix,   mix)   };
     };
 
-    ~lcn[\b2_s1_r2] = { |x| ~r2fx[\chorus].set(\rate,  x.linlin(0, 127, 0.05, 5.0)) };
-    ~lcn[\b2_s2_r2] = { |x| ~r2fx[\chorus].set(\depth, x.linlin(0, 127, 0.0, 0.015)) };
-    ~lcn[\b2_s3_r2] = { |x| ~r2fx[\chorus].set(\mix,   x.linlin(0, 127, 0.0,  1.0)) };
+    ~lcn[\b2_s1_r2] = { |x| ~r4fx[\chorus].set(\rate,  x.linlin(0, 127, 0.05, 5.0)) };
+    ~lcn[\b2_s2_r2] = { |x| ~r4fx[\chorus].set(\depth, x.linlin(0, 127, 0.0, 0.015)) };
+    ~lcn[\b2_s3_r2] = { |x| ~r4fx[\chorus].set(\mix,   x.linlin(0, 127, 0.0,  1.0)) };
 };
 
-~fxTeardown[\r2_chorus] = {
-    ~r2fx[\chorus].free;
-    ~r2fx[\chorus]    = nil;
-    ~r2fx[\setChorus] = nil;
+~fxTeardown[\r4_chorus] = {
+    ~r4fx[\chorus].free;
+    ~r4fx[\chorus]    = nil;
+    ~r4fx[\setChorus] = nil;
     [\b2_s1_r2, \b2_s2_r2, \b2_s3_r2].do { |k| ~lcn[k] = nil };
 };
 

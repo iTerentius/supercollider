@@ -15,7 +15,7 @@
 //   Receive on: [tablet IP]         : 9000    (TOSC default, matches ~toscAddr below)
 //
 // OSC address convention mirrors LCXL key naming:
-//   TOSC sends /tosc/b{n}/s{n}/f — SC strips leading slash, dict keys have none:
+//   TOSC may send /tosc/... or tosc/... — dispatcher normalises to no leading slash:
 //   tosc/b{bank}/s{strip}/f    — fader (level)
 //   tosc/b{bank}/s{strip}/r1   — knob row 1 (HPF)
 //   tosc/b{bank}/s{strip}/r2   — knob row 2 (LPF)
@@ -36,7 +36,8 @@ if(~toscRecvFunc.notNil) {
 
 // Feedback address — set tablet IP here
 // TouchOSC default receive port: 9000
-~toscAddr = NetAddr("192.168.0.22", 9000);
+// ~toscAddr = NetAddr("192.168.0.22", 9000);
+~toscAddr = NetAddr("192.168.0.62", 9000);
 
 // Send a value to TOSC, apply its callback, and store in ~oscState.
 // addr: Symbol (no leading slash). TOSC receives with leading slash prepended.
@@ -70,11 +71,14 @@ if(~toscRecvFunc.notNil) {
     };
 };
 
-// Global dispatcher — updates ~oscState and routes to ~oscParam callbacks
+// Global dispatcher — updates ~oscState and routes to ~oscParam callbacks.
+// Strips leading slash from path so both /tosc/... and tosc/... work.
 ~toscRecvFunc = { |msg, time, replyAddr, recvPort|
-    var val = msg[1].asFloat;
-    ~oscState[msg[0]] = val;
-    ~oscParam[msg[0]] !? { |cb| cb.(val) };
+    var path = msg[0].asString;
+    var key  = (if(path[0] == $/) { path[1..] } { path }).asSymbol;
+    var val  = msg[1].asFloat;
+    ~oscState[key] = val;
+    ~oscParam[key] !? { |cb| cb.(val) };
 };
 thisProcess.addOSCRecvFunc(~toscRecvFunc);
 

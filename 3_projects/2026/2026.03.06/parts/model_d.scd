@@ -6,7 +6,7 @@
 // PDEF
 ///////////////////////////////////////////////////////////////
 Pdef(\modelD,
-    Pbind(
+    Pbindef(\pbd_mD,  
         \instrument,   \modelD,
         \out,          Pn(Pdefn(\mD_out),  inf),
 
@@ -207,11 +207,11 @@ Pdefn(\mD_cutoff, Pseq([
     // Pn(Pdefn(\mD_cutoff_1), 4),
 ], 1));
 
-Pdefn(\mD_emphasis_0, 0.9);        // 0..1  (self-osc above ~0.88)
+Pdefn(\mD_emphasis_0, 0.2);        // 0..1  (self-osc above ~0.88)
 Pdefn(\mD_emphasis_1, Pseg([0.2, 0.8, 0.2], [4, 8], \sin, 1));
 Pdefn(\mD_emphasis, Pseq([
     Pn(Pdefn(\mD_emphasis_0), 4),
-    Pn(Pdefn(\mD_emphasis_1), 4),
+    // Pn(Pdefn(\mD_emphasis_1), 4),
 ], 1));
 
 Pdefn(\mD_kbdAmt_0, 0.2);          // 0..1

@@ -5,7 +5,7 @@
 // PDEF
 ///////////////////////////////////////////////////////////////
 Pdef(\bd1, ~pBuf.(
-    Pbind(
+    Pbindef(\pbd_bd1, 
         \buf,     Pn(Pdefn(\bd1_bufs),  inf),
         \bufnum,  Pkey(\buf),
         \scale,   Pn(Pdefn(\bd1_scale), inf),

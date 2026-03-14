@@ -7,7 +7,7 @@
 // PDEF
 ///////////////////////////////////////////////////////////////
 Pdef(\bCtl,
-    Pbind(
+    Pbindef(\pbd_biscuit, 
         \type,       \set,
         \id,         Pfunc({ ~r3_fx.nodeID }),
         \args,       #[\drive, \clock, \bits,

@@ -6,7 +6,7 @@
 // PDEF
 ///////////////////////////////////////////////////////////////
 Pdef(\neutron,
-    Pbind(
+    Pbindef(\pbd_ntron, 
         \instrument, \neutron,
         \out,        Pn(Pdefn(\ntron_out),   inf),
 
@@ -15,6 +15,7 @@ Pdef(\neutron,
         \octave,     Pn(Pdefn(\ntron_octs),       inf),
         \degree,     Pn(Pdefn(\ntron_degs),       inf),
         \dur,        Pn(Pdefn(\ntron_durs),       inf),
+        \timingOffset, Pn(Pdefn(\ntron_toff),     inf),  
         \stretch,    Pn(Pdefn(\ntron_strs),       inf),
         \legato,     Pn(Pdefn(\ntron_legs),       inf),
         \amp,        Pn(Pdefn(\ntron_amps),       inf),
@@ -95,7 +96,7 @@ Pdefn(\ntron_octs, Pseq([
 
 // DEGREE — words
 Pdefn(\ntron_deg_0, 0);
-Pdefn(\ntron_deg_1, Pslide((7..0),  1,  3, 1));
+Pdefn(\ntron_deg_1, Pslide((7..0),  2,  8, 1));
 // sentences
 Pdefn(\ntron_degs_a, Pseq([Pn(Pdefn(\ntron_deg_0), 4)], 1));   // root
 Pdefn(\ntron_degs_b, Pseq([Pn(Pdefn(\ntron_deg_1), 4)], 1));   // random
@@ -104,15 +105,19 @@ Pdefn(\ntron_degs, Pseq([Pn(Pdefn(\ntron_degs_b), 1)], 1));
 
 // DUR — words
 Pdefn(\ntron_dur_0, 1);
+Pdefn(\ntron_dur_3, Pseq([1/4!8, Rest()*2].flat,  1));
 Pdefn(\ntron_dur_1, Pseq([1/4!2, 1/2, 2,  Rest()].flat, 1));
 Pdefn(\ntron_dur_2, Pbjorklund(5, 8, 1)/2);
 // sentences
-Pdefn(\ntron_durs_a, Pseq([Pn(Pdefn(\ntron_dur_0), 4)], 1));   // quarter notes
+Pdefn(\ntron_durs_a, Pseq([Pn(Pdefn(\ntron_dur_3), 4)], 1));   // quarter notes
 Pdefn(\ntron_durs_b, Pseq([Pn(Pdefn(\ntron_dur_0), 4), Pn(Pdefn(\ntron_dur_1), 4)], 1));
 Pdefn(\ntron_durs_c, Pseq([Pn(Pdefn(\ntron_dur_2), 4)], 1));   // euclidean
 // story
-Pdefn(\ntron_durs, Pseq([Pn(Pdefn(\ntron_durs_b), 1)], 1));
+Pdefn(\ntron_durs, Pseq([Pn(Pdefn(\ntron_durs_a), 1)], 1));
 
+Pdefn(\ntron_toff_0,  0);
+Pdefn(\ntron_toff_1,  1/2);
+Pdefn(\ntron_toff,  Pn(Pdefn(\ntron_toff_1),  1));
 // STRETCH
 Pdefn(\ntron_str_0, 1);
 Pdefn(\ntron_str_1, Pseq([1!3, 2, 1/2!2].flat, 1));

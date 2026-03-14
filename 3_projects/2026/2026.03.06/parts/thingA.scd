@@ -17,7 +17,7 @@ SynthDef(\thingA, { |freq=110, amp=0.1, gate=1, mod1=1, mod2=1, out=0|
 // PDEF
 ///////////////////////////////////////////////////////////////
 Pdef(\thingA,
-    Pbind(
+    Pbindef(\pbd_thingA,  
         \instrument, \thingA,
         \scale,      Pn(Pdefn(\thingA_scale), inf),
         \octave,     Pn(Pdefn(\thingA_octs),  inf),

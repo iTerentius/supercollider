@@ -46,11 +46,11 @@
 ~r4 = MixerChannel.new(\r4, s, 2, 2, outbus: ~m1.inbus);
 
 // Per-return fx dictionaries — populated by ~fxSetup calls
-~r1fx = (); ~r2fx = (); ~r3fx = ();
-~fxSetup[\r1_freeVerb].value;
+~r1fx = (); ~r2fx = (); ~r3fx = (); ~r4fx = ();
+~fxSetup[\r1_greyhole].value;
 ~fxSetup[\r2_combDelay].value;
-~fxSetup[\r2_chorus].value;
 ~fxSetup[\r3_biscuit].value;
+~fxSetup[\r4_chorus].value;
 
 // submix example. perc feeds t1
 ~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t1.inbus);
@@ -136,13 +136,18 @@
 
 // ~toscMixSync: push current state for one strip to TOSC + populate ~oscState.
 // Reads chan.level / chan.pan; HPF/LPF use SC default Hz converted to normalized 0-1.
+// Does NOT fire callbacks — avoids /n_set on synths that may not be alive yet.
 // Call after default levels are set. Also useful mid-session to resync a strip.
 ~toscMixSync = { |bank, strip, chan|
     var b = "tosc/b" ++ bank ++ "/s" ++ strip;
-    ~toscSend.((b ++ "/f").asSymbol,  chan.level.clip(0, 1));
-    ~toscSend.((b ++ "/r3").asSymbol, chan.pan.linlin(-1, 1, 0, 1));
-    ~toscSend.((b ++ "/r1").asSymbol, 40.0.explin(20.0, 2000.0, 0.001, 1.0));    // HPF 40 Hz
-    ~toscSend.((b ++ "/r2").asSymbol, 18000.0.explin(200.0, 20000.0, 0.001, 1.0)); // LPF 18 kHz
+    var push = { |addr, val|
+        ~oscState[addr] = val;
+        ~toscAddr.sendMsg("/" ++ addr.asString, val);
+    };
+    push.((b ++ "/f").asSymbol,  chan.level.clip(0, 1));
+    push.((b ++ "/r3").asSymbol, chan.pan.linlin(-1, 1, 0, 1));
+    push.((b ++ "/r1").asSymbol, 40.0.explin(20.0, 2000.0, 0.001, 1.0));    // HPF 40 Hz
+    push.((b ++ "/r2").asSymbol, 18000.0.explin(200.0, 20000.0, 0.001, 1.0)); // LPF 18 kHz
 };
 
 // ~lcxlMixBind: analogous helper for LCXL (CC 0-127, exponential mapping)
@@ -306,7 +311,8 @@ if(~oscParam.notNil) {
 // ================= TOUCHOSC INITIAL SYNC =================
 // Push default mixer state to TOSC so faders show correct positions on startup.
 if(~toscSend.notNil) {
-    ~toscSend.('tosc/master/f', ~m1.level.linlin(0, 4, 0, 1));
+    ~oscState['tosc/master/f'] = ~m1.level.linlin(0, 4, 0, 1);
+    ~toscAddr.sendMsg("/tosc/master/f", ~oscState['tosc/master/f']);
 
     // Bank 1: Tracks 1-8
     ~toscMixSync.(1, 1, ~t1);  ~toscMixSync.(1, 2, ~t2);

@@ -5,7 +5,7 @@
 // PDEFS
 ///////////////////////////////////////////////////////////////
 Pdef(\roll,
-    Pbind(
+    Pbindef(\pbd_roll,  
         \instrument,  Pn(Pdefn(\roll_ins),        inf), 
         \buf,         Pn(Pdefn(\roll_bufs),       inf),
         \bufnum,      Pkey(\buf),
@@ -41,13 +41,13 @@ Pdef(\roll_fx_ctl, Pbindef(\roll_fx_ctl_pbd,
 ///////////////////////////////////////////////////////////////
 Pdefn(\roll_out,   ~t4.inbus.index);
 Pdefn(\roll_scale, Scale.minor);
-Pdefn(\roll_ins,  \slice_m);
+Pdefn(\roll_ins,  \slice_s);
 
 // BUFS — words
 // ~sRoll = ~sTree[\jttcot].values[0..6];
 // ~sRoll = ~sTree[\neutron_12].values;
-// ~sRoll = ~sTree[\drumloops].values;
-~sRoll = ~sTree[\_mono].values;
+~sRoll = ~sTree[\drumloops].values;
+// ~sRoll = ~sTree[\_mono].values;
 Pdefn(\roll_buf_0, Pseq(~sRoll, 1));
 // sentences
 Pdefn(\roll_bufs_a, Pseq([Pn(Pdefn(\roll_buf_0), 4)], 1));      // all samples
@@ -78,7 +78,7 @@ Pdefn(\roll_rate_0, 0.8);
 Pdefn(\roll_rate_1, Pseq([1.2, 0.8], 1));
 Pdefn(\roll_rate_2, Pseg([0.5, 1.5, 0.5], [2, 4], \sin, 1));
 // story
-Pdefn(\roll_rates, Pseq([Pn(Pdefn(\roll_rate_1), 1)], 1));
+Pdefn(\roll_rates, Pseq([Pn(Pdefn(\roll_rate_2), 1)], 1));
 
 // REV — words
 Pdefn(\roll_rev_0, 0);

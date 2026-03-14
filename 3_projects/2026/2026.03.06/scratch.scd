@@ -35,3 +35,9 @@
 });
 )
 ~bd1_revs_fx.level_(0.5);
+
+OSCFunc.trace(true)
+OSCFunc.trace(false)
+
+~toscSync.();
+~toscStateSave.(\2026_03_06);

@@ -11,6 +11,7 @@
 
 // BD1
 (
+"bd1.scd".loadRelative;
 Pdefn(\bd1_durs, Pseq([
     Pn(Pdefn(\bd1_durs_a), 4),
     Pn(Pdefn(\bd1_durs_b), 2),
@@ -25,6 +26,7 @@ Pdefn(\bd1_degs, Pseq([
 
 // SD1
 (
+"sd1.scd".loadRelative;
 Pdefn(\sd1_durs, Pseq([
     Pn(Pdefn(\sd1_durs_a), 4),
     Pn(Pdefn(\sd1_durs_b), 1),
@@ -38,6 +40,7 @@ Pdefn(\sd1_degs, Pseq([
 
 // HH1
 (
+"hh1.scd".loadRelative;
 Pdefn(\hh1_durs, Pseq([
     Pn(Pdefn(\hh1_durs_a), 4),
     Pn(Pdefn(\hh1_durs_b), 4),
