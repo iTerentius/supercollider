@@ -208,6 +208,13 @@
 };
 ~oscParam['tosc/p/all'] = { |val| if(val > 0.5) { ~toscPadStopAll.() } };
 
+// ---- Pre-register launchers for full grid (3 banks, 18 cols, 11 rows) ----
+// Launchers look up ~toscPads at trigger time so registration order doesn't matter.
+#[1, 2, 3].do { |bank|
+    (1..18).do { |col| ~toscColBind.(bank, col) };
+    (1..11).do { |row| ~toscRowBind.(bank, row) };
+};
+
 "TouchOSC pad router loaded.".postln;
 
 )

@@ -40,4 +40,20 @@ OSCFunc.trace(true)
 OSCFunc.trace(false)
 
 ~toscSync.();
-~toscStateSave.(\2026_03_06);
+~toscStateSave.("2026_03_06".asSymbol);
+~toscPadPaintAll.();
+  ~toscPads.size.postln;         // should be non-zero      
+  ~toscPadPaintAll.();           // manually trigger repaint
+    ~toscAddr = NetAddr("127.0.0.1", 9000);                   
+  ~toscPadPaintAll.();                                                    
+
+  ~toscAddr.sendMsg("/tosc/p1/1/1/color", 1.0, 0.0, 0.0, 1.0);
+  ~toscAddr.sendMsg("/tosc/pad/state", 1, 1, 1, 0.0, 1.0, 0.0, 1.0);
+  
+  ~toscAddr.sendMsg("/tosc/p1/1/col1/color", 0.0, 1.0, 0.0, 1.0);
+  ~toscAddr.sendMsg("/tosc/p1/1/col1/state", 1.0);  // should turn green
+  ~toscAddr.sendMsg("/tosc/p1/1/col1/state", 0.0);  // should restore orange
+    OSCdef(\toscDebug, { |msg| ("TOSC fired: " ++ msg).postln }, '/tosc/debug');
+  ~toscAddr.sendMsg("/tosc/p1/1/col1/state", 1.0);
+  ~toscAddr.sendMsg("/tosc/p1/1/col1/label", "bd1");
+
