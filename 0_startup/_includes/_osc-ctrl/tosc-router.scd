@@ -38,6 +38,7 @@ if(~toscRecvFunc.notNil) {
 // TouchOSC default receive port: 9000
 // ~toscAddr = NetAddr("192.168.0.22", 9000);
 ~toscAddr = NetAddr("192.168.0.62", 9000);
+// ~toscAddr = NetAddr("127.0.0.1", 9000);
 
 // Send a value to TOSC, apply its callback, and store in ~oscState.
 // addr: Symbol (no leading slash). TOSC receives with leading slash prepended.
@@ -73,12 +74,23 @@ if(~toscRecvFunc.notNil) {
 
 // Global dispatcher — updates ~oscState and routes to ~oscParam callbacks.
 // Strips leading slash from path so both /tosc/... and tosc/... work.
+// XY controls send two values; splits into key/x and key/y sub-keys.
 ~toscRecvFunc = { |msg, time, replyAddr, recvPort|
     var path = msg[0].asString;
     var key  = (if(path[0] == $/) { path[1..] } { path }).asSymbol;
-    var val  = msg[1].asFloat;
-    ~oscState[key] = val;
-    ~oscParam[key] !? { |cb| cb.(val) };
+    var normVal = { |v| if(v.isKindOf(Boolean)) { v.binaryValue.asFloat } { v.asFloat } };
+    if(msg.size > 2) {
+        var xKey = (key.asString ++ "/x").asSymbol;
+        var yKey = (key.asString ++ "/y").asSymbol;
+        var xVal = normVal.(msg[1]);
+        var yVal = normVal.(msg[2]);
+        ~oscState[xKey] = xVal; ~oscParam[xKey] !? { |cb| cb.(xVal) };
+        ~oscState[yKey] = yVal; ~oscParam[yKey] !? { |cb| cb.(yVal) };
+    } {
+        var val = normVal.(msg[1]);
+        ~oscState[key] = val;
+        ~oscParam[key] !? { |cb| cb.(val) };
+    };
 };
 thisProcess.addOSCRecvFunc(~toscRecvFunc);
 

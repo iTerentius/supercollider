@@ -12,6 +12,7 @@
 ~r1fx[\greyhole].set(\diff,  0.01);
 ~fxSetup[\r1_greyhole].value;
 ~fxSetup[\r4_chorus].value;
+~toscPadSyncAll.();
 ~toscStateLoad.("2026_03_06".asSymbol);  // restore saved fader/filter positions
 )
 // ~toscSync.();

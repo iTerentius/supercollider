@@ -107,6 +107,67 @@
 
 ~apcBindB.(4, 24, \r3_fx_r1, 4, nil, nil, ~fxSendStop[\r3_fx_r1]);
 
+// --- TouchOSC Pad Bindings ---
+
+// Bank 1: voice launchers
+~toscPadBind.(1, 1, 1, \bd1,     \orange, \green);
+~toscPadBind.(1, 2, 1, \sd1,     \yellow, \green);
+~toscPadBind.(1, 3, 1, \hh1,     \cyan,   \green);
+~toscPadBind.(1, 4, 1, \roll,    \blue,   \green);
+~toscPadBind.(1, 5, 1, \ms20,    \purple, \green);
+~toscPadBind.(1, 6, 1, \thingA,  \pink,   \green);
+~toscPadBind.(1, 7, 1, \neutron, \orange, \green);
+~toscPadBind.(1, 8, 1, \modelD,  \yellow, \green);
+~toscPadBind.(1, 9, 1, \bCtl,    \cyan,   \green);
+~toscColBind.(1, 1);
+
+// Bank 2: FX sends — bd1+sd1 (col 1), hh1+roll (col 2)
+~toscPadBind.(2, 1, 1, \bd1_fx_1, \blue,   \green, ~fxSendStop[\bd1_fx_1]);
+~toscPadBind.(2, 2, 1, \bd1_fx_2, \cyan,   \green, ~fxSendStop[\bd1_fx_2]);
+~toscPadBind.(2, 3, 1, \bd1_fx_3, \pink,   \green, ~fxSendStop[\bd1_fx_3]);
+~toscPadBind.(2, 4, 1, \bd1_fx_4, \purple, \green, ~fxSendStop[\bd1_fx_4]);
+~toscPadBind.(2, 5, 1, \sd1_fx_1, \blue,   \green, ~fxSendStop[\sd1_fx_1]);
+~toscPadBind.(2, 6, 1, \sd1_fx_2, \cyan,   \green, ~fxSendStop[\sd1_fx_2]);
+~toscPadBind.(2, 7, 1, \sd1_fx_3, \pink,   \green, ~fxSendStop[\sd1_fx_3]);
+~toscPadBind.(2, 8, 1, \sd1_fx_4, \purple, \green, ~fxSendStop[\sd1_fx_4]);
+
+~toscPadBind.(2, 1, 2, \hh1_fx_1,  \blue,   \green, ~fxSendStop[\hh1_fx_1]);
+~toscPadBind.(2, 2, 2, \hh1_fx_2,  \cyan,   \green, ~fxSendStop[\hh1_fx_2]);
+~toscPadBind.(2, 3, 2, \hh1_fx_3,  \pink,   \green, ~fxSendStop[\hh1_fx_3]);
+~toscPadBind.(2, 4, 2, \hh1_fx_4,  \purple, \green, ~fxSendStop[\hh1_fx_4]);
+~toscPadBind.(2, 5, 2, \roll_fx_1, \blue,   \green, ~fxSendStop[\roll_fx_1]);
+~toscPadBind.(2, 6, 2, \roll_fx_2, \cyan,   \green, ~fxSendStop[\roll_fx_2]);
+~toscPadBind.(2, 7, 2, \roll_fx_3, \pink,   \green, ~fxSendStop[\roll_fx_3]);
+~toscPadBind.(2, 8, 2, \roll_fx_4, \purple, \green, ~fxSendStop[\roll_fx_4]);
+~toscPadBind.(2, 9, 1, \r3_fx_r1,  \blue,   \green, ~fxSendStop[\r3_fx_r1]);
+~toscColBind.(2, 1);
+~toscColBind.(2, 2);
+(1..9).do { |row| ~toscRowBind.(2, row) };
+
+// Bank 3: FX sends — ms20+thingA (col 1), ntron+mD (col 2)
+~toscPadBind.(3, 1, 1, \ms20_fx_1,   \blue,   \green, ~fxSendStop[\ms20_fx_1]);
+~toscPadBind.(3, 2, 1, \ms20_fx_2,   \cyan,   \green, ~fxSendStop[\ms20_fx_2]);
+~toscPadBind.(3, 3, 1, \ms20_fx_3,   \pink,   \green, ~fxSendStop[\ms20_fx_3]);
+~toscPadBind.(3, 4, 1, \ms20_fx_4,   \purple, \green, ~fxSendStop[\ms20_fx_4]);
+~toscPadBind.(3, 5, 1, \thingA_fx_1, \blue,   \green, ~fxSendStop[\thingA_fx_1]);
+~toscPadBind.(3, 6, 1, \thingA_fx_2, \cyan,   \green, ~fxSendStop[\thingA_fx_2]);
+~toscPadBind.(3, 7, 1, \thingA_fx_3, \pink,   \green, ~fxSendStop[\thingA_fx_3]);
+~toscPadBind.(3, 8, 1, \thingA_fx_4, \purple, \green, ~fxSendStop[\thingA_fx_4]);
+
+~toscPadBind.(3, 1, 2, \ntron_fx_1, \blue,   \green, ~fxSendStop[\ntron_fx_1]);
+~toscPadBind.(3, 2, 2, \ntron_fx_2, \cyan,   \green, ~fxSendStop[\ntron_fx_2]);
+~toscPadBind.(3, 3, 2, \ntron_fx_3, \pink,   \green, ~fxSendStop[\ntron_fx_3]);
+~toscPadBind.(3, 4, 2, \ntron_fx_4, \purple, \green, ~fxSendStop[\ntron_fx_4]);
+~toscPadBind.(3, 5, 2, \mD_fx_1,    \blue,   \green, ~fxSendStop[\mD_fx_1]);
+~toscPadBind.(3, 6, 2, \mD_fx_2,    \cyan,   \green, ~fxSendStop[\mD_fx_2]);
+~toscPadBind.(3, 7, 2, \mD_fx_3,    \pink,   \green, ~fxSendStop[\mD_fx_3]);
+~toscPadBind.(3, 8, 2, \mD_fx_4,    \purple, \green, ~fxSendStop[\mD_fx_4]);
+~toscColBind.(3, 1);
+~toscColBind.(3, 2);
+(1..8).do { |row| ~toscRowBind.(3, row) };
+
+~toscPadPaintAll.();
+
 // Refresh APC40 LEDs — clear stale pulse states then repaint
 if(~apcOut.notNil) {
     ~apcPadMap.keysDo { |n| ~apcPadLEDch.(n, 0, ~apcCfg[\playMode] ? 9) };

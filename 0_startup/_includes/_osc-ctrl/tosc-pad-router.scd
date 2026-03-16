@@ -1,0 +1,213 @@
+// TouchOSC Pad Router
+// LP Mini-style pad launcher over OSC. Depends on tosc-router.scd.
+//
+// Globals:
+//   ~toscPads          — registry: Symbol(addr) → binding dict
+//   ~toscPadColors     — named RGBA color dict
+//   ~toscPadBind.(bank, row, col, key, color, playColor, onStop, label)
+//   ~toscRowBind.(bank, row)   — group toggle: all pads in that row
+//   ~toscColBind.(bank, col)   — group toggle: all pads in that col
+//   ~toscPadPaint.(addr)       — repaint one pad from current play state
+//   ~toscPadPaintAll.()        — repaint all pads (call after reconnect/score load)
+//
+// Addresses (leading slash stripped by dispatcher):
+//   tosc/p{bank}/{row}/{col}       — pad
+//   tosc/p{bank}/r/{row}           — row launcher
+//   tosc/p{bank}/c/{col}           — col launcher
+//
+// TOSC feedback:
+//   /tosc/p{bank}/{row}/{col}/color  r g b a   — color (playing vs stopped)
+//   /tosc/p{bank}/{row}/{col}/label  "string"  — pad label text
+//
+// Row/col launcher behavior: any playing → stop all; none playing → start all.
+
+(
+
+~toscPads = IdentityDictionary.new;
+
+~toscPadColors = (
+    off:     [0.15, 0.15, 0.15, 1.0],
+    white:   [1.0,  1.0,  1.0,  1.0],
+    red:     [1.0,  0.2,  0.2,  1.0],
+    orange:  [1.0,  0.5,  0.1,  1.0],
+    amber:   [1.0,  0.6,  0.0,  1.0],
+    yellow:  [1.0,  0.9,  0.1,  1.0],
+    green:   [0.2,  1.0,  0.3,  1.0],
+    cyan:    [0.1,  0.9,  1.0,  1.0],
+    sky:     [0.3,  0.6,  1.0,  1.0],
+    blue:    [0.2,  0.4,  1.0,  1.0],
+    indigo:  [0.4,  0.2,  1.0,  1.0],
+    purple:  [0.7,  0.2,  1.0,  1.0],
+    pink:    [1.0,  0.3,  0.7,  1.0],
+    magenta: [1.0,  0.1,  0.9,  1.0]
+);
+
+// ---- Object resolver: Symbol → Tdef > Ndef > Pdef; Function passed through ----
+~toscPadGetObj = { |key|
+    if(key.isKindOf(Function)) { key } {
+        if(Tdef.all[key].notNil) {
+            Tdef(key)
+        } {
+            var ps = Ndef.dictFor(Server.default);
+            if(ps.notNil and: { ps.envir.at(key).notNil }) { Ndef(key) } { Pdef(key) }
+        }
+    }
+};
+
+// ---- Playing state ----
+~toscPadIsRunning = { |obj|
+    if(obj.isNil) { false } {
+        if(obj.isKindOf(NodeProxy)) { obj.isMonitoring } {
+            if(obj.respondsTo(\isPlaying)) { obj.isPlaying } { false }
+        }
+    }
+};
+
+// ---- Send playing state to one pad ----
+// Sends 0.0 (stopped) or 1.0 (playing) to a hidden state fader in TOSC.
+// Stopped color is set in TOSC editor per pad; playing color (green) handled in TOSC Lua.
+~toscPadSendColor = { |addr, colorKey|
+    var b = ~toscPads[addr];
+    if(b.notNil) {
+        var isPlaying = (colorKey == b[\playColor]);
+        ~toscAddr.sendMsg("/tosc/p" ++ b[\bank] ++ "/" ++ b[\row] ++ "/col" ++ b[\col] ++ "/state",
+            if(isPlaying) { 1.0 } { 0.0 });
+    };
+};
+
+// ---- Repaint one pad from current play state ----
+~toscPadPaint = { |addr|
+    var b = ~toscPads[addr];
+    if(b.notNil) {
+        var running = ~toscPadIsRunning.(~toscPadGetObj.(b[\key]));
+        ~toscPadSendColor.(addr, if(running) { b[\playColor] } { b[\color] });
+    }
+};
+
+// ---- Repaint all registered pads ----
+~toscPadPaintAll = {
+    ~toscPads.keysDo { |addr| ~toscPadPaint.(addr) };
+    "TouchOSC pads: repainted all.".postln;
+};
+
+// ---- Full sync: state + labels + nums ----
+~toscPadSyncAll = {
+    ~toscPads.keysValuesDo { |addr, b|
+        ~toscPadPaint.(addr);
+        ~toscAddr.sendMsg("/tosc/p" ++ b[\bank] ++ "/" ++ b[\row] ++ "/col" ++ b[\col] ++ "/label", b[\label]);
+        ~toscAddr.sendMsg("/tosc/p" ++ b[\bank] ++ "/" ++ b[\row] ++ "/col" ++ b[\col] ++ "/nums", b[\col].asString ++ "|" ++ b[\row].asString);
+    };
+    "TouchOSC pads: synced all.".postln;
+};
+
+// ---- Toggle one pad ----
+~toscPadToggle = { |addr|
+    var b = ~toscPads[addr];
+    if(b.notNil) {
+        var obj     = ~toscPadGetObj.(b[\key]);
+        var running = ~toscPadIsRunning.(obj);
+        var clock   = ~link ?? { TempoClock.default };
+        case
+        { obj.isKindOf(Function) } {
+            obj.value;
+            ~toscPadSendColor.(addr, b[\playColor]);
+            AppClock.sched(0.15, { ~toscPadPaint.(addr); nil });
+        }
+        { running } {
+            if(b[\onStop].notNil) { b[\onStop].value } { obj.tryPerform(\stop) };
+            AppClock.sched(0.05, { ~toscPadPaint.(addr); nil });
+        }
+        { true } {
+            obj.tryPerform(\play, clock);
+            AppClock.sched(0.05, { ~toscPadPaint.(addr); nil });
+        };
+    }
+};
+
+// ---- Bind a pad ----
+// bank, row, col : Integer
+// key            : Symbol (Pdef/Tdef/Ndef) or Function
+// color          : Symbol from ~toscPadColors — stopped state (default \white)
+// playColor      : Symbol — playing state (defaults to color)
+// onStop         : Function called instead of obj.stop on toggle-off (optional)
+// label          : String shown on pad (defaults to key.asString)
+~toscPadBind = { |bank, row, col, key, color = \white, playColor, onStop, label|
+    var addr = ("tosc/p" ++ bank ++ "/" ++ row ++ "/" ++ col).asSymbol;
+    var lbl  = label ?? { if(key.isKindOf(Symbol)) { key.asString } { "fn" } };
+    var pc   = playColor ?? { color };
+
+    ~toscPads[addr] = (
+        key: key, color: color, playColor: pc, onStop: onStop, label: lbl,
+        bank: bank, row: row, col: col
+    );
+    ~oscParam[addr] = { |val| if(val > 0.5) { ~toscPadToggle.(addr) } };
+
+    ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/label", lbl);
+    ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/nums", col.asString ++ "|" ++ row.asString);
+    ~toscPadPaint.(addr);
+};
+
+// ---- Row launcher: any playing → stop all; none playing → start all ----
+~toscRowBind = { |bank, row|
+    var addr = ("tosc/p" ++ bank ++ "/r/" ++ row).asSymbol;
+    ~oscParam[addr] = { |val|
+        if(val > 0.5) {
+            var pads  = ~toscPads.select { |b| b[\bank] == bank and: { b[\row] == row } };
+            var anyOn = pads.any { |b| ~toscPadIsRunning.(~toscPadGetObj.(b[\key])) };
+            var clock = ~link ?? { TempoClock.default };
+            pads.keysValuesDo { |padAddr, b|
+                var obj     = ~toscPadGetObj.(b[\key]);
+                var running = ~toscPadIsRunning.(obj);
+                if(anyOn) {
+                    if(running) {
+                        if(b[\onStop].notNil) { b[\onStop].value } { obj.tryPerform(\stop) }
+                    }
+                } {
+                    if(running.not) { obj.tryPerform(\play, clock) }
+                }
+            };
+            AppClock.sched(0.05, { pads.keysDo { |a| ~toscPadPaint.(a) }; nil });
+        }
+    }
+};
+
+// ---- Col launcher: any playing → stop all; none playing → start all ----
+~toscColBind = { |bank, col|
+    var addr = ("tosc/p" ++ bank ++ "/c/" ++ col).asSymbol;
+    ~oscParam[addr] = { |val|
+        if(val > 0.5) {
+            var pads  = ~toscPads.select { |b| b[\bank] == bank and: { b[\col] == col } };
+            var anyOn = pads.any { |b| ~toscPadIsRunning.(~toscPadGetObj.(b[\key])) };
+            var clock = ~link ?? { TempoClock.default };
+            pads.keysValuesDo { |padAddr, b|
+                var obj     = ~toscPadGetObj.(b[\key]);
+                var running = ~toscPadIsRunning.(obj);
+                if(anyOn) {
+                    if(running) {
+                        if(b[\onStop].notNil) { b[\onStop].value } { obj.tryPerform(\stop) }
+                    }
+                } {
+                    if(running.not) { obj.tryPerform(\play, clock) }
+                }
+            };
+            AppClock.sched(0.05, { pads.keysDo { |a| ~toscPadPaint.(a) }; nil });
+        }
+    }
+};
+
+// ---- Stop all running pads across all banks ----
+~toscPadStopAll = {
+    ~toscPads.keysValuesDo { |addr, b|
+        var obj = ~toscPadGetObj.(b[\key]);
+        if(~toscPadIsRunning.(obj)) {
+            if(b[\onStop].notNil) { b[\onStop].value } { obj.tryPerform(\stop) };
+        };
+    };
+    AppClock.sched(0.1, { ~toscPadPaintAll.(); nil });
+    "TouchOSC pads: stopped all.".postln;
+};
+~oscParam['tosc/p/all'] = { |val| if(val > 0.5) { ~toscPadStopAll.() } };
+
+"TouchOSC pad router loaded.".postln;
+
+)
