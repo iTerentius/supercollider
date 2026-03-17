@@ -292,3 +292,180 @@ print("Tagged " .. count .. " controls")
 //   (e.g. nums label computing its own position from tree).
 //
 // - update() Lua callback fires every frame — available for polling logic.
+
+// =============================================================================
+// TOSC TREE STRUCTURE — FX PAGE
+// =============================================================================
+// synth-fx (PAGER)
+//  └─ 1  (GROUP, page 1, tag=1)  — fx1..fx5
+//      └─ fx1  (GROUP)
+//          ├─ f      FADER   — slot level/send fader
+//          ├─ label  LABEL   — slot name  (receive-only OSC, no Lua)
+//          ├─ r1     GROUP
+//          │   ├─ r      RADIAL  — knob
+//          │   └─ label  LABEL   — knob label (receive-only OSC)
+//          ├─ r2     GROUP  (same structure as r1)
+//          ├─ xy1    GROUP
+//          │   ├─ xy     XY      — XY pad
+//          │   └─ label  LABEL
+//          └─ t1     GROUP
+//              ├─ t      BUTTON  — toggle, Momentary Press
+//              └─ label  LABEL
+//      └─ fx2..fx5  (same structure, tag=1)
+//  └─ 2  (GROUP, page 2, tag=2)  — fx6..fx10
+
+// =============================================================================
+// OSC ADDRESS SCHEME — FX CONTROLS
+// =============================================================================
+// r / t controls (RADIAL/BUTTON inside sub-group, depth=2):
+//   /tosc/fx/{tag}/{fxN}/{groupN}
+//   e.g.  /tosc/fx/1/fx1/r1   /tosc/fx/1/fx1/t1
+//
+// xy control (XY inside sub-group, depth=2):
+//   /tosc/fx/{tag}/{fxN}/{groupN}  — sends two floats (x, y)
+//   e.g.  /tosc/fx/1/fx1/xy1
+//
+// f fader (FADER direct child of fxN, depth=1):
+//   /tosc/fx/{tag}/{fxN}/f
+//   e.g.  /tosc/fx/1/fx1/f
+//
+// label — knob/XY/toggle label (LABEL inside sub-group, depth=2):
+//   /tosc/fx/{tag}/{fxN}/{groupN}/label
+//   e.g.  /tosc/fx/1/fx1/r1/label
+//
+// label — slot label (LABEL direct child of fxN, depth=1):
+//   /tosc/fx/{tag}/{fxN}/label
+//   e.g.  /tosc/fx/1/fx1/label
+//
+// tag=1 → page 1 (fx1..fx5),  tag=2 → page 2 (fx6..fx10)
+
+// =============================================================================
+// TOSC CONTROL SETUP — FX RADIAL KNOB (r)
+// =============================================================================
+// Control type: RADIAL
+// Tag:          inherited from fxN group (set by Python build pipeline)
+// Receive path: /tosc/fx/ | tag | / | parent.parent.name | / | parent.name
+// Argument:     x (VALUE FLOAT)
+//
+// Lua script (onValueChanged):
+/*
+function onValueChanged(key)
+  if key == "x" then
+    sendOSC("/tosc/fx/" .. self.tag .. "/" .. self.parent.parent.name .. "/" ..
+  self.parent.name, self.values.x)
+  end
+end
+*/
+
+// =============================================================================
+// TOSC CONTROL SETUP — FX XY PAD (xy)
+// =============================================================================
+// Control type: XY
+// Receive path: /tosc/fx/ | tag | / | parent.parent.name | / | parent.name
+// Arguments:    x, y (two VALUE FLOATs)
+//
+// Lua script:
+/*
+function onValueChanged(key)
+  if key == "x" or key == "y" then
+    sendOSC("/tosc/fx/" .. self.tag .. "/" .. self.parent.parent.name .. "/" ..
+  self.parent.name, self.values.x, self.values.y)
+  end
+end
+*/
+
+// =============================================================================
+// TOSC CONTROL SETUP — FX TOGGLE BUTTON (t)
+// =============================================================================
+// Control type: BUTTON, Momentary Press
+// Receive path: /tosc/fx/ | tag | / | parent.parent.name | / | parent.name
+// Argument:     touch (VALUE FLOAT)
+//
+// Lua script:
+/*
+function onValueChanged(key)
+  if key == "touch" then
+    sendOSC("/tosc/fx/" .. self.tag .. "/" .. self.parent.parent.name .. "/" ..
+  self.parent.name, self.values.touch)
+  end
+end
+*/
+
+// =============================================================================
+// TOSC CONTROL SETUP — FX FADER (f)
+// =============================================================================
+// Control type: FADER (horizontal or vertical)
+// Receive path: /tosc/fx/ | tag | / | parent.name | /f
+// Argument:     x (VALUE FLOAT)
+//
+// Lua script:
+/*
+function onValueChanged(key)
+  if key == "x" then
+    sendOSC("/tosc/fx/" .. self.tag .. "/" .. self.parent.name .. "/f", self.values.x)
+  end
+end
+*/
+
+// =============================================================================
+// TOSC CONTROL SETUP — FX LABELS
+// =============================================================================
+// Receive-only (no Lua). OSC message blocks set by Python build pipeline.
+//
+// Knob/XY/toggle label (inside sub-group, depth=2):
+//   Receive path: /tosc/fx/ | tag | / | parent.parent.name | / | parent.name | /label
+//   Trigger: text / ANY    Argument: text (VALUE STRING)
+//
+// Slot label (direct child of fxN, depth=1):
+//   Receive path: /tosc/fx/ | tag | / | parent.name | /label
+//   Trigger: text / ANY    Argument: text (VALUE STRING)
+
+// =============================================================================
+// SC FX BIND HELPERS  (tosc-fx.scd)
+// =============================================================================
+// ~toscFXLabel.(slot, text)           — push slot label text
+//   addr: /tosc/fx/{page}/fx{slot}/label
+//
+// ~toscFXBind.(slot, group, func)     — bind r/t control; calls func(val 0-1)
+//   addr: /tosc/fx/{page}/fx{slot}/{group}
+//
+// ~toscFXBindXY.(slot, group, func)   — bind xy control; calls func(x, y)
+//   addr: /tosc/fx/{page}/fx{slot}/{group}
+//
+// ~toscFXSync.(slot, group, val)      — push value back to TOSC control
+// ~toscFXSyncXY.(slot, group, x, y)  — push XY values back
+//
+// page = ceil(slot / 5).asInteger  — slot 1-5 → page 1, slot 6-10 → page 2
+
+// =============================================================================
+// PYTHON BUILD PIPELINE  (0_startup/scripts/)
+// =============================================================================
+// Source: sc-devices-016.xml  (decompressed base; do NOT modify directly)
+// Output: sc-devices-NNN.tosc
+//
+// Run from the TouchOSC/SC/ directory (or adjust paths):
+/*
+REF=~/Music/supercollider/0_startup/scripts
+python3 $REF/tosc_dup_fx.py      input.xml    step1.xml   # dup fx1 → fx2..fx10 across 2 pages
+python3 $REF/tosc_add_mixer_recv.py step1.xml step2.xml   # fill 320 mixer receive paths
+python3 $REF/tosc_add_fx_recv.py    step2.xml step3.xml   # fix FX control receive paths
+python3 $REF/tosc_add_label_recv.py step3.xml step4.xml   # add label receive messages
+python3 $REF/tosc_convert.py compress step4.xml output.tosc
+*/
+//
+// tosc_dup_fx.py config (top of file):
+//   FX1_ID          — UUID of the fx1 GROUP node in the base XML
+//   PAGE2_ID        — UUID of the page-2 GROUP in the synth-fx PAGER
+//   FX_WIDTH/GAP    — slot width (400) and gap (10) in px
+//   FX1_X / FX1_Y  — top-left position of fx1 (43, 20)
+//   FX_SLOTS_PAGE1  — number of slots on page 1 (currently 5)
+//   FX_SLOTS_PAGE2  — number of slots on page 2 (currently 5)
+//
+// The script also patches a pre-existing bug in the base XML:
+//   slot label path had CDATA[label] instead of CDATA[/label] (missing leading /)
+//   Fixed by string-replacing in the fx1 block before duplication.
+//
+// tosc_convert.py — decompress/recompress .tosc ↔ .xml
+//   .tosc is raw zlib-compressed XML (magic bytes 78 9C), NOT a zip file.
+//   python3 tosc_convert.py decompress file.tosc file.xml
+//   python3 tosc_convert.py compress   file.xml  file.tosc
