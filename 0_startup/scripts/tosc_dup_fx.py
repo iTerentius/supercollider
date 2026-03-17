@@ -187,7 +187,7 @@ def main():
     # Stitch page-1 copies right after fx1
     print("Stitching page-1 copies …")
     separator = "\n"
-    inserted  = text[:end] + separator + separator.join(page1_copies) + text[end:]
+    inserted  = text[:start] + fx1_block + separator + separator.join(page1_copies) + text[end:]
 
     # Inject all page-2 slots into the page-2 GROUP node
     print(f"Injecting {len(page2_copies)} slot(s) into page-2 GROUP (ID={PAGE2_ID}) …")
