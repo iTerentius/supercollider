@@ -2,11 +2,11 @@
 """
 Patch pad page in a .tosc XML file:
   1. Remove banks 2 and 3 from pad PAGER 'p' (keep only bank 1)
-  2. Each pad row GROUP gets a BOX 'color' node inserted AFTER the button (on top):
-       - Passive display only: cornerRadius=10, outline=0, interactive=0, no Lua, no messages
-       - Starts amber; BUTTON Lua drives its color via findByName("color")
-  3. BUTTON 'pad': background=0, outline=0; keeps x receive (state from SC);
-     x Lua sets BOX color + sibling label/nums textColor (amber/green, white/black)
+  2. Each pad row GROUP gets a BOX 'color' node (idempotent — updates existing if present):
+       - Gets own OSC receive on /tosc/p{bank}/{row}/{colGroup}/state → x (noDuplicates=0)
+       - Lua sets self.color and sibling label textColors based on x value
+       - Non-interactive (touch passes through to BUTTON behind it)
+  3. BUTTON 'pad': background=0, outline=0; touch-only Lua (sends press/release, no color logic)
   4. LABEL 'label': textColor=white, textSize=14, default text cleared
   5. LABEL 'nums':  textColor=white, textSize=20, h=18, default text cleared, divider '-'
 
@@ -21,6 +21,8 @@ import xml.etree.ElementTree as ET
 
 # ── Lua scripts ───────────────────────────────────────────────────────────────
 
+# BUTTON: touch-only. Sends press (1) and release (0) to SC; SC ignores release.
+# No color logic here — BOX_LUA handles all display.
 BUTTON_LUA = (
     "function onValueChanged(key)\n"
     "    if key == \"touch\" then\n"
@@ -29,33 +31,39 @@ BUTTON_LUA = (
     "        local bank = self.parent.parent.parent.name\n"
     "        sendOSC(\"/tosc/p\" .. bank .. \"/\" .. row .. \"/\" .. col, self.values.touch)\n"
     "    end\n"
+    "end"
+)
+
+# BOX: receives /tosc/p{bank}/{row}/{colGroup}/state → x from SC.
+# x > 0.9 = playing (green); else colorIndex * 0.05 = stopped color.
+# Also updates sibling label/nums textColor (black when playing, white when stopped).
+# NOTE: contains { } (Lua tables) — must use string concat, never f-string/format().
+BOX_LUA = (
+    "function onValueChanged(key)\n"
     "    if key == \"x\" then\n"
     "        local x = self.values.x\n"
-    "        local bx = self.parent:findByName(\"color\")\n"
     "        local isPlaying = x > 0.9\n"
-    "        if bx then\n"
-    "            if isPlaying then\n"
-    "                bx.color = Color(0.2, 1.0, 0.3, 1.0)\n"
-    "            else\n"
-    "                local idx = math.floor(x * 20 + 0.1)\n"
-    "                local cols = {\n"
-    "                    [0]  = Color(1.0, 0.6, 0.0, 1.0),\n"
-    "                    [1]  = Color(1.0, 0.5, 0.1, 1.0),\n"
-    "                    [2]  = Color(1.0, 0.9, 0.1, 1.0),\n"
-    "                    [3]  = Color(0.1, 0.9, 1.0, 1.0),\n"
-    "                    [4]  = Color(0.2, 0.4, 1.0, 1.0),\n"
-    "                    [5]  = Color(0.4, 0.2, 1.0, 1.0),\n"
-    "                    [6]  = Color(0.7, 0.2, 1.0, 1.0),\n"
-    "                    [7]  = Color(1.0, 0.3, 0.7, 1.0),\n"
-    "                    [8]  = Color(1.0, 0.1, 0.9, 1.0),\n"
-    "                    [9]  = Color(1.0, 0.2, 0.2, 1.0),\n"
-    "                    [10] = Color(1.0, 1.0, 1.0, 1.0),\n"
-    "                    [11] = Color(0.3, 0.6, 1.0, 1.0),\n"
-    "                    [12] = Color(0.2, 1.0, 0.3, 1.0),\n"
-    "                    [13] = Color(0.15, 0.15, 0.15, 1.0)\n"
-    "                }\n"
-    "                bx.color = cols[idx] or Color(1.0, 0.6, 0.0, 1.0)\n"
-    "            end\n"
+    "        if isPlaying then\n"
+    "            self.color = Color(0.2, 1.0, 0.3, 1.0)\n"
+    "        else\n"
+    "            local idx = math.floor(x * 20 + 0.1)\n"
+    "            local cols = {\n"
+    "                [0]  = Color(1.0, 0.6, 0.0, 1.0),\n"
+    "                [1]  = Color(1.0, 0.5, 0.1, 1.0),\n"
+    "                [2]  = Color(1.0, 0.9, 0.1, 1.0),\n"
+    "                [3]  = Color(0.1, 0.9, 1.0, 1.0),\n"
+    "                [4]  = Color(0.2, 0.4, 1.0, 1.0),\n"
+    "                [5]  = Color(0.4, 0.2, 1.0, 1.0),\n"
+    "                [6]  = Color(0.7, 0.2, 1.0, 1.0),\n"
+    "                [7]  = Color(1.0, 0.3, 0.7, 1.0),\n"
+    "                [8]  = Color(1.0, 0.1, 0.9, 1.0),\n"
+    "                [9]  = Color(1.0, 0.2, 0.2, 1.0),\n"
+    "                [10] = Color(1.0, 1.0, 1.0, 1.0),\n"
+    "                [11] = Color(0.3, 0.6, 1.0, 1.0),\n"
+    "                [12] = Color(0.2, 1.0, 0.3, 1.0),\n"
+    "                [13] = Color(0.15, 0.15, 0.15, 1.0)\n"
+    "            }\n"
+    "            self.color = cols[idx] or Color(1.0, 0.6, 0.0, 1.0)\n"
     "        end\n"
     "        local tc = isPlaying and Color(0, 0, 0, 1) or Color(1, 1, 1, 1)\n"
     "        local lbl = self.parent:findByName(\"label\")\n"
@@ -66,6 +74,7 @@ BUTTON_LUA = (
     "end"
 )
 
+# Template for a new BOX 'color' node (no script/values/messages — added programmatically).
 BOX_NODE_XML = """\
 <node ID="{node_id}" type="BOX">
   <properties>
@@ -84,15 +93,7 @@ BOX_NODE_XML = """\
     <property type="i"><key>shape</key><value>1</value></property>
     <property type="b"><key>visible</key><value>1</value></property>
   </properties>
-  <values>
-    <value>
-      <key>touch</key>
-      <locked>0</locked>
-      <lockedDefaultCurrent>0</lockedDefaultCurrent>
-      <default>false</default>
-      <defaultPull>0</defaultPull>
-    </value>
-  </values>
+  <values/>
 </node>"""
 
 
@@ -143,6 +144,82 @@ def find_pager_p(root):
     return None
 
 
+def _partial_el(ptype, value):
+    """Build a <partial> element for OSC path construction."""
+    el = ET.Element('partial')
+    ET.SubElement(el, 'type').text = ptype
+    ET.SubElement(el, 'conversion').text = 'STRING'
+    v = ET.SubElement(el, 'value')
+    v.text = value
+    ET.SubElement(el, 'scaleMin').text = '0'
+    ET.SubElement(el, 'scaleMax').text = '1'
+    return el
+
+
+def _ensure_box_x_value(box_node):
+    """Add 'x' float value entry to BOX's <values> block if not already present."""
+    vals = box_node.find('values')
+    if vals is None:
+        vals = ET.SubElement(box_node, 'values')
+    for v in vals.findall('value'):
+        k = v.find('key')
+        if k is not None and k.text == 'x':
+            return  # already present
+    v = ET.SubElement(vals, 'value')
+    ET.SubElement(v, 'key').text = 'x'
+    ET.SubElement(v, 'locked').text = '0'
+    ET.SubElement(v, 'lockedDefaultCurrent').text = '0'
+    ET.SubElement(v, 'default').text = '0.0'
+    ET.SubElement(v, 'defaultPull').text = '0'
+
+
+def _add_box_receive(box_node):
+    """
+    Add/replace OSC receive on BOX for state path:
+      /tosc/p{bank}/{row}/{colGroup}/state  →  x  (noDuplicates=0)
+
+    BOX parent chain: BOX('color') → GROUP(row) → GROUP('col1') → PAGE(bank).
+    PROPERTY references:
+      parent.parent.parent.name = bank
+      parent.name               = row
+      parent.parent.name        = colGroup ('col1', 'col2', …)
+    """
+    # Remove any existing messages block
+    msgs = box_node.find('messages')
+    if msgs is not None:
+        box_node.remove(msgs)
+
+    msgs = ET.SubElement(box_node, 'messages')
+    osc = ET.SubElement(msgs, 'osc')
+    ET.SubElement(osc, 'enabled').text = '1'
+    ET.SubElement(osc, 'send').text = '0'
+    ET.SubElement(osc, 'receive').text = '1'
+    ET.SubElement(osc, 'feedback').text = '0'
+    ET.SubElement(osc, 'connections').text = 'FF'
+
+    triggers = ET.SubElement(osc, 'triggers')
+    trigger = ET.SubElement(triggers, 'trigger')
+    ET.SubElement(trigger, 'var').text = 'x'
+    ET.SubElement(trigger, 'noDuplicates').text = '0'
+
+    path = ET.SubElement(osc, 'path')
+    path.append(_partial_el('CONSTANT', '/tosc/p'))
+    path.append(_partial_el('PROPERTY', 'parent.parent.parent.name'))
+    path.append(_partial_el('CONSTANT', '/'))
+    path.append(_partial_el('PROPERTY', 'parent.name'))
+    path.append(_partial_el('CONSTANT', '/'))
+    path.append(_partial_el('PROPERTY', 'parent.parent.name'))
+    path.append(_partial_el('CONSTANT', '/state'))
+
+    arguments = ET.SubElement(osc, 'arguments')
+    arg = ET.SubElement(arguments, 'argument')
+    ET.SubElement(arg, 'type').text = 'FLOAT'
+    ET.SubElement(arg, 'var').text = 'x'
+    ET.SubElement(arg, 'conversion').text = 'FLOAT'
+    ET.SubElement(arg, 'scaleMin').text = '0'
+    ET.SubElement(arg, 'scaleMax').text = '1'
+
+
 # ── Main patch ────────────────────────────────────────────────────────────────
 
 def patch(input_path, output_path):
@@ -168,8 +245,9 @@ def patch(input_path, output_path):
             removed += 1
     print(f'Removed {removed} banks')
 
-    # 2 & 3. Process each row GROUP containing a BUTTON pad
-    boxes_added = buttons_patched = 0
+    # 2 & 3. Process each row GROUP containing a BUTTON 'pad'
+    # Idempotent: finds existing BOX 'color' and updates it; only inserts if absent.
+    boxes_added = boxes_updated = buttons_patched = 0
     for row_group in pager_p.iter('node'):
         if row_group.get('type') != 'GROUP':
             continue
@@ -177,6 +255,7 @@ def patch(input_path, output_path):
         if row_children is None:
             continue
 
+        # Find BUTTON 'pad'
         pad = None
         for child in row_children:
             name_v = get_prop_el(child, 'name')
@@ -186,20 +265,37 @@ def patch(input_path, output_path):
         if pad is None:
             continue
 
-        # Insert BOX after the BUTTON (renders on top)
-        box_node = ET.fromstring(BOX_NODE_XML.format(node_id=str(uuid.uuid4())))
-        pad_index = list(row_children).index(pad)
-        row_children.insert(pad_index + 1, box_node)
-        boxes_added += 1
+        # Find existing BOX 'color' (idempotent)
+        box_node = None
+        for child in row_children:
+            name_v = get_prop_el(child, 'name')
+            if child.get('type') == 'BOX' and name_v is not None and name_v.text == 'color':
+                box_node = child
+                break
 
-        # Update BUTTON: transparent, no outline, updated Lua
+        if box_node is None:
+            # Insert new BOX after BUTTON (renders on top)
+            box_node = ET.fromstring(BOX_NODE_XML.format(node_id=str(uuid.uuid4())))
+            pad_index = list(row_children).index(pad)
+            row_children.insert(pad_index + 1, box_node)
+            boxes_added += 1
+        else:
+            boxes_updated += 1
+
+        # Apply BOX: non-interactive, Lua script, x value entry, OSC receive
+        set_prop_value(box_node, 'interactive', '<value>0</value>')
+        set_prop_value(box_node, 'script', '<value>' + BOX_LUA + '</value>')
+        _ensure_box_x_value(box_node)
+        _add_box_receive(box_node)
+
+        # Update BUTTON: transparent bg/outline, touch-only Lua (no x color logic)
         set_prop_value(pad, 'background', '<value>0</value>')
         set_prop_value(pad, 'outline',    '<value>0</value>')
-        set_prop_value(pad, 'script',     f'<value>{BUTTON_LUA}</value>')
+        set_prop_value(pad, 'script',     '<value>' + BUTTON_LUA + '</value>')
         buttons_patched += 1
 
-    print(f'Added {boxes_added} BOX color nodes (on top, non-interactive)')
-    print(f'Simplified {buttons_patched} BUTTON pads (transparent, x Lua drives BOX color)')
+    print(f'BOX color nodes: {boxes_added} inserted, {boxes_updated} updated')
+    print(f'BUTTON pads patched (touch-only Lua): {buttons_patched}')
 
     # 4. Update LABELs
     label_updated = nums_updated = 0
