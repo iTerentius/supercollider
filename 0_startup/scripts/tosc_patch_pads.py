@@ -303,7 +303,9 @@ def patch(input_path, output_path):
         # BOX: passive display only (interactive=0, no Lua, no receive)
         set_prop_value(box_node, 'interactive', '<value>0</value>')
 
-        # Update BUTTON: transparent bg/outline, touch+x Lua (touch=OSC to SC, x=BOX color)
+        # Update BUTTON: Momentary (type=0) so x=1.0 on every press regardless of SC-set state,
+        # transparent bg/outline, touch+x Lua
+        set_prop_value(pad, 'buttonType', '<value>0</value>')
         set_prop_value(pad, 'background', '<value>0</value>')
         set_prop_value(pad, 'outline',    '<value>0</value>')
         set_prop_value(pad, 'script',     '<value>' + xml_escape(BUTTON_LUA) + '</value>')
