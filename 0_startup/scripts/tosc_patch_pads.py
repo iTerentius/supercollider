@@ -83,7 +83,7 @@ BOX_NODE_XML = """\
     <property type="f"><key>cornerRadius</key><value>10</value></property>
     <property type="r"><key>frame</key><value><x>0</x><y>0</y><w>100</w><h>100</h></value></property>
     <property type="b"><key>grabFocus</key><value>0</value></property>
-    <property type="b"><key>interactive</key><value>0</value></property>
+    <property type="b"><key>interactive</key><value>1</value></property>
     <property type="b"><key>locked</key><value>0</value></property>
     <property type="s"><key>name</key><value>color</value></property>
     <property type="i"><key>orientation</key><value>0</value></property>
@@ -273,17 +273,24 @@ def patch(input_path, output_path):
                 box_node = child
                 break
 
+        pad_index = list(row_children).index(pad)
+
         if box_node is None:
-            # Insert new BOX after BUTTON (renders on top)
+            # Insert BOX BEFORE BUTTON so BUTTON (transparent, on top) gets touch;
+            # BOX (interactive=1, below) receives OSC state and drives color.
             box_node = ET.fromstring(BOX_NODE_XML.format(node_id=str(uuid.uuid4())))
-            pad_index = list(row_children).index(pad)
-            row_children.insert(pad_index + 1, box_node)
+            row_children.insert(pad_index, box_node)
             boxes_added += 1
         else:
+            # Ensure existing BOX is before BUTTON (idempotent reposition)
+            box_index = list(row_children).index(box_node)
+            if box_index > pad_index:
+                row_children.remove(box_node)
+                row_children.insert(pad_index, box_node)
             boxes_updated += 1
 
-        # Apply BOX: non-interactive, Lua script, x value entry, OSC receive
-        set_prop_value(box_node, 'interactive', '<value>0</value>')
+        # Apply BOX: interactive=1 (required for OSC receive), Lua, x value, receive
+        set_prop_value(box_node, 'interactive', '<value>1</value>')
         set_prop_value(box_node, 'script', '<value>' + BOX_LUA + '</value>')
         _ensure_box_x_value(box_node)
         _add_box_receive(box_node)
