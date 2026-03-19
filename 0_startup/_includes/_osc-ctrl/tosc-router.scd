@@ -37,6 +37,7 @@ if(~toscRecvFunc.notNil) {
 // Feedback address — set tablet IP here
 // TouchOSC default receive port: 9000
 // ~toscAddr = NetAddr("192.168.0.22", 9000);
+// NetAddr.broadcastFlag = true;
 ~toscAddr = NetAddr("192.168.0.62", 9000);
 // ~toscAddr = NetAddr("127.0.0.1", 9000);
 
