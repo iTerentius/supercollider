@@ -54,6 +54,15 @@ function onValueChanged(key)
   end
 end"""
 
+PAGER_DEV_LUA = """\
+function onValueChanged(key)
+  if key == "page" then
+    if self.values.page == 1 then
+      sendOSC("/tosc/pads/visible", 1.0)
+    end
+  end
+end"""
+
 
 # ── XML helpers ────────────────────────────────────────────────────────────────
 
@@ -131,7 +140,15 @@ def patch(input_path, output_path):
     tree = ET.parse(input_path)
     root = tree.getroot()
 
-    master_patched = xy_patched = mute_patched = label_patched = 0
+    master_patched = xy_patched = mute_patched = label_patched = pager_dev_patched = 0
+
+    # 0. PAGER 'dev': add page-switch Lua to trigger pad repaint
+    for node in root.iter('node'):
+        if node.get('type') == 'PAGER' and get_prop_el(node, 'name') is not None:
+            if get_prop_el(node, 'name').text == 'dev':
+                set_prop_value(node, 'script', PAGER_DEV_LUA)
+                pager_dev_patched += 1
+                print(f'  PAGER "dev" Lua patched (ID={node.get("ID")})')
 
     # 1. Master fader: find FADER 'fader1' that is NOT inside PAGER 'b'
     pager_b = None
@@ -191,6 +208,7 @@ def patch(input_path, output_path):
                     if replace_label_receive_path(ctrl):
                         label_patched += 1
 
+    print(f'PAGER "dev" Lua patched:      {pager_dev_patched}')
     print(f'Master fader Lua patched:    {master_patched}')
     print(f'XY Lua patched (x+y split):  {xy_patched}')
     print(f'Mute button Lua patched:      {mute_patched}')

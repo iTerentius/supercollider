@@ -256,6 +256,9 @@ if(~toscAddr.notNil) {
 };
 ~oscParam['tosc/p/all'] = { |val| if(val > 0.5) { ~toscPadStopAll.() } };
 
+// ---- Page-switch repaint: PAGER 'dev' sends this when pads page is selected ----
+~oscParam['tosc/pads/visible'] = { ~toscPadPaintAll.() };
+
 // ---- Clear all bindings and blank the full device grid ----
 // Stops running pads, removes ~oscParam callbacks, clears registry,
 // then blanks every pad on the device (bank 1: 11 rows × 18 cols).
