@@ -138,6 +138,14 @@ if(~toscAddr.notNil) {
     "TouchOSC pads: repainted all.".postln;
 };
 
+// ---- Sync TOSC pad color for a specific key (call after LP Mini or other controller toggles) ----
+// Usage: ~toscPadSyncKey.(\bd1)
+~toscPadSyncKey = { |key|
+    ~toscPads.keysValuesDo { |addr, b|
+        if(b[\key] == key) { ~toscPadPaint.(addr) };
+    };
+};
+
 // ---- Full sync: state + labels + nums ----
 ~toscPadSyncAll = {
     ~toscPads.keysValuesDo { |addr, b|
@@ -188,7 +196,14 @@ if(~toscAddr.notNil) {
         key: key, color: color, playColor: pc, onStop: onStop, label: lbl,
         bank: bank, row: row, col: col
     );
-    ~oscParam[addr] = { |val| if(val > 0.5) { ~toscPadToggle.(addr) } };
+    ~oscParam[addr] = { |val|
+        if(val > 0.5) {
+            ~toscPadToggle.(addr)
+        } {
+            // Button released — repaint after brief delay to override buttonType=2 x reset
+            AppClock.sched(0.02, { ~toscPadPaint.(addr); nil });
+        }
+    };
 
     ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/label", lbl);
     ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/nums", col.asString ++ "-" ++ row.asString);
