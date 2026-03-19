@@ -120,43 +120,48 @@
 ~toscPadBind.(1, 8, 1, \modelD,  \yellow, \green);
 ~toscPadBind.(1, 9, 1, \bCtl,    \cyan,   \green);
 // Bank 2: FX sends — bd1+sd1 (col 1), hh1+roll (col 2)
-~toscPadBind.(2, 1, 1, \bd1_fx_1, \blue,   \green, ~fxSendStop[\bd1_fx_1]);
-~toscPadBind.(2, 2, 1, \bd1_fx_2, \cyan,   \green, ~fxSendStop[\bd1_fx_2]);
-~toscPadBind.(2, 3, 1, \bd1_fx_3, \pink,   \green, ~fxSendStop[\bd1_fx_3]);
-~toscPadBind.(2, 4, 1, \bd1_fx_4, \purple, \green, ~fxSendStop[\bd1_fx_4]);
-~toscPadBind.(2, 5, 1, \sd1_fx_1, \blue,   \green, ~fxSendStop[\sd1_fx_1]);
-~toscPadBind.(2, 6, 1, \sd1_fx_2, \cyan,   \green, ~fxSendStop[\sd1_fx_2]);
-~toscPadBind.(2, 7, 1, \sd1_fx_3, \pink,   \green, ~fxSendStop[\sd1_fx_3]);
-~toscPadBind.(2, 8, 1, \sd1_fx_4, \purple, \green, ~fxSendStop[\sd1_fx_4]);
+~toscPadBind.(1, 1, 2, \bd1_fx_1, \blue,   \green, ~fxSendStop[\bd1_fx_1], "bd1Fx1");
+~toscPadBind.(1, 1, 3, \bd1_fx_2, \cyan,   \green, ~fxSendStop[\bd1_fx_2], "bd1Fx2");
+~toscPadBind.(1, 1, 4, \bd1_fx_3, \pink,   \green, ~fxSendStop[\bd1_fx_3], "bd1Fx3");
+~toscPadBind.(1, 1, 5, \bd1_fx_4, \purple, \green, ~fxSendStop[\bd1_fx_4], "bd1Fx4");
 
-~toscPadBind.(2, 1, 2, \hh1_fx_1,  \blue,   \green, ~fxSendStop[\hh1_fx_1]);
-~toscPadBind.(2, 2, 2, \hh1_fx_2,  \cyan,   \green, ~fxSendStop[\hh1_fx_2]);
-~toscPadBind.(2, 3, 2, \hh1_fx_3,  \pink,   \green, ~fxSendStop[\hh1_fx_3]);
-~toscPadBind.(2, 4, 2, \hh1_fx_4,  \purple, \green, ~fxSendStop[\hh1_fx_4]);
-~toscPadBind.(2, 5, 2, \roll_fx_1, \blue,   \green, ~fxSendStop[\roll_fx_1]);
-~toscPadBind.(2, 6, 2, \roll_fx_2, \cyan,   \green, ~fxSendStop[\roll_fx_2]);
-~toscPadBind.(2, 7, 2, \roll_fx_3, \pink,   \green, ~fxSendStop[\roll_fx_3]);
-~toscPadBind.(2, 8, 2, \roll_fx_4, \purple, \green, ~fxSendStop[\roll_fx_4]);
-~toscPadBind.(2, 9, 1, \r3_fx_r1,  \blue,   \green, ~fxSendStop[\r3_fx_r1]);
+~toscPadBind.(1, 2, 2, \sd1_fx_1, \blue,   \green, ~fxSendStop[\sd1_fx_1]);
+~toscPadBind.(1, 2, 3, \sd1_fx_2, \cyan,   \green, ~fxSendStop[\sd1_fx_2]);
+~toscPadBind.(1, 2, 4, \sd1_fx_3, \pink,   \green, ~fxSendStop[\sd1_fx_3]);
+~toscPadBind.(1, 2, 5, \sd1_fx_4, \purple, \green, ~fxSendStop[\sd1_fx_4]);
+
+~toscPadBind.(1, 3, 2, \hh1_fx_1,  \blue,   \green, ~fxSendStop[\hh1_fx_1]);
+~toscPadBind.(1, 3, 3, \hh1_fx_2,  \cyan,   \green, ~fxSendStop[\hh1_fx_2]);
+~toscPadBind.(1, 3, 4, \hh1_fx_3,  \pink,   \green, ~fxSendStop[\hh1_fx_3]);
+~toscPadBind.(1, 3, 5, \hh1_fx_4,  \purple, \green, ~fxSendStop[\hh1_fx_4]);
+
+~toscPadBind.(1, 4, 2, \roll_fx_1, \blue,   \green, ~fxSendStop[\roll_fx_1]);
+~toscPadBind.(1, 4, 3, \roll_fx_2, \cyan,   \green, ~fxSendStop[\roll_fx_2]);
+~toscPadBind.(1, 4, 4, \roll_fx_3, \pink,   \green, ~fxSendStop[\roll_fx_3]);
+~toscPadBind.(1, 4, 5, \roll_fx_4, \purple, \green, ~fxSendStop[\roll_fx_4]);
+
+~toscPadBind.(1, 9, 2, \r3_fx_r1,  \blue,   \green, ~fxSendStop[\r3_fx_r1]);
 
 // Bank 3: FX sends — ms20+thingA (col 1), ntron+mD (col 2)
-~toscPadBind.(3, 1, 1, \ms20_fx_1,   \blue,   \green, ~fxSendStop[\ms20_fx_1]);
-~toscPadBind.(3, 2, 1, \ms20_fx_2,   \cyan,   \green, ~fxSendStop[\ms20_fx_2]);
-~toscPadBind.(3, 3, 1, \ms20_fx_3,   \pink,   \green, ~fxSendStop[\ms20_fx_3]);
-~toscPadBind.(3, 4, 1, \ms20_fx_4,   \purple, \green, ~fxSendStop[\ms20_fx_4]);
-~toscPadBind.(3, 5, 1, \thingA_fx_1, \blue,   \green, ~fxSendStop[\thingA_fx_1]);
-~toscPadBind.(3, 6, 1, \thingA_fx_2, \cyan,   \green, ~fxSendStop[\thingA_fx_2]);
-~toscPadBind.(3, 7, 1, \thingA_fx_3, \pink,   \green, ~fxSendStop[\thingA_fx_3]);
-~toscPadBind.(3, 8, 1, \thingA_fx_4, \purple, \green, ~fxSendStop[\thingA_fx_4]);
+~toscPadBind.(1, 5, 2, \ms20_fx_1,   \blue,   \green, ~fxSendStop[\ms20_fx_1]);
+~toscPadBind.(1, 5, 3, \ms20_fx_2,   \cyan,   \green, ~fxSendStop[\ms20_fx_2]);
+~toscPadBind.(1, 5, 4, \ms20_fx_3,   \pink,   \green, ~fxSendStop[\ms20_fx_3]);
+~toscPadBind.(1, 5, 5, \ms20_fx_4,   \purple, \green, ~fxSendStop[\ms20_fx_4]);
 
-~toscPadBind.(3, 1, 2, \ntron_fx_1, \blue,   \green, ~fxSendStop[\ntron_fx_1]);
-~toscPadBind.(3, 2, 2, \ntron_fx_2, \cyan,   \green, ~fxSendStop[\ntron_fx_2]);
-~toscPadBind.(3, 3, 2, \ntron_fx_3, \pink,   \green, ~fxSendStop[\ntron_fx_3]);
-~toscPadBind.(3, 4, 2, \ntron_fx_4, \purple, \green, ~fxSendStop[\ntron_fx_4]);
-~toscPadBind.(3, 5, 2, \mD_fx_1,    \blue,   \green, ~fxSendStop[\mD_fx_1]);
-~toscPadBind.(3, 6, 2, \mD_fx_2,    \cyan,   \green, ~fxSendStop[\mD_fx_2]);
-~toscPadBind.(3, 7, 2, \mD_fx_3,    \pink,   \green, ~fxSendStop[\mD_fx_3]);
-~toscPadBind.(3, 8, 2, \mD_fx_4,    \purple, \green, ~fxSendStop[\mD_fx_4]);
+~toscPadBind.(1, 6, 2, \thingA_fx_1, \blue,   \green, ~fxSendStop[\thingA_fx_1]);
+~toscPadBind.(1, 6, 3, \thingA_fx_2, \cyan,   \green, ~fxSendStop[\thingA_fx_2]);
+~toscPadBind.(1, 6, 4, \thingA_fx_3, \pink,   \green, ~fxSendStop[\thingA_fx_3]);
+~toscPadBind.(1, 6, 5, \thingA_fx_4, \purple, \green, ~fxSendStop[\thingA_fx_4]);
+
+~toscPadBind.(1, 7, 2, \ntron_fx_1, \blue,   \green, ~fxSendStop[\ntron_fx_1]);
+~toscPadBind.(1, 7, 3, \ntron_fx_2, \cyan,   \green, ~fxSendStop[\ntron_fx_2]);
+~toscPadBind.(1, 7, 4, \ntron_fx_3, \pink,   \green, ~fxSendStop[\ntron_fx_3]);
+~toscPadBind.(1, 7, 5, \ntron_fx_4, \purple, \green, ~fxSendStop[\ntron_fx_4]);
+
+~toscPadBind.(1, 8, 2, \mD_fx_1,    \blue,   \green, ~fxSendStop[\mD_fx_1]);
+~toscPadBind.(1, 8, 3, \mD_fx_2,    \cyan,   \green, ~fxSendStop[\mD_fx_2]);
+~toscPadBind.(1, 8, 4, \mD_fx_3,    \pink,   \green, ~fxSendStop[\mD_fx_3]);
+~toscPadBind.(1, 8, 5, \mD_fx_4,    \purple, \green, ~fxSendStop[\mD_fx_4]);
 
 ~toscPadPaintAll.();
 

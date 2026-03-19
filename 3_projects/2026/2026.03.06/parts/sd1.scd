@@ -57,7 +57,7 @@ Pdefn(\sd1_degs_a, Pseq([Pn(Pdefn(\sd1_deg_0), 4)], 1));
 Pdefn(\sd1_degs_b, Pseq([Pn(Pdefn(\sd1_deg_1), 4)], 1));
 Pdefn(\sd1_degs_c, Pseq([Pn(Pdefn(\sd1_deg_2), 4)], 1));
 // story
-Pdefn(\sd1_degs, Pseq([Pn(Pdefn(\sd1_degs_a), 1)], 1));
+Pdefn(\sd1_degs, Pseq([Pn(Pdefn(\sd1_degs_c), 1)], 1));
 
 // DURS — words
 Pdefn(\sd1_dur_0, 2);

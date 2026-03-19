@@ -23,6 +23,29 @@
 
 (
 
+// Teardown: stop any running pads from previous instance
+if(~toscPads.notNil) {
+    ~toscPads.keysValuesDo { |addr, b|
+        var obj = ~toscPadGetObj !? { ~toscPadGetObj.(b[\key]) };
+        if(obj.notNil and: { ~toscPadIsRunning !? { ~toscPadIsRunning.(obj) } ?? { false } }) {
+            if(b[\onStop].notNil) { b[\onStop].value } { obj.tryPerform(\stop) };
+        };
+    };
+};
+// Always blank the full grid on load (covers recompile where globals are wiped)
+if(~toscAddr.notNil) {
+    #[1].do { |bank|
+        (1..11).do { |row|
+            (1..18).do { |col|
+                ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/state", 0.0);
+                ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/label", "");
+                ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/nums", "");
+            };
+        };
+    };
+    "TouchOSC pad router: grid blanked.".postln;
+};
+
 ~toscPads = IdentityDictionary.new;
 
 ~toscPadColors = (
@@ -63,15 +86,40 @@
     }
 };
 
+// ---- Color index table ----
+// Encodes named colors as float index: x = colorIndex * 0.05 (stopped), x = 1.0 (playing).
+// Decoded in TOSC Lua: x > 0.9 → playing (green), else floor(x*20+0.1) → color index.
+~toscColorIndex = (
+    amber:   0,  // default stopped
+    orange:  1,
+    yellow:  2,
+    cyan:    3,
+    blue:    4,
+    indigo:  5,
+    purple:  6,
+    pink:    7,
+    magenta: 8,
+    red:     9,
+    white:   10,
+    sky:     11,
+    green:   12,
+    off:     13
+);
+
 // ---- Send playing state to one pad ----
-// Sends 0.0 (stopped) or 1.0 (playing) to a hidden state fader in TOSC.
-// Stopped color is set in TOSC editor per pad; playing color (green) handled in TOSC Lua.
+// Encodes color as x value: 1.0 = playing, colorIndex*0.05 = stopped.
+// TOSC Lua decodes x to set BOX color.
 ~toscPadSendColor = { |addr, colorKey|
     var b = ~toscPads[addr];
     if(b.notNil) {
         var isPlaying = (colorKey == b[\playColor]);
-        ~toscAddr.sendMsg("/tosc/p" ++ b[\bank] ++ "/" ++ b[\row] ++ "/col" ++ b[\col] ++ "/state",
-            if(isPlaying) { 1.0 } { 0.0 });
+        var xVal = if(isPlaying) {
+            1.0
+        } {
+            var idx = ~toscColorIndex[colorKey] ?? { ~toscColorIndex[b[\color]] } ?? { 0 };
+            idx * 0.05
+        };
+        ~toscAddr.sendMsg("/tosc/p" ++ b[\bank] ++ "/" ++ b[\row] ++ "/col" ++ b[\col] ++ "/state", xVal);
     };
 };
 
@@ -95,7 +143,7 @@
     ~toscPads.keysValuesDo { |addr, b|
         ~toscPadPaint.(addr);
         ~toscAddr.sendMsg("/tosc/p" ++ b[\bank] ++ "/" ++ b[\row] ++ "/col" ++ b[\col] ++ "/label", b[\label]);
-        ~toscAddr.sendMsg("/tosc/p" ++ b[\bank] ++ "/" ++ b[\row] ++ "/col" ++ b[\col] ++ "/nums", b[\col].asString ++ "|" ++ b[\row].asString);
+        ~toscAddr.sendMsg("/tosc/p" ++ b[\bank] ++ "/" ++ b[\row] ++ "/col" ++ b[\col] ++ "/nums", b[\col].asString ++ "-" ++ b[\row].asString);
     };
     "TouchOSC pads: synced all.".postln;
 };
@@ -143,7 +191,7 @@
     ~oscParam[addr] = { |val| if(val > 0.5) { ~toscPadToggle.(addr) } };
 
     ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/label", lbl);
-    ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/nums", col.asString ++ "|" ++ row.asString);
+    ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/nums", col.asString ++ "-" ++ row.asString);
     ~toscPadPaint.(addr);
 };
 
@@ -208,9 +256,34 @@
 };
 ~oscParam['tosc/p/all'] = { |val| if(val > 0.5) { ~toscPadStopAll.() } };
 
-// ---- Pre-register launchers for full grid (3 banks, 18 cols, 11 rows) ----
+// ---- Clear all bindings and blank the full device grid ----
+// Stops running pads, removes ~oscParam callbacks, clears registry,
+// then blanks every pad on the device (bank 1: 11 rows × 18 cols).
+~toscPadClearAll = {
+    ~toscPads.keysValuesDo { |addr, b|
+        var obj = ~toscPadGetObj.(b[\key]);
+        if(~toscPadIsRunning.(obj)) {
+            if(b[\onStop].notNil) { b[\onStop].value } { obj.tryPerform(\stop) };
+        };
+        ~oscParam.removeAt(addr);
+    };
+    ~toscPads = IdentityDictionary.new;
+    // Blast full grid regardless of what was registered
+    #[1].do { |bank|
+        (1..11).do { |row|
+            (1..18).do { |col|
+                ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/state", 0.0);
+                ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/label", "");
+                ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/nums", "");
+            };
+        };
+    };
+    "TouchOSC pads: all bindings cleared and grid blanked.".postln;
+};
+
+// ---- Pre-register launchers for bank 1 (18 cols, 11 rows) ----
 // Launchers look up ~toscPads at trigger time so registration order doesn't matter.
-#[1, 2, 3].do { |bank|
+#[1].do { |bank|
     (1..18).do { |col| ~toscColBind.(bank, col) };
     (1..11).do { |row| ~toscRowBind.(bank, row) };
 };

@@ -27,7 +27,7 @@ Pdefn(\bd1_scale, Scale.minor);
 // BUFS — words
 ~sbd1 = ~sTree[\bass_drums].values;
 Pdefn(\bd1_buf_0, Pseq(~sbd1, 1));
-Pdefn(\bd1_buf_1, Pseq(~sbd1[[1, 3]], 1));
+Pdefn(\bd1_buf_1, Pseq(~sbd1[[0,  1]], 2));
 // sentences
 Pdefn(\bd1_bufs_a, Pseq([Pn(Pdefn(\bd1_buf_1), 4)], 1));      // single hit
 Pdefn(\bd1_bufs_b, Pseq([Pn(Pdefn(\bd1_buf_0), 4)], 1));      // all samples
@@ -49,9 +49,9 @@ Pdefn(\bd1_amp_2, Pseq([0.5!3, 0.8].flat, 1));
 Pdefn(\bd1_amps, Pseq([Pn(Pdefn(\bd1_amp_0), 4)], 1));
 
 // DEGS — words
-Pdefn(\bd1_deg_0, [0, 1]);
+Pdefn(\bd1_deg_0, Place([0, [2, 4]], 1));
 Pdefn(\bd1_deg_1, Pseq([0, 1, \, 3, \, 0], 1));
-Pdefn(\bd1_deg_2, Pseq([0, \, \, \, 14, \, 0, \, 0, \, \, 0, 14, \, \, \], 1));
+Pdefn(\bd1_deg_2, Pseq([0, \, \, \, 7,  \, 0, \, 0, \, \, 0, 1, \, \, \], 1));
 // sentences
 Pdefn(\bd1_degs_a, Pseq([Pn(Pdefn(\bd1_deg_0), 4)], 1));         // root only
 Pdefn(\bd1_degs_b, Pseq([Pn(Pdefn(\bd1_deg_1), 4)], 1));         // short walk
@@ -67,14 +67,17 @@ Pdefn(\bd1_dur_3, Pseq([1/4!2, Rest(1/4), 1/4].flat, 1));
 Pdefn(\bd1_dur_4, 1/2);
 // sentences
 Pdefn(\bd1_durs_a, Pseq([Pn(Pdefn(\bd1_dur_0), 4)], 1));         // straight
-Pdefn(\bd1_durs_b, Pseq([Pn(Pdefn(\bd1_dur_0), 2), Pn(Pdefn(\bd1_dur_3), 2)], 1));  // + rest
+Pdefn(\bd1_durs_b, Pseq([
+  Pn(Pdefn(\bd1_dur_0), 2), 
+  Pn(Pdefn(\bd1_dur_3), 2), 
+], 1));  // + rest
 Pdefn(\bd1_durs_c, Pseq([Pn(Pdefn(\bd1_dur_2), 4)], 1));         // euclidean
 // story
-Pdefn(\bd1_durs, Pseq([Pn(Pdefn(\bd1_durs_b), 1)], 1));
+Pdefn(\bd1_durs, Pseq([Pn(Pdefn(\bd1_durs_c), 1)], 1));
 
 // STRS — words
 Pdefn(\bd1_str_0, 1);
 Pdefn(\bd1_str_1, Pstep(Pseq([1!4, 2!2].flat, 1), 1));
 // story
-Pdefn(\bd1_strs, Pseq([Pn(Pdefn(\bd1_str_0), 4)], 1));
+Pdefn(\bd1_strs, Pseq([Pn(Pdefn(\bd1_str_1), 4)], 1));
 )

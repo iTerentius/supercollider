@@ -1,5 +1,6 @@
 // Score — evaluate to load project
 (
+"lib/samples.scd".loadRelative;
 "lib/config.scd".loadRelative;
 "lib/fx.scd".loadRelative;
 "parts/thingA.scd".loadRelative;
