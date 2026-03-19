@@ -22,22 +22,29 @@ import xml.etree.ElementTree as ET
 # ── Lua scripts ───────────────────────────────────────────────────────────────
 
 # BUTTON: uses key=="x" for both toggle trigger and color display.
-# x=1.0 (button press)  → send toggle OSC to SC (val > 0.5 triggers ~toscPadToggle)
-# x=0.95 (SC playing)   → green BOX (isPlaying = x > 0.9 and x < 0.99)
+# x=1.0 (button press)  → send toggle OSC to SC on FIRST event only (debounced by `triggered`)
+# x=0.0 (button release)→ reset triggered flag, no color update
+# x=0.95 (SC playing)   → green BOX
 # x=0.05–0.70 (SC stop) → stopped color BOX decoded as floor(x*20+0.1)-1
-# x=0.0 (button release)→ ignored (x < 0.01)
-# key=="touch" is NOT used — may not fire for all TOSC button types.
+# Multiple x=1.0 events per press are common in TOSC; triggered flag prevents double-toggle.
+# Module-level `local triggered` persists between calls as a per-control closure variable.
 # NOTE: contains { } (Lua tables) — must use xml_escape(), never f-string/format().
 BUTTON_LUA = (
+    "local triggered = false\n"
     "function onValueChanged(key)\n"
     "    if key == \"x\" then\n"
     "        local x = self.values.x\n"
     "        if x > 0.99 then\n"
-    "            local row  = self.parent.name\n"
-    "            local col  = string.match(self.parent.parent.name, \"%d+\")\n"
-    "            local bank = self.parent.parent.parent.name\n"
-    "            sendOSC(\"/tosc/p\" .. bank .. \"/\" .. row .. \"/\" .. col, 1.0)\n"
-    "        elseif x > 0.01 then\n"
+    "            if not triggered then\n"
+    "                triggered = true\n"
+    "                local row  = self.parent.name\n"
+    "                local col  = string.match(self.parent.parent.name, \"%d+\")\n"
+    "                local bank = self.parent.parent.parent.name\n"
+    "                sendOSC(\"/tosc/p\" .. bank .. \"/\" .. row .. \"/\" .. col, 1.0)\n"
+    "            end\n"
+    "        elseif x < 0.01 then\n"
+    "            triggered = false\n"
+    "        else\n"
     "            local bx = self.parent:findByName(\"color\")\n"
     "            if bx == nil then return end\n"
     "            local isPlaying = x > 0.9\n"
