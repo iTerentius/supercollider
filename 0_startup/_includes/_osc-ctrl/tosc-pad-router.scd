@@ -196,14 +196,7 @@ if(~toscAddr.notNil) {
         key: key, color: color, playColor: pc, onStop: onStop, label: lbl,
         bank: bank, row: row, col: col
     );
-    ~oscParam[addr] = { |val|
-        if(val > 0.5) {
-            ~toscPadToggle.(addr)
-        } {
-            // Button released — repaint after brief delay to override buttonType=2 x reset
-            AppClock.sched(0.02, { ~toscPadPaint.(addr); nil });
-        }
-    };
+    ~oscParam[addr] = { |val| if(val > 0.5) { ~toscPadToggle.(addr) } };
 
     ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/label", lbl);
     ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/nums", col.asString ++ "-" ++ row.asString);
