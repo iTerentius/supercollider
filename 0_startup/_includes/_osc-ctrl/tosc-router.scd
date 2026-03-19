@@ -40,6 +40,13 @@ if(~toscRecvFunc.notNil) {
 ~toscAddr = NetAddr("192.168.0.62", 9000);
 // ~toscAddr = NetAddr("127.0.0.1", 9000);
 
+// ---- Multi-tablet: fan sendMsg to multiple addresses ----
+// Replace ~toscAddr with an Event that dispatches to all addresses in ~toscAddrs.
+// Usage (e.g. mixer on tablet 1, pads on tablet 2):
+//   ~toscAddrs = [NetAddr("192.168.0.62", 9000), NetAddr("192.168.0.xx", 9000)];
+//   ~toscAddr  = (sendMsg: { |self, path ...args| ~toscAddrs.do { |a| a.sendMsg(path, *args) } });
+// Undo: ~toscAddr = NetAddr("192.168.0.62", 9000);
+
 // Send a value to TOSC, apply its callback, and store in ~oscState.
 // addr: Symbol (no leading slash). TOSC receives with leading slash prepended.
 ~toscSend = { |addr, val|

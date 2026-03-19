@@ -79,12 +79,25 @@
         ~toscFXLabel.(page, slot, "greyhole");
         ~toscFXBind.(page, slot, \r1, { |v| ~r1fx[\greyhole].set(\delayTime, v.linexp(0, 1, 0.1, 5.0)) },  "time");
         ~toscFXBind.(page, slot, \r2, { |v| ~r1fx[\greyhole].set(\feedback,  v.linlin(0, 1, 0.1, 0.95)) }, "fdbk");
+        ~toscFXBind.(page, slot, \r3, { |v| ~r1fx[\greyhole].set(\diff,  v.linlin(0, 1, 0.1, 0.99)) }, "diff");
         ~toscFXBindXY.(page, slot, 1,
             { |v| ~r1fx[\greyhole].set(\size, v.linlin(0, 1, 0.1, 5.0)) },
             { |v| ~r1fx[\greyhole].set(\damp, v.linlin(0, 1, 0.0, 1.0)) },
             "sz|dmp"
         );
-        ~toscFXBind.(page, slot, \f, { |v| ~r1fx[\greyhole].set(\modDepth, v.linlin(0, 1, 0.0, 1.0)) });
+        ~toscFXBindXY.(page, slot, 2,
+            { |v| ~r1fx[\greyhole].set(\modDepth, v.linlin(0, 1, 0.01, 1.0)) },
+            { |v| ~r1fx[\greyhole].set(\modFreq, v.linexp(0, 1, 0.5, 100.0)) },
+            "modDepth|modFreq"
+        );
+        ~toscFXBind.(page, slot, \f, { |v| ~r1.level_(v.linlin(0, 1, 0.0, 1.0)) });
+        // Sync defaults
+        ~toscFXSync.(page, slot, \r1, 2.0.explin(0.1, 5.0, 0, 1));
+        ~toscFXSync.(page, slot, \r2, 0.1.linlin(0.1, 0.95, 0, 1));
+        ~toscFXSync.(page, slot, \r3, 0.707.linlin(0.1, 0.99, 0, 1));
+        ~toscFXSyncXY.(page, slot, 1, 3.0.linlin(0.1, 5.0, 0, 1), 0.0);
+        ~toscFXSyncXY.(page, slot, 2, 0.1.linlin(0.01, 1.0, 0, 1), 2.0.explin(0.5, 100.0, 0, 1));
+        ~toscFXSync.(page, slot, \f, ~r1.level);
     };
 };
 
@@ -95,9 +108,11 @@
     [\b1_s1_r1, \b1_s2_r1, \b1_s3_r1, \b1_s4_r1, \b1_s5_r1, \b1_s1_r2].do { |k| ~lcn[k] = nil };
     if(page.notNil and: { slot.notNil }) {
         var base = "tosc/fx/" ++ page ++ "/fx" ++ slot;
-        [\r1, \r2, \f].do { |c| ~oscParam[(base ++ "/" ++ c).asSymbol] = nil };
+        [\r1, \r2, \r3, \f].do { |c| ~oscParam[(base ++ "/" ++ c).asSymbol] = nil };
         ~oscParam[(base ++ "/xy1/x").asSymbol] = nil;
         ~oscParam[(base ++ "/xy1/y").asSymbol] = nil;
+        ~oscParam[(base ++ "/xy2/x").asSymbol] = nil;
+        ~oscParam[(base ++ "/xy3/y").asSymbol] = nil;
     };
 };
 
@@ -122,7 +137,13 @@
         ~toscFXLabel.(page, slot, "freeVerb");
         ~toscFXBind.(page, slot, \r1, { |v| ~r1fx[\freeVerb].set(\mix,  v.linlin(0, 1, 0.0, 1.0)) }, "mix");
         ~toscFXBind.(page, slot, \r2, { |v| ~r1fx[\freeVerb].set(\room, v.linlin(0, 1, 0.0, 1.0)) }, "room");
-        ~toscFXBind.(page, slot, \f,  { |v| ~r1fx[\freeVerb].set(\damp, v.linlin(0, 1, 0.0, 1.0)) });
+        ~toscFXBind.(page, slot, \r3,  { |v| ~r1fx[\freeVerb].set(\damp, v.linlin(0, 1, 0.0, 1.0)) },  "damp");
+        ~toscFXBind.(page, slot, \f, { |v| ~r1.level_(v.linlin(0, 1, 0.0, 1.0)) });
+        // Sync defaults
+        ~toscFXSync.(page, slot, \r1, 0.33.linlin(0.0, 1.0, 0, 1));
+        ~toscFXSync.(page, slot, \r2, 0.5.linlin(0.0, 1.0, 0, 1));
+        ~toscFXSync.(page, slot, \r3, 0.5.linlin(0.0, 1.0, 0, 1));
+        ~toscFXSync.(page, slot, \f, ~r1.level);
     };
 };
 
@@ -133,7 +154,7 @@
     [\b1_s1_r1, \b1_s2_r1, \b1_s3_r1].do { |k| ~lcn[k] = nil };
     if(page.notNil and: { slot.notNil }) {
         var base = "tosc/fx/" ++ page ++ "/fx" ++ slot;
-        [\r1, \r2, \f].do { |c| ~oscParam[(base ++ "/" ++ c).asSymbol] = nil };
+        [\r1, \r2, \r3, \f].do { |c| ~oscParam[(base ++ "/" ++ c).asSymbol] = nil };
     };
 };
 
@@ -158,6 +179,11 @@
         ~toscFXLabel.(page, slot, "comb");
         ~toscFXBind.(page, slot, \r1, { |v| ~r2fx[\combDelay].set(\dt,  v.linlin(0, 1, 0.01, 0.4)) }, "time");
         ~toscFXBind.(page, slot, \r2, { |v| ~r2fx[\combDelay].set(\dec, v.linlin(0, 1, 0.1,  4.0)) }, "decay");
+        ~toscFXBind.(page, slot, \f, { |v| ~r2.level_(v.linlin(0, 1, 0.0, 1.0)) });
+        // Sync defaults
+        ~toscFXSync.(page, slot, \r1, 0.25.linlin(0.01, 0.4, 0, 1));
+        ~toscFXSync.(page, slot, \r2, 0.6.linlin(0.1, 4.0, 0, 1));
+        ~toscFXSync.(page, slot, \f, ~r2.level);
     };
 };
 
@@ -168,7 +194,7 @@
     [\b1_s1_r2, \b1_s2_r2, \b1_s3_r2].do { |k| ~lcn[k] = nil };
     if(page.notNil and: { slot.notNil }) {
         var base = "tosc/fx/" ++ page ++ "/fx" ++ slot;
-        [\r1, \r2].do { |c| ~oscParam[(base ++ "/" ++ c).asSymbol] = nil };
+        [\r1, \r2,  \f].do { |c| ~oscParam[(base ++ "/" ++ c).asSymbol] = nil };
     };
 };
 
@@ -191,6 +217,10 @@
         ~toscFXBind.(page, slot, \r1, { |v| ~r4fx[\chorus].set(\rate,  v.linlin(0, 1, 0.05, 5.0)) },   "rate");
         ~toscFXBind.(page, slot, \r2, { |v| ~r4fx[\chorus].set(\depth, v.linlin(0, 1, 0.0, 0.015)) },  "depth");
         ~toscFXBind.(page, slot, \f,  { |v| ~r4fx[\chorus].set(\mix,   v.linlin(0, 1, 0.0, 1.0)) });
+        // Sync defaults
+        ~toscFXSync.(page, slot, \r1, 0.4.linlin(0.05, 5.0, 0, 1));
+        ~toscFXSync.(page, slot, \r2, 0.004.linlin(0.0, 0.015, 0, 1));
+        ~toscFXSync.(page, slot, \f, ~r4.level);
     };
 };
 
@@ -232,13 +262,31 @@
         if(page.notNil and: { slot.notNil }) {
             ~toscFXLabel.(page, slot, "biscuit");
             ~toscFXBind.(page, slot, \r1, { |v| ~r3fx[\biscuit].set(\drive,   v.linlin(0, 1, 0.0,    1.0)) },    "drive");
-            ~toscFXBind.(page, slot, \r2, { |v| ~r3fx[\biscuit].set(\bits,    v.linlin(0, 1, 0.0,    1.0)) },    "bits");
+            ~toscFXBind.(page, slot, \r2, { |v| ~r3fx[\biscuit].set(\clock,   v.linlin(0, 1, 250,    30000)) },    "clock");
+            ~toscFXBind.(page, slot, \r3, { |v| ~r3fx[\biscuit].set(\bits,    v.linlin(0, 1, 0.0,    1.0)) },    "bits");
+            ~toscFXBind.(page, slot, \r4, { |v| ~r3fx[\biscuit].set(\shape,   v.linlin(0, 1, 0,    3)) },    "shape");
+            ~toscFXBind.(page, slot, \r5, { |v| ~r3fx[\biscuit].set(\fxMode,   v.linlin(0, 1, 0,    3)) },    "fxMode");
             ~toscFXBindXY.(page, slot, 1,
                 { |v| ~r3fx[\biscuit].set(\filterFreq, v.linexp(0.001, 1, 200, 20000)) },
                 { |v| ~r3fx[\biscuit].set(\filterQ,    v.linlin(0, 1, 0.1, 4.0)) },
                 "filter"
             );
-            ~toscFXBind.(page, slot, \f, { |v| ~r3fx[\biscuit].set(\dressed, v.linlin(0, 1, 0.0, 1.0)) });
+            ~toscFXBindXY.(page, slot, 2,
+                { |v| ~r3fx[\biscuit].set(\naked, v.linlin(0.001, 1, 0.0, 1.0)) },
+                { |v| ~r3fx[\biscuit].set(\dressed,    v.linlin(0, 1, 0.0, 1.0)) },
+                "naked|dressed"
+            );
+            // ~toscFXBind.(page, slot, \f, { |v| ~r3fx[\biscuit].set(\dressed, v.linlin(0, 1, 0.0, 1.0)) });
+            ~toscFXBind.(page, slot, \f, { |v| ~r3.level_(v.linlin(0, 1, 0.0, 1.0)) });
+            // Sync defaults
+            ~toscFXSync.(page, slot, \r1, 0.0);
+            ~toscFXSync.(page, slot, \r2, 250.0.linlin(250, 30000, 0, 1));
+            ~toscFXSync.(page, slot, \r3, 0.0);
+            ~toscFXSync.(page, slot, \r4, 0.0);
+            ~toscFXSync.(page, slot, \r5, 0.0);
+            ~toscFXSyncXY.(page, slot, 1, 0.5, 0.5);
+            ~toscFXSyncXY.(page, slot, 2, 0.0, 1.0);
+            ~toscFXSync.(page, slot, \f, ~r3.level);
         };
     }.fork;
 };
@@ -249,9 +297,11 @@
     ~r3fx[\setBiscuit] = nil;
     if(page.notNil and: { slot.notNil }) {
         var base = "tosc/fx/" ++ page ++ "/fx" ++ slot;
-        [\r1, \r2, \f].do { |c| ~oscParam[(base ++ "/" ++ c).asSymbol] = nil };
+        [\r1, \r2, \r3, \r4,  \r5,  \f].do { |c| ~oscParam[(base ++ "/" ++ c).asSymbol] = nil };
         ~oscParam[(base ++ "/xy1/x").asSymbol] = nil;
         ~oscParam[(base ++ "/xy1/y").asSymbol] = nil;
+        ~oscParam[(base ++ "/xy2/x").asSymbol] = nil;
+        ~oscParam[(base ++ "/xy2/y").asSymbol] = nil;
     };
 };
 
