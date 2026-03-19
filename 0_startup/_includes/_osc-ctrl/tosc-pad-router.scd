@@ -172,11 +172,15 @@ if(~toscAddr.notNil) {
         }
         { running } {
             if(b[\onStop].notNil) { b[\onStop].value } { obj.tryPerform(\stop) };
-            AppClock.sched(0.05, { ~toscPadPaint.(addr); nil });
+            ~toscPadSendColor.(addr, b[\color]);                      // immediate stopped color
+            AppClock.sched(0.5, { ~toscPadPaint.(addr); nil });       // deferred confirm
         }
         { true } {
             obj.tryPerform(\play, clock);
-            AppClock.sched(0.05, { ~toscPadPaint.(addr); nil });
+            ~toscPadSendColor.(addr, b[\playColor]);                  // immediate playing color
+            // repaint at 0.5s and 2.0s to catch quant-delayed Pdef starts
+            AppClock.sched(0.5, { ~toscPadPaint.(addr); nil });
+            AppClock.sched(2.0, { ~toscPadPaint.(addr); nil });
         };
     }
 };
