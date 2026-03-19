@@ -3,10 +3,10 @@
 Patch pad page in a .tosc XML file:
   1. Remove banks 2 and 3 from pad PAGER 'p' (keep only bank 1)
   2. Each pad row GROUP gets a BOX 'color' node (idempotent — updates existing if present):
-       - Gets own OSC receive on /tosc/p{bank}/{row}/{colGroup}/state → x (noDuplicates=0)
-       - Lua sets self.color and sibling label textColors based on x value
-       - Non-interactive (touch passes through to BUTTON behind it)
-  3. BUTTON 'pad': background=0, outline=0; touch-only Lua (sends press/release, no color logic)
+       - Passive display only (interactive=0); BUTTON Lua drives color via findByName("color")
+  3. BUTTON 'pad': background=0, outline=0; Lua handles touch (OSC to SC) + x (color via BOX)
+       - x encoding: SC sends 0.95=playing, (colorIndex+1)*0.05=stopped (range 0.05–0.70)
+       - Lua filters x<0.01 and x>0.98 (button press/release artifacts at 1.0 and 0.0)
   4. LABEL 'label': textColor=white, textSize=14, default text cleared
   5. LABEL 'nums':  textColor=white, textSize=20, h=18, default text cleared, divider '-'
 
@@ -21,8 +21,10 @@ import xml.etree.ElementTree as ET
 
 # ── Lua scripts ───────────────────────────────────────────────────────────────
 
-# BUTTON: touch-only. Sends press (1) and release (0) to SC; SC ignores release.
-# No color logic here — BOX_LUA handles all display.
+# BUTTON: sends touch to SC (toggle trigger) + drives BOX color via x value from SC state.
+# SC sends x=0.95 for playing and x=(colorIndex+1)*0.05 for stopped (range 0.05–0.70).
+# x=0.0 (button release) and x=1.0 (button press) are filtered — never treated as SC state.
+# NOTE: contains { } (Lua tables) — must use string concat, never f-string/format().
 BUTTON_LUA = (
     "function onValueChanged(key)\n"
     "    if key == \"touch\" then\n"
@@ -31,22 +33,16 @@ BUTTON_LUA = (
     "        local bank = self.parent.parent.parent.name\n"
     "        sendOSC(\"/tosc/p\" .. bank .. \"/\" .. row .. \"/\" .. col, self.values.touch)\n"
     "    end\n"
-    "end"
-)
-
-# BOX: receives /tosc/p{bank}/{row}/{colGroup}/state → x from SC.
-# x > 0.9 = playing (green); else colorIndex * 0.05 = stopped color.
-# Also updates sibling label/nums textColor (black when playing, white when stopped).
-# NOTE: contains { } (Lua tables) — must use string concat, never f-string/format().
-BOX_LUA = (
-    "function onValueChanged(key)\n"
     "    if key == \"x\" then\n"
     "        local x = self.values.x\n"
+    "        if x < 0.01 or x > 0.98 then return end\n"
+    "        local bx = self.parent:findByName(\"color\")\n"
+    "        if bx == nil then return end\n"
     "        local isPlaying = x > 0.9\n"
     "        if isPlaying then\n"
-    "            self.color = Color(0.2, 1.0, 0.3, 1.0)\n"
+    "            bx.color = Color(0.2, 1.0, 0.3, 1.0)\n"
     "        else\n"
-    "            local idx = math.floor(x * 20 + 0.1)\n"
+    "            local idx = math.floor(x * 20 + 0.1) - 1\n"
     "            local cols = {\n"
     "                [0]  = Color(1.0, 0.6, 0.0, 1.0),\n"
     "                [1]  = Color(1.0, 0.5, 0.1, 1.0),\n"
@@ -63,7 +59,7 @@ BOX_LUA = (
     "                [12] = Color(0.2, 1.0, 0.3, 1.0),\n"
     "                [13] = Color(0.15, 0.15, 0.15, 1.0)\n"
     "            }\n"
-    "            self.color = cols[idx] or Color(1.0, 0.6, 0.0, 1.0)\n"
+    "            bx.color = cols[idx] or Color(1.0, 0.6, 0.0, 1.0)\n"
     "        end\n"
     "        local tc = isPlaying and Color(0, 0, 0, 1) or Color(1, 1, 1, 1)\n"
     "        local lbl = self.parent:findByName(\"label\")\n"
@@ -83,7 +79,7 @@ BOX_NODE_XML = """\
     <property type="f"><key>cornerRadius</key><value>10</value></property>
     <property type="r"><key>frame</key><value><x>0</x><y>0</y><w>100</w><h>100</h></value></property>
     <property type="b"><key>grabFocus</key><value>0</value></property>
-    <property type="b"><key>interactive</key><value>1</value></property>
+    <property type="b"><key>interactive</key><value>0</value></property>
     <property type="b"><key>locked</key><value>0</value></property>
     <property type="s"><key>name</key><value>color</value></property>
     <property type="i"><key>orientation</key><value>0</value></property>
@@ -133,6 +129,11 @@ def clear_value_default(node, key):
                 d = v.find('default')
                 if d is not None:
                     d.text = ''
+
+
+def xml_escape(s):
+    """Escape characters that are invalid in XML text content."""
+    return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
 def find_pager_p(root):
@@ -276,29 +277,26 @@ def patch(input_path, output_path):
         pad_index = list(row_children).index(pad)
 
         if box_node is None:
-            # Insert BOX BEFORE BUTTON so BUTTON (transparent, on top) gets touch;
-            # BOX (interactive=1, below) receives OSC state and drives color.
+            # Insert BOX AFTER BUTTON so it renders on top (visible through transparent BUTTON).
+            # BOX is interactive=0 so touch falls through to BUTTON.
             box_node = ET.fromstring(BOX_NODE_XML.format(node_id=str(uuid.uuid4())))
-            row_children.insert(pad_index, box_node)
+            row_children.insert(pad_index + 1, box_node)
             boxes_added += 1
         else:
-            # Ensure existing BOX is before BUTTON (idempotent reposition)
+            # Ensure existing BOX is after BUTTON (idempotent reposition)
             box_index = list(row_children).index(box_node)
-            if box_index > pad_index:
+            if box_index < pad_index:
                 row_children.remove(box_node)
-                row_children.insert(pad_index, box_node)
+                row_children.insert(pad_index + 1, box_node)
             boxes_updated += 1
 
-        # Apply BOX: interactive=1 (required for OSC receive), Lua, x value, receive
-        set_prop_value(box_node, 'interactive', '<value>1</value>')
-        set_prop_value(box_node, 'script', '<value>' + BOX_LUA + '</value>')
-        _ensure_box_x_value(box_node)
-        _add_box_receive(box_node)
+        # BOX: passive display only (interactive=0, no Lua, no receive)
+        set_prop_value(box_node, 'interactive', '<value>0</value>')
 
-        # Update BUTTON: transparent bg/outline, touch-only Lua (no x color logic)
+        # Update BUTTON: transparent bg/outline, touch+x Lua (touch=OSC to SC, x=BOX color)
         set_prop_value(pad, 'background', '<value>0</value>')
         set_prop_value(pad, 'outline',    '<value>0</value>')
-        set_prop_value(pad, 'script',     '<value>' + BUTTON_LUA + '</value>')
+        set_prop_value(pad, 'script',     '<value>' + xml_escape(BUTTON_LUA) + '</value>')
         buttons_patched += 1
 
     print(f'BOX color nodes: {boxes_added} inserted, {boxes_updated} updated')

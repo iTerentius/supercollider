@@ -107,17 +107,18 @@ if(~toscAddr.notNil) {
 );
 
 // ---- Send playing state to one pad ----
-// Encodes color as x value: 1.0 = playing, colorIndex*0.05 = stopped.
-// TOSC Lua decodes x to set BOX color.
+// Encodes color as x value: 0.95 = playing, (colorIndex+1)*0.05 = stopped (range 0.05–0.70).
+// Range avoids 0.0 (BUTTON release artifact) and 1.0 (BUTTON press artifact).
+// TOSC Lua filters x < 0.01 and x > 0.98, decodes stopped as floor(x*20+0.1)-1.
 ~toscPadSendColor = { |addr, colorKey|
     var b = ~toscPads[addr];
     if(b.notNil) {
         var isPlaying = (colorKey == b[\playColor]);
         var xVal = if(isPlaying) {
-            1.0
+            0.95
         } {
             var idx = ~toscColorIndex[colorKey] ?? { ~toscColorIndex[b[\color]] } ?? { 0 };
-            idx * 0.05
+            (idx + 1) * 0.05
         };
         ~toscAddr.sendMsg("/tosc/p" ++ b[\bank] ++ "/" ++ b[\row] ++ "/col" ++ b[\col] ++ "/state", xVal);
     };
