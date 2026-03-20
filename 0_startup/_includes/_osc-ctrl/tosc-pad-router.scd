@@ -5,6 +5,8 @@
 //   ~toscPads          — registry: Symbol(addr) → binding dict
 //   ~toscPadColors     — named RGBA color dict
 //   ~toscPadBind.(bank, row, col, key, color, playColor, onStop, label)
+//   ~toscPadBindToggleFn.(bank, row, col, fnA, fnB, colorA, colorB, labelA, labelB)
+//                          — two-state function toggle: press→fnA (colorA), press again→fnB (colorB)
 //   ~toscRowBind.(bank, row)   — group toggle: all pads in that row
 //   ~toscColBind.(bank, col)   — group toggle: all pads in that col
 //   ~toscPadPaint.(addr)       — repaint one pad from current play state
@@ -32,19 +34,28 @@ if(~toscPads.notNil) {
         };
     };
 };
-// Always blank the full grid on load (covers recompile where globals are wiped)
-if(~toscAddr.notNil) {
-    #[1].do { |bank|
-        (1..11).do { |row|
-            (1..18).do { |col|
-                ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/state", 0.0);
-                ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/label", "");
-                ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/nums", "");
+// ---- Blank the full grid (paced to avoid UDP flood dropping packets) ----
+// Sends one row per tick (~15ms apart); 11 rows ≈ 165ms total.
+~toscPadBlankGrid = {
+    if(~toscAddr.notNil) {
+        Task({
+            #[1].do { |bank|
+                (1..11).do { |row|
+                    (1..18).do { |col|
+                        ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/state", 0.70);
+                        ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/label", "");
+                        ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/nums", "");
+                    };
+                    0.015.wait;
+                };
             };
-        };
+            "TouchOSC pad router: grid blanked.".postln;
+        }).play(AppClock);
     };
-    "TouchOSC pad router: grid blanked.".postln;
 };
+
+// Always blank the full grid on load (covers recompile where globals are wiped)
+~toscPadBlankGrid.();
 
 ~toscPads = IdentityDictionary.new;
 
@@ -125,10 +136,16 @@ if(~toscAddr.notNil) {
 };
 
 // ---- Repaint one pad from current play state ----
+// If the binding has an \isRunning function (e.g. from ~toscPadBindToggleFn), use it;
+// otherwise fall back to ~toscPadIsRunning on the resolved object.
 ~toscPadPaint = { |addr|
     var b = ~toscPads[addr];
     if(b.notNil) {
-        var running = ~toscPadIsRunning.(~toscPadGetObj.(b[\key]));
+        var running = if(b[\isRunning].notNil) {
+            b[\isRunning].value
+        } {
+            ~toscPadIsRunning.(~toscPadGetObj.(b[\key]))
+        };
         ~toscPadSendColor.(addr, if(running) { b[\playColor] } { b[\color] });
     }
 };
@@ -173,14 +190,14 @@ if(~toscAddr.notNil) {
         { running } {
             if(b[\onStop].notNil) { b[\onStop].value } { obj.tryPerform(\stop) };
             AppClock.sched(0,   { ~toscPadSendColor.(addr, b[\color]); nil });  // immediate stopped color
-            AppClock.sched(0.5, { ~toscPadPaint.(addr); nil });                 // deferred confirm
+            AppClock.sched(0.1, { ~toscPadPaint.(addr); nil });                 // deferred confirm
         }
         { true } {
             obj.tryPerform(\play, clock);
             AppClock.sched(0,   { ~toscPadSendColor.(addr, b[\playColor]); nil }); // immediate playing color
             // repaint at 1.0s and 2.5s to catch quant-delayed Pdef starts (avoids premature revert)
-            AppClock.sched(1.0, { ~toscPadPaint.(addr); nil });
-            AppClock.sched(2.5, { ~toscPadPaint.(addr); nil });
+            AppClock.sched(0.1, { ~toscPadPaint.(addr); nil });
+            AppClock.sched(0.2, { ~toscPadPaint.(addr); nil });
         };
     }
 };
@@ -206,6 +223,48 @@ if(~toscAddr.notNil) {
     ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/label", lbl);
     ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/nums", col.asString ++ "-" ++ row.asString);
     ~toscPadPaint.(addr);
+};
+
+// ---- Two-state function toggle pad ----
+// Press once:  call fnA (e.g. activate alt phrase), pad shows colorA (default \green).
+// Press again: call fnB (e.g. restore default phrase), pad shows colorB.
+// colorA/colorB : Symbols from ~toscPadColors.
+// labelA/labelB : Strings shown on pad (defaults: "A" / "B").
+// ~toscPadSyncAll correctly reflects active state via the stored \isRunning closure.
+~toscPadBindToggleFn = { |bank, row, col, fnA, fnB, colorA = \green, colorB = \blue, labelA, labelB|
+    var addr  = ("tosc/p" ++ bank ++ "/" ++ row ++ "/" ++ col).asSymbol;
+    var active = false;
+    var lblA  = labelA ?? { "A" };
+    var lblB  = labelB ?? { "B" };
+
+    ~toscPads[addr] = (
+        key: {}, color: colorB, playColor: colorA, onStop: nil, label: lblB,
+        bank: bank, row: row, col: col,
+        isRunning: { active }
+    );
+
+    ~oscParam[addr] = { |val|
+        if(val > 0.5) {
+            active = active.not;
+            if(active) {
+                fnA.value;
+                AppClock.sched(0,   { ~toscPadSendColor.(addr, colorA); nil });
+                AppClock.sched(0.1, { ~toscPadPaint.(addr); nil });
+                AppClock.sched(0.2, { ~toscPadPaint.(addr); nil });
+            } {
+                fnB.value;
+                AppClock.sched(0,   { ~toscPadSendColor.(addr, colorB); nil });
+                AppClock.sched(0.1, { ~toscPadPaint.(addr); nil });
+                AppClock.sched(0.2, { ~toscPadPaint.(addr); nil });
+            };
+            ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/label",
+                if(active) { lblA } { lblB });
+        }
+    };
+
+    ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/label", lblB);
+    ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/nums", col.asString ++ "-" ++ row.asString);
+    ~toscPadSendColor.(addr, colorB);
 };
 
 // ---- Row launcher: any playing → stop all; none playing → start all ----
@@ -284,16 +343,7 @@ if(~toscAddr.notNil) {
         ~oscParam.removeAt(addr);
     };
     ~toscPads = IdentityDictionary.new;
-    // Blast full grid regardless of what was registered
-    #[1].do { |bank|
-        (1..11).do { |row|
-            (1..18).do { |col|
-                ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/state", 0.0);
-                ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/label", "");
-                ~toscAddr.sendMsg("/tosc/p" ++ bank ++ "/" ++ row ++ "/col" ++ col ++ "/nums", "");
-            };
-        };
-    };
+    ~toscPadBlankGrid.();
     "TouchOSC pads: all bindings cleared and grid blanked.".postln;
 };
 

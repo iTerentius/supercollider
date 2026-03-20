@@ -159,6 +159,9 @@ if(~fbufs.isNil) { ~fbufs = IdentityDictionary.new };
             ~sTree[folderSym] = IdentityDictionary.new;
         };
 
+        // Skip if already loaded — prevents duplicate buffers on re-eval
+        if(~sTree[folderSym][fileSym].notNil) { ^nil };
+
         Buffer.read(s, fpath, action: { |b|
             var sub, ch;
             sub = ~sTree[folderSym];
