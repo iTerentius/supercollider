@@ -124,3 +124,21 @@ OSCFunc.trace(false)
   ~toscFXBind.(1, 1, \t1, { |v| "t1: %".format(v).postln }, "t1");                            
   ~toscFXBind.(1, 1, \f,  { |v| "f: %".format(v).postln },  "f");
   )                                                                                           
+  OSCFunc({ |msg| ("key=x val=" ++ msg[1]).postln }, '/test');  
+  thisProcess.addOSCRecvFunc({ |msg, time, addr| [msg, addr].postln });    
+  // === DIAGNOSTIC ===
+  (
+  "--- LP Mini ---".postln;
+  ("~lpMini notNil: " ++ ~lpMini.notNil).postln;
+  ("~lpMini[\\uid]: " ++ ~lpMini[\uid]).postln;
+  ("lpMini_note MIDIdef: " ++ MIDIdef.all[\lpMini_note]).postln;
+  ("bindings size: " ++ ~lpMini[\bindings].size).postln;
+  ("bank 1 bindings: " ++ ~lpMini[\banks][0].keys).postln;
+
+  "--- TOSC ---".postln;
+  ("~toscPads size: " ++ ~toscPads.size).postln;
+  ("~oscParam size: " ++ ~oscParam.size).postln;
+  ("~toscAddr: " ++ ~toscAddr).postln;
+  ("'tosc/p1/1/1' in oscParam: " ++
+  ~oscParam['tosc/p1/1/1'].notNil).postln;
+  )

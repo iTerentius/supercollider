@@ -8,12 +8,12 @@
 Pdef(\modelD,
     // Pbindef(\pbd_mD,  
     Pbind(
-        \instrument,   \modelD,
+        \instrument,   \bass8,
         \out,          Pn(Pdefn(\mD_out),  inf),
 
         // --- pitch / gate ---
         \scale,        Pn(Pdefn(\mD_scale),  inf),
-        \root,        1,  
+        \root,        0,  
         \degree,       Pn(Pdefn(\mD_degs),   inf),
         \octave,       Pn(Pdefn(\mD_octs),   inf),
         \dur,          Pn(Pdefn(\mD_durs),   inf),
@@ -23,56 +23,6 @@ Pdef(\modelD,
         \timeOffset,  1/4,  
 
         // --- glide ---
-        \glide,        Pn(Pdefn(\mD_glides),  inf),
-
-        // --- osc 1 ---
-        \osc1Wave,     Pn(Pdefn(\mD_osc1Wave), inf),
-        \osc1Oct,      Pn(Pdefn(\mD_osc1Oct),  inf),
-
-        // --- osc 2 ---
-        \osc2Wave,     Pn(Pdefn(\mD_osc2Wave), inf),
-        \osc2Oct,      Pn(Pdefn(\mD_osc2Oct),  inf),
-        \osc2Fine,     Pn(Pdefn(\mD_osc2Fine), inf),
-
-        // --- osc 3 ---
-        \osc3Wave,     Pn(Pdefn(\mD_osc3Wave),     inf),
-        \osc3Oct,      Pn(Pdefn(\mD_osc3Oct),      inf),
-        \osc3Fine,     Pn(Pdefn(\mD_osc3Fine),     inf),
-        \osc3KbdTrack, Pn(Pdefn(\mD_osc3KbdTrack), inf),
-        \osc3Freq,     Pn(Pdefn(\mD_osc3Freq),     inf),
-
-        // --- oscillator mixer ---
-        \osc1Lvl,      Pn(Pdefn(\mD_osc1Lvl),  inf),
-        \osc2Lvl,      Pn(Pdefn(\mD_osc2Lvl),  inf),
-        \osc3Lvl,      Pn(Pdefn(\mD_osc3Lvl),  inf),
-        \noiseLvl,     Pn(Pdefn(\mD_noiseLvl), inf),
-        \noiseType,    Pn(Pdefn(\mD_noiseType), inf),
-
-        // --- filter ---
-        \cutoff,       Pn(Pdefn(\mD_cutoff),      inf),
-        \emphasis,     Pn(Pdefn(\mD_emphasis),     inf),
-        \kbdAmt,       Pn(Pdefn(\mD_kbdAmt),      inf),
-        \contourAmt,   Pn(Pdefn(\mD_contourAmt),   inf),
-        \drive,        Pn(Pdefn(\mD_drive),        inf),
-
-        // --- filter contour ---
-        \fAtk,         Pn(Pdefn(\mD_fAtk), inf),
-        \fDcy,         Pn(Pdefn(\mD_fDcy), inf),
-        \fSus,         Pn(Pdefn(\mD_fSus), inf),
-
-        // --- amp contour ---
-        \aAtk,         Pn(Pdefn(\mD_aAtk), inf),
-        \aDcy,         Pn(Pdefn(\mD_aDcy), inf),
-        \aSus,         Pn(Pdefn(\mD_aSus), inf),
-
-        // --- decay switch ---
-        \decayOn,      Pn(Pdefn(\mD_decayOn), inf),
-
-        // --- mod wheel ---
-        \modWheel,     Pn(Pdefn(\mD_modWheel),    inf),
-        \modToOsc,     Pn(Pdefn(\mD_modToOsc),    inf),
-        \modToFilter,  Pn(Pdefn(\mD_modToFilter),  inf),
-        \modSource,    Pn(Pdefn(\mD_modSource),   inf),
     )
 );
 
@@ -83,11 +33,11 @@ Pdefn(\mD_out,   ~t8.inbus.index);
 Pdefn(\mD_scale, Scale.minor);
 
 // OCTAVE
-Pdefn(\mD_oct_0, 2);              // 0..8
-Pdefn(\mD_oct_1, Pseq([3, 4], 1));
+Pdefn(\mD_oct_0, 4);              // 0..8
+Pdefn(\mD_oct_1, Pseq([5, 4], 1));
 Pdefn(\mD_octs, Pseq([
-    Pn(Pdefn(\mD_oct_0), 4),
-    // Pn(Pdefn(\mD_oct_1), 4),
+    // Pn(Pdefn(\mD_oct_0), 4),
+    Pn(Pdefn(\mD_oct_1), 4),
 ], 1));
 
 // DEGREE — words
@@ -100,7 +50,7 @@ Pdefn(\mD_degs_a, Pseq([Pn(Pdefn(\mD_deg_0), 4)], 1));          // root pedal
 Pdefn(\mD_degs_b, Pseq([Pn(Pdefn(\mD_deg_1), 1)], 1));          // slide phrase
 Pdefn(\mD_degs_c, Pseq([Pn(Pdefn(\mD_deg_2), 2), Pn(Pdefn(\mD_deg_3), 2)], 1));
 // story
-Pdefn(\mD_degs, Pseq([Pn(Pdefn(\mD_degs_a), 1)], 1));
+Pdefn(\mD_degs, Pseq([Pn(Pdefn(\mD_degs_c), 1)], 1));
 
 // DUR — words
 Pdefn(\mD_dur_0, 1/4);
@@ -130,7 +80,7 @@ Pdefn(\mD_amp_0, 0.6);            // 0..1
 Pdefn(\mD_amp_1, 0.8);
 Pdefn(\mD_amps, Pseq([
     // Pn(Pdefn(\mD_amp_0), 4),
-    Pn(Pdefn(\mD_amp_0), 4),
+    Pn(Pdefn(\mD_amp_1), 4),
 ], 1));
 
 // GLIDE

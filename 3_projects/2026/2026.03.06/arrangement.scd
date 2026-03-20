@@ -11,7 +11,7 @@
 
 // BD1
 (
-"bd1.scd".loadRelative;
+"parts/bd1.scd".loadRelative;
 Pdefn(\bd1_durs, Pseq([
     Pn(Pdefn(\bd1_durs_a), 4),
     Pn(Pdefn(\bd1_durs_b), 2),
@@ -23,10 +23,46 @@ Pdefn(\bd1_degs, Pseq([
     Pn(Pdefn(\bd1_degs_b), 2),
 ], 1));
 )
+(
+  ~toscPadBindToggleFn.(1, 1, 7,
+    {
+      Pbindef(\pbd_bd1,
+          \dur, Pseq([
+            Pn(Pdefn(\bd1_durs_b), 2),
+            Pn(Pdefn(\bd1_durs_c), 2),
+            Pn(Pdefn(\bd1_durs_a), 4)], inf),
+          \degree, Pseq([
+            Pn(Pdefn(\bd1_degs_a), 4),
+            Pn(Pdefn(\bd1_degs_b), 2)], inf)
+      )
+    },
+    {
+      Pbindef(\pbd_bd1,
+          \dur,    Pseq([Pn(Pdefn(\bd1_durs_a), 4)], inf),
+          \degree, Pseq([Pn(Pdefn(\bd1_degs_a), 4)], inf)
+      )
+    },
+    \green, \blue, "phrA", "phr0"
+  );
+  ~toscPadBindToggleFn.(1, 1, 8,
+    {
+      Pbindef(\pbd_bd1,
+          \dur, Pn(Pseg([2, 1/2, 1/4], [4, 8], \lin, inf))
+      )
+    },
+    // fnB — restore default
+    {
+      Pbindef(\pbd_bd1,
+          \dur, Pseq([Pn(Pdefn(\bd1_durs_a), 4)], inf)
+      )
+    },
+    \green, \blue, "phrB", "phr0"
+  );
+)
 
 // SD1
 (
-"sd1.scd".loadRelative;
+"parts/sd1.scd".loadRelative;
 Pdefn(\sd1_durs, Pseq([
     Pn(Pdefn(\sd1_durs_a), 4),
     Pn(Pdefn(\sd1_durs_b), 1),
@@ -40,7 +76,7 @@ Pdefn(\sd1_degs, Pseq([
 
 // HH1
 (
-"hh1.scd".loadRelative;
+"parts/hh1.scd".loadRelative;
 Pdefn(\hh1_durs, Pseq([
     Pn(Pdefn(\hh1_durs_a), 4),
     Pn(Pdefn(\hh1_durs_b), 4),

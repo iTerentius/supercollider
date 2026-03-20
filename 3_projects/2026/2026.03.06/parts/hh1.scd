@@ -6,7 +6,8 @@
 ///////////////////////////////////////////////////////////////
 Pdef(\hh1,
     ~pBuf.(
-        Pbindef(\pbd_hh1, 
+        // Pbindef(\pbd_hh1, 
+        Pbind(
             \buf,     Pn(Pdefn(\hh1_bufs), inf),
             \bufnum,  Pkey(\buf),
             \octave,  Pn(Pdefn(\hh1_octs), inf),

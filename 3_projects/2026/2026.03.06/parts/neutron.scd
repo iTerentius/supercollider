@@ -6,7 +6,8 @@
 // PDEF
 ///////////////////////////////////////////////////////////////
 Pdef(\neutron,
-    Pbindef(\pbd_ntron, 
+    // Pbindef(\pbd_ntron, 
+    Pbind(
         \instrument, \neutron,
         \out,        Pn(Pdefn(\ntron_out),   inf),
 

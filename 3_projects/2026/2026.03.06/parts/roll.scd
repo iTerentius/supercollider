@@ -5,7 +5,8 @@
 // PDEFS
 ///////////////////////////////////////////////////////////////
 Pdef(\roll,
-    Pbindef(\pbd_roll,  
+    // Pbindef(\pbd_roll,  
+    Pbind(
         \instrument,  Pn(Pdefn(\roll_ins),        inf), 
         \buf,         Pn(Pdefn(\roll_bufs),       inf),
         \bufnum,      Pkey(\buf),
@@ -45,15 +46,20 @@ Pdefn(\roll_ins,  \slice_m);
 
 // BUFS — words
 ~sRoll = ~sTree[\jttcot].values[0..6];
+// ~sRoll = ~sTree[\hoarder_mono].values[0..6];
+// ~sRoll = ~sTree[\casio_mt_100].values;
+// ~sRoll = ~sTree[\bass_drops].values;
+// ~sRoll = ~sTree[\mm].values;
 // ~sRoll = ~sTree[\neutron_12].values;
 // ~sRoll = ~sTree[\drumloops].values;
 // ~sRoll = ~sTree[\_mono].values;
 Pdefn(\roll_buf_0, Pseq(~sRoll, 1));
+Pdefn(\roll_buf_1, Pseq(~sRoll[[3,  4,  5]], 1));
 // sentences
 Pdefn(\roll_bufs_a, Pseq([Pn(Pdefn(\roll_buf_0), 4)], 1));      // all samples
-Pdefn(\roll_bufs_b, Pseq([Pn(Pdefn(\roll_buf_0), 8)], 1));      // longer cycle
+Pdefn(\roll_bufs_b, Pseq([Pn(Pdefn(\roll_buf_1), 8)], 1));      // longer cycle
 // story
-Pdefn(\roll_bufs, Pseq([Pn(Pdefn(\roll_bufs_a), 1)], 1));
+Pdefn(\roll_bufs, Pseq([Pn(Pdefn(\roll_bufs_b), 1)], 1));
 
 // OCTS — words
 Pdefn(\roll_oct_0, 1);
