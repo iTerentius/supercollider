@@ -1,25 +1,59 @@
 // Scratch
 (
-~bd1_ilfx_1.free;
-~bd1_ilfx_1 = ~pbd1.playfx({|in|
-  var sig = In.ar(~pbd1.inbus,  2);
-  var hpfreq = \hpfreq.kr(400);
-  var hprq = \hprq.kr(1.0);
-  var lpfreq = \lpfreq.kr(800);
-  var lprq = \lprq.kr(1.0);
-  var lpsig = LPF.ar(sig, lpfreq, lprq);
-  var hpsig = HPF.ar(sig, hpfreq, hprq); 
-  var wet = lpsig + hpsig; 
-  wet; 
+~m1_ilfx_1.free;
+~m1_ilfx_1 = ~m1.playfx({|in|
+    var sig = In.ar(~m1.inbus, 2);
+    var mod = \mod.kr(1);
+    var mix = \mix.kr(0);      // 0 = dry, 1 = wet
+    var amp = \amp.kr(1);
+    var gate = K2A.ar(LFPulse.kr(mod).lag(0.005));
+    var wet = gate * sig;
+    XFade2.ar(sig, wet, mix.linlin(0, 1, -1, 1)) * amp;
 });
 )
+~m1_ilfx_1.set(\level,  0);
+(
+Pdef(\modCtl, Pbind(
+  \type,   \set,  
+  \id,   ~m1_ilfx_1.nodeID,  
+  \args,  #[\mod, \width, \mix, \amp],  
+  \mod, Pser((10..30), inf),
+  \width,  Pseg([0.1, 1.0,  0.1],[2,  4], \sin, inf ),  
+  \amp,  1, 
+  \mix, Pseg([0.0,  0.5,  1.0], [2, 4],  \sin, inf),  
+  // \mix,  0, 
+  // \delta, 1/4,  
+  \dur,  1/32, 
+));
+)
+Pdef(\modCtl).play;
+Pdef(\modCtl).stop;
+
+// Create a control bus
+~lfoBus = Bus.control(s, 1);
+
+// LFO synth — runs before the target synth in node order
+~lfoSynth = {
+    arg rate = 0.5, lo = 400, hi = 600;
+    Out.kr(~lfoBus, LFTri.kr(rate).range(lo, hi));
+}.play(s, addAction: \addToHead);
+
+// Target synth reads from the bus via `In.kr`
+SynthDef(\bussedSynth, {
+    arg freqBus = 0;
+    var freq = In.kr(freqBus);
+    var sig = SinOsc.ar(freq);
+    Out.ar(0, sig * 0.2 ! 2);
+}).add;
+
+~targetSynth = Synth(\bussedSynth, [\freqBus, ~lfoBus]);
 
 ~bd1_ilfx_1.set(\lpfreq,  1000,  \rq, 2.0,  \hpfreq,  500,  \hprq,  2.0);
 // Greyhole.ar(in, delayTime: 2.0, damp: 0.0, size: 1.0, diff: 0.707, feedback: 0.9, modDepth: 0.1, modFreq: 2.0) ~
 
 (
-~bd1_revs_fx.free;
-~bd1_revs_fx = ~m1.playfx({|in|
+~m1_revs_fx.free;
+~m1_revs_fx = ~m1.playfx({|in|
   var sig = In.ar(~m1.inbus,  2);
   var wet = Greyhole.ar(
     in:  sig,
@@ -39,8 +73,15 @@
 OSCFunc.trace(true)
 OSCFunc.trace(false)
 
+~catDate = "AAA-" ++ Date.localtime.format("%Y%m%d_%H%M%S");
+~catDate.postln;
+
+(
+var savedDateStr = Date.localtime.format("%Y%m%d_%H%M%S").postcs;
+var loadedDate = Date.fromString(savedDateStr, "%Y%m%d_%H%M%S").postln;
+)
 ~toscSync.();
-~toscStateSave.("2026_03_06".asSymbol);
+~toscStateSave.(("2026_03_06_" ++ Date.localtime.format()).asSymbol);
 ~toscPadPaintAll.();
   ~toscPads.size.postln;         // should be non-zero      
   ~toscPadPaintAll.();           // manually trigger repaint
@@ -142,3 +183,5 @@ OSCFunc.trace(false)
   ("'tosc/p1/1/1' in oscParam: " ++
   ~oscParam['tosc/p1/1/1'].notNil).postln;
   )
+
+

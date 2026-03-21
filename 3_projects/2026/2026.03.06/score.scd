@@ -16,6 +16,7 @@ var dir = thisProcess.nowExecutingPath.dirname;
     (dir +/+ "parts/ms20.scd").load;
     (dir +/+ "parts/neutron.scd").load;
     (dir +/+ "parts/model_d.scd").load;
+    (dir +/+ "parts/bass8.scd").load;
     (dir +/+ "automation/biscuit.scd").load;
     (dir +/+ "lib/bindings.scd").load;
     "Score loaded.".postln;

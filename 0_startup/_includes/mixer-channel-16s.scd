@@ -49,7 +49,7 @@
 ~r1fx = (); ~r2fx = (); ~r3fx = (); ~r4fx = ();
 ~fxSetup[\r1_greyhole].(1,  1);
 ~fxSetup[\r2_combDelay].(1, 2);
-~fxSetup[\r3_biscuit].(1, 3);
+~fxSetup[\r3_biscuit].(1, 3);  // teardown-safe: frees any prior instance before recreating
 ~fxSetup[\r4_chorus].(1,  4);
 
 // submix example. perc feeds t1
@@ -351,8 +351,13 @@ if(~oscParam.notNil) {
 // Bank 1 labels T1-T12 are TOSC defaults — no push needed.
 ~toscMixSyncAll = {
     if(~toscAddr.notNil) {
-        ~oscState['tosc/master/f'] = ~m1.level.linlin(0, 4, 0, 1);
-        ~toscAddr.sendMsg("/tosc/master/f", ~oscState['tosc/master/f']);
+        var masterVal = ~m1.level.linlin(0, 4, 0, 1);
+        ~oscState['tosc/master/f'] = masterVal;
+        ~toscAddr.sendMsg("/tosc/master/f", masterVal);
+        // Deferred resends using captured masterVal — TOSC may send 0 on connect between
+        // now and then, which would zero ~m1.level; re-reading it would push 0 back.
+        AppClock.sched(1.0, { ~toscAddr.sendMsg("/tosc/master/f", masterVal); nil });
+        AppClock.sched(3.5, { ~toscAddr.sendMsg("/tosc/master/f", masterVal); nil });
     };
     ~toscMixSync.(1,  1, ~t1);   ~toscMixSync.(1,  2, ~t2);
     ~toscMixSync.(1,  3, ~t3);   ~toscMixSync.(1,  4, ~t4);

@@ -5,8 +5,8 @@
 // PDEFS
 ///////////////////////////////////////////////////////////////
 Pdef(\roll,
-    // Pbindef(\pbd_roll,  
-    Pbind(
+    Pbindef(\pbd_roll,  
+    // Pbind(
         \instrument,  Pn(Pdefn(\roll_ins),        inf), 
         \buf,         Pn(Pdefn(\roll_bufs),       inf),
         \bufnum,      Pkey(\buf),

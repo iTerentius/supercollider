@@ -51,6 +51,11 @@
 ~lpBindB.(1, [7, 8], \mD_fx_3,  5, nil, nil, ~makeFxSendTdef.(\mD_fx_3, ~t8, ~r3));
 ~lpBindB.(1, [8, 8], \mD_fx_4, 35, nil, nil, ~makeFxSendTdef.(\mD_fx_4, ~t8, ~r4));
 
+~lpBindB.(1, [5, 8], \bass_fx_1, 41, nil, nil, ~makeFxSendTdef.(\bass_fx_1, ~t9, ~r1));
+~lpBindB.(1, [6, 8], \bass_fx_2, 81, nil, nil, ~makeFxSendTdef.(\bass_fx_2, ~t9, ~r2));
+~lpBindB.(1, [7, 8], \bass_fx_3,  5, nil, nil, ~makeFxSendTdef.(\bass_fx_3, ~t9, ~r3));
+~lpBindB.(1, [8, 8], \bass_fx_4, 35, nil, nil, ~makeFxSendTdef.(\bass_fx_4, ~t9, ~r4));
+
 ~lpBindB.(2, [4, 1], \r3_fx_r1, 41, nil, nil, ~makeFxSendTdef.(\r3_fx_r1, ~r3, ~r1));
 
 
@@ -105,6 +110,11 @@
 ~apcBindB.(1, 15, \mD_fx_3, 1, \pink,   nil, ~fxSendStop[\mD_fx_3]);
 ~apcBindB.(1,  7, \mD_fx_4, 1, \purple, nil, ~fxSendStop[\mD_fx_4]);
 
+~apcBindB.(1, 31, \bass_fx_1, 1, \blue,   nil, ~fxSendStop[\bass_fx_1]);
+~apcBindB.(1, 23, \bass_fx_2, 1, \cyan,   nil, ~fxSendStop[\bass_fx_2]);
+~apcBindB.(1, 15, \bass_fx_3, 1, \pink,   nil, ~fxSendStop[\bass_fx_3]);
+~apcBindB.(1,  7, \bass_fx_4, 1, \purple, nil, ~fxSendStop[\bass_fx_4]);
+
 ~apcBindB.(4, 24, \r3_fx_r1, 4, nil, nil, ~fxSendStop[\r3_fx_r1]);
 
 // --- TouchOSC Pad Bindings ---
@@ -118,7 +128,8 @@
 ~toscPadBind.(1, 6, 1, \thingA,  \pink,   \green);
 ~toscPadBind.(1, 7, 1, \neutron, \orange, \green);
 ~toscPadBind.(1, 8, 1, \modelD,  \yellow, \green);
-~toscPadBind.(1, 9, 1, \bCtl,    \cyan,   \green);
+~toscPadBind.(1, 9, 1, \bass,  \purple, \green);
+~toscPadBind.(1, 11, 1, \bCtl,    \cyan,   \green);
 // Bank 2: FX sends — bd1+sd1 (col 1), hh1+roll (col 2)
 ~toscPadBind.(1, 1, 2, \bd1_fx_1, \blue,   \green, ~fxSendStop[\bd1_fx_1], "bd1Fx1");
 ~toscPadBind.(1, 1, 3, \bd1_fx_2, \cyan,   \green, ~fxSendStop[\bd1_fx_2], "bd1Fx2");
@@ -140,7 +151,7 @@
 ~toscPadBind.(1, 4, 4, \roll_fx_3, \pink,   \green, ~fxSendStop[\roll_fx_3]);
 ~toscPadBind.(1, 4, 5, \roll_fx_4, \purple, \green, ~fxSendStop[\roll_fx_4]);
 
-~toscPadBind.(1, 9, 2, \r3_fx_r1,  \blue,   \green, ~fxSendStop[\r3_fx_r1]);
+~toscPadBind.(1, 11, 2, \r3_fx_r1,  \blue,   \green, ~fxSendStop[\r3_fx_r1]);
 
 // Bank 3: FX sends — ms20+thingA (col 1), ntron+mD (col 2)
 ~toscPadBind.(1, 5, 2, \ms20_fx_1,   \blue,   \green, ~fxSendStop[\ms20_fx_1]);
@@ -162,6 +173,117 @@
 ~toscPadBind.(1, 8, 3, \mD_fx_2,    \cyan,   \green, ~fxSendStop[\mD_fx_2]);
 ~toscPadBind.(1, 8, 4, \mD_fx_3,    \pink,   \green, ~fxSendStop[\mD_fx_3]);
 ~toscPadBind.(1, 8, 5, \mD_fx_4,    \purple, \green, ~fxSendStop[\mD_fx_4]);
+
+~toscPadBind.(1, 9, 2, \bass_fx_1,    \blue,   \green, ~fxSendStop[\bass_fx_1]);
+~toscPadBind.(1, 9, 3, \bass_fx_2,    \cyan,   \green, ~fxSendStop[\bass_fx_2]);
+~toscPadBind.(1, 9, 4, \bass_fx_3,    \pink,   \green, ~fxSendStop[\bass_fx_3]);
+~toscPadBind.(1, 9, 5, \bass_fx_4,    \purple, \green, ~fxSendStop[\bass_fx_4]);
+
+// Toggles
+~toscPadBindToggleFn.(1, 1, 7,
+  {
+    Pbindef(\pbd_bd1,
+        \dur, Pseq([
+          Pn(Pdefn(\bd1_durs_b), 2),
+          Pn(Pdefn(\bd1_durs_c), 2),
+          Pn(Pdefn(\bd1_durs_a), 4)], inf),
+        \degree, Pseq([
+          Pn(Pdefn(\bd1_degs_a), 4),
+          Pn(Pdefn(\bd1_degs_b), 2)], inf)
+    )
+  },
+  {
+    Pbindef(\pbd_bd1,
+        \dur,    Pseq([Pn(Pdefn(\bd1_durs_a), 4)], inf),
+        \degree, Pseq([Pn(Pdefn(\bd1_degs_a), 4)], inf)
+    )
+  },
+  \green, \blue, "phrA", "phr0"
+);
+~toscPadBindToggleFn.(1, 1, 8,
+  {
+    Pbindef(\pbd_bd1,
+        \dur, Pn(Pseg([2, 1/2, 1/4], [4, 8], \lin, inf))
+    )
+  },
+  // fnB — restore default
+  {
+    Pbindef(\pbd_bd1,
+        \dur, Pseq([Pn(Pdefn(\bd1_durs_a), 4)], inf)
+    )
+  },
+  \green, \blue, "phrB", "phr0"
+);
+~toscPadBindToggleFn.(1, 2, 7,
+  {
+    Pbindef(\pbd_sd1,
+        \dur, Pseq([
+          Pn(Pdefn(\sd1_durs_a), 4),
+          Pn(Pdefn(\sd1_durs_b), 1),
+          // Pn(Pdefn(\sd1_durs_c), 1),
+        ], inf),
+        \degree, Pseq([
+          Pn(Pdefn(\sd1_degs_a), 4),
+          Pn(Pdefn(\sd1_degs_b), 2)], inf)
+    )
+  },
+  {
+    Pbindef(\pbd_sd1,
+        \dur,    Pseq([Pn(Pdefn(\sd1_durs_a), 4)], inf),
+        \degree, Pseq([Pn(Pdefn(\sd1_degs_a), 4)], inf)
+    )
+  },
+  \green, \blue, "phrA", "phr0"
+);
+~toscPadBindToggleFn.(1, 2, 8,
+  {
+    Pbindef(\pbd_sd1,
+        \dur, Pn(Pseg([2, 1/2, 1/4], [4, 8], \lin, inf))
+    )
+  },
+  // fnB — restore default
+  {
+    Pbindef(\pbd_sd1,
+        \dur, Pseq([Pn(Pdefn(\sd1_durs_a), 4)], inf)
+    )
+  },
+  \green, \blue, "phrB", "phr0"
+);
+~toscPadBindToggleFn.(1, 3, 7,
+  {
+    Pbindef(\pbd_hh1,
+        \dur, Pseq([
+          Pn(Pdefn(\hh1_durs_a), 4),
+          Pn(Pdefn(\hh1_durs_b), 1),
+          // Pn(Pdefn(\hh1_durs_c), 1),
+        ],  inf), 
+        \degree, Pseq([
+          Pn(Pdefn(\hh1_degs_a), 4),
+          Pn(Pdefn(\hh1_degs_b), 2)], inf)
+    )
+  },
+  {
+    Pbindef(\pbd_hh1,
+        \dur,    Pseq([Pn(Pdefn(\hh1_durs_a), 4)], inf),
+        \degree, Pseq([Pn(Pdefn(\hh1_degs_a), 4)], inf)
+    )
+  },
+  \green, \blue, "phrA", "phr0"
+);
+~toscPadBindToggleFn.(1, 3, 8,
+  {
+    Pbindef(\pbd_hh1,
+        \dur, Pn(Pseg([2, 1/2, 1/4], [4, 8], \lin, inf))
+    )
+  },
+  // fnB — restore default
+  {
+    Pbindef(\pbd_hh1,
+        \dur, Pseq([Pn(Pdefn(\hh1_durs_a), 4)], inf)
+    )
+  },
+  \green, \blue, "phrB", "phr0"
+);
 
 ~toscPadPaintAll.();
 

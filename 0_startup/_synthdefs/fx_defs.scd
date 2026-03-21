@@ -6,25 +6,27 @@
 
 ~fxDefs[\combDelay] = { |in, bus|
     var sig = In.ar(bus, 2);
-    CombL.ar(sig,
+    var wet = CombL.ar(sig,
         maxdelaytime: \maxdt.kr(0.4),
         delaytime:    \dt.kr(0.25),
         decaytime:    \dec.kr(0.6)
-    )
+    );
+    XFade2.ar(sig, wet, \mix.kr(1).linlin(0, 1, -1, 1)) * \amp.kr(1)
 };
 
 ~fxDefs[\freeVerb] = { |in, bus|
     var sig = In.ar(bus, 2);
-    FreeVerb2.ar(sig[0], sig[1],
-        mix:  \mix.kr(0.33),
+    var wet = FreeVerb2.ar(sig[0], sig[1],
+        mix:  1.0,
         room: \room.kr(0.5),
         damp: \damp.kr(0.5)
-    )
+    );
+    XFade2.ar(sig, wet, \mix.kr(1).linlin(0, 1, -1, 1)) * \amp.kr(1)
 };
 
 ~fxDefs[\greyhole] = { |in, bus|
     var sig = In.ar(bus, 2);
-    Greyhole.ar(sig,
+    var wet = Greyhole.ar(sig,
         \delayTime.kr(2.0),
         \damp.kr(0.0),
         \size.kr(3.0),
@@ -32,7 +34,8 @@
         \feedback.kr(0.1),
         \modDepth.kr(0.1),
         \modFreq.kr(2.0)
-    )
+    );
+    XFade2.ar(sig, wet, \mix.kr(1).linlin(0, 1, -1, 1)) * \amp.kr(1)
 };
 
 // Stereo chorus: LFO-modulated short delay, offset 90deg per channel for width
@@ -40,13 +43,15 @@
     var sig  = In.ar(bus, 2);
     var lfo  = SinOsc.kr(\rate.kr(0.4), [0, 0.5pi]) * \depth.kr(0.004) + 0.005;
     var wet  = DelayC.ar(sig, 0.05, lfo);
-    XFade2.ar(sig, wet, \mix.kr(0.5).linlin(0, 1, -1, 1))
+    XFade2.ar(sig, wet, \mix.kr(0.5).linlin(0, 1, -1, 1)) * \amp.kr(1)
 };
 
 // ---- r1: greyhole (default) / freeVerb (swap) ----
 // TOSC layout: r1=delayTime, r2=feedback, xy1(x=size, y=damp), f=modDepth
 // diff and modFreq: LC/APC only (TOSC has no remaining controls)
 ~fxSetup[\r1_greyhole] = { |page=nil, slot=nil|
+    ~r1fx[\greyhole].tryPerform(\free);
+    ~r1fx[\greyhole] = nil; ~r1fx[\setGreyhole] = nil;
     ~r1fx[\greyhole] = ~r1.playfx({ |in| ~fxDefs[\greyhole].(in, ~r1.inbus.index) });
 
     ~r1fx[\setGreyhole] = { |delayTime, damp, size, diff, feedback, modDepth, modFreq|
@@ -90,14 +95,14 @@
             { |v| ~r1fx[\greyhole].set(\modFreq, v.linexp(0, 1, 0.5, 100.0)) },
             "modDepth|modFreq"
         );
-        ~toscFXBind.(page, slot, \f, { |v| ~r1.level_(v.linlin(0, 1, 0.0, 1.0)) });
+        ~toscFXBind.(page, slot, \f, { |v| ~r1fx[\greyhole].set(\mix, v) }, "mix");
         // Sync defaults
         ~toscFXSync.(page, slot, \r1, 2.0.explin(0.1, 5.0, 0, 1));
         ~toscFXSync.(page, slot, \r2, 0.1.linlin(0.1, 0.95, 0, 1));
         ~toscFXSync.(page, slot, \r3, 0.707.linlin(0.1, 0.99, 0, 1));
         ~toscFXSyncXY.(page, slot, 1, 3.0.linlin(0.1, 5.0, 0, 1), 0.0);
         ~toscFXSyncXY.(page, slot, 2, 0.1.linlin(0.01, 1.0, 0, 1), 2.0.explin(0.5, 100.0, 0, 1));
-        ~toscFXSync.(page, slot, \f, ~r1.level);
+        ~toscFXSync.(page, slot, \f, 1.0);
     };
 };
 
@@ -118,6 +123,8 @@
 
 // TOSC layout: r1=mix, r2=room, f=damp
 ~fxSetup[\r1_freeVerb] = { |page=nil, slot=nil|
+    ~r1fx[\freeVerb].tryPerform(\free);
+    ~r1fx[\freeVerb] = nil; ~r1fx[\setFreeVerb] = nil;
     ~r1fx[\freeVerb] = ~r1.playfx({ |in| ~fxDefs[\freeVerb].(in, ~r1.inbus.index) });
 
     ~r1fx[\setFreeVerb] = { |mix, room, damp|
@@ -126,24 +133,22 @@
         damp.notNil.if { ~r1fx[\freeVerb].set(\damp, damp) };
     };
 
-    ~lcn[\b1_s1_r1] = { |x| ~r1fx[\freeVerb].set(\mix,  x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcn[\b1_s2_r1] = { |x| ~r1fx[\freeVerb].set(\room, x.linlin(0, 127, 0.0, 1.0)) };
-    ~lcn[\b1_s3_r1] = { |x| ~r1fx[\freeVerb].set(\damp, x.linlin(0, 127, 0.0, 1.0)) };
-    ~apcBindParam.(\b1_d1, { |x| ~r1fx[\freeVerb].set(\mix,  x.linlin(0, 127, 0.0, 1.0)) });
-    ~apcBindParam.(\b1_d2, { |x| ~r1fx[\freeVerb].set(\room, x.linlin(0, 127, 0.01, 1.0)) });
-    ~apcBindParam.(\b1_d3, { |x| ~r1fx[\freeVerb].set(\damp, x.linlin(0, 127, 0.01, 1.0)) });
+    ~lcn[\b1_s1_r1] = { |x| ~r1fx[\freeVerb].set(\room, x.linlin(0, 127, 0.0, 1.0)) };
+    ~lcn[\b1_s2_r1] = { |x| ~r1fx[\freeVerb].set(\damp, x.linlin(0, 127, 0.0, 1.0)) };
+    ~lcn[\b1_s3_r1] = { |x| ~r1fx[\freeVerb].set(\mix,  x.linlin(0, 127, 0.0, 1.0)) };
+    ~apcBindParam.(\b1_d1, { |x| ~r1fx[\freeVerb].set(\room, x.linlin(0, 127, 0.0,  1.0)) });
+    ~apcBindParam.(\b1_d2, { |x| ~r1fx[\freeVerb].set(\damp, x.linlin(0, 127, 0.01, 1.0)) });
+    ~apcBindParam.(\b1_d3, { |x| ~r1fx[\freeVerb].set(\mix,  x.linlin(0, 127, 0.0,  1.0)) });
 
     if(page.notNil and: { slot.notNil }) {
         ~toscFXLabel.(page, slot, "freeVerb");
-        ~toscFXBind.(page, slot, \r1, { |v| ~r1fx[\freeVerb].set(\mix,  v.linlin(0, 1, 0.0, 1.0)) }, "mix");
-        ~toscFXBind.(page, slot, \r2, { |v| ~r1fx[\freeVerb].set(\room, v.linlin(0, 1, 0.0, 1.0)) }, "room");
-        ~toscFXBind.(page, slot, \r3,  { |v| ~r1fx[\freeVerb].set(\damp, v.linlin(0, 1, 0.0, 1.0)) },  "damp");
-        ~toscFXBind.(page, slot, \f, { |v| ~r1.level_(v.linlin(0, 1, 0.0, 1.0)) });
+        ~toscFXBind.(page, slot, \r1, { |v| ~r1fx[\freeVerb].set(\room, v.linlin(0, 1, 0.0, 1.0)) }, "room");
+        ~toscFXBind.(page, slot, \r2, { |v| ~r1fx[\freeVerb].set(\damp, v.linlin(0, 1, 0.0, 1.0)) }, "damp");
+        ~toscFXBind.(page, slot, \f,  { |v| ~r1fx[\freeVerb].set(\mix,  v.linlin(0, 1, 0.0, 1.0)) }, "mix");
         // Sync defaults
-        ~toscFXSync.(page, slot, \r1, 0.33.linlin(0.0, 1.0, 0, 1));
+        ~toscFXSync.(page, slot, \r1, 0.5.linlin(0.0, 1.0, 0, 1));
         ~toscFXSync.(page, slot, \r2, 0.5.linlin(0.0, 1.0, 0, 1));
-        ~toscFXSync.(page, slot, \r3, 0.5.linlin(0.0, 1.0, 0, 1));
-        ~toscFXSync.(page, slot, \f, ~r1.level);
+        ~toscFXSync.(page, slot, \f, 1.0);
     };
 };
 
@@ -161,6 +166,8 @@
 // ---- r2: combDelay → chorus (series) ----
 // TOSC layout: r1=time, r2=decay  (maxdt: LC only)
 ~fxSetup[\r2_combDelay] = { |page=nil, slot=nil|
+    ~r2fx[\combDelay].tryPerform(\free);
+    ~r2fx[\combDelay] = nil; ~r2fx[\setCombDelay] = nil;
     ~r2fx[\combDelay] = ~r2.playfx({ |in| ~fxDefs[\combDelay].(in, ~r2.inbus.index) });
 
     ~r2fx[\setCombDelay] = { |dt, dec, maxdt|
@@ -179,11 +186,11 @@
         ~toscFXLabel.(page, slot, "comb");
         ~toscFXBind.(page, slot, \r1, { |v| ~r2fx[\combDelay].set(\dt,  v.linlin(0, 1, 0.01, 0.4)) }, "time");
         ~toscFXBind.(page, slot, \r2, { |v| ~r2fx[\combDelay].set(\dec, v.linlin(0, 1, 0.1,  4.0)) }, "decay");
-        ~toscFXBind.(page, slot, \f, { |v| ~r2.level_(v.linlin(0, 1, 0.0, 1.0)) });
+        ~toscFXBind.(page, slot, \f, { |v| ~r2fx[\combDelay].set(\mix, v) }, "mix");
         // Sync defaults
         ~toscFXSync.(page, slot, \r1, 0.25.linlin(0.01, 0.4, 0, 1));
         ~toscFXSync.(page, slot, \r2, 0.6.linlin(0.1, 4.0, 0, 1));
-        ~toscFXSync.(page, slot, \f, ~r2.level);
+        ~toscFXSync.(page, slot, \f, 1.0);
     };
 };
 
@@ -200,6 +207,8 @@
 
 // TOSC layout: r1=rate, r2=depth, f=mix
 ~fxSetup[\r4_chorus] = { |page=nil, slot=nil|
+    ~r4fx[\chorus].tryPerform(\free);
+    ~r4fx[\chorus] = nil; ~r4fx[\setChorus] = nil;
     ~r4fx[\chorus] = ~r4.playfx({ |in| ~fxDefs[\chorus].(in, ~r4.inbus.index) });
 
     ~r4fx[\setChorus] = { |rate, depth, mix|
@@ -220,7 +229,7 @@
         // Sync defaults
         ~toscFXSync.(page, slot, \r1, 0.4.linlin(0.05, 5.0, 0, 1));
         ~toscFXSync.(page, slot, \r2, 0.004.linlin(0.0, 0.015, 0, 1));
-        ~toscFXSync.(page, slot, \f, ~r4.level);
+        ~toscFXSync.(page, slot, \f, 0.5);
     };
 };
 
@@ -236,8 +245,14 @@
 };
 
 // ---- r3: biscuit (SynthDef-based, loaded async via fork) ----
-// TOSC layout: r1=drive, r2=bits, xy1(x=filterFreq, y=filterQ), f=dressed
+// TOSC layout: r1=drive, r2=clock, r3=bits, r4=shape, r5=fxMode, xy1=filter, xy2=naked|dressed, f=dressed(mix)
 ~fxSetup[\r3_biscuit] = { |page=nil, slot=nil|
+    // Free any existing instance before (re)creating — prevents double-synth leak
+    ~r3fx[\biscuit].tryPerform(\free);
+    ~r3fx[\biscuit]    = nil;
+    ~r3fx[\setBiscuit] = nil;
+
+    // Synth creation must be async (SynthDef confirmed via s.sync)
     {
         s.sync;
         ~r3fx[\biscuit] = Synth(\biscuit, [
@@ -258,37 +273,37 @@
             naked.notNil.if      { ~r3fx[\biscuit].set(\naked,      naked)      };
             dressed.notNil.if    { ~r3fx[\biscuit].set(\dressed,    dressed)    };
         };
-
-        if(page.notNil and: { slot.notNil }) {
-            ~toscFXLabel.(page, slot, "biscuit");
-            ~toscFXBind.(page, slot, \r1, { |v| ~r3fx[\biscuit].set(\drive,   v.linlin(0, 1, 0.0,    1.0)) },    "drive");
-            ~toscFXBind.(page, slot, \r2, { |v| ~r3fx[\biscuit].set(\clock,   v.linlin(0, 1, 250,    30000)) },    "clock");
-            ~toscFXBind.(page, slot, \r3, { |v| ~r3fx[\biscuit].set(\bits,    v.linlin(0, 1, 0.0,    1.0)) },    "bits");
-            ~toscFXBind.(page, slot, \r4, { |v| ~r3fx[\biscuit].set(\shape,   v.linlin(0, 1, 0,    3)) },    "shape");
-            ~toscFXBind.(page, slot, \r5, { |v| ~r3fx[\biscuit].set(\fxMode,   v.linlin(0, 1, 0,    3)) },    "fxMode");
-            ~toscFXBindXY.(page, slot, 1,
-                { |v| ~r3fx[\biscuit].set(\filterFreq, v.linexp(0.001, 1, 200, 20000)) },
-                { |v| ~r3fx[\biscuit].set(\filterQ,    v.linlin(0, 1, 0.1, 4.0)) },
-                "filter"
-            );
-            ~toscFXBindXY.(page, slot, 2,
-                { |v| ~r3fx[\biscuit].set(\naked, v.linlin(0.001, 1, 0.0, 1.0)) },
-                { |v| ~r3fx[\biscuit].set(\dressed,    v.linlin(0, 1, 0.0, 1.0)) },
-                "naked|dressed"
-            );
-            // ~toscFXBind.(page, slot, \f, { |v| ~r3fx[\biscuit].set(\dressed, v.linlin(0, 1, 0.0, 1.0)) });
-            ~toscFXBind.(page, slot, \f, { |v| ~r3.level_(v.linlin(0, 1, 0.0, 1.0)) });
-            // Sync defaults
-            ~toscFXSync.(page, slot, \r1, 0.0);
-            ~toscFXSync.(page, slot, \r2, 250.0.linlin(250, 30000, 0, 1));
-            ~toscFXSync.(page, slot, \r3, 0.0);
-            ~toscFXSync.(page, slot, \r4, 0.0);
-            ~toscFXSync.(page, slot, \r5, 0.0);
-            ~toscFXSyncXY.(page, slot, 1, 0.5, 0.5);
-            ~toscFXSyncXY.(page, slot, 2, 0.0, 1.0);
-            ~toscFXSync.(page, slot, \f, ~r3.level);
-        };
     }.fork;
+
+    // TOSC bindings don't need server sync — closures resolve ~r3fx[\biscuit] at call time
+    if(page.notNil and: { slot.notNil }) {
+        ~toscFXLabel.(page, slot, "biscuit");
+        ~toscFXBind.(page, slot, \r1, { |v| ~r3fx[\biscuit].set(\drive,     v.linlin(0, 1, 0.0,   0.95))  }, "drive");
+        ~toscFXBind.(page, slot, \r2, { |v| ~r3fx[\biscuit].set(\clock,     v.linlin(0, 1, 250,   30000)) }, "clock");
+        ~toscFXBind.(page, slot, \r3, { |v| ~r3fx[\biscuit].set(\bits,      v.linlin(0, 1, 0.0,   1.0))   }, "bits");
+        ~toscFXBind.(page, slot, \r4, { |v| ~r3fx[\biscuit].set(\shape,     v.linlin(0, 1, 0,     3))     }, "shape");
+        ~toscFXBind.(page, slot, \r5, { |v| ~r3fx[\biscuit].set(\fxMode,    v.linlin(0, 1, 0,     3))     }, "fxMode");
+        ~toscFXBindXY.(page, slot, 1,
+            { |v| ~r3fx[\biscuit].set(\filterFreq, v.linexp(0.001, 1, 200, 20000)) },
+            { |v| ~r3fx[\biscuit].set(\filterQ,    v.linlin(0, 1, 0.1, 4.0)) },
+            "filter"
+        );
+        ~toscFXBindXY.(page, slot, 2,
+            { |v| ~r3fx[\biscuit].set(\naked,   v.linlin(0.001, 1, 0.0, 1.0)) },
+            { |v| ~r3fx[\biscuit].set(\dressed, v.linlin(0, 1, 0.0, 1.0)) },
+            "naked|dressed"
+        );
+        ~toscFXBind.(page, slot, \f, { |v| ~r3fx[\biscuit].set(\dressed, v) }, "mix");
+        // Sync defaults
+        ~toscFXSync.(page, slot, \r1, 0.0);
+        ~toscFXSync.(page, slot, \r2, 250.0.linlin(250, 30000, 0, 1));
+        ~toscFXSync.(page, slot, \r3, 0.0);
+        ~toscFXSync.(page, slot, \r4, 0.0);
+        ~toscFXSync.(page, slot, \r5, 0.0);
+        ~toscFXSyncXY.(page, slot, 1, 0.5, 0.5);
+        ~toscFXSyncXY.(page, slot, 2, 0.0, 1.0);
+        ~toscFXSync.(page, slot, \f, 1.0);
+    };
 };
 
 ~fxTeardown[\r3_biscuit] = { |page=nil, slot=nil|
