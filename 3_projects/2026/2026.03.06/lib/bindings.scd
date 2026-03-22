@@ -214,6 +214,40 @@
   },
   \green, \blue, "phrB", "phr0"
 );
+~toscPadBindToggleFn.(1, 1, 7,  
+  {
+    Pbindef(\pbd_bd1,
+        \dur, Pseq([
+          Pn(Pdefn(\bd1_durs_b), 2),
+          Pn(Pdefn(\bd1_durs_c), 2),
+          Pn(Pdefn(\bd1_durs_a), 4)], inf),
+        \degree, Pseq([
+          Pn(Pdefn(\bd1_degs_a), 4),
+          Pn(Pdefn(\bd1_degs_b), 2)], inf)
+    )
+  },
+  {
+    Pbindef(\pbd_bd1,
+        \dur,    Pseq([Pn(Pdefn(\bd1_durs_a), 4)], inf),
+        \degree, Pseq([Pn(Pdefn(\bd1_degs_a), 4)], inf)
+    )
+  },
+  \green, \blue,  "phrA", "phr0"
+);
+~toscPadBindToggleFn.(1, 1, 8,
+  {
+    Pbindef(\pbd_bd1,
+        \dur, Pn(Pseg([2, 1/2, 1/4], [4, 8], \lin, inf))
+    )
+  },
+  // fnB — restore default
+  {
+    Pbindef(\pbd_bd1,
+        \dur, Pseq([Pn(Pdefn(\bd1_durs_a), 4)], inf)
+    )
+  },
+  \green, \blue, "phrB", "phr0"
+);
 ~toscPadBindToggleFn.(1, 2, 7,
   {
     Pbindef(\pbd_sd1,
