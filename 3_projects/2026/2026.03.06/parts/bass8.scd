@@ -33,24 +33,25 @@ Pdefn(\bass_out,   ~t9.inbus.index);
 Pdefn(\bass_scale, Scale.minor);
 
 // OCTAVE
-Pdefn(\bass_oct_0, 5);              // 0..8
+Pdefn(\bass_oct_0, 4);              // 0..8
 Pdefn(\bass_oct_1, Pseq([5, 4], 1));
 Pdefn(\bass_octs, Pseq([
-    // Pn(Pdefn(\bass_oct_0), 4),
-    Pn(Pdefn(\bass_oct_1), 4),
+    Pn(Pdefn(\bass_oct_0), 4),
+    // Pn(Pdefn(\bass_oct_1), 4),
 ], 1));
 
+// Pslide.new(list, repeats: 1, len: 3, step: 1, start: 0, wrapAtEnd: true) ~
 // DEGREE — words
 Pdefn(\bass_deg_0, 0);
-Pdefn(\bass_deg_1, Pslide([-3, [7, 2]], 8, 1, 0, 1));
-Pdefn(\bass_deg_2, Pslide((0..-3), 1, 3, 1, 0));
-Pdefn(\bass_deg_3, Pslide((-4..7), 2, 3, 1, 0));
+Pdefn(\bass_deg_1, Pslide([-3, 7, 4,  0], 2, 2, 2, 0));
+Pdefn(\bass_deg_2, Pslide((0..3), 1, 3, 1, 0));
+Pdefn(\bass_deg_3, Pslide((0..7), 2, 3, 1, 0));
 // sentences
 Pdefn(\bass_degs_a, Pseq([Pn(Pdefn(\bass_deg_0), 4)], 1));          // root pedal
 Pdefn(\bass_degs_b, Pseq([Pn(Pdefn(\bass_deg_1), 1)], 1));          // slide phrase
 Pdefn(\bass_degs_c, Pseq([Pn(Pdefn(\bass_deg_2), 2), Pn(Pdefn(\bass_deg_3), 2)], 1));
 // story
-Pdefn(\bass_degs, Pseq([Pn(Pdefn(\bass_degs_c), 1)], 1));
+Pdefn(\bass_degs, Pseq([Pn(Pdefn(\bass_degs_0), 1)], 1));
 
 // DUR — words
 Pdefn(\bass_dur_0, 1/4);
@@ -68,7 +69,7 @@ Pdefn(\bass_strs, Pseq([
 ], 1));
 
 // LEGATO
-Pdefn(\bass_leg_0, 1.5);            // 0..2+
+Pdefn(\bass_leg_0, 1.3);            // 0..2+
 Pdefn(\bass_leg_1, Pwhite(0.6, 1.0, 1));
 Pdefn(\bass_legs, Pseq([
     Pn(Pdefn(\bass_leg_0), 4),

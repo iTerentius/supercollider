@@ -42,13 +42,13 @@ Pdef(\roll_fx_ctl, Pbindef(\roll_fx_ctl_pbd,
 ///////////////////////////////////////////////////////////////
 Pdefn(\roll_out,   ~t4.inbus.index);
 Pdefn(\roll_scale, Scale.minor);
-Pdefn(\roll_ins,  \slice_m);
+Pdefn(\roll_ins,  \slice_s);
 
 // BUFS — words
-~sRoll = ~sTree[\jttcot].values[0..6];
+// ~sRoll = ~sTree[\jttcot].values[0..6];
 // ~sRoll = ~sTree[\hoarder_mono].values[0..6];
 // ~sRoll = ~sTree[\casio_mt_100].values;
-// ~sRoll = ~sTree[\bass_drops].values;
+~sRoll = ~sTree[\bass_drops].values;
 // ~sRoll = ~sTree[\mm].values;
 // ~sRoll = ~sTree[\neutron_12].values;
 // ~sRoll = ~sTree[\drumloops].values;

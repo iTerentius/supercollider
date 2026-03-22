@@ -262,6 +262,8 @@
             \dressed, 1.0
         ], ~r3.effectgroup);
 
+        ~r3_fx = ~r3fx[\biscuit];  // legacy alias — automation/biscuit.scd targets ~r3_fx
+
         ~r3fx[\setBiscuit] = { |drive, clock, bits, fxMode, shape, filterFreq, filterQ, naked, dressed|
             drive.notNil.if      { ~r3fx[\biscuit].set(\drive,      drive)      };
             clock.notNil.if      { ~r3fx[\biscuit].set(\clock,      clock)      };

@@ -40,9 +40,13 @@ Pdefn(\thingA_out,   ~t6.inbus.index);
 Pdefn(\thingA_scale, Scale.minor);
 
 // OCTS — words
-Pdefn(\thingA_oct_0, 3);
+Pdefn(\thingA_oct_0, 4);
+Pdefn(\thingA_oct_1, Pseq([4,  6],  1));
 // story
-Pdefn(\thingA_octs, Pseq([Pn(Pdefn(\thingA_oct_0), 4)], 1));
+Pdefn(\thingA_octs, Pseq([
+  Pn(Pdefn(\thingA_oct_0), 4),  
+  Pn(Pdefn(\thingA_oct_1), 4),  
+], 1));
 
 // AMPS — words
 Pdefn(\thingA_amp_0, 1);
@@ -57,7 +61,10 @@ Pdefn(\thingA_deg_1, Pseq([Pseq([0, 1, 4, 2], 1), Rest()*4], 1));
 Pdefn(\thingA_degs_a, Pseq([Pn(Pdefn(\thingA_deg_1), 4)], 1));  // riff
 Pdefn(\thingA_degs_b, Pseq([Pn(Pdefn(\thingA_deg_0), 4)], 1));  // held root
 // story
-Pdefn(\thingA_degs, Pseq([Pn(Pdefn(\thingA_degs_a), 1)], 1));
+Pdefn(\thingA_degs, Pseq([
+  Pn(Pdefn(\thingA_degs_a), 7), 
+  Pn(Pdefn(\thingA_degs_b), 1), 
+], 1));
 
 // DURS — words
 Pdefn(\thingA_dur_0, 1);
@@ -70,7 +77,10 @@ Pdefn(\thingA_durs, Pseq([Pn(Pdefn(\thingA_durs_a), 1)], 1));
 Pdefn(\thingA_delta_0, 1);
 Pdefn(\thingA_delta_1, 1/(Pkey(\dur) * 2));
 // story
-Pdefn(\thingA_delta, Pseq([Pn(Pdefn(\thingA_delta_0), 1)], 1));
+Pdefn(\thingA_delta, Pseq([
+  Pn(Pdefn(\thingA_delta_0), 8), 
+  Pn(Pdefn(\thingA_delta_1), 2), 
+], 1));
 
 // STRS — words
 Pdefn(\thingA_str_0, 1);

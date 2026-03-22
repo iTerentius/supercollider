@@ -13,14 +13,14 @@ Pdef(\modelD,
 
         // --- pitch / gate ---
         \scale,        Pn(Pdefn(\mD_scale),  inf),
-        \root,        1,  
+        \root,        0,  
         \degree,       Pn(Pdefn(\mD_degs),   inf),
         \octave,       Pn(Pdefn(\mD_octs),   inf),
         \dur,          Pn(Pdefn(\mD_durs),   inf),
         \stretch,      Pn(Pdefn(\mD_strs),   inf),
         \legato,       Pn(Pdefn(\mD_legs),   inf),
         \amp,          Pn(Pdefn(\mD_amps),   inf),
-        \timeOffset,  1/4,  
+        \timeOffset,  1/2,  
 
         // --- glide ---
         \glide,        Pn(Pdefn(\mD_glides),  inf),
@@ -83,10 +83,10 @@ Pdefn(\mD_out,   ~t8.inbus.index);
 Pdefn(\mD_scale, Scale.minor);
 
 // OCTAVE
-Pdefn(\mD_oct_0, 2);              // 0..8
+Pdefn(\mD_oct_0, 5);              // 0..8
 Pdefn(\mD_oct_1, Pseq([3, 4], 1));
 Pdefn(\mD_octs, Pseq([
-    Pn(Pdefn(\mD_oct_0), 4),
+    Pn(Pdefn(\mD_oct_1), 4),
     // Pn(Pdefn(\mD_oct_1), 4),
 ], 1));
 
@@ -109,7 +109,10 @@ Pdefn(\mD_dur_1, Pseq([1/4!3, Rest(0.25), 1/4,  1/2, Rest(2.25)].flat, 1));
 Pdefn(\mD_durs_a, Pseq([Pn(Pdefn(\mD_dur_0), 4), Pn(Rest(), 4)], 1));  // sparse
 Pdefn(\mD_durs_b, Pseq([Pn(Pdefn(\mD_dur_1), 4)], 1));                  // syncopated
 // story
-Pdefn(\mD_durs, Pseq([Pn(Pdefn(\mD_durs_b), 1)], 1));
+Pdefn(\mD_durs, Pseq([
+  Pn(Pdefn(\mD_durs_b), 1), 
+  // Pn(Pdefn(\mD_durs_b), 1)
+], 1));
 
 // STRETCH
 Pdefn(\mD_str_0, 1);
@@ -120,9 +123,10 @@ Pdefn(\mD_strs, Pseq([
 // LEGATO
 Pdefn(\mD_leg_0, 0.8);            // 0..2+
 Pdefn(\mD_leg_1, Pwhite(0.6, 1.0, 1));
+Pdefn(\mD_leg_2, 1.8);            // 0..2+
 Pdefn(\mD_legs, Pseq([
-    Pn(Pdefn(\mD_leg_0), 4),
-    // Pn(Pdefn(\mD_leg_1), 4),
+    Pn(Pdefn(\mD_leg_2), 4),
+    Pn(Pdefn(\mD_leg_1), 4),
 ], 1));
 
 // AMP
@@ -142,7 +146,7 @@ Pdefn(\mD_glides, Pseq([
 ], 1));
 
 // OSC 1
-Pdefn(\mD_osc1Wave_0, 4);         // 0=tri 1=inv-saw 2=saw 3=sq 4=wide 5=narrow
+Pdefn(\mD_osc1Wave_0, 3);         // 0=tri 1=inv-saw 2=saw 3=sq 4=wide 5=narrow
 Pdefn(\mD_osc1Wave, Pseq([Pn(Pdefn(\mD_osc1Wave_0), 4)], 1));
 
 Pdefn(\mD_osc1Oct_0, 0);  // -3..+3
@@ -150,9 +154,9 @@ Pdefn(\mD_osc1Oct_1, Pseq((0..2), 1));  // -3..+3
 Pdefn(\mD_osc1Oct, Pseq([Pn(Pdefn(\mD_osc1Oct_0), 4)], 1));
 
 // OSC 2
-Pdefn(\mD_osc2Wave_0, 0);         // 0..5
+Pdefn(\mD_osc2Wave_0, 2);         // 0..5
 Pdefn(\mD_osc2Wave_1, Pstep(Pseq([0,  4,  3,  5],  1)), 8);         // 0..5
-Pdefn(\mD_osc2Wave, Pseq([Pn(Pdefn(\mD_osc2Wave_0), 4)], 1));
+Pdefn(\mD_osc2Wave, Pseq([Pn(Pdefn(\mD_osc2Wave_1), 4)], 1));
 
 Pdefn(\mD_osc2Oct_0, 1);
 Pdefn(\mD_osc2Oct_1, Pseq((0..2), 1));  // -3..+3
@@ -179,8 +183,12 @@ Pdefn(\mD_osc3Fine_0, 0.0);       // ±7 semitones
 Pdefn(\mD_osc3Fine_1, Pseg((0..-7), [1, 8], \sin, 1));       // ±7 semitones
 Pdefn(\mD_osc3Fine, Pseq([Pn(Pdefn(\mD_osc3Fine_0), 4)], 1));
 
-Pdefn(\mD_osc3KbdTrack_0, 1);     // 0/1  (0=free LFO)
-Pdefn(\mD_osc3KbdTrack, Pseq([Pn(Pdefn(\mD_osc3KbdTrack_0), 4)], 1));
+Pdefn(\mD_osc3KbdTrack_0, 0);     // 0/1  (0=free LFO)
+Pdefn(\mD_osc3KbdTrack_1, 1);     // 0/1  (0=free LFO)
+Pdefn(\mD_osc3KbdTrack, Pseq([
+  Pn(Pdefn(\mD_osc3KbdTrack_0), 1), 
+  Pn(Pdefn(\mD_osc3KbdTrack_1), 1)
+], 1));
 
 Pdefn(\mD_osc3Freq_0, 2.0);       // 0.1..50 Hz  (LFO rate when kbdTrack=0)
 Pdefn(\mD_osc3Freq, Pseq([Pn(Pdefn(\mD_osc3Freq_0), 4)], 1));

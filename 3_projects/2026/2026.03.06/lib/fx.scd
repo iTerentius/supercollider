@@ -30,13 +30,6 @@
   wet; 
 });
 
-{
-    s.sync;
-    ~r3_fx = Synth(\biscuit, [
-        \in,      ~r3.inbus.index,
-        \out,     ~r3.inbus.index,
-        \naked,   0.0,
-        \dressed, 1.0,
-    ], ~r3.effectgroup);
-}.fork;
+// ~r3_fx is created and aliased by ~fxSetup[\r3_biscuit] in fx_defs.scd (via config.scd).
+// Do NOT create a second \biscuit synth here — that was the old pre-fxSetup approach.
 )

@@ -66,8 +66,7 @@ SynthDef(\bussedSynth, {
     modFreq: 2.0,  
   );
   wet;
-});
-)
+});)
 ~bd1_revs_fx.level_(0.5);
 
 OSCFunc.trace(true)
