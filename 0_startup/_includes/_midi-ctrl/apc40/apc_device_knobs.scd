@@ -1,4 +1,8 @@
 /* 2025-10-19 add-on — device knobs CC (per bank) with boot + panic auto-arm */
+/* 2026-03-22 — device sub-bank: Record Arm buttons (note 48, ch 0-7) select
+                sub-bank for the 8 device knobs. Mirrors main bank (note 50, ch 0-7).
+   Key format: b{mainBank-1}_ds{devSubBank}_k{knob1..8}
+   e.g. b0_ds1_k1, b0_ds2_k3, b7_ds8_k8 */
 /* single () block, vars at top, no ) in comments */
 
 (
@@ -6,69 +10,100 @@ var ensureID, norm7;
 ensureID = { |sym| if(currentEnvironment.at(sym).isNil) { currentEnvironment.put(sym, IdentityDictionary.new) } };
 ensureID.(\apcParamBindings);
 
-~apcDevCCBase  = ~apcDevCCBase  ? 16;   /* CC16..23 map to d1..8 */
-~apcDevCCCount = ~apcDevCCCount ? 8;
+~apcDevCCBase     = ~apcDevCCBase     ? 16;   /* CC16..23 = device knobs k1..8 */
+~apcDevCCCount    = ~apcDevCCCount    ? 8;
+~apcDevSubBank    = ~apcDevSubBank    ? 1;     /* active device sub-bank 1-8 */
+~apcDevSubBtnNote = ~apcDevSubBtnNote ? 48;   /* Record Arm: note 48, ch 0-7 */
 
-/* helper: \b{bank}_d{1..8} */
-~apcParamKeyForDevice = { |bank, dev|
-    var b, d;
-    b = bank.clip(0, 7);
-    d = dev.clip(1, 8);
-    ("b" ++ b ++ "_d" ++ d).asSymbol
+/* Key: b{mainBank-1}_ds{devSubBank}_k{knob} */
+~apcParamKeyForDevice = { |bank, sub, knob|
+    ("b" ++ bank.clip(0,7) ++ "_ds" ++ sub.clip(1,8) ++ "_k" ++ knob.clip(1,8)).asSymbol
 };
 
-/* tiny utils */
 norm7 = { |v| (v.asFloat.clip(0, 127)) / 127.0 };
 
-/* install or re-install the CC listener */
+/* ---- Sub-bank LED painter ---- */
+~apcPaintDevSubBank = {
+    var onColor, offColor, note;
+    note     = ~apcDevSubBtnNote;
+    onColor  = ~apcColors[\green] ? 21;
+    offColor = ~apcColors[\off]   ? 0;
+    8.do { |i|
+        var c = if((i + 1) == ~apcDevSubBank) { onColor } { offColor };
+        ~apcPadLEDch.(note, c, i);
+        AppClock.sched(0.03, { ~apcPadLEDch.(note, c, i) });
+    };
+};
+
+/* ---- Change device sub-bank ---- */
+~apcChangeDevSubBank = { |n|
+    ~apcDevSubBank = n.clip(1, 8);
+    ~apcPaintDevSubBank.();
+    ["[DEV SUBBANK]", ~apcDevSubBank].postln;
+};
+
+/* ---- Sub-bank button listener (note 48, ch 0-7) ---- */
+~apcInstallDevSubBankButtons = {
+    var nameOn, nameOff, note;
+    nameOn = \apc_dev_subbank_on; nameOff = \apc_dev_subbank_off;
+    note = ~apcDevSubBtnNote;
+    MIDIdef.free(nameOn); MIDIdef.free(nameOff);
+    MIDIdef.noteOn(nameOn, { |vel, num, chan, src|
+        if(num == note and: { chan >= 0 } and: { chan <= 7 } and: { vel > 0 }) {
+            ~apcChangeDevSubBank.(chan + 1);
+        };
+    }, nil, nil, ~apcMidiUID);
+    MIDIdef.noteOff(nameOff, { |vel, num, chan, src|
+        if(num == note and: { chan >= 0 } and: { chan <= 7 }) {
+            ~apcPaintDevSubBank.();
+        };
+    }, nil, nil, ~apcMidiUID);
+    "[dev sub-bank buttons armed (note 48, ch 0-7)]".postln; true
+};
+
+/* ---- Device knob CC listener ---- */
 ~apcInstallDevKnobCC = {
     var name, base, count;
-    name = \apc_dev_knobs_cc;
-    base = ~apcDevCCBase;
-    count = ~apcDevCCCount;
-
+    name = \apc_dev_knobs_cc; base = ~apcDevCCBase; count = ~apcDevCCCount;
     MIDIdef.free(name);
     MIDIdef.cc(name, { |val, num, chan, src|
-        var idx, dev, key, x, bankNow, f;
+        var idx, knob, key, x, f;
         if((num >= base) and: { num < (base + count) }) {
-            idx = num - base;       /* 0..7 */
-            dev = idx + 1;          /* 1..8 */
-            bankNow = ~apcBank ? 0; /* fall back to 0 if not set yet */
-            key = ~apcParamKeyForDevice.(bankNow, dev);
-            x = norm7.(val);
-
+            idx  = num - base;
+            knob = idx + 1;
+            key  = ~apcParamKeyForDevice.(~apcBank - 1, ~apcDevSubBank, knob);
+            x    = norm7.(val);
             if(~apcApplyParam.notNil) {
                 ~apcApplyParam.(key, x);
-            }{
+            } {
                 f = ~apcParamBindings[key];
                 if(f.notNil) { f.value(x) };
             };
-
-            /* uncomment for verbose logging
-            ["[DEV CC]", "cc", num, "dev", dev, "bank", bankNow, "x", x.round(0.001)].postln;
-            */
         };
     });
-
     "[device knob CC armed]".postln; true
 };
 
-/* arm now */
+/* ---- Boot ---- */
 ~apcInstallDevKnobCC.();
+~apcInstallDevSubBankButtons.();
+~apcPaintDevSubBank.();
 
-/* add a dedicated CmdPeriod hook just for this listener */
+/* ---- CmdPeriod + StartUp hooks ---- */
 CmdPeriod.remove(~apcDevKnobPanicHook);
 ~apcDevKnobPanicHook = {
-    AppClock.sched(0.0, { ~apcInstallDevKnobCC.(); nil });
+    AppClock.sched(0.0, {
+        ~apcInstallDevKnobCC.();
+        ~apcInstallDevSubBankButtons.();
+        ~apcPaintDevSubBank.();
+        nil
+    });
 };
 CmdPeriod.add(~apcDevKnobPanicHook);
 
-/* also re-arm after library recompile */
 StartUp.remove(~apcDevKnobStartHook);
-~apcDevKnobStartHook = { ~apcInstallDevKnobCC.() };
+~apcDevKnobStartHook = { ~apcInstallDevKnobCC.(); ~apcInstallDevSubBankButtons.() };
 StartUp.add(~apcDevKnobStartHook);
 
-/* optional tiny self-check */
-if(~apcParamKeyForDevice.notNil) { ("[dev binding key sample] " ++ ~apcParamKeyForDevice.(0, 3)).postln };
+("[dev knob key sample] " ++ ~apcParamKeyForDevice.(0, 2, 3)).postln;
 )
-

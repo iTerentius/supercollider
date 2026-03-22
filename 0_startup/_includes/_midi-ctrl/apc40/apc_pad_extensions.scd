@@ -131,36 +131,38 @@
 // Playing pads pulse (MIDI ch ~apcCfg[\playMode]); stopped pads are static (ch 0).
 // Handles both: ~apcLEDByState.(note, key) and ~apcLEDByState.(note, eventBinding)
 ~apcLEDByStateExt = { |note, keyOrBinding|
-    var colors, obj, wantColor, wantChan, binding, actualKey, customColor, playColor, isRunning;
+    var colors, obj, wantColor, wantChan, binding, actualKey, customColor, playColor, isRunning, isRunningFn;
     colors = ~apcColors;
 
     if(keyOrBinding.isKindOf(Event)) {
         actualKey = keyOrBinding[\key];
         customColor = keyOrBinding[\color];
         playColor = keyOrBinding[\playColor];
+        isRunningFn = keyOrBinding[\isRunning];
     } {
         actualKey = keyOrBinding;
         binding = ~apcPadMap[note];
         if(binding.isKindOf(Event)) {
             customColor = binding[\color];
             playColor = binding[\playColor];
+            isRunningFn = binding[\isRunning];
         };
     };
 
     obj = ~apcGetObj.(actualKey);
-    isRunning = ~apcIsRunning.(obj);
+    isRunning = if(isRunningFn.notNil) { isRunningFn.value } { ~apcIsRunning.(obj) };
 
     if(obj.notNil) {
         case
-        { obj.isKindOf(Function) or: { obj.isString } } {
-            // Functions/Strings: static, use custom color or amber
-            wantColor = customColor ?? { colors[\amber] };
-            wantChan = 0;
-        }
         { isRunning } {
-            // Playing: pulse at playColor, else pulse at customColor, else pulse green
+            // Active/playing: pulse — checked first so toggleFn and Function keys pulse correctly
             wantColor = playColor ?? { customColor ?? { colors[\green] } };
             wantChan = ~apcCfg[\playMode] ? 9;
+        }
+        { obj.isKindOf(Function) or: { obj.isString } } {
+            // Function/String, not running: static
+            wantColor = customColor ?? { colors[\amber] };
+            wantChan = 0;
         }
         {
             // Stopped: static at custom color or amber
@@ -243,7 +245,11 @@
 
             if(vel > 0) {
                 ~apcIsDown[num] = true;
-                ~apcToggleObj.(num, key, quant, onStop);
+                if(binding.isKindOf(Event) and: { binding[\type] == \toggleFn }) {
+                    binding[\toggleHandler].value;
+                } {
+                    ~apcToggleObj.(num, key, quant, onStop);
+                };
                 ~apcRepaintStops.();
             } {
                 ~apcIsDown[num] = false;
@@ -342,6 +348,54 @@
     "Available APC40 colors:".postln;
     ~apcColors.keys.asArray.sort.do { |k|
         ["  ", k, "->", ~apcColors[k]].postln;
+    };
+};
+
+// ---- Two-state function toggle pad ----
+// Analogous to ~toscPadBindToggleFn.
+// Press once:  call fnA, pad shows colorA (pulsing).
+// Press again: call fnB, pad shows colorB (static).
+// colorA/colorB : Symbols from ~apcColors or Integer (0-127).
+~apcBindToggleFn = { |note, fnA, fnB, colorA = \green, colorB = \blue|
+    var colors = ~apcColors;
+    var active = false;
+    var resolvedA = if(colorA.isKindOf(Symbol)) { colors[colorA] } { colorA };
+    var resolvedB = if(colorB.isKindOf(Symbol)) { colors[colorB] } { colorB };
+    ~apcPadMap[note] = (
+        key: {}, type: \toggleFn,
+        color: resolvedB, playColor: resolvedA,
+        isRunning: { active },
+        toggleHandler: {
+            active = active.not;
+            if(active) { fnA.value } { fnB.value };
+            ~apcLEDByState.(note, ~apcPadMap[note]);
+        }
+    );
+    ~apcLEDByState.(note, ~apcPadMap[note]);
+};
+
+// ---- Bank-targeted two-state toggle (like ~apcBindB) ----
+~apcBindToggleFnB = { |bank, note, fnA, fnB, colorA = \green, colorB = \blue|
+    var colors = ~apcColors;
+    var active = false;
+    var resolvedA = if(colorA.isKindOf(Symbol)) { colors[colorA] } { colorA };
+    var resolvedB = if(colorB.isKindOf(Symbol)) { colors[colorB] } { colorB };
+    var bindEvent;
+    bank = bank.clip(1, 8);
+    bindEvent = (
+        key: {}, type: \toggleFn,
+        color: resolvedB, playColor: resolvedA,
+        isRunning: { active },
+        toggleHandler: {
+            active = active.not;
+            if(active) { fnA.value } { fnB.value };
+            ~apcLEDByState.(note, ~apcPadMap[note]);
+        }
+    );
+    ~apcBanks[bank - 1][note] = bindEvent;
+    if(bank == ~apcBank) {
+        ~apcPadMap[note] = bindEvent;
+        ~apcLEDByState.(note, bindEvent);
     };
 };
 

@@ -180,7 +180,7 @@
 ~toscPadBind.(1, 9, 5, \bass_fx_4,    \purple, \green, ~fxSendStop[\bass_fx_4]);
 
 // Toggles
-~toscPadBindToggleFn.(1, 1, 7,
+~apcBindToggleFn.(2, 32,
   {
     Pbindef(\pbd_bd1,
         \dur, Pseq([
@@ -198,7 +198,7 @@
         \degree, Pseq([Pn(Pdefn(\bd1_degs_a), 4)], inf)
     )
   },
-  \green, \blue, "phrA", "phr0"
+  \green, \blue
 );
 ~toscPadBindToggleFn.(1, 1, 8,
   {

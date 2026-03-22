@@ -504,6 +504,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     ~apcRepaintStops.();
     ~apcPaintAllBanks.();
     ~apcPaintKnobRow.();
+    ~apcPaintDevSubBank !? { ~apcPaintDevSubBank.() };
     "[APC] LEDs repainted".postln;
 };
 

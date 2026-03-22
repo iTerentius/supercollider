@@ -72,13 +72,15 @@
     ~lcn[\b1_s1_r2] = { |x| ~r1fx[\greyhole].set(\modDepth,  x.linlin(0, 127, 0.0,   1.0)) };
     ~lcn[\b1_s2_r2] = { |x| ~r1fx[\greyhole].set(\modFreq,   x.linexp(0, 127, 0.5, 100.0)) };
 
-    ~apcBindParam.(\b1_d1, { |x| ~r1fx[\greyhole].set(\delayTime, x.linexp(0, 127, 0.1, 5.0)) });
-    ~apcBindParam.(\b1_d2, { |x| ~r1fx[\greyhole].set(\damp,      x.linlin(0, 127, 0.01, 1.0)) });
-    ~apcBindParam.(\b1_d3, { |x| ~r1fx[\greyhole].set(\size,      x.linlin(0, 127, 0.1, 5.0)) });
-    ~apcBindParam.(\b1_d4, { |x| ~r1fx[\greyhole].set(\diff,      x.linlin(0, 127, 0.01, 0.99)) });
-    ~apcBindParam.(\b1_d5, { |x| ~r1fx[\greyhole].set(\feedback,  x.linlin(0, 127, 0.01, 0.95)) });
-    ~apcBindParam.(\b1_d6, { |x| ~r1fx[\greyhole].set(\modDepth,  x.linlin(0, 127, 0.01, 1.0)) });
-    ~apcBindParam.(\b1_d7, { |x| ~r1fx[\greyhole].set(\modFreq,   x.linexp(0, 127, 0.5, 100.0)) });
+    // APC40 device knobs — main bank 1, sub-bank 1 (b0_ds1_k1..8), x = 0-1
+    ~apcBindParam.(\b0_ds1_k1, { |x| ~r1fx[\greyhole].set(\delayTime, x.linexp(0.001, 1, 0.1,  5.0)) });
+    ~apcBindParam.(\b0_ds1_k2, { |x| ~r1fx[\greyhole].set(\damp,      x.linlin(0, 1, 0.0,   1.0)) });
+    ~apcBindParam.(\b0_ds1_k3, { |x| ~r1fx[\greyhole].set(\size,      x.linlin(0, 1, 0.1,   5.0)) });
+    ~apcBindParam.(\b0_ds1_k4, { |x| ~r1fx[\greyhole].set(\diff,      x.linlin(0, 1, 0.01,  0.99)) });
+    ~apcBindParam.(\b0_ds1_k5, { |x| ~r1fx[\greyhole].set(\feedback,  x.linlin(0, 1, 0.01,  0.95)) });
+    ~apcBindParam.(\b0_ds1_k6, { |x| ~r1fx[\greyhole].set(\modDepth,  x.linlin(0, 1, 0.0,   1.0)) });
+    ~apcBindParam.(\b0_ds1_k7, { |x| ~r1fx[\greyhole].set(\modFreq,   x.linexp(0.001, 1, 0.5, 100.0)) });
+    ~apcBindParam.(\b0_ds1_k8, { |x| ~r1fx[\greyhole].set(\mix,       x.linlin(0, 1, 0.0,   1.0)) });
 
     if(page.notNil and: { slot.notNil }) {
         ~toscFXLabel.(page, slot, "greyhole");
@@ -111,6 +113,10 @@
     ~r1fx[\greyhole]    = nil;
     ~r1fx[\setGreyhole] = nil;
     [\b1_s1_r1, \b1_s2_r1, \b1_s3_r1, \b1_s4_r1, \b1_s5_r1, \b1_s1_r2].do { |k| ~lcn[k] = nil };
+    if(~apcParamBindings.notNil) {
+        [\b0_ds1_k1, \b0_ds1_k2, \b0_ds1_k3, \b0_ds1_k4,
+         \b0_ds1_k5, \b0_ds1_k6, \b0_ds1_k7, \b0_ds1_k8].do { |k| ~apcParamBindings[k] = nil };
+    };
     if(page.notNil and: { slot.notNil }) {
         var base = "tosc/fx/" ++ page ++ "/fx" ++ slot;
         [\r1, \r2, \r3, \f].do { |c| ~oscParam[(base ++ "/" ++ c).asSymbol] = nil };
@@ -136,9 +142,6 @@
     ~lcn[\b1_s1_r1] = { |x| ~r1fx[\freeVerb].set(\room, x.linlin(0, 127, 0.0, 1.0)) };
     ~lcn[\b1_s2_r1] = { |x| ~r1fx[\freeVerb].set(\damp, x.linlin(0, 127, 0.0, 1.0)) };
     ~lcn[\b1_s3_r1] = { |x| ~r1fx[\freeVerb].set(\mix,  x.linlin(0, 127, 0.0, 1.0)) };
-    ~apcBindParam.(\b1_d1, { |x| ~r1fx[\freeVerb].set(\room, x.linlin(0, 127, 0.0,  1.0)) });
-    ~apcBindParam.(\b1_d2, { |x| ~r1fx[\freeVerb].set(\damp, x.linlin(0, 127, 0.01, 1.0)) });
-    ~apcBindParam.(\b1_d3, { |x| ~r1fx[\freeVerb].set(\mix,  x.linlin(0, 127, 0.0,  1.0)) });
 
     if(page.notNil and: { slot.notNil }) {
         ~toscFXLabel.(page, slot, "freeVerb");
@@ -179,8 +182,11 @@
     ~lcn[\b1_s1_r2] = { |x| ~r2fx[\combDelay].set(\dt,    x.linlin(0, 127, 0.01, 0.4)) };
     ~lcn[\b1_s2_r2] = { |x| ~r2fx[\combDelay].set(\dec,   x.linlin(0, 127, 0.1,  4.0)) };
     ~lcn[\b1_s3_r2] = { |x| ~r2fx[\combDelay].set(\maxdt, x.linlin(0, 127, 0.01, 0.5)) };
-    ~apcBindParam.(\b1_d6, { |x| ~r2fx[\combDelay].set(\dec, x.linlin(0, 127, 0.01, 4.0)) });
-    ~apcBindParam.(\b1_d5, { |x| ~r2fx[\combDelay].set(\dt,  x.linexp(0, 127, 0.01, 2.0)) });
+    // APC40 device knobs — main bank 1, sub-bank 2 (b0_ds2_k1..4), x = 0-1
+    ~apcBindParam.(\b0_ds2_k1, { |x| ~r2fx[\combDelay].set(\dt,    x.linlin(0, 1, 0.01, 0.4)) });
+    ~apcBindParam.(\b0_ds2_k2, { |x| ~r2fx[\combDelay].set(\dec,   x.linlin(0, 1, 0.1,  4.0)) });
+    ~apcBindParam.(\b0_ds2_k3, { |x| ~r2fx[\combDelay].set(\maxdt, x.linlin(0, 1, 0.01, 0.5)) });
+    ~apcBindParam.(\b0_ds2_k4, { |x| ~r2fx[\combDelay].set(\mix,   x.linlin(0, 1, 0.0,  1.0)) });
 
     if(page.notNil and: { slot.notNil }) {
         ~toscFXLabel.(page, slot, "comb");
@@ -199,6 +205,9 @@
     ~r2fx[\combDelay]    = nil;
     ~r2fx[\setCombDelay] = nil;
     [\b1_s1_r2, \b1_s2_r2, \b1_s3_r2].do { |k| ~lcn[k] = nil };
+    if(~apcParamBindings.notNil) {
+        [\b0_ds2_k1, \b0_ds2_k2, \b0_ds2_k3, \b0_ds2_k4].do { |k| ~apcParamBindings[k] = nil };
+    };
     if(page.notNil and: { slot.notNil }) {
         var base = "tosc/fx/" ++ page ++ "/fx" ++ slot;
         [\r1, \r2,  \f].do { |c| ~oscParam[(base ++ "/" ++ c).asSymbol] = nil };
@@ -220,6 +229,10 @@
     ~lcn[\b2_s1_r2] = { |x| ~r4fx[\chorus].set(\rate,  x.linlin(0, 127, 0.05, 5.0)) };
     ~lcn[\b2_s2_r2] = { |x| ~r4fx[\chorus].set(\depth, x.linlin(0, 127, 0.0, 0.015)) };
     ~lcn[\b2_s3_r2] = { |x| ~r4fx[\chorus].set(\mix,   x.linlin(0, 127, 0.0,  1.0)) };
+    // APC40 device knobs — main bank 1, sub-bank 4 (b0_ds4_k1..3), x = 0-1
+    ~apcBindParam.(\b0_ds4_k1, { |x| ~r4fx[\chorus].set(\rate,  x.linlin(0, 1, 0.05, 5.0)) });
+    ~apcBindParam.(\b0_ds4_k2, { |x| ~r4fx[\chorus].set(\depth, x.linlin(0, 1, 0.0, 0.015)) });
+    ~apcBindParam.(\b0_ds4_k3, { |x| ~r4fx[\chorus].set(\mix,   x.linlin(0, 1, 0.0, 1.0)) });
 
     if(page.notNil and: { slot.notNil }) {
         ~toscFXLabel.(page, slot, "chorus");
@@ -238,6 +251,9 @@
     ~r4fx[\chorus]    = nil;
     ~r4fx[\setChorus] = nil;
     [\b2_s1_r2, \b2_s2_r2, \b2_s3_r2].do { |k| ~lcn[k] = nil };
+    if(~apcParamBindings.notNil) {
+        [\b0_ds4_k1, \b0_ds4_k2, \b0_ds4_k3].do { |k| ~apcParamBindings[k] = nil };
+    };
     if(page.notNil and: { slot.notNil }) {
         var base = "tosc/fx/" ++ page ++ "/fx" ++ slot;
         [\r1, \r2, \f].do { |c| ~oscParam[(base ++ "/" ++ c).asSymbol] = nil };
@@ -277,12 +293,23 @@
         };
     }.fork;
 
+    // APC40 device knobs — main bank 1, sub-bank 3 (b0_ds3_k1..8), x = 0-1
+    // Closures resolve ~r3fx[\biscuit] at call time (same as TOSC — no sync needed)
+    ~apcBindParam.(\b0_ds3_k1, { |x| ~r3fx[\biscuit].set(\drive,      x.linlin(0, 1, 0.0,   0.95)) });
+    ~apcBindParam.(\b0_ds3_k2, { |x| ~r3fx[\biscuit].set(\clock,      x.linlin(0, 1, 250,   30000)) });
+    ~apcBindParam.(\b0_ds3_k3, { |x| ~r3fx[\biscuit].set(\bits,       x.linlin(0, 1, 8,     1)) });  // 8=transparent → 1=max crush
+    ~apcBindParam.(\b0_ds3_k4, { |x| ~r3fx[\biscuit].set(\shape,      x.linlin(0, 1, 0,     3)) });
+    ~apcBindParam.(\b0_ds3_k5, { |x| ~r3fx[\biscuit].set(\fxMode,     x.linlin(0, 1, 0,     3)) });
+    ~apcBindParam.(\b0_ds3_k6, { |x| ~r3fx[\biscuit].set(\filterFreq, x.linexp(0.001, 1, 200, 20000)) });
+    ~apcBindParam.(\b0_ds3_k7, { |x| ~r3fx[\biscuit].set(\filterQ,    x.linlin(0, 1, 0.1,   4.0)) });
+    ~apcBindParam.(\b0_ds3_k8, { |x| ~r3fx[\biscuit].set(\dressed,    x.linlin(0, 1, 0.0,   1.0)) });
+
     // TOSC bindings don't need server sync — closures resolve ~r3fx[\biscuit] at call time
     if(page.notNil and: { slot.notNil }) {
         ~toscFXLabel.(page, slot, "biscuit");
         ~toscFXBind.(page, slot, \r1, { |v| ~r3fx[\biscuit].set(\drive,     v.linlin(0, 1, 0.0,   0.95))  }, "drive");
         ~toscFXBind.(page, slot, \r2, { |v| ~r3fx[\biscuit].set(\clock,     v.linlin(0, 1, 250,   30000)) }, "clock");
-        ~toscFXBind.(page, slot, \r3, { |v| ~r3fx[\biscuit].set(\bits,      v.linlin(0, 1, 0.0,   1.0))   }, "bits");
+        ~toscFXBind.(page, slot, \r3, { |v| ~r3fx[\biscuit].set(\bits,      v.linlin(0, 1, 8,     1))     }, "bits");  // 8=transparent → 1=max crush
         ~toscFXBind.(page, slot, \r4, { |v| ~r3fx[\biscuit].set(\shape,     v.linlin(0, 1, 0,     3))     }, "shape");
         ~toscFXBind.(page, slot, \r5, { |v| ~r3fx[\biscuit].set(\fxMode,    v.linlin(0, 1, 0,     3))     }, "fxMode");
         ~toscFXBindXY.(page, slot, 1,
@@ -312,6 +339,10 @@
     ~r3fx[\biscuit].free;
     ~r3fx[\biscuit]    = nil;
     ~r3fx[\setBiscuit] = nil;
+    if(~apcParamBindings.notNil) {
+        [\b0_ds3_k1, \b0_ds3_k2, \b0_ds3_k3, \b0_ds3_k4,
+         \b0_ds3_k5, \b0_ds3_k6, \b0_ds3_k7, \b0_ds3_k8].do { |k| ~apcParamBindings[k] = nil };
+    };
     if(page.notNil and: { slot.notNil }) {
         var base = "tosc/fx/" ++ page ++ "/fx" ++ slot;
         [\r1, \r2, \r3, \r4,  \r5,  \f].do { |c| ~oscParam[(base ++ "/" ++ c).asSymbol] = nil };
