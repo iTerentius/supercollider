@@ -117,6 +117,111 @@
 
 ~apcBindB.(4, 24, \r3_fx_r1, 4, nil, nil, ~fxSendStop[\r3_fx_r1]);
 
+~apcBindToggleFnB.(2, 32,
+  {
+    Pbindef(\pbd_bd1,
+        \dur, Pseq([
+          Pn(Pdefn(\bd1_durs_b), 2),
+          Pn(Pdefn(\bd1_durs_c), 2),
+          Pn(Pdefn(\bd1_durs_a), 4)], inf),
+        \degree, Pseq([
+          Pn(Pdefn(\bd1_degs_a), 4),
+          Pn(Pdefn(\bd1_degs_b), 2)], inf)
+    )
+  },
+  {
+    Pbindef(\pbd_bd1,
+        \dur,    Pseq([Pn(Pdefn(\bd1_durs_a), 4)], inf),
+        \degree, Pseq([Pn(Pdefn(\bd1_degs_a), 4)], inf)
+    )
+  },
+  \green, \blue, "phrA", "phr0"
+);
+~toscPadBindToggleFn.(1, 1, 8,
+  {
+    Pbindef(\pbd_bd1,
+        \dur, Pn(Pseg([2, 1/2, 1/4], [4, 8], \lin, inf))
+    )
+  },
+  // fnB — restore default
+  {
+    Pbindef(\pbd_bd1,
+        \dur, Pseq([Pn(Pdefn(\bd1_durs_a), 4)], inf)
+    )
+  },
+  \green, \blue, "phrB", "phr0"
+);
+~toscPadBindToggleFn.(1, 2, 7,
+  {
+    Pbindef(\pbd_sd1,
+        \dur, Pseq([
+          Pn(Pdefn(\sd1_durs_a), 4),
+          Pn(Pdefn(\sd1_durs_b), 1),
+          // Pn(Pdefn(\sd1_durs_c), 1),
+        ], inf),
+        \degree, Pseq([
+          Pn(Pdefn(\sd1_degs_a), 4),
+          Pn(Pdefn(\sd1_degs_b), 2)], inf)
+    )
+  },
+  {
+    Pbindef(\pbd_sd1,
+        \dur,    Pseq([Pn(Pdefn(\sd1_durs_a), 4)], inf),
+        \degree, Pseq([Pn(Pdefn(\sd1_degs_a), 4)], inf)
+    )
+  },
+  \green, \blue, "phrA", "phr0"
+);
+~toscPadBindToggleFn.(1, 2, 8,
+  {
+    Pbindef(\pbd_sd1,
+        \dur, Pn(Pseg([2, 1/2, 1/4], [4, 8], \lin, inf))
+    )
+  },
+  // fnB — restore default
+  {
+    Pbindef(\pbd_sd1,
+        \dur, Pseq([Pn(Pdefn(\sd1_durs_a), 4)], inf)
+    )
+  },
+  \green, \blue, "phrB", "phr0"
+);
+~toscPadBindToggleFn.(1, 3, 7,
+  {
+    Pbindef(\pbd_hh1,
+        \dur, Pseq([
+          Pn(Pdefn(\hh1_durs_a), 4),
+          Pn(Pdefn(\hh1_durs_b), 1),
+          // Pn(Pdefn(\hh1_durs_c), 1),
+        ],  inf), 
+        \degree, Pseq([
+          Pn(Pdefn(\hh1_degs_a), 4),
+          Pn(Pdefn(\hh1_degs_b), 2)], inf)
+    )
+  },
+  {
+    Pbindef(\pbd_hh1,
+        \dur,    Pseq([Pn(Pdefn(\hh1_durs_a), 4)], inf),
+        \degree, Pseq([Pn(Pdefn(\hh1_degs_a), 4)], inf)
+    )
+  },
+  \green, \blue, "phrA", "phr0"
+);
+~toscPadBindToggleFn.(1, 3, 8,
+  {
+    Pbindef(\pbd_hh1,
+        \dur, Pn(Pseg([2, 1/2, 1/4], [4, 8], \lin, inf))
+    )
+  },
+  // fnB — restore default
+  {
+    Pbindef(\pbd_hh1,
+        \dur, Pseq([Pn(Pdefn(\hh1_durs_a), 4)], inf)
+    )
+  },
+  \green, \blue, "phrB", "phr0"
+);
+
 // --- TouchOSC Pad Bindings ---
 
 // Bank 1: voice launchers
@@ -180,7 +285,7 @@
 ~toscPadBind.(1, 9, 5, \bass_fx_4,    \purple, \green, ~fxSendStop[\bass_fx_4]);
 
 // Toggles
-~apcBindToggleFn.(2, 32,
+~toscPadBindToggleFn.(1, 1, 7,
   {
     Pbindef(\pbd_bd1,
         \dur, Pseq([
@@ -198,7 +303,7 @@
         \degree, Pseq([Pn(Pdefn(\bd1_degs_a), 4)], inf)
     )
   },
-  \green, \blue
+  \green, \blue, "phrA", "phr0"
 );
 ~toscPadBindToggleFn.(1, 1, 8,
   {
