@@ -133,6 +133,19 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
     };
 
     if(note.isInteger) {
+        // --- toggleFn shortcut ---
+        if(bindData.isKindOf(Event) and: { bindData[\type] == \toggleFn }) {
+            var active = bindData[\isActive].value;
+            channel = if(active) { 2 } { 0 };
+            color   = if(active) { bindData[\colorA] } { bindData[\colorB] };
+            if(~lpMini[\ledCache][note] != [channel, color]) {
+                if(~lpMini[\out].notNil) {
+                    ~lpMini[\out].noteOn(channel, note, color);
+                    ~lpMini[\ledCache][note] = [channel, color];
+                };
+            };
+        } {
+
         obj = ~lpMini[\getObj].(key);
 
         if(obj.isNil) {
@@ -164,15 +177,22 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
                 ~lpMini[\ledCache][note] = [channel, color];
             };
         };
+        }; // end toggleFn else
     };
 };
 
 // --- TOGGLE HANDLER ---
 ~lpMini[\toggle] = { |note, bindData|
     var key = bindData[\key];
-    var obj = ~lpMini[\getObj].(key);
     var clock = bindData[\clock] ?? { ~link ?? { TempoClock.default } };
     var quant = bindData[\quant] ?? { 4 };
+
+    // toggleFn: two-state function toggle
+    if(bindData[\type] == \toggleFn) {
+        bindData[\toggleHandler].value;
+    } {
+
+    var obj = ~lpMini[\getObj].(key);
 
     if(obj.notNil) {
         if(obj.isKindOf(Function)) {
@@ -209,6 +229,7 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
         ~lpMini[\ledCache][note] = nil;
         ~lpMini[\paint].(note, bindData);
     };
+    }; // end toggleFn else
 };
 
 // --- GROUP LAUNCHER ---
@@ -314,6 +335,61 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
         ~lpMini[\paint].(note, ~lpMini[\banks][bank - 1][note]);
     };
     "LP Bound Pad % (Bank %)".format(note, bank).postln;
+};
+
+// --- TOGGLE FUNCTION BINDING API ---
+// Two-state toggle: press once → fnA + colorA (pulsing); press again → fnB + colorB (static)
+// colorA/colorB are LP Mini palette indices (integers).
+~lpBindToggleFn = { |ref, fnA, fnB, colorA = 21, colorB = 9|
+    var note, active = false;
+    if(ref.isArray) {
+        note = ((9 - ref[0]) * 10) + ref[1];
+    } {
+        note = ref;
+    };
+    ~lpMini[\bindings][note] = (
+        key: {}, type: \toggleFn,
+        colorA: colorA, colorB: colorB,
+        isActive: { active },
+        toggleHandler: {
+            active = active.not;
+            if(active) { fnA.value } { fnB.value };
+            ~lpMini[\ledCache][note] = nil;
+            ~lpMini[\paint].(note, ~lpMini[\bindings][note]);
+        }
+    );
+    ~lpMini[\ledCache][note] = nil;
+    ~lpMini[\paint].(note, ~lpMini[\bindings][note]);
+    "LP ToggleFn Bound Pad % (Bank %)".format(note, ~lpMini[\bank]).postln;
+};
+
+// Bank-targeted version of ~lpBindToggleFn.
+~lpBindBToggleFn = { |bank, ref, fnA, fnB, colorA = 21, colorB = 9|
+    var note, active = false;
+    bank = bank.clip(1, 8);
+    if(ref.isArray) {
+        note = ((9 - ref[0]) * 10) + ref[1];
+    } {
+        note = ref;
+    };
+    ~lpMini[\banks][bank - 1][note] = (
+        key: {}, type: \toggleFn,
+        colorA: colorA, colorB: colorB,
+        isActive: { active },
+        toggleHandler: {
+            active = active.not;
+            if(active) { fnA.value } { fnB.value };
+            ~lpMini[\ledCache][note] = nil;
+            if(bank == ~lpMini[\bank]) {
+                ~lpMini[\paint].(note, ~lpMini[\banks][bank - 1][note]);
+            };
+        }
+    );
+    if(bank == ~lpMini[\bank]) {
+        ~lpMini[\ledCache][note] = nil;
+        ~lpMini[\paint].(note, ~lpMini[\banks][bank - 1][note]);
+    };
+    "LP ToggleFn Bound Pad % (Bank %)".format(note, bank).postln;
 };
 
 // --- MIDI LISTENERS ---
