@@ -89,11 +89,11 @@ Pdefn(\ntron_out,   ~t7.inbus.index);
 Pdefn(\ntron_scale, Scale.minor);
 
 // OCTAVE
-Pdefn(\ntron_oct_0, 5);              // 0..8
+Pdefn(\ntron_oct_0, 4);              // 0..8
 Pdefn(\ntron_oct_1, Pseq([3, 5, 4], 1));
 Pdefn(\ntron_octs, Pseq([
     // Pn(Pdefn(\ntron_oct_0), 2),
-    Pn(Pdefn(\ntron_oct_1), 2),
+    Pn(Pdefn(\ntron_oct_0), 2),
 ], 1));
 
 // DEGREE — words

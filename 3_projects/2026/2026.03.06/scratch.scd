@@ -183,4 +183,29 @@ var loadedDate = Date.fromString(savedDateStr, "%Y%m%d_%H%M%S").postln;
   ~oscParam['tosc/p1/1/1'].notNil).postln;
   )
 
+  MIDIdef(\devSubProbe, { |vel,num,chan|                    
+      if(vel > 0) { ["DEV BTN:", num, "ch", chan].postln }
+  }, nil, nil, ~apcMidiUID);                                        
+
+  ~t1_ilfx_2.set(\freeze, 1);
+(
+Pdef(\modCtl, Pbind(
+  \type,   \set,  
+  \id,   ~t1_ilfx_2.nodeID,  
+  \args,  #[\freeze, \mix, \amp,  \chunk],  
+  \chunk, Pseq([512,  1024, 2048, 4096],  inf), 
+  \freeze,   Pwhite(0,  1,  inf), 
+  \amp,  2, 
+  // \mix, Pseg([0.0,  0.5,  1.0], [2, 4],  \sin, inf),  
+  \mix,  0.9999999999, 
+  // \delta, Pkey(\dur)/4,  
+  // \dur,  Pseq([1/4, 1/2,  1,  2], inf),  
+  // \dur,  pbjorklund(3, 8,  inf), 
+  \dur,  Pseg([1/2,   1, 1/4], [2, 4], \sin,  inf), 
+  // \dur, 1/16, 
+));
+)
+Pdef(\modCtl).play;
+Pdef(\modCtl).stop;
+
 
