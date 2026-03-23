@@ -18,6 +18,7 @@ var dir = thisProcess.nowExecutingPath.dirname;
     (dir +/+ "parts/model_d.scd").load;
     (dir +/+ "parts/bass8.scd").load;
     (dir +/+ "automation/biscuit.scd").load;
+    (dir +/+ "arrangement.scd").load;
     (dir +/+ "lib/bindings.scd").load;
     "Score loaded.".postln;
 }.fork(AppClock);
