@@ -135,10 +135,27 @@ Pdef(\bCtl).play;
 ~r3_fx_rev.tryPerform(\free);
 ~r3_fx_del = ~r3.newPostSend(~r2, 0.5);
 ~r3_fx_del.tryPerform(\free);
-~r3.level_(1);
 
 ~r4_fx_rev = ~r4.newPostSend(~r1, 1);
 ~r4_fx_rev.tryPerform(\free);
 
 ~setR1.set(\room, 0.8,  \damp, 0.5,  \mix, 1.0);
 ~setR2.set(\maxdt, 1.0, \dt,   0.8,  \dec, 2.0);
+
+~t1_2_r5.tryPerform(\free);
+~t1_2_r5 = ~ensurePostSend.(~t1,  ~r5,  1);
+~t2_2_r5.tryPerform(\free);
+~t2_2_r5 = ~ensurePostSend.(~t2,  ~r5,  1);
+~t3_2_r5.tryPerform(\free);
+~t3_2_r5 = ~ensurePostSend.(~t3,  ~r5,  1);
+~t4_2_r5 = ~ensurePostSend.(~t4,  ~r5,  1);
+~t5_2_r5 = ~ensurePostSend.(~t5,  ~r5,  1);
+~t6_2_r5 = ~ensurePostSend.(~t6,  ~r5,  1);
+~t7_2_r5 = ~ensurePostSend.(~t7,  ~r5,  1);
+~t8_2_r5 = ~ensurePostSend.(~t8,  ~r5,  1);
+~r1_2_r5 = ~ensurePostSend.(~r1,  ~r5,  1);
+~r2_2_r5 = ~ensurePostSend.(~r2,  ~r5,  1);
+~r3_2_r5.tryPerform(\free);
+~r3_2_r5 = ~ensurePostSend.(~r3,  ~r5,  1);
+~r4_2_r5 = ~ensurePostSend.(~r4,  ~r5,  1);
+~r5.level_(1.0);

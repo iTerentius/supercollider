@@ -77,10 +77,10 @@ Pdef(\bCtl,
 Pdefn(\bsct_dur_0, 1);
 Pdefn(\bsct_dur_1, Pseq([1/4, 1, 1/2!2].flat, 1));
 // sentences
-Pdefn(\bsct_durs_A, Pseq([Pn(Pdefn(\bsct_dur_0), 4)], 1));   // slow scan
-Pdefn(\bsct_durs_B, Pseq([Pn(Pdefn(\bsct_dur_1), 4)], 1));   // variable
+Pdefn(\bsct_durs_a, Pseq([Pn(Pdefn(\bsct_dur_0), 4)], 1));   // slow scan
+Pdefn(\bsct_durs_a, Pseq([Pn(Pdefn(\bsct_dur_1), 4)], 1));   // variable
 // story
-Pdefn(\bsct_durs, Pseq([Pn(Pdefn(\bsct_durs_A), 1)], 1));
+Pdefn(\bsct_durs, Pseq([Pn(Pdefn(\bsct_durs_a), 1)], 1));
 
 // INPUT
 Pdefn(\bsct_drive_0, 1.5);          // 1.0..5.6  (+0 to +15dB)

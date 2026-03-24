@@ -3,22 +3,30 @@
 // Fork + s.sync so Buffer.read callbacks complete before parts access ~sTree.
 (
 var dir = thisProcess.nowExecutingPath.dirname;
+var safeLoad = { |path|
+    try {
+        (dir +/+ path).load;
+    } { |err|
+        ("Score: FAILED " ++ path).postln;
+        err.errorString.postln;
+    };
+};
 {
     (dir +/+ "lib/samples.scd").load;
     s.sync;  // wait for all Buffer.read /done callbacks to fire
-    (dir +/+ "lib/config.scd").load;
-    (dir +/+ "lib/fx.scd").load;
-    (dir +/+ "parts/thingA.scd").load;
-    (dir +/+ "parts/bd1.scd").load;
-    (dir +/+ "parts/sd1.scd").load;
-    (dir +/+ "parts/hh1.scd").load;
-    (dir +/+ "parts/roll.scd").load;
-    (dir +/+ "parts/ms20.scd").load;
-    (dir +/+ "parts/neutron.scd").load;
-    (dir +/+ "parts/model_d.scd").load;
-    (dir +/+ "parts/bass8.scd").load;
-    (dir +/+ "automation/biscuit.scd").load;
-    (dir +/+ "lib/bindings.scd").load;
+    safeLoad.("lib/config.scd");
+    safeLoad.("lib/fx.scd");
+    safeLoad.("parts/thingA.scd");
+    safeLoad.("parts/bd1.scd");
+    safeLoad.("parts/sd1.scd");
+    safeLoad.("parts/hh1.scd");
+    safeLoad.("parts/roll.scd");
+    safeLoad.("parts/ms20.scd");
+    safeLoad.("parts/neutron.scd");
+    safeLoad.("parts/model_d.scd");
+    safeLoad.("parts/bass8.scd");
+    safeLoad.("automation/biscuit.scd");
+    safeLoad.("lib/bindings.scd");
     "Score loaded.".postln;
 }.fork(AppClock);
 )

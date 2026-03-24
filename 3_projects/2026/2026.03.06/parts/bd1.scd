@@ -26,15 +26,15 @@ Pdefn(\bd1_out,   ~t1.inbus.index);
 Pdefn(\bd1_scale, Scale.minor);
 
 // BUFS — words
-~sbd1 = ~sTree[\bass_drums].values;
+~sbd1 = ~sTree[\bass_drums].values[1..5];
 Pdefn(\bd1_buf_0, Pseq(~sbd1, 1));
-Pdefn(\bd1_buf_1, Pseq(~sbd1[[0,  1]], 2));
+Pdefn(\bd1_buf_1, Pseq(~sbd1[[2,  1]], 2));
 // sentences
 Pdefn(\bd1_bufs_a, Pseq([Pn(Pdefn(\bd1_buf_1), 4)], 1));      // single hit
 Pdefn(\bd1_bufs_b, Pseq([Pn(Pdefn(\bd1_buf_0), 4)], 1));      // all samples
 Pdefn(\bd1_bufs_c, Pseq([Pn(Pdefn(\bd1_buf_1), 2), Pn(Pdefn(\bd1_buf_0), 2)], 1));
 // story
-Pdefn(\bd1_bufs, Pseq([Pn(Pdefn(\bd1_bufs_a), 1)], 1));
+Pdefn(\bd1_bufs, Pseq([Pn(Pdefn(\bd1_bufs_b), 1)], 1));
 
 // OCTS — words
 Pdefn(\bd1_oct_0, 5);

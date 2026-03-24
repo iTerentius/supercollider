@@ -6,7 +6,7 @@
 // PDEF
 ///////////////////////////////////////////////////////////////
 Pdef(\modelD,
-    Pbindef(\pbd_mD,  
+    Pbindef(\pbd_mD,
     // Pbind(
         \instrument,   \modelD,
         \out,          Pn(Pdefn(\mD_out),  inf),

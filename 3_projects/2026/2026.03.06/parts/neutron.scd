@@ -6,7 +6,7 @@
 // PDEF
 ///////////////////////////////////////////////////////////////
 Pdef(\neutron,
-    Pbindef(\pbd_ntron, 
+    Pbindef(\pbd_ntron,
     // Pbind(
         \instrument, \neutron,
         \out,        Pn(Pdefn(\ntron_out),   inf),
@@ -109,7 +109,7 @@ Pdefn(\ntron_degs, Pseq([
 ], 1));
 
 // DUR — words
-Pdefn(\ntron_dur_0, Pseq([1/4!2,  1/2, 11].flat,  1));
+Pdefn(\ntron_dur_0, Pseq([1/2, 11.5].flat,  1));
 Pdefn(\ntron_dur_3, Pseq([1/4!8, Rest()*2].flat,  1));
 Pdefn(\ntron_dur_1, Pseq([1/4!2, 1/2, 2,  Rest()].flat, 1));
 Pdefn(\ntron_dur_2, Pbjorklund(5, 8, 1)/4);
