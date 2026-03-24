@@ -7,9 +7,9 @@
 ~fxSetup[\r2_combDelay].(1, 2);
 ~fxSetup[\r3_biscuit].(1, 3);
 ~fxSetup[\r4_chorus].(1,  4);
-
-~toscPadSyncAll.();
-~toscMixSyncAll.()
+//
+// ~toscPadSyncAll.();
+// ~toscMixSyncAll.()
 // ~toscStateLoad.("2026_03_06".asSymbol);  // restore saved fader/filter positions
 )
 // ~fxSetup[\r1_greyhole].(1,  1);

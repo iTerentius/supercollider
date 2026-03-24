@@ -75,7 +75,7 @@ s.waitForBoot {
 
     // --- TouchOSC OSC router (always load — no device detection needed)
     "_includes/_osc-ctrl/tosc-router.scd".loadRelative;
-    // "_includes/_osc-ctrl/tosc-pad-router.scd".loadRelative;
+    "_includes/_osc-ctrl/tosc-pad-router.scd".loadRelative;
     "_includes/_osc-ctrl/tosc-fx.scd".loadRelative;
 
     // --- Mixer channels (with conditional controller bindings)

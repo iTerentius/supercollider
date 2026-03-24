@@ -7,17 +7,22 @@
     sig;
 };
 
-~freeze = {|in|
-    var sig, chains, wet, mix, freeze, chunk, amp;
+~spectral = {|in|
+    var sig, chains, wetFreeze, wetSmear, wet, mix, amp, freeze, smear, freezeSmear, chunk;
     sig = In.ar(~r5.inbus, 2);
     mix = \mix.kr(1);
     amp = \amp.kr(0.4);
     chunk = \chunk.kr(2048);
     freeze = \freeze.kr(0);
+    smear = \smear.kr(0);
+    freezeSmear = \freezeSmear.kr(0);
+
     chains = sig.collect({ |chan| FFT(LocalBuf(chunk), chan) });
-    chains = chains.collect({ |chain| PV_Freeze(chain, freeze) });
-    wet = IFFT(chains);
-    XFade2.ar(sig, wet, mix * 2 - 1);
+    wetFreeze = IFFT(chains.collect({ |chain| PV_Freeze(chain, freeze) }));
+    wetSmear  = IFFT(chains.collect({ |chain| PV_MagSmear(chain, smear) }));
+
+    wet = XFade2.ar(wetFreeze, wetSmear, freezeSmear * 2 - 1);
+    XFade2.ar(sig, wet, mix * 2 - 1) * amp;
 };
 
 ~exp1 = { |in|
@@ -31,7 +36,7 @@
 };
 
 ~r5_ilfx_1.free;
-~r5_ilfx_1 = ~r5.playfx(~freeze);
+~r5_ilfx_1 = ~r5.playfx(~spectral);
 
 // ~m1_ilfx_1.free;
 // ~m1_ilfx_1 = ~m1.playfx({|in|

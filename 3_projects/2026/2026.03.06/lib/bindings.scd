@@ -11,7 +11,7 @@
 ~lpBindB.(1, [1, 8], \modelD,  12);
 ~lpBindB.(1, [2, 1], \bass,  12);
 ~lpBindB.(4, [1,  1],  \bCtl, 21);
-~lpBindB.(4, [2,  1],  \freeze, 30);
+~lpBindB.(4, [1,  2],  \spectral, 30);
 
 ~lpBindB.(2, [1, 1], \bd1_fx_1, 41, nil, nil, ~makeFxSendTdef.(\bd1_fx_1, ~t1, ~r1));
 ~lpBindB.(2, [2, 1], \bd1_fx_2, 81, nil, nil, ~makeFxSendTdef.(\bd1_fx_2, ~t1, ~r2));
@@ -68,6 +68,7 @@
 ~lpBindB.(3, [5, 1], \bass_fx_5, 10, nil, nil, ~makeFxSendTdef.(\bass_fx_5, ~t9, ~r5));
 
 ~lpBindB.(4, [2, 1], \r3_fx_r1, 41, nil, nil, ~makeFxSendTdef.(\r3_fx_r1, ~r3, ~r1));
+~lpBindB.(4, [3, 1], \r3_fx_r5, 41, nil, nil, ~makeFxSendTdef.(\r3_fx_r5, ~r3, ~r5));
 
 
 // --- APC40 Mk2 pads (bank 1) ---
@@ -81,7 +82,7 @@
 ~apcBindB.(1, 39, \modelD,   4, \yellow);
 ~apcBindB.(2, 32, \bass,   4, \green);
 ~apcBindB.(4, 32, \bCtl,   4, \cyan);
-~apcBindB.(4, 33, \freeze,   4, \blue);
+~apcBindB.(4, 33, \spectral,   4, \blue);
 // --- Grid Layout ---
 // 5 rows x 8 columns of clip launch pads (notes 0-39)
 // Row 0 (top):    32,33,34,35,36,37,38,39

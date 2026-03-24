@@ -26,6 +26,7 @@ var safeLoad = { |path|
     safeLoad.("parts/model_d.scd");
     safeLoad.("parts/bass8.scd");
     safeLoad.("automation/biscuit.scd");
+    safeLoad.("automation/spectral.scd");
     safeLoad.("lib/bindings.scd");
     "Score loaded.".postln;
 }.fork(AppClock);
