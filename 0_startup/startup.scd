@@ -49,7 +49,8 @@ case
     "Audio config: using defaults".postln;
 };
 
-if (s.serverRunning.not) { s.boot };
+Server.killAll;  // ensure previous scsynth is gone before boot (avoids macOS AVAudio race)
+s.boot;
 
 s.waitForBoot {
     // --- Core synths + sample loader (always load)
@@ -74,7 +75,7 @@ s.waitForBoot {
 
     // --- TouchOSC OSC router (always load — no device detection needed)
     "_includes/_osc-ctrl/tosc-router.scd".loadRelative;
-    "_includes/_osc-ctrl/tosc-pad-router.scd".loadRelative;
+    // "_includes/_osc-ctrl/tosc-pad-router.scd".loadRelative;
     "_includes/_osc-ctrl/tosc-fx.scd".loadRelative;
 
     // --- Mixer channels (with conditional controller bindings)

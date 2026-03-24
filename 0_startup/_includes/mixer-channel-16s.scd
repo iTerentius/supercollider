@@ -44,13 +44,20 @@
 ~r2 = MixerChannel.new(\r2, s, 2, 2, outbus: ~m1.inbus);
 ~r3 = MixerChannel.new(\r3, s, 2, 2, outbus: ~m1.inbus);
 ~r4 = MixerChannel.new(\r4, s, 2, 2, outbus: ~m1.inbus);
+~r5 = MixerChannel.new(\r4, s, 2, 2, outbus: ~m1.inbus);
 
 // Per-return fx dictionaries — populated by ~fxSetup calls
-~r1fx = (); ~r2fx = (); ~r3fx = (); ~r4fx = ();
+~r1fx = (); ~r2fx = (); ~r3fx = (); ~r4fx = (); 
 ~fxSetup[\r1_greyhole].(1,  1);
 ~fxSetup[\r2_combDelay].(1, 2);
 ~fxSetup[\r3_biscuit].(1, 3);  // teardown-safe: frees any prior instance before recreating
 ~fxSetup[\r4_chorus].(1,  4);
+
+// FX Buses
+~g1 = MixerChannel.new(\g1, s, 2, 2, outbus: ~m1.inbus);
+~g2 = MixerChannel.new(\g2, s, 2, 2, outbus: ~m1.inbus);
+~g3 = MixerChannel.new(\g3, s, 2, 2, outbus: ~m1.inbus);
+~g4 = MixerChannel.new(\g4, s, 2, 2, outbus: ~m1.inbus);
 
 // submix example. perc feeds t1
 ~perc = MixerChannel.new(\perc, s, 2, 2, outbus: ~t1.inbus);

@@ -51,8 +51,9 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
 ~lpMini[\colors] = (
     empty:       0, pdefDefault: 9, ndefDefault: 95,
     funcDefault: 13, trigger: 21,
-    bankOn:      17,  // white: bank nav available
-    bankOff:     0    // off: at boundary
+    bankActive:  3,   // white: selected bank
+    bankOff:     0,   // off: inactive bank
+    stopAll:     9    // amber: stop-all indicator
 );
 
 // --- HARDWARE CONTROL ---
@@ -81,8 +82,9 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
     var b = ~lpMini[\bank];
     var out = ~lpMini[\out];
     if(out.notNil) {
-        out.control(0, 93, if(b > 1) { ~lpMini[\colors][\bankOn] } { ~lpMini[\colors][\bankOff] });
-        out.control(0, 94, if(b < 8) { ~lpMini[\colors][\bankOn] } { ~lpMini[\colors][\bankOff] });
+        (1..8).do { |i|
+            out.control(0, 90 + i, if(i == b) { ~lpMini[\colors][\bankActive] } { ~lpMini[\colors][\bankOff] });
+        };
     };
     "LP Mini Bank: %/8".format(b).postln;
 };
@@ -102,6 +104,27 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
         ~lpMini[\ledCache] = IdentityDictionary.new;  // watcher repaints new bank
         ~lpMini[\paintBankLEDs].();
     };
+};
+
+// --- STOP ALL ---
+~lpMini[\stopAll] = {
+    ~lpMini[\banks].do { |bankDict|
+        bankDict.keysValuesDo { |note, bindData|
+            var obj = ~lpMini[\getObj].(bindData[\key]);
+            if(obj.notNil) {
+                var isRunning = if(obj.isKindOf(NodeProxy)) { obj.isMonitoring } { obj.isPlaying };
+                if(isRunning) {
+                    var q = bindData[\quant] ?? { 4 };
+                    if(bindData[\onStop].notNil) {
+                        bindData[\onStop].value;
+                    } {
+                        if(obj.respondsTo(\stopQ)) { obj.stopQ(q) } { obj.stop };
+                    };
+                };
+            };
+        };
+    };
+    "LP Mini: All clips stopped".postln;
 };
 
 // --- OBJECT RESOLVER ---
@@ -288,6 +311,24 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
 ~lpMini[\watcher] = Routine {
     loop {
         ~lpMini[\bindings].keysValuesDo { |note, bindData| ~lpMini[\paint].(note, bindData); };
+        if(~lpMini[\out].notNil) {
+            var anyPlaying = false;
+            ~lpMini[\banks].do { |bankDict|
+                bankDict.do { |bindData|
+                    if(anyPlaying.not and: { bindData[\type] != \toggleFn }) {
+                        var obj = ~lpMini[\getObj].(bindData[\key]);
+                        if(obj.notNil and: { obj.isKindOf(Function).not }) {
+                            if(obj.isKindOf(NodeProxy)) {
+                                if(obj.isMonitoring) { anyPlaying = true }
+                            } {
+                                if(obj.isPlaying) { anyPlaying = true }
+                            };
+                        };
+                    };
+                };
+            };
+            ~lpMini[\out].control(0, 19, if(anyPlaying) { ~lpMini[\colors][\stopAll] } { 0 });
+        };
         0.1.wait;
     }
 }.play(AppClock);
@@ -412,28 +453,13 @@ if(~lpMini[\uid].notNil) {
 if(~lpMini[\uid].notNil) {
     MIDIdef.cc(\lpMini_cc, { |val, cc, chan, src|
     if(val > 0) {
-        // 1. Bank Navigation: Left (CC 93) / Right (CC 94)
-        if(cc == 93) { ~lpMini[\switchBank].(~lpMini[\bank] - 1) };
-        if(cc == 94) { ~lpMini[\switchBank].(~lpMini[\bank] + 1) };
-
-        // 2. Column Launch (Top Buttons 91,92,95-98 — skipping 93/94)
-        if(cc >= 91 and: { cc <= 98 } and: { cc != 93 and: { cc != 94 } }) {
-            var col = cc - 90;
-            var noteList = (1..8).collect { |r| ((9-r)*10) + col };
-            "Column Launch Col %".format(col).postln;
-            ~lpMini[\launchList].(noteList);
+        // 1. Bank Select (Top Buttons CC 91-98 → banks 1-8)
+        if(cc >= 91 and: { cc <= 98 }) {
+            ~lpMini[\switchBank].(cc - 90);
         };
 
-        // 3. Scene Launch (Right Buttons 89..19)
-        if( (cc % 10) == 9 and: { cc >= 19 and: { cc <= 89 } }) {
-            var row = (9 - (cc / 10).floor).asInteger;
-            if(row >= 1 and: { row <= 8 }) {
-                var rowBase = (9 - row) * 10;
-                var noteList = (1..8).collect { |c| rowBase + c };
-                "Scene Launch Row %".format(row).postln;
-                ~lpMini[\launchList].(noteList);
-            };
-        };
+        // 2. Stop All (Bottom-right side button CC 19)
+        if(cc == 19) { ~lpMini[\stopAll].() };
     };
 }, nil, nil, ~lpMini[\uid]);
 } {
