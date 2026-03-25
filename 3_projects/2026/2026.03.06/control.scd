@@ -13,7 +13,7 @@
 
 Pdef(\bd1).play;
 Pdef(\bd1).stop;
-
+~m1.level_(0.6);
 ~bd1_rev = ~ensurePostSend.(~t1, ~r1, 0.7);
 ~bd1_rev.tryPerform(\free);
 ~bd1_rev.level_(1);
@@ -39,20 +39,24 @@ Pdef(\bd1).stop;
 Pdef(\sd1).play;
 Pdef(\sd1).stop;
 
-~sd1_rev = ~ensurePostSend.(~psd1, ~r1, 0.7);
+~sd1_rev = ~ensurePostSend.(~t2, ~r1, 0.7);
 ~sd1_rev.tryPerform(\free);
 ~sd1_rev.level_(1);
 
-~sd1_del = ~ensurePostSend.(~psd1, ~r2, 1);
+~sd1_del = ~ensurePostSend.(~t2, ~r2, 1);
 ~sd1_del.tryPerform(\free);
 
-~sd1_b = ~ensurePostSend.(~psd1, ~r3, 1);
+~sd1_b = ~ensurePostSend.(~t2, ~r3, 1);
 ~sd1_b.tryPerform(\free);
 ~sd1_b.level_(1);
 
-~sd1_t = ~ensurePostSend.(~psd1, ~r4, 1);
+~sd1_t = ~ensurePostSend.(~t2, ~r4, 1);
 ~sd1_t.tryPerform(\free);
 ~sd1_t.level_(0.7);
+
+~sd1_s = ~ensurePostSend.(~t2, ~r5, 1);
+~sd1_s.tryPerform(\free);
+~sd1_s.level_(0.7);
 
 //--------------------------------------------------
 // hh1
@@ -78,18 +82,19 @@ Pdef(\roll).play;
 Pdef(\roll).stop;
 
 ~roll_fx1.free;
-~roll_fx1 = ~t2.playfx(~exp1);
+~roll_fx1 = ~t4.playfx(~exp1);
 
 Pdef(\roll_fx_ctl).play;
+Pdef(\roll_fx_ctl).stop;
 
-~roll_rev = ~ensurePostSend.(~t2, ~r1, 0.8);
+~roll_rev = ~ensurePostSend.(~t4, ~r1, 0.8);
 ~roll_rev.tryPerform(\free);
-~roll_del = ~ensurePostSend.(~t2, ~r2, 0.8);
+~roll_del = ~ensurePostSend.(~t4, ~r2, 0.8);
 ~roll_del.tryPerform(\free);
-~roll_b = ~ensurePostSend.(~t2, ~r3, 1);
+~roll_b = ~ensurePostSend.(~t4, ~r3, 1);
 ~roll_b.tryPerform(\free);
-~roll_glitch = ~ensurePostSend.(~t2, ~r4, 1);
-~roll_glitch.tryPerform(\free);
+~roll_s = ~ensurePostSend.(~t4, ~r5, 1);
+~roll_s.tryPerform(\free);
 
 //--------------------------------------------------
 // ms20

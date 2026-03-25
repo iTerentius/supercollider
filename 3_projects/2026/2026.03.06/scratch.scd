@@ -124,3 +124,5 @@ Pdef(\modCtl).stop;
           ("Connected: " ++ ep.device ++ " / " ++ ep.name).postln;        
       };          
   };                                                                      
+  ~roll_phrA_fnA.(); 
+  ~roll_phrA_fnB.();  

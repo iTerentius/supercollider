@@ -56,6 +56,7 @@ Pdefn(\hh1_degs, Pseq([
 // ROLL
 (
 "parts/roll.scd".loadRelative;
+~sRoll = ~sTree[\hoarder_mono].values[0..6];
 Pdefn(\roll_durs, Pseq([
     Pn(Pdefn(\roll_durs_b), 2),    // whole notes — sparse intro
     Pn(Pdefn(\roll_durs_a), 4),    // euclidean

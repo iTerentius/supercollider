@@ -28,7 +28,7 @@ Pdef(\roll,
 // Glitch FX — controls ~roll_fx1 node (set in control.scd: ~roll_fx1 = ~t2.playfx(~exp1))
 Pdef(\roll_fx_ctl, Pbindef(\roll_fx_ctl_pbd,
     \type,    \set,
-    \id,      Pfunc({ ~roll_fx1.nodeID }),
+    \id,      Pfunc({ ~t4.nodeID }),
     \args,    #[\mod1, \amp, \dur],
     \amp,     Pn(Pdefn(\roll_fx_amps),  inf),
     \mod1,    Pn(Pdefn(\roll_fx_mod1),  inf),
@@ -42,16 +42,16 @@ Pdef(\roll_fx_ctl, Pbindef(\roll_fx_ctl_pbd,
 ///////////////////////////////////////////////////////////////
 Pdefn(\roll_out,   ~t4.inbus.index);
 Pdefn(\roll_scale, Scale.minor);
-Pdefn(\roll_ins,  \slice_m);
+Pdefn(\roll_ins,  \slice_s);
 
 // BUFS — words
-~sRoll = (~sTree[\jttcot] ?? { "roll: ~sTree[\\jttcot] not in sTree — check samples.scd".warn; IdentityDictionary.new }).values[0..6];
+// ~sRoll = (~sTree[\jttcot] ?? { "roll: ~sTree[\\jttcot] not in sTree — check samples.scd".warn; IdentityDictionary.new }).values[0..6];
 // ~sRoll = ~sTree[\hoarder_mono].values[0..6];
 // ~sRoll = ~sTree[\casio_mt_100].values;
 // ~sRoll = ~sTree[\bass_drops].values;
 // ~sRoll = ~sTree[\mm].values;
 // ~sRoll = ~sTree[\neutron_12].values;
-// ~sRoll = ~sTree[\drumloops].values;
+~sRoll = ~sTree[\drumloops].values;
 // ~sRoll = ~sTree[\_mono].values;
 Pdefn(\roll_buf_0, Pseq(~sRoll, 1));
 Pdefn(\roll_buf_1, Pseq(~sRoll[[3,  4,  5]], 1));
@@ -68,7 +68,7 @@ Pdefn(\roll_oct_1, Pseq([1, 3, 7], 1));
 Pdefn(\roll_octs, Pseq([Pn(Pdefn(\roll_oct_0), 4)], 1));
 
 // AMPS — words
-Pdefn(\roll_amp_0, 0.8);
+Pdefn(\roll_amp_0, 0.3);
 Pdefn(\roll_amp_1, Pwhite(0.75, 0.5, 1));
 // story
 Pdefn(\roll_amps, Pseq([Pn(Pdefn(\roll_amp_0), 4)], 1));
@@ -134,7 +134,7 @@ Pdefn(\roll_durs, Pseq([Pn(Pdefn(\roll_durs_2), 1)], 1));
 Pdefn(\roll_str_0, 1);
 Pdefn(\roll_str_1, Pseq([1/4, 1/2, 1], 4));
 // story
-Pdefn(\roll_strs, Pseq([Pn(Pdefn(\roll_str_0), 32)], 1));
+Pdefn(\roll_strs, Pseq([Pn(Pdefn(\roll_str_1), 32)], 1));
 
 ///////////////////////////////////////////////////////////////
 // ROLL FX PDEFNS  (controls ~roll_fx1 = ~t2.playfx(~exp1))
