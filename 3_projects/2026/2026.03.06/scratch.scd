@@ -105,3 +105,22 @@ Pdef(\modCtl).stop;
   Pdefn(\ntron_out).source.postln;           // nil or wrong = bad bus
   Synth(\neutron, [\out, ~t7.inbus.index, \freq, 220, \amp, 0.5]);        
   Pbindef(\pbd_ntron).patterns.postln;                      
+    MIDIClient.sources.do { |ep, i| [i, ep.device, ep.name, ep.uid].postln }
+
+  [                                                                       
+    "apcMidiUID:", ~apcMidiUID,
+    "apcOut:", ~apcOut,                                                   
+    "apcPadMap size:", ~apcPadMap.size,
+    "apcBanks[0] size:", ~apcBanks[0].size                                
+  ].postln
+                                                                          
+  // 4. Raw MIDI test — press any pad on either controller after running
+  this                                                                    
+  MIDIdef.noteOn(\dbg, { |v, n, c, s| ["NOTE", v, n, c, s].postln })
+  MIDIIn.disconnectAll;
+  MIDIClient.sources.do { |ep, i|
+      if(ep.device.containsi("IAC Driver").not) {                         
+          MIDIIn.connect(i);
+          ("Connected: " ++ ep.device ++ " / " ++ ep.name).postln;        
+      };          
+  };                                                                      

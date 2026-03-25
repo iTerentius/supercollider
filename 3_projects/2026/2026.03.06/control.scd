@@ -18,16 +18,20 @@ Pdef(\bd1).stop;
 ~bd1_rev.tryPerform(\free);
 ~bd1_rev.level_(1);
 
-~bd1_del = ~ensurePostSend.(~pbd1, ~r2, 1);
+~bd1_del = ~ensurePostSend.(~t1, ~r2, 1);
 ~bd1_del.tryPerform(\free);
 
-~bd1_b = ~ensurePostSend.(~pbd1, ~r3, 1);
+~bd1_b = ~ensurePostSend.(~t1, ~r3, 1);
 ~bd1_b.tryPerform(\free);
-~bd1_b.level_(1);
+~bd1_b.level_(0.7);
 
-~bd1_t = ~ensurePostSend.(~pbd1, ~r4, 1);
+~bd1_t = ~ensurePostSend.(~t1, ~r4, 1);
 ~bd1_t.tryPerform(\free);
 ~bd1_t.level_(0.7);
+
+~bd1_s = ~ensurePostSend.(~t1, ~r5, 1);
+~bd1_s.tryPerform(\free);
+~bd1_s.level_(1);
 
 //--------------------------------------------------
 // sd1
@@ -56,14 +60,16 @@ Pdef(\sd1).stop;
 Pdef(\hh1).play;
 Pdef(\hh1).stop;
 
-~hh1_rev = ~ensurePostSend.(~phh1, ~r1, 1);
+~hh1_rev = ~ensurePostSend.(~t3, ~r1, 1);
 ~hh1_rev.tryPerform(\free);
-~hh1_del = ~ensurePostSend.(~phh1, ~r2, 1);
+~hh1_del = ~ensurePostSend.(~t3, ~r2, 1);
 ~hh1_del.tryPerform(\free);
-~hh1_b = ~ensurePostSend.(~phh1, ~r3, 1);
+~hh1_b = ~ensurePostSend.(~t3, ~r3, 1);
 ~hh1_b.tryPerform(\free);
-~hh1_t = ~ensurePostSend.(~phh1, ~r4, 1);
+~hh1_t = ~ensurePostSend.(~t3, ~r4, 1);
 ~hh1_t.tryPerform(\free);
+~hh1_s = ~ensurePostSend.(~t3, ~r5, 1);
+~hh1_s.tryPerform(\free);
 
 //--------------------------------------------------
 // roll
@@ -130,7 +136,7 @@ Pdef(\modelD).stop;
 // biscuit FX
 
 Pdef(\bCtl).play;
-
+Pdef(\spectral).play;
 ~r3_fx_rev = ~r3.newPostSend(~r1, 0.5);
 ~r3_fx_rev.tryPerform(\free);
 ~r3_fx_del = ~r3.newPostSend(~r2, 0.5);

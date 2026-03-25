@@ -41,7 +41,7 @@ Pdefn(\spectral_outs_a, Pseq([Pn(Pdefn(\spectral_outs_0), 4)], 1));
 Pdefn(\spectral_outs, Pseq([Pn(Pdefn(\spectral_outs_a), 1)], 1));
 
 // AMP
-Pdefn(\spectral_amp_0, 0.1);
+Pdefn(\spectral_amp_0, 1.1);
 // sentences
 Pdefn(\spectral_amp_a, Pseq([Pn(Pdefn(\spectral_amp_0), 4)], 1));
 // story
