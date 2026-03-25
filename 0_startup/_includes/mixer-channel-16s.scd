@@ -39,15 +39,16 @@
 ~r2.tryPerform(\free);
 ~r3.tryPerform(\free);
 ~r4.tryPerform(\free);
+~r5.tryPerform(\free);
 
 ~r1 = MixerChannel.new(\r1, s, 2, 2, outbus: ~m1.inbus);
 ~r2 = MixerChannel.new(\r2, s, 2, 2, outbus: ~m1.inbus);
 ~r3 = MixerChannel.new(\r3, s, 2, 2, outbus: ~m1.inbus);
 ~r4 = MixerChannel.new(\r4, s, 2, 2, outbus: ~m1.inbus);
-~r5 = MixerChannel.new(\r4, s, 2, 2, outbus: ~m1.inbus);
+~r5 = MixerChannel.new(\r5, s, 2, 2, outbus: ~m1.inbus);
 
 // Per-return fx dictionaries — populated by ~fxSetup calls
-~r1fx = (); ~r2fx = (); ~r3fx = (); ~r4fx = (); 
+~r1fx = (); ~r2fx = (); ~r3fx = (); ~r4fx = (); ~r5fx = (); 
 ~fxSetup[\r1_greyhole].(1,  1);
 ~fxSetup[\r2_combDelay].(1, 2);
 ~fxSetup[\r3_biscuit].(1, 3);  // teardown-safe: frees any prior instance before recreating
@@ -109,7 +110,7 @@
 ~inlineFXmk.(~t5, \t5);   ~inlineFXmk.(~t6, \t6);   ~inlineFXmk.(~t7, \t7);   ~inlineFXmk.(~t8, \t8);
 ~inlineFXmk.(~t9, \t9);   ~inlineFXmk.(~t10, \t10); ~inlineFXmk.(~t11, \t11); ~inlineFXmk.(~t12, \t12);
 // Returns
-~inlineFXmk.(~r1, \r1);   ~inlineFXmk.(~r2, \r2);   ~inlineFXmk.(~r3, \r3);   ~inlineFXmk.(~r4, \r4);
+~inlineFXmk.(~r1, \r1);   ~inlineFXmk.(~r2, \r2);   ~inlineFXmk.(~r3, \r3);   ~inlineFXmk.(~r4, \r4); ~inlineFXmk.(~r5, \r5);
 // Perc submix + sub-channels
 ~inlineFXmk.(~perc, \perc);
 ~inlineFXmk.(~pbd1, \pbd1); ~inlineFXmk.(~pbd2, \pbd2);
@@ -206,6 +207,9 @@ if(~apcBindParam.notNil) {
     ~apcMixBind.(1, 3, ~t11, \t11);  ~apcMixBind.(1, 4, ~t12, \t12);
     ~apcMixBind.(1, 5, ~r1, \r1, false);
     ~apcMixBind.(1, 6, ~r2, \r2, false);
+    ~apcMixBind.(1, 7, ~r3, \r3, false);
+    ~apcMixBind.(1, 8, ~r4, \r4, false);
+    ~apcMixBind.(2, 8, ~r5, \r5, false);
 
     "APC40 mkII bindings complete (banks 0-1).".postln;
 } {
@@ -350,7 +354,7 @@ if(~oscParam.notNil) {
 ~pcr1.level_(1.0); ~pcr2.level_(1.0);
 ~pex1.level_(1.0); ~pex2.level_(1.0);
 // Returns
-~r1.level_(0.6); ~r2.level_(0.6); ~r3.level_(0.6); ~r4.level_(0.6);
+~r1.level_(0.6); ~r2.level_(0.6); ~r3.level_(0.6); ~r4.level_(0.6); ~r5.level_(0.8);
 
 // ================= TOUCHOSC INITIAL SYNC =================
 // ~toscMixSyncAll: push all mixer state + labels to TOSC.

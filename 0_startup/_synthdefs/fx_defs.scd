@@ -46,6 +46,24 @@
     XFade2.ar(sig, wet, \mix.kr(0.5).linlin(0, 1, -1, 1)) * \amp.kr(1)
 };
 
+~fxDefs[\spectral] = { |in, bus|
+    var sig, chains, wetFreeze, wetSmear, wet, mix, amp, freeze, smear, freezeSmear, chunk;
+    sig = In.ar(bus, 2);
+    mix = \mix.kr(1);
+    amp = \amp.kr(0.4);
+    chunk = \chunk.kr(2048);
+    freeze = \freeze.kr(0);
+    smear = \smear.kr(0);
+    freezeSmear = \freezeSmear.kr(0);
+
+    chains = sig.collect({ |chan| FFT(LocalBuf(chunk), chan) });
+    wetFreeze = IFFT(chains.collect({ |chain| PV_Freeze(chain, freeze) }));
+    wetSmear  = IFFT(chains.collect({ |chain| PV_MagSmear(chain, smear) }));
+
+    wet = XFade2.ar(wetFreeze, wetSmear, freezeSmear * 2 - 1);
+    XFade2.ar(sig, wet, mix * 2 - 1) * amp;
+};
+
 // ---- r1: greyhole (default) / freeVerb (swap) ----
 // TOSC layout: r1=delayTime, r2=feedback, xy1(x=size, y=damp), f=modDepth
 // diff and modFreq: LC/APC only (TOSC has no remaining controls)
@@ -350,6 +368,45 @@
         ~oscParam[(base ++ "/xy1/y").asSymbol] = nil;
         ~oscParam[(base ++ "/xy2/x").asSymbol] = nil;
         ~oscParam[(base ++ "/xy2/y").asSymbol] = nil;
+    };
+};
+
+~fxSetup[\r5_spectral] = { |page=nil, slot=nil|
+    ~r5fx[\spectral].tryPerform(\free);
+    ~r5fx[\spectral] = nil; ~r5fx[\setSpectral] = nil;
+    ~r5fx[\spectral] = ~r5.playfx({ |in| ~fxDefs[\spectral].(in, ~r5.inbus.index) });
+
+    ~r5fx[\setSpectral] = { |mix, amp, chunk, freeze, smear, freezeSmear|
+        mix.notNil.if  { ~r5fx[\spectral].set(\mix,  mix)  };
+        amp.notNil.if { ~r5fx[\spectral].set(\amp, amp) };
+        chunk.notNil.if { ~r5fx[\spectral].set(\chunk, chunk) };
+        freeze.notNil.if { ~r5fx[\spectral].set(\freeze, freeze) };
+        smear.notNil.if { ~r5fx[\spectral].set(\smear, smear) };
+        freezeSmear.notNil.if { ~r5fx[\spectral].set(\freezeSmear, freezeSmear) };
+    };
+    
+    ~apcBindParam.(\b0_ds5_k1, { |x|
+      var chunks = [128, 256, 512, 1024, 2048];
+      ~r5fx[\spectral].set(\chunk, chunks[(x.linlin(0, 1, 0, 4).round.asInteger)]);});
+    ~apcBindParam.(\b0_ds5_k2, { |x| ~r5fx[\spectral].set(\freeze,      x.linlin(0, 1, 0,   1).round.asInteger) });
+    ~apcBindParam.(\b0_ds5_k3, { |x| ~r5fx[\spectral].set(\smear,       x.linlin(0, 1, 0,    1).round.asInteger) });  // 8=transparent → 1=max crush
+    ~apcBindParam.(\b0_ds5_k4, { |x| ~r5fx[\spectral].set(\freezeSmear,      x.linlin(0, 1, 0, 1)) });
+    ~apcBindParam.(\b0_ds5_k5, { |x| ~r5fx[\spectral].set(\amp,     x.linlin(0, 1, 0.01,     3.0)) });
+    ~apcBindParam.(\b0_ds5_k6, { |x| ~r5fx[\spectral].set(\mix,     x.linlin(0, 1, 0.0,   1.0)) });
+};
+
+~fxTeardown[\r5_spectral] = { |page=nil, slot=nil|
+    ~r5fx[\spectral].free;
+    ~r5fx[\spectral]    = nil;
+    ~r5fx[\setSpectral] = nil;
+    [\b1_s1_r1, \b1_s2_r1, \b1_s3_r1].do { |k| ~lcn[k] = nil };
+    if(page.notNil and: { slot.notNil }) {
+        var base = "tosc/fx/" ++ page ++ "/fx" ++ slot;
+        [\r1, \r2, \r3, \f].do { |c| ~oscParam[(base ++ "/" ++ c).asSymbol] = nil };
+    };
+    if(~apcParamBindings.notNil) {
+        [\b0_ds5_k1, \b0_ds5_k2, \b0_ds5_k3, \b0_ds5_k4,
+         \b0_ds5_k5, \b0_ds5_k6, \b0_ds5_k7, \b0_ds5_k8].do { |k| ~apcParamBindings[k] = nil };
     };
 };
 

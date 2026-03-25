@@ -7,6 +7,7 @@
 ~fxSetup[\r2_combDelay].(1, 2);
 ~fxSetup[\r3_biscuit].(1, 3);
 ~fxSetup[\r4_chorus].(1,  4);
+~fxSetup[\r5_spectral].(1,  5);
 //
 // ~toscPadSyncAll.();
 // ~toscMixSyncAll.()
