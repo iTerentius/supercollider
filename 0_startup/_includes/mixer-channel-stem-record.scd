@@ -116,9 +116,9 @@
 // Emergency restore if recording stops unexpectedly while MIDI spy is active.
 // Safe to call even if no spy is active.
 ~stemMidiUnpatch = {
-    if(~_stemMidiOrigNoteType.notNil) {
-        Event.eventTypes[\note] = ~_stemMidiOrigNoteType;
-        ~_stemMidiOrigNoteType = nil;
+    if(~stemMidiOrigNoteHandler.notNil) {
+        Event.eventTypes[\note] = ~stemMidiOrigNoteHandler;
+        ~stemMidiOrigNoteHandler = nil;
         "[stemRec] Event.eventTypes[\\note] restored.".postln;
     } {
         "[stemRec] no MIDI spy active.".postln;
@@ -159,12 +159,13 @@
 
     if(idxs.isEmpty) {
         "stemDiskStart - no valid stem buses".warn;
-        ^{ |beats=0| nil };
-    };
+        { |beats=0| nil }
+    } {
 
     if(dirPath.isNil or: { dirPath == "" }) {
         dirPath = (~stemBaseDir ? (Platform.userHomeDir +/+ "recordings"));
     };
+    dirPath = dirPath.asString.standardizePath;
     if(File.exists(dirPath).not) { File.mkdir(dirPath); ("created " ++ dirPath).postln; };
 
     d = Date.getDate;
@@ -267,32 +268,30 @@
                 // --- History save ---
                 if(captureHistory) {
                     try {
-                        var hPath = baseDir +/+ (baseName ++ ".history.scd");
                         History.end;
-                        History.write(hPath);
-                        ("[stemRec] History saved: " ++ hPath).postln;
+                        ("[stemRec] History saved: " ++ ~stemHistoryPath).postln;
                     } { |e| ("[stemRec] History save failed: " ++ e.errorString).warn };
                 };
 
                 // --- MIDI write ---
                 if(captureMidi) {
+                    var numTracks = tracks.size + returns.size;
+                    var tracksEvents = Array.fill(numTracks, { List.new });
+                    var bpmFinal = bpmAtStart;
                     midiActive = false;
                     // Restore event type handler
                     if(origNoteType.notNil) {
                         Event.eventTypes[\note] = origNoteType;
-                        ~_stemMidiOrigNoteType = nil;
+                        ~stemMidiOrigNoteHandler = nil;
                         "[stemRec] MIDI spy removed.".postln;
                     };
                     // Group events by track index
-                    var numTracks = tracks.size + returns.size;
-                    var tracksEvents = Array.fill(numTracks, { List.new });
                     midiLog.do { |ev|
                         var ti = ev[\track].clip(0, numTracks - 1);
                         tracksEvents[ti].add(ev);
                     };
                     // Sort each track by tick (events should arrive sorted, but be safe)
                     tracksEvents = tracksEvents.collect { |evList| evList.asArray.sort { |a, b| a[\tick] < b[\tick] } };
-                    var bpmFinal = bpmAtStart;
                     if(midiLog.size > 0) {
                         ~stemMidiWrite.(midiPath, tracksEvents, bpmFinal, ppqn);
                         ("[stemRec] MIDI: " ++ midiLog.size ++ " events, "
@@ -350,7 +349,11 @@
 
         // --- History start ---
         if(captureHistory) {
-            try { History.start } { |e| ("[stemRec] History.start failed: " ++ e.errorString).warn };
+            try {
+                ~stemHistoryPath = baseDir +/+ (baseName ++ ".history.scd");
+                History.path = ~stemHistoryPath;
+                History.start;
+            } { |e| ("[stemRec] History.start failed: " ++ e.errorString).warn };
             "[stemRec] History recording started.".postln;
         };
 
@@ -367,7 +370,7 @@
 
             // Patch event type handler — save original and stash for ~stemMidiUnpatch too
             origNoteType = Event.eventTypes[\note];
-            ~_stemMidiOrigNoteType = origNoteType;
+            ~stemMidiOrigNoteHandler = origNoteType;
 
             Event.eventTypes[\note] = { |ev|
                 if(midiActive) {
@@ -412,7 +415,7 @@
         nil
     });
 
-    ^{ |beats=1|
+    { |beats=1|
         var stopBeat;
         stopBeat = c.beats + beats;
         ("stemDisk stop scheduled at " ++ stopBeat ++ " on " ++ c).postln;
@@ -421,13 +424,18 @@
             finalize.();
             nil
         })
-    };
+    }
+
+    } // end if(idxs.isEmpty) else
 };
 
 ~stemStopNow = {
-    if(~stemRec.isNil) { "stemStopNow: no active stem recording".warn; ^nil };
-    ("stemStopNow called").postln;
-    if(~stemRec[\finalize].notNil) { ~stemRec[\finalize].value } { "stemStopNow: no finalize closure".warn };
+    if(~stemRec.isNil) {
+        "stemStopNow: no active stem recording".warn;
+    } {
+        ("stemStopNow called").postln;
+        if(~stemRec[\finalize].notNil) { ~stemRec[\finalize].value } { "stemStopNow: no finalize closure".warn };
+    };
     nil
 };
 )

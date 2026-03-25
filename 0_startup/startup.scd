@@ -80,6 +80,7 @@ s.waitForBoot {
 
     // --- Mixer channels (with conditional controller bindings)
     "_includes/mixer-channel-16s.scd".loadRelative;
+    "_includes/mixer-channel-stem-record.scd".loadRelative;
 
     // --- Helpers
     "_includes/_helpers/helpers.scd".loadRelative;

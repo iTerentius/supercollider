@@ -48,11 +48,11 @@
 ~r5 = MixerChannel.new(\r5, s, 2, 2, outbus: ~m1.inbus);
 
 // Per-return fx dictionaries — populated by ~fxSetup calls
-~r1fx = (); ~r2fx = (); ~r3fx = (); ~r4fx = (); ~r5fx = (); 
-~fxSetup[\r1_greyhole].(1,  1);
-~fxSetup[\r2_combDelay].(1, 2);
-~fxSetup[\r3_biscuit].(1, 3);  // teardown-safe: frees any prior instance before recreating
-~fxSetup[\r4_chorus].(1,  4);
+~r1fx = (); ~r2fx = (); ~r3fx = (); ~r4fx = (); ~r5fx = ();
+~fxSetup[\greyhole].(~r1, ~r1fx, ds: 1, page: 1, slot: 1);
+~fxSetup[\combDelay].(~r2, ~r2fx, ds: 2, page: 1, slot: 2);
+~fxSetup[\biscuit].(~r3, ~r3fx, ds: 3, page: 1, slot: 3);
+~fxSetup[\chorus].(~r4, ~r4fx, ds: 4, page: 1, slot: 4);
 
 // FX Buses
 ~g1 = MixerChannel.new(\g1, s, 2, 2, outbus: ~m1.inbus);
