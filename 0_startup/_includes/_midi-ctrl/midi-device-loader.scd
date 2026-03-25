@@ -7,7 +7,7 @@
 
 var hasEndpoint, loadInclude, chosen;
 
-MIDIClient.init;
+if(MIDIClient.initialized.not) { MIDIClient.init };
 
 // helper to test if any MIDI source or dest matches a regex string
 hasEndpoint = { |rx|

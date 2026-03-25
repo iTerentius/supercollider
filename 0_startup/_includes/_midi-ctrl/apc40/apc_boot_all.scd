@@ -129,7 +129,11 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 
         if(apcInport.notNil) {
             apcSrc = MIDIClient.sources[apcInport];
-            MIDIIn.connect(0, apcSrc);
+            // macOS: connected early in midi-setup.scd to avoid CoreMIDI deadlock.
+            // Linux: connect here.
+            if(Platform.case(\osx, { false }, { true })) {
+                MIDIIn.connect(0, apcSrc);
+            };
             ~apcMidiUID = apcSrc.uid;
             ["[APC] MIDIIn connected (port 0 -> index " ++ apcInport ++ "):", apcSrc.device, apcSrc.name].postln;
             ~apcMidiInDone = true;

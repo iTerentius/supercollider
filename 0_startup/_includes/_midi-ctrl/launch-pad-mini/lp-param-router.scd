@@ -29,9 +29,12 @@ pickDest = {
 srcIdx = pickSrcIdx.();
 if(srcIdx.notNil) {
     ~lpMini[\src] = MIDIClient.sources[srcIdx];
-    // Use connectAll for cross-platform compatibility (ALSA on Linux needs this)
-    MIDIIn.connectAll;
-    ["[LP Mini] MIDIIn connectAll, found device:", ~lpMini[\src].device].postln;
+    // macOS: connected early in midi-setup.scd to avoid CoreMIDI deadlock.
+    // Linux/ALSA: connectAll needed here.
+    if(Platform.case(\osx, { false }, { true })) {
+        MIDIIn.connectAll;
+    };
+    ["[LP Mini] MIDIIn connected, found device:", ~lpMini[\src].device].postln;
 } {
     ~lpMini[\src] = nil;
 };

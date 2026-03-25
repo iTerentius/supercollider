@@ -66,36 +66,32 @@ lcxlHuiInEp = (lcxlHuiInIdx.notNil).if { srcs[lcxlHuiInIdx] } { nil };
 lcInEp = (lcInIdx.notNil).if { srcs[lcInIdx] } { nil };
 iacInEp = (iacInIdx.notNil).if { srcs[iacInIdx] } { nil };
 
-// ---- connect helper (INDEX-BASED on your system)
+// ---- connect helper (used for Linux path below)
 connectIdx = { |idx|
     if(idx.notNil) {
-        MIDIIn.connect(idx);
-        ("MIDIIn connected index " ++ idx ++ ": " ++ srcs[idx].device ++ " / " ++ srcs[idx].name).postln;
+        MIDIIn.connect(0, srcs[idx].uid);
+        ("MIDIIn connected: " ++ srcs[idx].device ++ " / " ++ srcs[idx].name).postln;
     };
 };
 
 // ---- MIDI input connection (platform-specific)
 case
 { platform == \macos } {
-    // macOS: disconnect all, then connect only specific hardware controllers
-    // This prevents IAC/Bitwig traffic from triggering SC MIDIdefs
-    MIDIIn.disconnectAll;
+    // macOS: connectAll before any controller loaders run.
+    // IMPORTANT: all connects must happen here — calling MIDIIn.connect after MIDIdefs
+    // are registered deadlocks CoreMIDI on macOS.
+    // MIDIIn.connectAll includes IAC, but all controller MIDIdefs filter by UID so
+    // IAC/DAW traffic cannot accidentally trigger them.
+    MIDIIn.connectAll;
+    "MIDIIn: all sources connected".postln;
 
-    if(useHui) {
-        connectIdx.(lcxlHuiInIdx);
-        ~lcxlSrcUid = lcxlHuiInEp.notNil.if { lcxlHuiInEp.uid } { nil };
+    // uid vars for MIDIdef filtering
+    ~lcxlSrcUid = if(useHui) {
+        lcxlHuiInEp.notNil.if { lcxlHuiInEp.uid } { nil }
     } {
-        connectIdx.(lcxlInIdx);
-        ~lcxlSrcUid = lcxlInEp.notNil.if { lcxlInEp.uid } { nil };
+        lcxlInEp.notNil.if { lcxlInEp.uid } { nil }
     };
-
-    connectIdx.(lcInIdx);
     ~lcSrcUid = lcInEp.notNil.if { lcInEp.uid } { nil };
-
-    // IMPORTANT: do NOT connect IAC as MIDIIn
-    if(iacInEp.notNil) {
-        ("IAC exists as MIDI source (index " ++ iacInIdx ++ ") but is intentionally NOT connected as MIDIIn.").postln;
-    };
 }
 { platform == \linux } {
     // Linux/ALSA: Do NOT connect MIDI inputs here
@@ -143,6 +139,14 @@ if(~mOut.isNil) {
 };
 
 ~mOut.latency = s.latency;
+
+// ---- reconnect helper (macOS: CoreMIDI drops MIDIIn subscriptions on USB events)
+// Call ~reconnectMidi.() any time MIDI input stops working without restarting SC.
+~reconnectMidi = {
+    MIDIIn.disconnectAll;
+    MIDIIn.connectAll;
+    "MIDIIn: all sources reconnected".postln;
+};
 
 // ---- summary
 [
