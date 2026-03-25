@@ -1,15 +1,148 @@
 (
-// 2025-10-26 21:45 CDT  stemDiskStart v8  single block, Routine-based finalize, manual ~stemStopNow, robust split
+// stemDiskStart v9  — adds captureHistory + captureMidi kwargs
+//
+// NOT loaded by default. Load manually before use:
+//   "_includes/mixer-channel-stem-record.scd".loadRelative;
+//
+// New kwargs (both default false):
+//   captureHistory: saves a .history.scd alongside stems (History.start/end/write)
+//   captureMidi:    captures all note events during recording → .mid file
+//                   Patches Event.eventTypes[\note] while recording; restores on stop.
+//                   ~stemMidiUnpatch.() is an emergency restore if something goes wrong.
+//
+// ~stemMidiWrite is also a standalone helper — call it manually to snapshot patterns.
 
-~stemDiskStart = { |tracks=#[], returns=#[], fileBase="take", dirPath="", clock=nil, addAction=\addToTail, autoSplit=true, splitCodec=\pcm_s24le|
+// =============================================================================
+// MIDI FILE WRITER — standalone helper
+// =============================================================================
+// ~stemMidiWrite.(path, tracksEvents, bpm, ppq)
+//   tracksEvents : Array of Arrays.
+//                  Each inner Array is one MIDI track (one voice).
+//                  Each event is an Event with keys:
+//                    \tick  (integer ticks from recording start)
+//                    \pitch (0–127)
+//                    \dur   (ticks, note-on to note-off)
+//                    \vel   (1–127)
+//                  Events must be pre-sorted by \tick within each inner array.
+//   bpm          : tempo to embed in MIDI tempo track
+//   ppq          : ticks per quarter note (default 96)
+//
+// Returns true on success, false on failure (logs error to post window).
+
+~stemMidiWrite = { |path, tracksEvents, bpm=120, ppq=96|
+    var microspb, mkTrackBytes, tempoBytes, allTrackBytes, numTracks, f, ok;
+
+    microspb = (60000000.0 / bpm).asInteger;
+
+    // Build one track's bytes as Array.
+    // Note on immediately, note off after dur ticks (running events aren't sorted back here —
+    // for pattern-based capture events per voice rarely overlap, so this is fine).
+    mkTrackBytes = { |events|
+        var b = List.new;
+        var lastTick = 0;
+
+        // Append variable-length encoded integer
+        var vl = { |n|
+            var v = n.max(0).asInteger;
+            var chunks = [];
+            chunks = chunks.add(v.bitAnd(0x7F));
+            v = v >> 7;
+            while { v > 0 } {
+                chunks = [(v.bitAnd(0x7F)) | 0x80] ++ chunks;
+                v = v >> 7;
+            };
+            chunks.do { |byte| b.add(byte.bitAnd(0xFF)) };
+        };
+
+        events.do { |ev|
+            var delta = (ev[\tick] - lastTick).max(0);
+            lastTick = ev[\tick];
+            vl.(delta);
+            b.add(0x90);                           // note on, channel 0
+            b.add(ev[\pitch].clip(0, 127));
+            b.add(ev[\vel].clip(1, 127));
+            vl.(ev[\dur].max(1));
+            b.add(0x80);                           // note off, channel 0
+            b.add(ev[\pitch].clip(0, 127));
+            b.add(0);
+        };
+        // end-of-track meta event
+        b.add(0); b.add(0xFF); b.add(0x2F); b.add(0x00);
+        b.asArray
+    };
+
+    // Tempo track (track 0): just a tempo event + end-of-track
+    tempoBytes = [
+        0,                                      // delta 0
+        0xFF, 0x51, 0x03,                       // set tempo meta
+        (microspb >> 16).bitAnd(0xFF),
+        (microspb >> 8).bitAnd(0xFF),
+        microspb.bitAnd(0xFF),
+        0, 0xFF, 0x2F, 0x00                     // end-of-track
+    ];
+
+    allTrackBytes = [tempoBytes] ++ tracksEvents.collect { |evs| mkTrackBytes.(evs) };
+    numTracks = allTrackBytes.size;
+
+    ok = try {
+        f = File.new(path, "wb");
+        if(f.isNil) { Error("Cannot open for write: " ++ path).throw };
+
+        // MIDI header chunk
+        "MThd".do { |c| f.putInt8(c.ascii) };
+        f.putInt32(6, 'big');            // always 6
+        f.putInt16(1, 'big');            // format 1 (multi-track)
+        f.putInt16(numTracks, 'big');
+        f.putInt16(ppq, 'big');
+
+        // Track chunks
+        allTrackBytes.do { |tb|
+            "MTrk".do { |c| f.putInt8(c.ascii) };
+            f.putInt32(tb.size, 'big');
+            tb.do { |byte| f.putInt8(byte.bitAnd(0xFF)) };
+        };
+
+        f.close;
+        ("[stemMidiWrite] written: " ++ path).postln;
+        true
+    } { |err|
+        ("[stemMidiWrite] failed: " ++ err.errorString).warn;
+        f.tryPerform(\close);
+        false
+    };
+    ok
+};
+
+// Emergency restore if recording stops unexpectedly while MIDI spy is active.
+// Safe to call even if no spy is active.
+~stemMidiUnpatch = {
+    if(~_stemMidiOrigNoteType.notNil) {
+        Event.eventTypes[\note] = ~_stemMidiOrigNoteType;
+        ~_stemMidiOrigNoteType = nil;
+        "[stemRec] Event.eventTypes[\\note] restored.".postln;
+    } {
+        "[stemRec] no MIDI spy active.".postln;
+    };
+};
+
+// =============================================================================
+// MAIN RECORDING FUNCTION
+// =============================================================================
+~stemDiskStart = { |tracks=#[], returns=#[], fileBase="take", dirPath="",
+                    clock=nil, addAction=\addToTail, autoSplit=true, splitCodec=\pcm_s24le,
+                    captureHistory=false, captureMidi=false|
+
     var tIdx, rIdx, idxs, numChans, buf, defName, d, dstr, fullPath, baseName, baseDir, c, startBeat, synth;
     var names, sidecarPath, stemsDir, ffmpegPath, ffprobePath;
     var sanitize, writeSidecar, doSplit, mkDirIfNeeded, findBin, debug, makeFinalize, finalize, didFinalize;
+    // MIDI capture state
+    var midiLog, busTrackMap, midiStartBeat, bpmAtStart, ppqn, midiActive;
+    var midiPath, origNoteType;
 
-    debug = true;         // set false to quiet logs
-    didFinalize = false;  // guard against double finalize
+    debug = true;
+    didFinalize = false;
+    ppqn = 96;
 
-    // sanitize keys for filenames
     sanitize = { |str|
         var s;
         s = str.asString;
@@ -17,11 +150,9 @@
         s
     };
 
-    // key names in write order
     names = (tracks.collect({ |mc| var n; n = { mc.name }.try({ nil }); (n ?? { mc.asString }).asString }))
           ++ (returns.collect({ |mc| var n; n = { mc.name }.try({ nil }); (n ?? { mc.asString }).asString }));
 
-    // input bus indices
     tIdx = tracks.collect({ |mc| { mc.inbus.index }.try({ nil }) }).reject(_.isNil);
     rIdx = returns.collect({ |mc| { mc.inbus.index }.try({ nil }) }).reject(_.isNil);
     idxs = tIdx ++ rIdx;
@@ -31,13 +162,11 @@
         ^{ |beats=0| nil };
     };
 
-    // destination folder
     if(dirPath.isNil or: { dirPath == "" }) {
         dirPath = (~stemBaseDir ? (Platform.userHomeDir +/+ "recordings"));
     };
     if(File.exists(dirPath).not) { File.mkdir(dirPath); ("created " ++ dirPath).postln; };
 
-    // timestamped base
     d = Date.getDate;
     dstr = d.year.asString
         ++ "-" ++ d.month.asString.padLeft(2, "0")
@@ -51,9 +180,9 @@
     baseDir  = dirPath;
 
     sidecarPath = baseDir +/+ (baseName ++ ".stemnames.txt");
-    stemsDir = baseDir +/+ (baseName ++ "-stems");
+    stemsDir    = baseDir +/+ (baseName ++ "-stems");
+    midiPath    = baseDir +/+ (baseName ++ ".mid");
 
-    // utils
     mkDirIfNeeded = { |path| if(File.exists(path).not) { File.mkdir(path) } };
 
     writeSidecar = {
@@ -74,7 +203,7 @@
         p
     };
 
-    ffmpegPath  = findBin.([ "/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/usr/bin/ffmpeg", "ffmpeg" ]);
+    ffmpegPath  = findBin.([ "/opt/homebrew/bin/ffmpeg",  "/usr/local/bin/ffmpeg",  "/usr/bin/ffmpeg",  "ffmpeg" ]);
     ffprobePath = findBin.([ "/opt/homebrew/bin/ffprobe", "/usr/local/bin/ffprobe", "/usr/bin/ffprobe", "ffprobe" ]);
 
     doSplit = {
@@ -112,17 +241,16 @@
                 ++ " " ++ outName.escapeChar($ );
 
             if(debug) { ("[split] cmd: " ++ cmd).postln; };
-            cmd.unixCmd; // stderr prints in post window
+            cmd.unixCmd;
             (" → wrote " ++ outName ++ "  L=c" ++ lch ++ " R=c" ++ rch ++ " key=" ++ key).postln;
 
             i = i + 1;
         };
 
-        ("✅ stems written to " ++ stemsDir).postln;
+        ("stems written to " ++ stemsDir).postln;
         nil
     };
 
-    // builds a finalize closure captured to current buf and synth
     makeFinalize = {
         finalize = {
             if(didFinalize) { "[finalize] already ran, skipping".postln; ^nil };
@@ -134,14 +262,52 @@
 
                 ("[finalize] closing buffer").postln;
                 if(buf.notNil) { buf.close };
-                s.sync;     // makes the WAV header safe to open
+                s.sync;
+
+                // --- History save ---
+                if(captureHistory) {
+                    try {
+                        var hPath = baseDir +/+ (baseName ++ ".history.scd");
+                        History.end;
+                        History.write(hPath);
+                        ("[stemRec] History saved: " ++ hPath).postln;
+                    } { |e| ("[stemRec] History save failed: " ++ e.errorString).warn };
+                };
+
+                // --- MIDI write ---
+                if(captureMidi) {
+                    midiActive = false;
+                    // Restore event type handler
+                    if(origNoteType.notNil) {
+                        Event.eventTypes[\note] = origNoteType;
+                        ~_stemMidiOrigNoteType = nil;
+                        "[stemRec] MIDI spy removed.".postln;
+                    };
+                    // Group events by track index
+                    var numTracks = tracks.size + returns.size;
+                    var tracksEvents = Array.fill(numTracks, { List.new });
+                    midiLog.do { |ev|
+                        var ti = ev[\track].clip(0, numTracks - 1);
+                        tracksEvents[ti].add(ev);
+                    };
+                    // Sort each track by tick (events should arrive sorted, but be safe)
+                    tracksEvents = tracksEvents.collect { |evList| evList.asArray.sort { |a, b| a[\tick] < b[\tick] } };
+                    var bpmFinal = bpmAtStart;
+                    if(midiLog.size > 0) {
+                        ~stemMidiWrite.(midiPath, tracksEvents, bpmFinal, ppqn);
+                        ("[stemRec] MIDI: " ++ midiLog.size ++ " events, "
+                            ++ numTracks ++ " tracks → " ++ midiPath).postln;
+                    } {
+                        "[stemRec] MIDI: no events captured — .mid not written.".warn;
+                    };
+                };
 
                 if(autoSplit) {
                     ("[finalize] splitting in 0.3s").postln;
                     0.3.wait;
                     doSplit.();
                 }{
-                    ("autoSplit false; stems not split. Sidecar at " ++ sidecarPath).postln;
+                    ("autoSplit false; sidecar at " ++ sidecarPath).postln;
                 };
 
                 ("[finalize] freeing buffer").postln;
@@ -153,15 +319,15 @@
         nil
     };
 
-    // schedule writer on next bar
     c = clock ?? { thisThread.clock ?? TempoClock.default };
     startBeat = c.beats.ceil(1.0);
+    bpmAtStart = (c.tempo * 60).round(0.01);
 
     defName = \__stemDiskOut__;
     SynthDef(defName, { |bufnum=0|
         var sig, ins;
         ins = Array.fill(idxs.size, { |j| In.ar(idxs[j], 2) });
-        sig = ins.flat; // interleaved stereo pairs
+        sig = ins.flat;
         DiskOut.ar(bufnum, sig);
     }).add;
 
@@ -180,21 +346,72 @@
         mkDirIfNeeded.(baseDir);
         writeSidecar.();
         synth = Synth.new(defName, [\bufnum, buf], s, addAction);
-        makeFinalize.();  // bind finalize to current buf and synth
+        makeFinalize.();
+
+        // --- History start ---
+        if(captureHistory) {
+            try { History.start } { |e| ("[stemRec] History.start failed: " ++ e.errorString).warn };
+            "[stemRec] History recording started.".postln;
+        };
+
+        // --- MIDI spy setup ---
+        if(captureMidi) {
+            midiLog = List.new;
+            midiActive = true;
+            midiStartBeat = c.beats;
+
+            // Build bus → track index map from recorded tracks/returns
+            busTrackMap = IdentityDictionary.new;
+            tracks.do  { |mc, i| try { busTrackMap[mc.inbus.index] = i } };
+            returns.do { |mc, i| try { busTrackMap[mc.inbus.index] = tracks.size + i } };
+
+            // Patch event type handler — save original and stash for ~stemMidiUnpatch too
+            origNoteType = Event.eventTypes[\note];
+            ~_stemMidiOrigNoteType = origNoteType;
+
+            Event.eventTypes[\note] = { |ev|
+                if(midiActive) {
+                    try {
+                        // Skip rests
+                        if(ev[\isRest].not and: { ev[\type] != \rest }) {
+                            var out   = ev[\out] ? 0;
+                            var track = busTrackMap[out] ? 0;
+                            var beat  = c.beats - midiStartBeat;
+                            var pitch, dur, vel;
+                            ev.use {
+                                pitch = ~midinote.value.asInteger.clip(0, 127);
+                                dur   = (~sustain.value.max(0.01) * ppqn).asInteger.max(1);
+                                vel   = (~amp.value.linlin(0.0, 1.0, 1, 127)).asInteger.clip(1, 127);
+                            };
+                            midiLog.add((
+                                tick:  (beat * ppqn).asInteger.max(0),
+                                pitch: pitch,
+                                dur:   dur,
+                                vel:   vel,
+                                track: track
+                            ));
+                        };
+                    };  // silently swallow per-event errors to never break playback
+                };
+                origNoteType.value(ev);
+            };
+
+            "[stemRec] MIDI spy active — capturing note events.".postln;
+        };
+
         ("stemDisk start " ++ startBeat ++ " → " ++ fullPath ++ "  chans " ++ numChans).postln;
 
-        // stash a tiny context for manual helpers
         ~stemRec = (
-            baseName: baseName,
-            fullPath: fullPath,
-            stemsDir: stemsDir,
+            baseName:    baseName,
+            fullPath:    fullPath,
+            stemsDir:    stemsDir,
             sidecarPath: sidecarPath,
-            finalize: { finalize.() }   // safe callable
+            midiPath:    midiPath,
+            finalize:    { finalize.() }
         );
         nil
     });
 
-    // return a scheduled stopper
     ^{ |beats=1|
         var stopBeat;
         stopBeat = c.beats + beats;
@@ -207,7 +424,6 @@
     };
 };
 
-// manual immediate stop helper, safe from the interpreter
 ~stemStopNow = {
     if(~stemRec.isNil) { "stemStopNow: no active stem recording".warn; ^nil };
     ("stemStopNow called").postln;
@@ -215,4 +431,3 @@
     nil
 };
 )
-
