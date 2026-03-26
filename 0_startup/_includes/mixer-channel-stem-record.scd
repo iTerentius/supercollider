@@ -1,5 +1,5 @@
 (
-// stemDiskStart v9  — adds captureHistory + captureMidi kwargs
+// stemDiskStart v10  — captureMidi re-implemented via Event.parentEvents[\default][\callback]
 //
 // NOT loaded by default. Load manually before use:
 //   "_includes/mixer-channel-stem-record.scd".loadRelative;
@@ -7,8 +7,9 @@
 // New kwargs (both default false):
 //   captureHistory: saves a .history.scd alongside stems (History.start/end/write)
 //   captureMidi:    captures all note events during recording → .mid file
-//                   Patches Event.eventTypes[\note] while recording; restores on stop.
-//                   ~stemMidiUnpatch.() is an emergency restore if something goes wrong.
+//                   Hooks Event.parentEvents[\default][\callback] (called by play: AFTER each note event
+//                   type fires). Does NOT wrap Event.eventTypes[\note], so no
+//                   OutOfContextReturnError. ~stemMidiUnpatch.() is an emergency restore.
 //
 // ~stemMidiWrite is also a standalone helper — call it manually to snapshot patterns.
 
@@ -116,13 +117,11 @@
 // Emergency restore if recording stops unexpectedly while MIDI spy is active.
 // Safe to call even if no spy is active.
 ~stemMidiUnpatch = {
-    if(~stemMidiOrigNoteHandler.notNil) {
-        Event.eventTypes[\note] = ~stemMidiOrigNoteHandler;
-        ~stemMidiOrigNoteHandler = nil;
-        "[stemRec] Event.eventTypes[\\note] restored.".postln;
-    } {
-        "[stemRec] no MIDI spy active.".postln;
-    };
+    // ~stemMidiOrigCallback is set to a Function or nil (nil = no spy active)
+    // We use the midiActive-via-global flag: check if callback was patched
+    Event.parentEvents[\default][\callback] = ~stemMidiOrigCallback;  // nil is fine (clears it)
+    ~stemMidiOrigCallback = nil;
+    "[stemRec] Event.default[\\callback] restored (or cleared).".postln;
 };
 
 // =============================================================================
@@ -132,12 +131,12 @@
                     clock=nil, addAction=\addToTail, autoSplit=true, splitCodec=\pcm_s24le,
                     captureHistory=false, captureMidi=false|
 
-    var tIdx, rIdx, idxs, numChans, buf, defName, d, dstr, fullPath, baseName, baseDir, c, startBeat, synth;
-    var names, sidecarPath, stemsDir, ffmpegPath, ffprobePath;
+    var tIdx, rIdx, idxs, numChans, buf, defName, d, dstr, fullPath, baseName, sessionDir, baseDir, c, startBeat, synth;
+    var names, sidecarPath, stemsDir, midiDir, ffmpegPath, ffprobePath;
     var sanitize, writeSidecar, doSplit, mkDirIfNeeded, findBin, debug, makeFinalize, finalize, didFinalize;
     // MIDI capture state
-    var midiLog, busTrackMap, midiStartBeat, bpmAtStart, ppqn, midiActive;
-    var midiPath, origNoteType;
+    var midiLog, midiStartBeat, bpmAtStart, ppqn, midiActive, midiCbOrig, midiCbCount;
+    var midiPath;
 
     debug = true;
     didFinalize = false;
@@ -176,13 +175,15 @@
         ++ "-" ++ d.minute.asString.padLeft(2, "0")
         ++ "-" ++ d.second.asString.padLeft(2, "0");
 
-    baseName = fileBase ++ "_" ++ dstr;
-    fullPath = dirPath +/+ (baseName ++ ".wav");
-    baseDir  = dirPath;
+    baseName   = fileBase ++ "_" ++ dstr;
+    sessionDir = dirPath +/+ baseName;           // master session folder
+    baseDir    = sessionDir;
+    fullPath   = sessionDir +/+ (baseName ++ ".wav");
 
-    sidecarPath = baseDir +/+ (baseName ++ ".stemnames.txt");
-    stemsDir    = baseDir +/+ (baseName ++ "-stems");
-    midiPath    = baseDir +/+ (baseName ++ ".mid");
+    sidecarPath = sessionDir +/+ (baseName ++ ".stemnames.txt");
+    stemsDir    = sessionDir +/+ "stems";
+    midiDir     = sessionDir +/+ "midi";
+    midiPath    = midiDir +/+ (baseName ++ ".mid");
 
     mkDirIfNeeded = { |path| if(File.exists(path).not) { File.mkdir(path) } };
 
@@ -268,21 +269,31 @@
                 // --- History save ---
                 if(captureHistory) {
                     try {
-                        var srcPath;
+                        var histPath = baseDir +/+ (baseName ++ ".history.scd");
                         History.end;
-                        // History always writes to this platform path; no path accessor exists
-                        srcPath = Platform.userAppSupportDir +/+ "sclang-history";
-                        if(File.exists(srcPath)) {
-                            ("cp " ++ srcPath.escapeChar($ ) ++ " " ++ ~stemHistoryPath.escapeChar($ )).unixCmd;
-                            ("[stemRec] History saved: " ++ ~stemHistoryPath).postln;
-                        } {
-                            ("[stemRec] History: log not found at " ++ srcPath).warn;
-                        };
+                        // saveStory writes directly to a supplied path (logFolder is read-only)
+                        History.saveStory(histPath);
+                        ("[stemRec] History saved: " ++ histPath).postln;
                     } { |e| ("[stemRec] History save failed: " ++ e.errorString).warn };
                 };
 
-                // --- MIDI write --- (disabled: see captureMidi note above)
-                // if(captureMidi) { ... };
+                // --- MIDI write ---
+                if(captureMidi) {
+                    // Stop capture first so no new events sneak in
+                    midiActive = false;
+                    // Restore Event.parentEvents[\default][\callback]
+                    Event.parentEvents[\default][\callback] = ~stemMidiOrigCallback;  // nil is fine
+                    ~stemMidiOrigCallback = nil;
+                    ("[stemRec] MIDI spy fired " ++ midiCbCount ++ " times, tracks=" ++ midiLog.size).postln;
+                    if(midiLog.notNil and: { midiLog.size > 0 }) {
+                        // Sort tracks by bus index so order is deterministic; each entry = one MIDI track
+                        var tracks = midiLog.keys.asArray.sort.collect { |k| midiLog[k].asArray };
+                        "[stemRec] Writing " ++ tracks.size ++ " MIDI tracks.".postln;
+                        ~stemMidiWrite.(midiPath, tracks, bpmAtStart, ppqn);
+                    } {
+                        "[stemRec] MIDI capture: no events recorded.".postln;
+                    };
+                };
 
                 if(autoSplit) {
                     ("[finalize] splitting in 0.3s").postln;
@@ -316,6 +327,8 @@
     numChans = idxs.size * 2;
 
     c.schedAbs(startBeat, {
+        mkDirIfNeeded.(sessionDir);
+        mkDirIfNeeded.(midiDir);
         buf = Buffer.alloc(s, 65536, numChans);
         buf.write(
             path: fullPath,
@@ -325,7 +338,6 @@
             startFrame: 0,
             leaveOpen: true
         );
-        mkDirIfNeeded.(baseDir);
         writeSidecar.();
         // Place DiskOut at the root node tail — AFTER the default group and all
         // MixerChannel fadergroups (including post-send synths), so In.ar reads
@@ -335,27 +347,70 @@
 
         // --- History start ---
         if(captureHistory) {
-            ~stemHistoryPath = baseDir +/+ (baseName ++ ".history.scd");
             try { History.start } { |e| ("[stemRec] History.start failed: " ++ e.errorString).warn };
             "[stemRec] History recording started.".postln;
         };
 
         // --- MIDI spy setup ---
-        // NOTE: captureMidi is currently disabled. SC's built-in \note event type handler
-        // uses non-local return (^) internally, which unwinds past any try{} wrapper and
-        // causes OutOfContextReturnError in PauseStream:awake, crashing EventStreamPlayers.
-        // Infrastructure (~stemMidiWrite, ~stemMidiUnpatch, midiLog, etc.) is preserved
-        // for future implementation once a safe patching strategy is found.
+        // Hook Event.parentEvents[\default][\callback] — called by play: AFTER the note event type fires,
+        // so we never call the #{...} note handler via .value (no OutOfContextReturnError).
         if(captureMidi) {
-            "[stemRec] captureMidi: not yet supported — skipping MIDI capture.".warn;
+            // midiLog: Dictionary busIndex -> List of events (one entry per active voice/channel)
+            midiLog = Dictionary.new;
+            midiStartBeat = c.beats;
+            midiActive = true;
+            midiCbCount = 0;
+            midiCbOrig = Event.parentEvents[\default][\callback];
+            ~stemMidiOrigCallback = midiCbOrig;
+            Event.parentEvents[\default][\callback] = { |ev|
+                midiCbOrig !? { midiCbOrig.value(ev) };
+                midiCbCount = midiCbCount + 1;
+                if(midiCbCount <= 3) {
+                    ("[MIDI spy] cb #" ++ midiCbCount
+                        ++ " midiActive=" ++ midiActive
+                        ++ " isRest=" ++ ev.isRest
+                        ++ " type=" ++ ev[\type]
+                        ++ " out=" ++ ev[\out]
+                        ++ " freqClass=" ++ ev[\freq].class).postln;
+                };
+                // Only capture note-type events (skip \set, \rest, etc.)
+                if(midiActive and: { ev.isRest.not } and: {
+                    var t = ev[\type]; t.isNil or: { t == \note }
+                }) {
+                    var freq = ev[\freq];
+                    if(freq.isKindOf(Number) or: { freq.isKindOf(SequenceableCollection) and: { freq.size > 0 } and: { freq.first.isKindOf(Number) } }) {
+                        var outIdxRaw, outIdx, track, startBeats, durBeats, freqs, amps;
+                        outIdxRaw = ev[\out];
+                        outIdx = if(outIdxRaw.isKindOf(Number)) { outIdxRaw.asInteger } { -1 };
+                        track = midiLog[outIdx];
+                        if(track.isNil) { track = List.new; midiLog[outIdx] = track };
+                        startBeats = c.beats - midiStartBeat;
+                        durBeats = (ev[\dur] ? 1).asFloat;
+                        freqs = freq.asArray;
+                        amps = ev[\amp].asArray;
+                        freqs.do { |f, i|
+                            if(f.isKindOf(Number)) {
+                                var mn = f.cpsmidi.round.asInteger.clip(0, 127);
+                                var vel = (amps.wrapAt(i).asFloat * 127).clip(1, 127).round.asInteger;
+                                var tick = (startBeats * ppqn).round.asInteger;
+                                var durTick = (durBeats * ppqn).round.asInteger.max(1);
+                                track.add((tick: tick, pitch: mn, vel: vel, dur: durTick));
+                            };
+                        };
+                    };
+                };
+            };
+            "[stemRec] MIDI capture active.".postln;
         };
 
         ("stemDisk start " ++ startBeat ++ " → " ++ fullPath ++ "  chans " ++ numChans).postln;
 
         ~stemRec = (
             baseName:    baseName,
+            sessionDir:  sessionDir,
             fullPath:    fullPath,
             stemsDir:    stemsDir,
+            midiDir:     midiDir,
             sidecarPath: sidecarPath,
             midiPath:    midiPath,
             finalize:    { finalize.() }

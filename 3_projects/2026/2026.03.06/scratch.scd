@@ -139,6 +139,21 @@ Pdef(\modCtl).stop;
           MIDIIn.connect(i);
           ("Connected: " ++ ep.device ++ " / " ++ ep.name).postln;        
       };          
-  };                                                                      
+  };                                                                       
   ~roll_phrA_fnA.(); 
   ~roll_phrA_fnB.();  
+
+  ~r5.postSends.do { |s| s.postSettings };
+  ~r5.inbus.index.postln;
+  ~t8.inbus.index.postln;
+
+  [~t1,~t2,~t3,~t4,~t5,~t6,~t7,~t8,~t9].do {
+  |ch|
+      ch.postSends.do { |s|
+          if(s.outbus.index ==
+  ~r5.inbus.index) {
+              ("→ ~r5 from " ++ ch.name ++ "
+  level=" ++ s.level).postln
+          }
+      }
+  };
