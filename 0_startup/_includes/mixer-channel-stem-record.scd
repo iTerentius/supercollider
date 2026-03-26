@@ -268,38 +268,21 @@
                 // --- History save ---
                 if(captureHistory) {
                     try {
+                        var srcPath;
                         History.end;
-                        ("[stemRec] History saved: " ++ ~stemHistoryPath).postln;
+                        // History always writes to this platform path; no path accessor exists
+                        srcPath = Platform.userAppSupportDir +/+ "sclang-history";
+                        if(File.exists(srcPath)) {
+                            ("cp " ++ srcPath.escapeChar($ ) ++ " " ++ ~stemHistoryPath.escapeChar($ )).unixCmd;
+                            ("[stemRec] History saved: " ++ ~stemHistoryPath).postln;
+                        } {
+                            ("[stemRec] History: log not found at " ++ srcPath).warn;
+                        };
                     } { |e| ("[stemRec] History save failed: " ++ e.errorString).warn };
                 };
 
-                // --- MIDI write ---
-                if(captureMidi) {
-                    var numTracks = tracks.size + returns.size;
-                    var tracksEvents = Array.fill(numTracks, { List.new });
-                    var bpmFinal = bpmAtStart;
-                    midiActive = false;
-                    // Restore event type handler
-                    if(origNoteType.notNil) {
-                        Event.eventTypes[\note] = origNoteType;
-                        ~stemMidiOrigNoteHandler = nil;
-                        "[stemRec] MIDI spy removed.".postln;
-                    };
-                    // Group events by track index
-                    midiLog.do { |ev|
-                        var ti = ev[\track].clip(0, numTracks - 1);
-                        tracksEvents[ti].add(ev);
-                    };
-                    // Sort each track by tick (events should arrive sorted, but be safe)
-                    tracksEvents = tracksEvents.collect { |evList| evList.asArray.sort { |a, b| a[\tick] < b[\tick] } };
-                    if(midiLog.size > 0) {
-                        ~stemMidiWrite.(midiPath, tracksEvents, bpmFinal, ppqn);
-                        ("[stemRec] MIDI: " ++ midiLog.size ++ " events, "
-                            ++ numTracks ++ " tracks → " ++ midiPath).postln;
-                    } {
-                        "[stemRec] MIDI: no events captured — .mid not written.".warn;
-                    };
-                };
+                // --- MIDI write --- (disabled: see captureMidi note above)
+                // if(captureMidi) { ... };
 
                 if(autoSplit) {
                     ("[finalize] splitting in 0.3s").postln;
@@ -344,62 +327,27 @@
         );
         mkDirIfNeeded.(baseDir);
         writeSidecar.();
-        synth = Synth.new(defName, [\bufnum, buf], s, addAction);
+        // Place DiskOut at the root node tail — AFTER the default group and all
+        // MixerChannel fadergroups (including post-send synths), so In.ar reads
+        // current-block values written by sends/FX rather than zeroed bus state.
+        synth = Synth.new(defName, [\bufnum, buf], RootNode(s), \addToTail);
         makeFinalize.();
 
         // --- History start ---
         if(captureHistory) {
-            try {
-                ~stemHistoryPath = baseDir +/+ (baseName ++ ".history.scd");
-                History.path = ~stemHistoryPath;
-                History.start;
-            } { |e| ("[stemRec] History.start failed: " ++ e.errorString).warn };
+            ~stemHistoryPath = baseDir +/+ (baseName ++ ".history.scd");
+            try { History.start } { |e| ("[stemRec] History.start failed: " ++ e.errorString).warn };
             "[stemRec] History recording started.".postln;
         };
 
         // --- MIDI spy setup ---
+        // NOTE: captureMidi is currently disabled. SC's built-in \note event type handler
+        // uses non-local return (^) internally, which unwinds past any try{} wrapper and
+        // causes OutOfContextReturnError in PauseStream:awake, crashing EventStreamPlayers.
+        // Infrastructure (~stemMidiWrite, ~stemMidiUnpatch, midiLog, etc.) is preserved
+        // for future implementation once a safe patching strategy is found.
         if(captureMidi) {
-            midiLog = List.new;
-            midiActive = true;
-            midiStartBeat = c.beats;
-
-            // Build bus → track index map from recorded tracks/returns
-            busTrackMap = IdentityDictionary.new;
-            tracks.do  { |mc, i| try { busTrackMap[mc.inbus.index] = i } };
-            returns.do { |mc, i| try { busTrackMap[mc.inbus.index] = tracks.size + i } };
-
-            // Patch event type handler — save original and stash for ~stemMidiUnpatch too
-            origNoteType = Event.eventTypes[\note];
-            ~stemMidiOrigNoteHandler = origNoteType;
-
-            Event.eventTypes[\note] = { |ev|
-                if(midiActive) {
-                    try {
-                        // Skip rests
-                        if(ev[\isRest].not and: { ev[\type] != \rest }) {
-                            var out   = ev[\out] ? 0;
-                            var track = busTrackMap[out] ? 0;
-                            var beat  = c.beats - midiStartBeat;
-                            var pitch, dur, vel;
-                            ev.use {
-                                pitch = ~midinote.value.asInteger.clip(0, 127);
-                                dur   = (~sustain.value.max(0.01) * ppqn).asInteger.max(1);
-                                vel   = (~amp.value.linlin(0.0, 1.0, 1, 127)).asInteger.clip(1, 127);
-                            };
-                            midiLog.add((
-                                tick:  (beat * ppqn).asInteger.max(0),
-                                pitch: pitch,
-                                dur:   dur,
-                                vel:   vel,
-                                track: track
-                            ));
-                        };
-                    };  // silently swallow per-event errors to never break playback
-                };
-                origNoteType.value(ev);
-            };
-
-            "[stemRec] MIDI spy active — capturing note events.".postln;
+            "[stemRec] captureMidi: not yet supported — skipping MIDI capture.".warn;
         };
 
         ("stemDisk start " ++ startBeat ++ " → " ++ fullPath ++ "  chans " ++ numChans).postln;

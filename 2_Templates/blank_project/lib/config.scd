@@ -2,13 +2,11 @@
 (
 ~link.tempo = 120/60;
 
-// Return bus FX — swap any slot by calling a different ~fxSetup key.
-// Page/slot args wire up the TouchOSC FX page (nil = skip TOSC).
-~fxSetup[\r1_greyhole].(1,  1);
-~fxSetup[\r2_combDelay].(1, 2);
-// ~fxSetup[\r3_biscuit].(1, 3);   // external hardware
-~fxSetup[\r4_chorus].(1,  4);
-~fxSetup[\r5_spectral].(1, 5);
+~fxSetup[\greyhole].(~r1, ~r1fx, ds: 1, page: 1, slot: 1);
+~fxSetup[\combDelay].(~r2, ~r2fx, ds: 2, page: 1, slot: 2);
+~fxSetup[\biscuit].(~r3, ~r3fx, ds: 3, page: 1, slot: 3);
+~fxSetup[\chorus].(~r4, ~r4fx, ds: 4, page: 1, slot: 4);
+~fxSetup[\spectral].(~r5, ~r5fx, ds: 5, page: 1, slot: 4);
 
 // ~toscPadSyncAll.();
 // ~toscMixSyncAll.();

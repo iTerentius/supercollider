@@ -141,7 +141,7 @@
 
 ~apcBindB.(3, 32, \bass_fx_1, 1, \blue,   nil, ~fxSendStop[\bass_fx_1]);
 ~apcBindB.(3, 24, \bass_fx_2, 1, \cyan,   nil, ~fxSendStop[\bass_fx_2]);
-~apcBindB.(3, 15, \bass_fx_3, 1, \pink,   nil, ~fxSendStop[\bass_fx_3]);
+~apcBindB.(3, 16, \bass_fx_3, 1, \pink,   nil, ~fxSendStop[\bass_fx_3]);
 ~apcBindB.(3,  8, \bass_fx_4, 1, \purple, nil, ~fxSendStop[\bass_fx_4]);
 ~apcBindB.(3, 0,  \bass_fx_5, 1, \orange, nil, ~fxSendStop[\bass_fx_5]);
 
@@ -257,7 +257,7 @@
   Pbindef(\pbd_thingA,                                                   
     \dur,    Pseq([Pn(Pdefn(\thingA_durs_a), 4)], inf),                
     \degree, Pseq([Pn(Pdefn(\thingA_degs_a), 4)], inf))                
-};                                                                      
+};                                                     
 
 // NEUTRON
 ~ntron_phrA_fnA = {                                                       

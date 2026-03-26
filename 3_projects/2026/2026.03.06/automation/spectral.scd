@@ -32,9 +32,9 @@ Pdefn(\spectral_durs_b, Pseq([
 Pdefn(\spectral_durs, Pseq([Pn(Pdefn(\spectral_durs_a), 1)], 1));
 
 // OUTS
-Pdefn(\spectral_outs_0, ~r5_ilfx_1);
-Pdefn(\spectral_outs_1, ~m1_ilfx_1);
-Pdefn(\spectral_outs_2, [~r5_ilfx_1, ~m1_ilfx_1]);
+Pdefn(\spectral_outs_0, ~r5.inbus.index);
+Pdefn(\spectral_outs_1, ~m1.inbus.index);
+Pdefn(\spectral_outs_2, [~r5.inbus.index, ~m1.inbus.index]);
 // sentences
 Pdefn(\spectral_outs_a, Pseq([Pn(Pdefn(\spectral_outs_0), 4)], 1));
 // story
