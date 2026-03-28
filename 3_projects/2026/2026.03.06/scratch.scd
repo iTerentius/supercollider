@@ -85,8 +85,10 @@ SynthDef(\bussedSynth, {
 });)
 ~bd1_revs_fx.level_(0.5);
 
-OSCFunc.trace(true)
+OSCFunc.trace(true, hideStatusMsg: true);
 OSCFunc.trace(false)
+~r3fx[\biscuit].postln;
+  ~r3fx[\biscuit].set(\drive, 0.0);
 
 (
 // ~outs = ~m1_ilfx_1.nodeID;
@@ -98,7 +100,7 @@ Pdef(\modCtl, Pbind(
   \args,  #[\freeze, \mix, \amp,  \chunk],  
   \chunk, Pseq([512,  1024, 2048, 4096],  inf), 
   \freeze,   Pwhite(0,  1,  inf), 
-  \amp,  0.1, 
+  \amp,  0.7, 
   // \mix, Pseg([0.0,  0.5,  1.0], [2, 4],  \sin, inf),  
   \mix,  1, 
   // \delta, Pkey(\dur)/4,  
@@ -157,3 +159,23 @@ Pdef(\modCtl).stop;
           }
       }
   };
+
+  ~r5.level_(1)
+(
+Tdef(\tempo, {
+  var bpms = [50,  100, 200].scramble;
+  var durs = [4,  8,  16].scramble;
+  loop {
+    bpms.do { |bpm, i|
+      ~link.tempo = bpm / 60;
+      durs[i].wait;  // wait 4 beats
+    };
+  };
+};)
+)
+Tdef(\tempo).play(~link);
+Tdef(\tempo).stop;
+
+~r3fx[\biscuit].nodeID;
+
+Pdef(\bCtl).stop;

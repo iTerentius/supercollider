@@ -10,8 +10,8 @@
 ~lpBindB.(1, [1, 7], \neutron, 22);
 ~lpBindB.(1, [1, 8], \modelD,  12);
 ~lpBindB.(1, [2, 1], \bass,  12);
-~lpBindB.(4, [1,  1],  \bCtl, 21);
-~lpBindB.(4, [1,  2],  \spectral, 30);
+~lpBindB.(4, [1,  3],  \bCtl, 21);
+~lpBindB.(4, [1,  5],  \spectral, 30);
 
 ~lpBindB.(2, [1, 1], \bd1_fx_1, 41, nil, nil, ~makeFxSendTdef.(\bd1_fx_1, ~t1, ~r1));
 ~lpBindB.(2, [2, 1], \bd1_fx_2, 81, nil, nil, ~makeFxSendTdef.(\bd1_fx_2, ~t1, ~r2));
@@ -67,9 +67,32 @@
 ~lpBindB.(3, [4, 1], \bass_fx_4, 35, nil, nil, ~makeFxSendTdef.(\bass_fx_4, ~t9, ~r4));
 ~lpBindB.(3, [5, 1], \bass_fx_5, 10, nil, nil, ~makeFxSendTdef.(\bass_fx_5, ~t9, ~r5));
 
-~lpBindB.(4, [2, 1], \r3_fx_r1, 41, nil, nil, ~makeFxSendTdef.(\r3_fx_r1, ~r3, ~r1));
-~lpBindB.(4, [3, 1], \r3_fx_r5, 41, nil, nil, ~makeFxSendTdef.(\r3_fx_r5, ~r3, ~r5));
+~lpBindB.(4, [3, 1], \r1_fx_r2, 31, nil, nil, ~makeFxSendTdef.(\r1_fx_r2, ~r1, ~r2));
+~lpBindB.(4, [4, 1], \r1_fx_r3, 32, nil, nil, ~makeFxSendTdef.(\r1_fx_r3, ~r1, ~r3));
+~lpBindB.(4, [5, 1], \r1_fx_r4, 33, nil, nil, ~makeFxSendTdef.(\r1_fx_r4, ~r1, ~r4));
+~lpBindB.(4, [6, 1], \r1_fx_r5, 34, nil, nil, ~makeFxSendTdef.(\r1_fx_r5, ~r1, ~r5));
 
+~lpBindB.(4, [2, 2], \r2_fx_r1, 21, nil, nil, ~makeFxSendTdef.(\r2_fx_r1, ~r2, ~r1));
+~lpBindB.(4, [4, 2], \r2_fx_r3, 22, nil, nil, ~makeFxSendTdef.(\r2_fx_r3, ~r2, ~r3));
+~lpBindB.(4, [5, 2], \r2_fx_r4, 23, nil, nil, ~makeFxSendTdef.(\r2_fx_r4, ~r2, ~r4));
+~lpBindB.(4, [6, 2], \r2_fx_r5, 24, nil, nil, ~makeFxSendTdef.(\r1_fx_r5, ~r2, ~rj));
+
+~lpBindB.(4, [2, 3], \r3_fx_r1, 51, nil, nil, ~makeFxSendTdef.(\r3_fx_r1, ~r3, ~r1));
+~lpBindB.(4, [3, 3], \r3_fx_r2, 52, nil, nil, ~makeFxSendTdef.(\r3_fx_r2, ~r3, ~r2));
+~lpBindB.(4, [5, 3], \r3_fx_r4, 53, nil, nil, ~makeFxSendTdef.(\r3_fx_r4, ~r3, ~r4));
+~lpBindB.(4, [6, 3], \r3_fx_r5, 54, nil, nil, ~makeFxSendTdef.(\r3_fx_r5, ~r3, ~r5));
+
+~lpBindB.(4, [2, 4], \r4_fx_r1, 61, nil, nil, ~makeFxSendTdef.(\r4_fx_r1, ~r4, ~r1));
+~lpBindB.(4, [3, 4], \r4_fx_r2, 62, nil, nil, ~makeFxSendTdef.(\r4_fx_r2, ~r4, ~r2));
+~lpBindB.(4, [4, 4], \r4_fx_r3, 63, nil, nil, ~makeFxSendTdef.(\r4_fx_r3, ~r4, ~r3));
+~lpBindB.(4, [6, 4], \r4_fx_r5, 64, nil, nil, ~makeFxSendTdef.(\r4_fx_r5, ~r4, ~r5));
+
+~lpBindB.(4, [2, 5], \r5_fx_r1, 71, nil, nil, ~makeFxSendTdef.(\r5_fx_r1, ~r5, ~r1));
+~lpBindB.(4, [3, 5], \r5_fx_r2, 72, nil, nil, ~makeFxSendTdef.(\r5_fx_r2, ~r5, ~r2));
+~lpBindB.(4, [4, 5], \r5_fx_r3, 73, nil, nil, ~makeFxSendTdef.(\r5_fx_r3, ~r5, ~r3));
+~lpBindB.(4, [5, 5], \r5_fx_r4, 74, nil, nil, ~makeFxSendTdef.(\r5_fx_r4, ~r5, ~r4));
+
+~lpBindB.(4, [8, 8], \tempo, 41, ~link,  4);
 
 // --- APC40 Mk2 pads (bank 1) ---
 ~apcBindB.(1, 32, \bd1,      4, \orange);
@@ -83,13 +106,6 @@
 ~apcBindB.(1, 24, \bass,   4, \green);
 ~apcBindB.(4, 32, \bCtl,   4, \cyan);
 ~apcBindB.(4, 33, \spectral,   4, \blue);
-// --- Grid Layout ---
-// 5 rows x 8 columns of clip launch pads (notes 0-39)
-// Row 0 (top):    32,33,34,35,36,37,38,39
-// Row 1:          24,25,26,27,28,29,30,31
-// Row 2:          16,17,18,19,20,21,22,23
-// Row 3:           8, 9,10,11,12,13,14,15
-// Row 4 (bottom):  0, 1, 2, 3, 4, 5, 6, 7
 
 ~apcBindB.(2, 32, \bd1_fx_1, 1, \blue,   nil, ~fxSendStop[\bd1_fx_1]);
 ~apcBindB.(2, 24, \bd1_fx_2, 1, \cyan,   nil, ~fxSendStop[\bd1_fx_2]);
@@ -144,8 +160,39 @@
 ~apcBindB.(3, 16, \bass_fx_3, 1, \pink,   nil, ~fxSendStop[\bass_fx_3]);
 ~apcBindB.(3,  8, \bass_fx_4, 1, \purple, nil, ~fxSendStop[\bass_fx_4]);
 ~apcBindB.(3, 0,  \bass_fx_5, 1, \orange, nil, ~fxSendStop[\bass_fx_5]);
+// --- Grid Layout ---
+// 5 rows x 8 columns of clip launch pads (notes 0-39)
+// Row 0 (top):    32,33,34,35,36,37,38,39
+// Row 1:          24,25,26,27,28,29,30,31
+// Row 2:          16,17,18,19,20,21,22,23
+// Row 3:           8, 9,10,11,12,13,14,15
+// Row 4 (bottom):  0, 1, 2, 3, 4, 5, 6, 7
+~apcBindB.(4, 24, \r1_fx_r2, 4, nil, nil, ~fxSendStop[\r1_fx_r2]);
+~apcBindB.(4, 16, \r1_fx_r3, 4, nil, nil, ~fxSendStop[\r1_fx_r3]);
+~apcBindB.(4,  8, \r1_fx_r4, 4, nil, nil, ~fxSendStop[\r1_fx_r4]);
+~apcBindB.(4,  0, \r1_fx_r5, 4, nil, nil, ~fxSendStop[\r1_fx_r5]);
 
-~apcBindB.(4, 24, \r3_fx_r1, 4, nil, nil, ~fxSendStop[\r3_fx_r1]);
+~apcBindB.(4, 33, \r2_fx_r1, 4, nil, nil, ~fxSendStop[\r2_fx_r1]);
+~apcBindB.(4, 17, \r2_fx_r3, 4, nil, nil, ~fxSendStop[\r2_fx_r3]);
+~apcBindB.(4,  9, \r2_fx_r4, 4, nil, nil, ~fxSendStop[\r2_fx_r4]);
+~apcBindB.(4,  1, \r2_fx_r5, 4, nil, nil, ~fxSendStop[\r2_fx_r5]);
+
+~apcBindB.(4, 34, \r3_fx_r1, 4, nil, nil, ~fxSendStop[\r3_fx_r1]);
+~apcBindB.(4, 26, \r3_fx_r2, 4, nil, nil, ~fxSendStop[\r3_fx_r2]);
+~apcBindB.(4, 10, \r3_fx_r4, 4, nil, nil, ~fxSendStop[\r3_fx_r4]);
+~apcBindB.(4,  2, \r3_fx_r5, 4, nil, nil, ~fxSendStop[\r3_fx_r5]);
+
+~apcBindB.(4, 35, \r4_fx_r1, 4, nil, nil, ~fxSendStop[\r4_fx_r1]);
+~apcBindB.(4, 27, \r4_fx_r2, 4, nil, nil, ~fxSendStop[\r4_fx_r2]);
+~apcBindB.(4, 19, \r4_fx_r3, 4, nil, nil, ~fxSendStop[\r4_fx_r3]);
+~apcBindB.(4,  3, \r4_fx_r5, 4, nil, nil, ~fxSendStop[\r4_fx_r5]);
+
+~apcBindB.(4, 36, \r5_fx_r1, 4, nil, nil, ~fxSendStop[\r5_fx_r1]);
+~apcBindB.(4, 28, \r5_fx_r2, 4, nil, nil, ~fxSendStop[\r5_fx_r2]);
+~apcBindB.(4, 20, \r5_fx_r3, 4, nil, nil, ~fxSendStop[\r5_fx_r3]);
+~apcBindB.(4, 12, \r5_fx_r4, 4, nil, nil, ~fxSendStop[\r5_fx_r4]);
+
+~apcBindB.(4, 7, \tempo, 4, 4);
 
 // BD1
 ~bd1_phrA_fnA = {                                                       

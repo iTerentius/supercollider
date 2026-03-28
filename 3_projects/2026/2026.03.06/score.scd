@@ -27,7 +27,13 @@ var safeLoad = { |path|
     safeLoad.("parts/bass8.scd");
     safeLoad.("automation/biscuit.scd");
     safeLoad.("automation/spectral.scd");
+    safeLoad.("automation/tempo.scd");
     safeLoad.("lib/bindings.scd");
+    safeLoad.("lib/tosc_biscuit.scd");
+    // second time to make sure it actually loads
+    safeLoad.("parts/neutron.scd");
     "Score loaded.".postln;
 }.fork(AppClock);
 )
+
+
