@@ -48,11 +48,14 @@
 ~r5 = MixerChannel.new(\r5, s, 2, 2, outbus: ~m1.inbus);
 
 // Per-return fx dictionaries — populated by ~fxSetup calls
+// s.sync ensures MixerChannel groups are confirmed on server before Synth targets them
 ~r1fx = (); ~r2fx = (); ~r3fx = (); ~r4fx = (); ~r5fx = ();
+s.sync;
 ~fxSetup[\greyhole].(~r1, ~r1fx, ds: 1, page: 1, slot: 1);
 ~fxSetup[\combDelay].(~r2, ~r2fx, ds: 2, page: 1, slot: 2);
 ~fxSetup[\biscuit].(~r3, ~r3fx, ds: 3, page: 1, slot: 3);
 ~fxSetup[\chorus].(~r4, ~r4fx, ds: 4, page: 1, slot: 4);
+~fxSetup[\spectral].(~r5, ~r5fx, ds: 5, page: 1, slot: 5);
 
 // FX Buses
 ~g1 = MixerChannel.new(\g1, s, 2, 2, outbus: ~m1.inbus);
@@ -283,54 +286,54 @@ if(~lcxlParam.notNil) {
 //   Bank 3: Submix row 2     (pcr1, pcr2, pex1, pex2, s1-s4)
 //   Bank 4: Returns          (r1-r4, s1-s4)
 // Split into one block per bank to stay under SC's ~127-literal per-block limit.
-if(~oscParam.notNil) {
-    ~oscParam['tosc/master/f'] = { |x| ~m1.level_(x.linlin(0, 1, 0.0, 4.0)) };
-
-    // Bank 1: Tracks t1-t12
-    ~toscMixBind.(1,  1, ~t1,  \t1);  ~toscMixBindXY.(1,  1, \t1);
-    ~toscMixBind.(1,  2, ~t2,  \t2);  ~toscMixBindXY.(1,  2, \t2);
-    ~toscMixBind.(1,  3, ~t3,  \t3);  ~toscMixBindXY.(1,  3, \t3);
-    ~toscMixBind.(1,  4, ~t4,  \t4);  ~toscMixBindXY.(1,  4, \t4);
-    ~toscMixBind.(1,  5, ~t5,  \t5);  ~toscMixBindXY.(1,  5, \t5);
-    ~toscMixBind.(1,  6, ~t6,  \t6);  ~toscMixBindXY.(1,  6, \t6);
-    ~toscMixBind.(1,  7, ~t7,  \t7);  ~toscMixBindXY.(1,  7, \t7);
-    ~toscMixBind.(1,  8, ~t8,  \t8);  ~toscMixBindXY.(1,  8, \t8);
-    ~toscMixBind.(1,  9, ~t9,  \t9);  ~toscMixBindXY.(1,  9, \t9);
-    ~toscMixBind.(1, 10, ~t10, \t10); ~toscMixBindXY.(1, 10, \t10);
-    ~toscMixBind.(1, 11, ~t11, \t11); ~toscMixBindXY.(1, 11, \t11);
-    ~toscMixBind.(1, 12, ~t12, \t12); ~toscMixBindXY.(1, 12, \t12);
-    "TouchOSC bank 1 (tracks) bound.".postln;
-};
-if(~oscParam.notNil) {
-    // Bank 2: Submix row 1 (perc submix + pbd/psd/phh/pcp/ptm)
-    ~toscMixBind.(2,  1, ~perc, \perc); ~toscMixBindXY.(2,  1, \perc);
-    ~toscMixBind.(2,  2, ~pbd1, \pbd1); ~toscMixBindXY.(2,  2, \pbd1);
-    ~toscMixBind.(2,  3, ~pbd2, \pbd2); ~toscMixBindXY.(2,  3, \pbd2);
-    ~toscMixBind.(2,  4, ~psd1, \psd1); ~toscMixBindXY.(2,  4, \psd1);
-    ~toscMixBind.(2,  5, ~psd2, \psd2); ~toscMixBindXY.(2,  5, \psd2);
-    ~toscMixBind.(2,  6, ~phh1, \phh1); ~toscMixBindXY.(2,  6, \phh1);
-    ~toscMixBind.(2,  7, ~phh2, \phh2); ~toscMixBindXY.(2,  7, \phh2);
-    ~toscMixBind.(2,  8, ~pcp1, \pcp1); ~toscMixBindXY.(2,  8, \pcp1);
-    ~toscMixBind.(2,  9, ~pcp2, \pcp2); ~toscMixBindXY.(2,  9, \pcp2);
-    ~toscMixBind.(2, 10, ~ptm1, \ptm1); ~toscMixBindXY.(2, 10, \ptm1);
-    ~toscMixBind.(2, 11, ~ptm2, \ptm2); ~toscMixBindXY.(2, 11, \ptm2);
-    ~toscMixBind.(2, 12, ~ptm3, \ptm3); ~toscMixBindXY.(2, 12, \ptm3);
-    "TouchOSC bank 2 (submix row 1) bound.".postln;
-};
-if(~oscParam.notNil) {
-    // Bank 3: Submix row 2 (pcr, pex — s5-s12 unbound)
-    ~toscMixBind.(3, 1, ~pcr1, \pcr1); ~toscMixBindXY.(3, 1, \pcr1);
-    ~toscMixBind.(3, 2, ~pcr2, \pcr2); ~toscMixBindXY.(3, 2, \pcr2);
-    ~toscMixBind.(3, 3, ~pex1, \pex1); ~toscMixBindXY.(3, 3, \pex1);
-    ~toscMixBind.(3, 4, ~pex2, \pex2); ~toscMixBindXY.(3, 4, \pex2);
-
-    // Bank 4: Returns r1-r4 (s5-s12 unbound)
-    ~toscMixBind.(4, 1, ~r1, \r1); ~toscMixBindXY.(4, 1, \r1);
-    ~toscMixBind.(4, 2, ~r2, \r2); ~toscMixBindXY.(4, 2, \r2);
-    ~toscMixBind.(4, 3, ~r3, \r3); ~toscMixBindXY.(4, 3, \r3);
-    ~toscMixBind.(4, 4, ~r4, \r4); ~toscMixBindXY.(4, 4, \r4);
-    "TouchOSC banks 3-4 (submix row 2, returns) bound.".postln;
-};
+// if(~oscParam.notNil) {
+//     ~oscParam['tosc/master/f'] = { |x| ~m1.level_(x.linlin(0, 1, 0.0, 4.0)) };
+//
+//     // Bank 1: Tracks t1-t12
+//     ~toscMixBind.(1,  1, ~t1,  \t1);  ~toscMixBindXY.(1,  1, \t1);
+//     ~toscMixBind.(1,  2, ~t2,  \t2);  ~toscMixBindXY.(1,  2, \t2);
+//     ~toscMixBind.(1,  3, ~t3,  \t3);  ~toscMixBindXY.(1,  3, \t3);
+//     ~toscMixBind.(1,  4, ~t4,  \t4);  ~toscMixBindXY.(1,  4, \t4);
+//     ~toscMixBind.(1,  5, ~t5,  \t5);  ~toscMixBindXY.(1,  5, \t5);
+//     ~toscMixBind.(1,  6, ~t6,  \t6);  ~toscMixBindXY.(1,  6, \t6);
+//     ~toscMixBind.(1,  7, ~t7,  \t7);  ~toscMixBindXY.(1,  7, \t7);
+//     ~toscMixBind.(1,  8, ~t8,  \t8);  ~toscMixBindXY.(1,  8, \t8);
+//     ~toscMixBind.(1,  9, ~t9,  \t9);  ~toscMixBindXY.(1,  9, \t9);
+//     ~toscMixBind.(1, 10, ~t10, \t10); ~toscMixBindXY.(1, 10, \t10);
+//     ~toscMixBind.(1, 11, ~t11, \t11); ~toscMixBindXY.(1, 11, \t11);
+//     ~toscMixBind.(1, 12, ~t12, \t12); ~toscMixBindXY.(1, 12, \t12);
+//     "TouchOSC bank 1 (tracks) bound.".postln;
+// };
+// if(~oscParam.notNil) {
+//     // Bank 2: Submix row 1 (perc submix + pbd/psd/phh/pcp/ptm)
+//     ~toscMixBind.(2,  1, ~perc, \perc); ~toscMixBindXY.(2,  1, \perc);
+//     ~toscMixBind.(2,  2, ~pbd1, \pbd1); ~toscMixBindXY.(2,  2, \pbd1);
+//     ~toscMixBind.(2,  3, ~pbd2, \pbd2); ~toscMixBindXY.(2,  3, \pbd2);
+//     ~toscMixBind.(2,  4, ~psd1, \psd1); ~toscMixBindXY.(2,  4, \psd1);
+//     ~toscMixBind.(2,  5, ~psd2, \psd2); ~toscMixBindXY.(2,  5, \psd2);
+//     ~toscMixBind.(2,  6, ~phh1, \phh1); ~toscMixBindXY.(2,  6, \phh1);
+//     ~toscMixBind.(2,  7, ~phh2, \phh2); ~toscMixBindXY.(2,  7, \phh2);
+//     ~toscMixBind.(2,  8, ~pcp1, \pcp1); ~toscMixBindXY.(2,  8, \pcp1);
+//     ~toscMixBind.(2,  9, ~pcp2, \pcp2); ~toscMixBindXY.(2,  9, \pcp2);
+//     ~toscMixBind.(2, 10, ~ptm1, \ptm1); ~toscMixBindXY.(2, 10, \ptm1);
+//     ~toscMixBind.(2, 11, ~ptm2, \ptm2); ~toscMixBindXY.(2, 11, \ptm2);
+//     ~toscMixBind.(2, 12, ~ptm3, \ptm3); ~toscMixBindXY.(2, 12, \ptm3);
+//     "TouchOSC bank 2 (submix row 1) bound.".postln;
+// };
+// if(~oscParam.notNil) {
+//     // Bank 3: Submix row 2 (pcr, pex — s5-s12 unbound)
+//     ~toscMixBind.(3, 1, ~pcr1, \pcr1); ~toscMixBindXY.(3, 1, \pcr1);
+//     ~toscMixBind.(3, 2, ~pcr2, \pcr2); ~toscMixBindXY.(3, 2, \pcr2);
+//     ~toscMixBind.(3, 3, ~pex1, \pex1); ~toscMixBindXY.(3, 3, \pex1);
+//     ~toscMixBind.(3, 4, ~pex2, \pex2); ~toscMixBindXY.(3, 4, \pex2);
+//
+//     // Bank 4: Returns r1-r4 (s5-s12 unbound)
+//     ~toscMixBind.(4, 1, ~r1, \r1); ~toscMixBindXY.(4, 1, \r1);
+//     ~toscMixBind.(4, 2, ~r2, \r2); ~toscMixBindXY.(4, 2, \r2);
+//     ~toscMixBind.(4, 3, ~r3, \r3); ~toscMixBindXY.(4, 3, \r3);
+//     ~toscMixBind.(4, 4, ~r4, \r4); ~toscMixBindXY.(4, 4, \r4);
+//     "TouchOSC banks 3-4 (submix row 2, returns) bound.".postln;
+// };
 
 ~apcMixBind = nil;
 ~lcxlMixBind = nil;
@@ -360,36 +363,36 @@ if(~oscParam.notNil) {
 // ~toscMixSyncAll: push all mixer state + labels to TOSC.
 // Called via AppClock on startup (gives TOSC time to connect), and callable manually.
 // Bank 1 labels T1-T12 are TOSC defaults — no push needed.
-~toscMixSyncAll = {
-    if(~toscAddr.notNil) {
-        var masterVal = ~m1.level.linlin(0, 4, 0, 1);
-        ~oscState['tosc/master/f'] = masterVal;
-        ~toscAddr.sendMsg("/tosc/master/f", masterVal);
-        // Deferred resends using captured masterVal — TOSC may send 0 on connect between
-        // now and then, which would zero ~m1.level; re-reading it would push 0 back.
-        AppClock.sched(1.0, { ~toscAddr.sendMsg("/tosc/master/f", masterVal); nil });
-        AppClock.sched(3.5, { ~toscAddr.sendMsg("/tosc/master/f", masterVal); nil });
-    };
-    ~toscMixSync.(1,  1, ~t1);   ~toscMixSync.(1,  2, ~t2);
-    ~toscMixSync.(1,  3, ~t3);   ~toscMixSync.(1,  4, ~t4);
-    ~toscMixSync.(1,  5, ~t5);   ~toscMixSync.(1,  6, ~t6);
-    ~toscMixSync.(1,  7, ~t7);   ~toscMixSync.(1,  8, ~t8);
-    ~toscMixSync.(1,  9, ~t9);   ~toscMixSync.(1, 10, ~t10);
-    ~toscMixSync.(1, 11, ~t11);  ~toscMixSync.(1, 12, ~t12);
-    ~toscMixSync.(2,  1, ~perc, "perc"); ~toscMixSync.(2,  2, ~pbd1, "bd1");
-    ~toscMixSync.(2,  3, ~pbd2, "bd2");  ~toscMixSync.(2,  4, ~psd1, "sd1");
-    ~toscMixSync.(2,  5, ~psd2, "sd2");  ~toscMixSync.(2,  6, ~phh1, "hh1");
-    ~toscMixSync.(2,  7, ~phh2, "hh2");  ~toscMixSync.(2,  8, ~pcp1, "cp1");
-    ~toscMixSync.(2,  9, ~pcp2, "cp2");  ~toscMixSync.(2, 10, ~ptm1, "tm1");
-    ~toscMixSync.(2, 11, ~ptm2, "tm2");  ~toscMixSync.(2, 12, ~ptm3, "tm3");
-    ~toscMixSync.(3, 1, ~pcr1, "cr1"); ~toscMixSync.(3, 2, ~pcr2, "cr2");
-    ~toscMixSync.(3, 3, ~pex1, "ex1"); ~toscMixSync.(3, 4, ~pex2, "ex2");
-    ~toscMixSync.(4, 1, ~r1, "R1");    ~toscMixSync.(4, 2, ~r2, "R2");
-    ~toscMixSync.(4, 3, ~r3, "R3");    ~toscMixSync.(4, 4, ~r4, "R4");
-    "TouchOSC: mixer state synced.".postln;
-};
-// Schedule with a small delay so TOSC's OSC listener is ready to receive.
-AppClock.sched(0.5, { ~toscMixSyncAll.(); nil });
+// ~toscMixSyncAll = {
+//     if(~toscAddr.notNil) {
+//         var masterVal = ~m1.level.linlin(0, 4, 0, 1);
+//         ~oscState['tosc/master/f'] = masterVal;
+//         ~toscAddr.sendMsg("/tosc/master/f", masterVal);
+//         // Deferred resends using captured masterVal — TOSC may send 0 on connect between
+//         // now and then, which would zero ~m1.level; re-reading it would push 0 back.
+//         AppClock.sched(1.0, { ~toscAddr.sendMsg("/tosc/master/f", masterVal); nil });
+//         AppClock.sched(3.5, { ~toscAddr.sendMsg("/tosc/master/f", masterVal); nil });
+//     };
+//     ~toscMixSync.(1,  1, ~t1);   ~toscMixSync.(1,  2, ~t2);
+//     ~toscMixSync.(1,  3, ~t3);   ~toscMixSync.(1,  4, ~t4);
+//     ~toscMixSync.(1,  5, ~t5);   ~toscMixSync.(1,  6, ~t6);
+//     ~toscMixSync.(1,  7, ~t7);   ~toscMixSync.(1,  8, ~t8);
+//     ~toscMixSync.(1,  9, ~t9);   ~toscMixSync.(1, 10, ~t10);
+//     ~toscMixSync.(1, 11, ~t11);  ~toscMixSync.(1, 12, ~t12);
+//     ~toscMixSync.(2,  1, ~perc, "perc"); ~toscMixSync.(2,  2, ~pbd1, "bd1");
+//     ~toscMixSync.(2,  3, ~pbd2, "bd2");  ~toscMixSync.(2,  4, ~psd1, "sd1");
+//     ~toscMixSync.(2,  5, ~psd2, "sd2");  ~toscMixSync.(2,  6, ~phh1, "hh1");
+//     ~toscMixSync.(2,  7, ~phh2, "hh2");  ~toscMixSync.(2,  8, ~pcp1, "cp1");
+//     ~toscMixSync.(2,  9, ~pcp2, "cp2");  ~toscMixSync.(2, 10, ~ptm1, "tm1");
+//     ~toscMixSync.(2, 11, ~ptm2, "tm2");  ~toscMixSync.(2, 12, ~ptm3, "tm3");
+//     ~toscMixSync.(3, 1, ~pcr1, "cr1"); ~toscMixSync.(3, 2, ~pcr2, "cr2");
+//     ~toscMixSync.(3, 3, ~pex1, "ex1"); ~toscMixSync.(3, 4, ~pex2, "ex2");
+//     ~toscMixSync.(4, 1, ~r1, "R1");    ~toscMixSync.(4, 2, ~r2, "R2");
+//     ~toscMixSync.(4, 3, ~r3, "R3");    ~toscMixSync.(4, 4, ~r4, "R4");
+//     "TouchOSC: mixer state synced.".postln;
+// };
+// // Schedule with a small delay so TOSC's OSC listener is ready to receive.
+// AppClock.sched(0.5, { ~toscMixSyncAll.(); nil });
 
 "Mixer channels initialized.".postln;
 )

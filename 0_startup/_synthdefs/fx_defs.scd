@@ -306,28 +306,24 @@
     retFx[\biscuit]    = nil;
     retFx[\setBiscuit] = nil;
 
-    // Synth creation must be async (SynthDef confirmed via s.sync)
-    {
-        s.sync;
-        retFx[\biscuit] = Synth(\biscuit, [
-            \in,      ret.inbus.index,
-            \out,     ret.inbus.index,
-            \naked,   0.0,
-            \dressed, 1.0
-        ], ret.effectgroup);
+    retFx[\biscuit] = Synth(\biscuit, [
+        \in,      ret.inbus.index,
+        \out,     ret.inbus.index,
+        \naked,   0.0,
+        \dressed, 1.0
+    ], ret.synthgroup, \addToTail);
 
-        retFx[\setBiscuit] = { |drive, clock, bits, fxMode, shape, filterFreq, filterQ, naked, dressed|
-            drive.notNil.if      { retFx[\biscuit].set(\drive,      drive)      };
-            clock.notNil.if      { retFx[\biscuit].set(\clock,      clock)      };
-            bits.notNil.if       { retFx[\biscuit].set(\bits,       bits)       };
-            fxMode.notNil.if     { retFx[\biscuit].set(\fxMode,     fxMode)     };
-            shape.notNil.if      { retFx[\biscuit].set(\shape,      shape)      };
-            filterFreq.notNil.if { retFx[\biscuit].set(\filterFreq, filterFreq) };
-            filterQ.notNil.if    { retFx[\biscuit].set(\filterQ,    filterQ)    };
-            naked.notNil.if      { retFx[\biscuit].set(\naked,      naked)      };
-            dressed.notNil.if    { retFx[\biscuit].set(\dressed,    dressed)    };
-        };
-    }.fork;
+    retFx[\setBiscuit] = { |drive, clock, bits, fxMode, shape, filterFreq, filterQ, naked, dressed|
+        drive.notNil.if      { retFx[\biscuit].set(\drive,      drive)      };
+        clock.notNil.if      { retFx[\biscuit].set(\clock,      clock)      };
+        bits.notNil.if       { retFx[\biscuit].set(\bits,       bits)       };
+        fxMode.notNil.if     { retFx[\biscuit].set(\fxMode,     fxMode)     };
+        shape.notNil.if      { retFx[\biscuit].set(\shape,      shape)      };
+        filterFreq.notNil.if { retFx[\biscuit].set(\filterFreq, filterFreq) };
+        filterQ.notNil.if    { retFx[\biscuit].set(\filterQ,    filterQ)    };
+        naked.notNil.if      { retFx[\biscuit].set(\naked,      naked)      };
+        dressed.notNil.if    { retFx[\biscuit].set(\dressed,    dressed)    };
+    };
 
     // APC bindings use closures — resolve retFx[\biscuit] at call time (no sync needed)
     if(ds.notNil and: { ~apcBindParam.notNil }) {
