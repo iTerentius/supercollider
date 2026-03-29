@@ -264,6 +264,32 @@ def find_biscuit(root):
     return None
 
 
+def get_tag(node):
+    for p in node.findall('properties/property'):
+        k = p.find('key')
+        v = p.find('value')
+        if k is not None and k.text == 'tag' and v is not None:
+            return (v.text or '').strip()
+    return ''
+
+
+def set_tag(node, tag):
+    props = node.find('properties')
+    if props is None:
+        props = ET.SubElement(node, 'properties')
+    for p in props.findall('property'):
+        k = p.find('key')
+        if k is not None and k.text == 'tag':
+            v = p.find('value')
+            if v is not None:
+                v.text = tag
+                return
+    p = ET.SubElement(props, 'property')
+    p.set('type', 's')
+    ET.SubElement(p, 'key').text = 'tag'
+    ET.SubElement(p, 'value').text = tag
+
+
 # ── Patch ─────────────────────────────────────────────────────────────────────
 
 def patch(input_path, output_path):
@@ -273,6 +299,16 @@ def patch(input_path, output_path):
     biscuit = find_biscuit(root)
     if biscuit is None:
         print('ERROR: GROUP "biscuit" not found'); sys.exit(1)
+
+    # 0. Ensure all RADIO and RADIAL nodes inside biscuit have tag="2"
+    #    (tag is used in Lua as the FX slot number in the OSC path)
+    tag_count = 0
+    for node in biscuit.iter('node'):
+        if node.get('type') in ('RADIO', 'RADIAL'):
+            if get_tag(node) != '2':
+                set_tag(node, '2')
+                tag_count += 1
+    print(f'  Set tag="2" on {tag_count} nodes (RADIO/RADIAL missing tag)')
 
     bits_grp    = find_child(biscuit, 'bits')
     fxMode_grp  = find_child(biscuit, 'fxMode')

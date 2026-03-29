@@ -84,7 +84,30 @@ norm7 = { |v| (v.asFloat.clip(0, 127)) / 127.0 };
     "[device knob CC armed]".postln; true
 };
 
+/* ---- Tempo knob (CC 13 — relative encoder) ---- */
+/* CC 13 val 1-63 = +N BPM, val 65-127 = -(128-N) BPM */
+~apcTempoBpmStep = ~apcTempoBpmStep ? 1.0;   /* BPM per encoder tick */
+~apcTempoBpmMin  = ~apcTempoBpmMin  ? 40.0;
+~apcTempoBpmMax  = ~apcTempoBpmMax  ? 300.0;
+
+~apcInstallTempoKnob = {
+    MIDIdef.free(\apc_tempo_knob);
+    MIDIdef.cc(\apc_tempo_knob, { |val, num, chan, src|
+        if(num == 13) {
+            var delta, clock, bpm;
+            delta = if(val < 64) { val } { val - 128 };
+            clock = ~link ?? { TempoClock.default };
+            bpm   = (clock.tempo * 60) + (delta * ~apcTempoBpmStep);
+            bpm   = bpm.clip(~apcTempoBpmMin, ~apcTempoBpmMax);
+            clock.tempo = bpm / 60;
+            ("tempo: " ++ bpm.round(0.1) ++ " BPM").postln;
+        };
+    }, nil, nil, ~apcMidiUID);
+    "[tempo knob CC13 armed]".postln; true
+};
+
 /* ---- Boot ---- */
+~apcInstallTempoKnob.();
 ~apcInstallDevKnobCC.();
 ~apcInstallDevSubBankButtons.();
 ~apcPaintDevSubBank.();
@@ -93,6 +116,7 @@ norm7 = { |v| (v.asFloat.clip(0, 127)) / 127.0 };
 CmdPeriod.remove(~apcDevKnobPanicHook);
 ~apcDevKnobPanicHook = {
     AppClock.sched(0.0, {
+        ~apcInstallTempoKnob.();
         ~apcInstallDevKnobCC.();
         ~apcInstallDevSubBankButtons.();
         ~apcPaintDevSubBank.();
@@ -102,7 +126,7 @@ CmdPeriod.remove(~apcDevKnobPanicHook);
 CmdPeriod.add(~apcDevKnobPanicHook);
 
 StartUp.remove(~apcDevKnobStartHook);
-~apcDevKnobStartHook = { ~apcInstallDevKnobCC.(); ~apcInstallDevSubBankButtons.() };
+~apcDevKnobStartHook = { ~apcInstallTempoKnob.(); ~apcInstallDevKnobCC.(); ~apcInstallDevSubBankButtons.() };
 StartUp.add(~apcDevKnobStartHook);
 
 ("[dev knob key sample] " ++ ~apcParamKeyForDevice.(0, 2, 3)).postln;

@@ -101,7 +101,7 @@ s.sync;
 ~inlineFXmk = { |ch, sym|
     ~inlineFX[sym] = ch.playfx({ |in|
         var sig = In.ar(ch.inbus.index, 2);
-        HPF.ar(LPF.ar(sig, \lpfreq.kr(18000)), \hpfreq.kr(40))
+        HPF.ar(LPF.ar(sig, \lpfreq.kr(18000)), \hpfreq.kr(100))
     });
 };
 
@@ -197,7 +197,7 @@ s.sync;
 if(~apcBindParam.notNil) {
     "Binding APC40 mkII controls...".postln;
 
-    ~apcBindParam.(\master_f, { |x| ~m1.level_(x) });
+    ~apcBindParam.(\master_f, { |x| ~m1.level_(x.linlin(0, 1, 0, 4.0)) });
 
     // Bank 0: Tracks 1-8
     ~apcMixBind.(0, 1, ~t1, \t1);  ~apcMixBind.(0, 2, ~t2, \t2);
