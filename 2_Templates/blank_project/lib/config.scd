@@ -1,7 +1,7 @@
 // config.scd — tempo, return FX setup, initial state
 (
 ~link.tempo = 120/60;
-
+~inlineFX[\t1].set(\hpfreq,  100,  \lpfreq,  0);
 ~fxSetup[\greyhole].(~r1, ~r1fx, ds: 1, page: 1, slot: 1);
 ~fxSetup[\combDelay].(~r2, ~r2fx, ds: 2, page: 1, slot: 2);
 ~fxSetup[\biscuit].(~r3, ~r3fx, ds: 3, page: 1, slot: 3);

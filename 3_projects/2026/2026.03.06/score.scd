@@ -36,4 +36,3 @@ var safeLoad = { |path|
 }.fork(AppClock);
 )
 
-

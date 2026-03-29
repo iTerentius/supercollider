@@ -1,4 +1,3 @@
-
 // Re-eval this file to reset voice to defaults (story overrides live in arrangement.scd).
 (
 ///////////////////////////////////////////////////////////////
@@ -42,16 +41,16 @@ Pdef(\roll_fx_ctl, Pbindef(\roll_fx_ctl_pbd,
 ///////////////////////////////////////////////////////////////
 Pdefn(\roll_out,   ~t4.inbus.index);
 Pdefn(\roll_scale, Scale.minor);
-Pdefn(\roll_ins,  \slice_s);
+Pdefn(\roll_ins,  \slice_m);
 
 // BUFS — words
-// ~sRoll = (~sTree[\jttcot] ?? { "roll: ~sTree[\\jttcot] not in sTree — check samples.scd".warn; IdentityDictionary.new }).values[0..6];
+~sRoll = (~sTree[\jttcot] ?? { "roll: ~sTree[\\jttcot] not in sTree — check samples.scd".warn; IdentityDictionary.new }).values[0..6];
 // ~sRoll = ~sTree[\hoarder_mono].values[0..6];
 // ~sRoll = ~sTree[\casio_mt_100].values;
 // ~sRoll = ~sTree[\bass_drops].values;
 // ~sRoll = ~sTree[\mm].values;
 // ~sRoll = ~sTree[\neutron_12].values;
-~sRoll = ~sTree[\drumloops].values;
+// ~sRoll = ~sTree[\drumloops].values;
 // ~sRoll = ~sTree[\_mono].values;
 Pdefn(\roll_buf_0, Pseq(~sRoll, 1));
 Pdefn(\roll_buf_1, Pseq(~sRoll[[3,  4,  5]], 1));

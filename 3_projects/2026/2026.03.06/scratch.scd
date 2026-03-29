@@ -90,10 +90,12 @@ OSCFunc.trace(false)
 ~r3fx[\biscuit].postln;
   ~r3fx[\biscuit].set(\drive, 0.0);
 
+~inlineFX[\r3].set(\hpfreq,  0,  \lpfreq,  18000);
 (
 // ~outs = ~m1_ilfx_1.nodeID;
 ~outs = ~r5_ilfx_1;
 // ~outs = [~m1_ilfx_1,  ~r5_ilfx_1];
+
 Pdef(\modCtl, Pbind(
   \type,   \set,  
   \id,   ~outs,    
@@ -179,3 +181,5 @@ Tdef(\tempo).stop;
 ~r3fx[\biscuit].nodeID;
 
 Pdef(\bCtl).stop;
+MIDIFunc.trace(true); // Turn on
+MIDIFunc.trace(false); // Turn off
