@@ -426,7 +426,7 @@ SynthDef(\duck, { |in=0, side=0, out=0, thresh=0.1, ratio=10, attack=0.01, relea
         ]
     );
 
-    Out.ar(out, sig * gain * makeup);
+    ReplaceOut.ar(out, sig * gain * makeup);
 }).add;
 );
 

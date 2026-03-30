@@ -1,81 +1,48 @@
+// ndef2mixer-channel.scd — route Ndefs into ddwMixerChannel strips
+// Load after mixer-channel-16s.scd (needs MixerChannels to exist).
+//
+// API:
+//   ~ndefmRoute.(key, chan)         — play Ndef(key) into chan (stereo)
+//   ~ndefmRoute.(key, chan, 1)      — mono Ndef
+//   ~ndefmFree.(key)                — stop + remove from chan
+//   ~ndefmFreeAll.()                — free all routed Ndefs
+//   ~ndefmMap                       — IdentityDict: key → (chan, synth)
+//
+// Example:
+//   Ndef(\pad, { SinOsc.ar([440, 441]) * 0.2 });
+//   ~ndefmRoute.(\pad, ~t2);
+//   ~ndefmFree.(\pad);
 (
-// [2025-10-29 11:58 CDT] Ndef → ddwMixerChannel routing helpers (fixed: no `.not`, no touching \out)
+~ndefmMap = IdentityDictionary.new;
 
-// ——— TEMP one-shot: clear older buggy helpers (safe if they don't exist) ———
-~ndefAttachToChan = nil;
-~ndefDetach = nil;
-~ndefAttachMany = nil;
-~ndefMap = nil;
-
-// ——— State ———
-~ndefMap = IdentityDictionary.new;   // ndefKey -> (mode:\gen|\fx, chan:MixerChannel, synth:Synth?)
-
-// ——— Attach: route an Ndef into a MixerChannel ———
-~ndefAttachToChan = { |ndefKey, chan, chans = 2|
-	var nkey, rec, useChans, isEmpty, fxSynth;
-	nkey = ndefKey.asSymbol;
-	useChans = chans;
-
-	// already attached?
-	rec = ~ndefMap[nkey];
-	rec.isNil.if({
-		isEmpty = chan.synth.isNil;
-
-		isEmpty.if({
-			// Channel empty: install Ndef tap as the channel generator
-			chan.play({
-				var sig;
-				sig = Ndef(nkey).ar(useChans);
-				sig = sig.isArray.if({ sig.flat }, { sig });  // avoid [[a,a],[a,a]] → flat
-				sig
-			});
-			~ndefMap[nkey] = (mode: \gen, chan: chan);
-		}, {
-			// Channel already has a generator: mix Ndef as an FX layer
-			fxSynth = chan.playfx({ |outbus|
-				var sig;
-				sig = Ndef(nkey).ar(useChans);
-				sig = sig.isArray.if({ sig.flat }, { sig });
-				Out.ar(outbus, sig);
-			});
-			~ndefMap[nkey] = (mode: \fx, chan: chan, synth: fxSynth);
-		});
-	}, {
-		("~ndefAttachToChan: \\%" ++ nkey ++ " already attached to " ++ rec[\chan].name).postln;
-	});
+~ndefmRoute = { |key, chan, chans = 2|
+    var k = key.asSymbol;
+    var syn;
+    ~ndefmFree.(k);   // replace if already routed
+    syn = chan.playfx({ |outbus|
+        var sig = Ndef(k).ar(chans);
+        Out.ar(outbus, sig.flat)
+    });
+    ~ndefmMap[k] = (chan: chan, synth: syn);
+    ("~ndefmRoute: \\" ++ k ++ " → " ++ chan.name).postln;
 };
 
-// ——— Detach: remove routing created by ~ndefAttachToChan ———
-~ndefDetach = { |ndefKey|
-	var nkey, rec, mode, chan, synth;
-	nkey = ndefKey.asSymbol;
-	rec = ~ndefMap[nkey];
-	rec.notNil.if({
-		mode = rec[\mode];
-		chan = rec[\chan];
-		synth = rec[\synth];
-		(mode == \fx).if({
-			synth.notNil.if({ synth.free });
-		}, {
-			// If you want to explicitly silence the channel after detaching a \gen tap, uncomment:
-			// chan.play({ Silent.ar(chan.numChannels) });
-		});
-		~ndefMap.removeAt(nkey);
-	}, {
-		("~ndefDetach: nothing recorded for \\" ++ nkey).postln;
-	});
+~ndefmFree = { |key, stopNdef = true|
+    var k   = key.asSymbol;
+    var rec = ~ndefmMap[k];
+    if(rec.notNil) {
+        rec[\synth].tryPerform(\free);
+        ~ndefmMap.removeAt(k);
+        ("~ndefmFree: \\" ++ k).postln;
+    };
+    if(stopNdef) { Ndef(k).stop };
 };
 
-// ——— Convenience: many keys to one channel ———
-~ndefAttachMany = { |ndefKeys, chan, chans = 2|
-	var keys;
-	keys = ndefKeys.collect(_.asSymbol);
-	keys.do({ |k| ~ndefAttachToChan.(k, chan, chans) });
+~ndefmFreeAll = {
+    ~ndefmMap.keys.asArray.do { |k| ~ndefmFree.(k) };
 };
 
-CmdPeriod.doOnce({
-    // ~t1.free;
-    Ndef.clear;
-});
+CmdPeriod.doOnce({ ~ndefmMap = IdentityDictionary.new });
 
+"ndef2mixer-channel loaded. (~ndefmRoute, ~ndefmFree, ~ndefmFreeAll)".postln;
 )

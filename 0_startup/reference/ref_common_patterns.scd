@@ -40,6 +40,43 @@ Pdef(\kicks).play(~link, quant: 4);
     ~r1_fx.set(\damp, val.linlin(0, 127, 0.0, 1.0));
 };
 
+// --- Sidechain ducking with multi-source ~scBus ---
+// ~scBus is a shared audio bus created in mixer-channel-16s.scd.
+// Route any sources into it with Out.ar (additive mix), then point
+// \side at ~scBus.index in a \duck Synth on the channel to duck.
+(
+// Route kick (t1) and snare (psd1) as combined sidechain trigger
+~sc_bd  = { Out.ar(~scBus, In.ar(~t1.inbus.index,   2)) }.play;
+~sc_sn  = { Out.ar(~scBus, In.ar(~psd1.inbus.index, 2)) }.play;
+
+// Duck the biscuit return (~r3) from combined kick+snare
+~duck_r3 = Synth(\duck, [
+    \in,      ~r3.inbus.index,
+    \side,    ~scBus.index,
+    \out,     ~r3.inbus.index,
+    \thresh,  0.08,
+    \ratio,   4,
+    \attack,  0.003,
+    \release, 0.25,
+    \makeup,  1.0
+], ~r3.synthgroup, \addToTail);
+)
+
+// Remove a source from the sidechain without changing the duck synth
+~sc_sn.free;
+
+// Add a new source
+~sc_hh = { Out.ar(~scBus, In.ar(~phh1.inbus.index, 2)) }.play;
+
+// Adjust duck parameters live
+~duck_r3.set(\ratio, 8, \release, 0.15);
+
+// Tear down
+(
+~duck_r3.free;
+~sc_bd.free; ~sc_sn.free; ~sc_hh.free;
+)
+
 // --- Launchpad + mixer + Pdef workflow ---
 (
 Pdef(\beat, Pbind(

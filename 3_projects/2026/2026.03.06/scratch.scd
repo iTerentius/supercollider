@@ -183,3 +183,62 @@ Tdef(\tempo).stop;
 Pdef(\bCtl).stop;
 MIDIFunc.trace(true); // Turn on
 MIDIFunc.trace(false); // Turn off
+
+// Duck ~t1 (e.g. pads/synths) when ~t3 (e.g. kick) hits
+(
+~duck_r3_bd1.free;
+~duck_r3_bd1 = Synth(\duck, [
+  \in,      ~r3.inbus.index,   // signal to duck
+  \side,    ~t1.inbus.index,   // sidechain trigger source
+  \out,     ~r3.inbus.index,   // replace in place
+  \thresh,  0.88,              // onset threshold (0–1 amp scale)
+  \ratio,   4,                // compression ratio
+  \attack,  0.003,             // duck onset (seconds)
+  \release, 0.25,              // duck release (seconds)
+  \makeup,  1.0
+], ~r3.synthgroup, \addToTail);  // runs after input synths, before fader
+)
+~duck_r3_bd1.free;
+
+  // Free it
+(
+~duck_t7_bd1.free;
+~duck_t7_bd1 = Synth(\duck, [
+  \in,      ~t7.inbus.index,   // signal to duck
+  \side,    ~t1.inbus.index,   // sidechain trigger source
+  \out,     ~t7.inbus.index,   // replace in place
+  \thresh,  0.08,              // onset threshold (0–1 amp scale)
+  \ratio,   12,                // compression ratio
+  \attack,  0.03,             // duck onset (seconds)
+  \release, 0.35,              // duck release (seconds)
+  \makeup,  1.0
+], ~t7.synthgroup, \addToTail);  // runs after input synths, before fader
+)
+~duck_t7_bd1.free;
+(
+Ndef(\s1, { 
+  | out, sustain=1, freq=110, speed=1, begin=0, end=1, pan, accelerate, offest, freqmod=1, gate=1, noise=4 |
+	var e, f, s;
+	f = Array.fill(5, { | i | i + freqmod/freq * 10});
+	e = EnvGen.kr(Env.adsr(releaseTime: gate/2), gate, doneAction: 2);
+	s = Pulse.ar(f/2*Pulse.kr(LFNoise0.kr(noise)).range(0, 10) * LFPulse.kr([0.5, 0.01, 2]/freqmod, 0.5).range(1, 10))* e;
+	s = Splay.ar(s * e );
+	Out.ar(out, s *0.5);
+});
+Ndef(\s1)[1] = \pset -> Pbind(
+    \instrument, \s1,
+    \octave, 5,
+    \freqMod,   4, 
+    \dur, Pseq([0.125, 0.125, 0.25, 0.25], inf),
+    \degree, Pseq([0, 2, 4, 2, 5, 4, 2, 0], inf),
+    \legato, 0.8,
+    \amp, 0.15,
+
+    // per‑event aux‑send amounts (0..1); these are read by a filter tap below
+    \verbSend, Pwhite(0.0, 0.5, inf),
+    \delSend,  Pseg(Pseq([0.0, 0.6, 0.2, 0.8], inf), 4, \lin)
+); 
+)
+
+Ndef(\s1).play;
+Ndef(\s1).clear;

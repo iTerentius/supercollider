@@ -443,5 +443,129 @@
     };
 };
 
+// =============================================================================
+// ADDITIONAL FX DEFS (no ~fxSetup — use inline via playfx or Ndef)
+// =============================================================================
+
+// Bitcrusher — sample rate + bit depth reduction
+// Params: \rate (100–44100 Hz), \bits (1–16), \mix (0–1)
+~fxDefs[\bitcrush] = { |in, bus|
+    var sig, wet;
+    sig = In.ar(bus, 2);
+    wet = Decimator.ar(sig, \rate.kr(44100), \bits.kr(8));
+    XFade2.ar(sig, wet, \mix.kr(1).linlin(0, 1, -1, 1)) * \amp.kr(1)
+};
+
+// Ring modulator
+// Params: \freq (20–2000 Hz), \mix (0–1)
+~fxDefs[\ringmod] = { |in, bus|
+    var sig, wet;
+    sig = In.ar(bus, 2);
+    wet = sig * SinOsc.ar(\freq.kr(440));
+    XFade2.ar(sig, wet, \mix.kr(1).linlin(0, 1, -1, 1)) * \amp.kr(1)
+};
+
+// Wavefolder
+// Params: \gain (1–20), \mix (0–1)
+~fxDefs[\fold] = { |in, bus|
+    var sig, wet;
+    sig = In.ar(bus, 2);
+    wet = (sig * \gain.kr(4)).fold2(1);
+    XFade2.ar(sig, wet, \mix.kr(1).linlin(0, 1, -1, 1)) * \amp.kr(0.5)
+};
+
+// Glitch — LFO-modulated decimation
+// Params: \rate (0.1–10), \mix (0–1)
+~fxDefs[\glitch] = { |in, bus|
+    var sig, wet;
+    sig = In.ar(bus, 2);
+    wet = Decimator.ar(
+        sig,
+        LFTri.ar(\rate.kr(1) * 0.5).range(200, 6000),
+        LFPulse.kr(\rate.kr(1) * 0.5, 0.5).range(6, 14)
+    ) + sig;
+    XFade2.ar(sig, wet, \mix.kr(0.7).linlin(0, 1, -1, 1)) * \amp.kr(0.8)
+};
+
+// Pitch shimmer — PitchShift in semitones
+// Params: \shift (semitones, e.g. 12 = up one octave), \time (0.01–0.5), \mix (0–1)
+~fxDefs[\shimmer] = { |in, bus|
+    var sig, wet;
+    sig = In.ar(bus, 2);
+    wet = PitchShift.ar(sig,
+        windowSize:      0.2,
+        pitchRatio:      \shift.kr(12).midiratio,
+        pitchDispersion: 0.01,
+        timeDispersion:  \time.kr(0.1)
+    );
+    XFade2.ar(sig, wet, \mix.kr(0.4).linlin(0, 1, -1, 1)) * \amp.kr(1)
+};
+
+// Stutter — continuous stereo record + TGrains playback
+// Params: \rate (0.5–8 repeats/sec), \mix (0–1)
+~fxDefs[\stutter] = { |in, bus|
+    var sig, trig, bufL, bufR, wet;
+    sig  = In.ar(bus, 2);
+    trig = Impulse.kr(\rate.kr(2));
+    bufL = LocalBuf(SampleRate.ir * 2, 1);
+    bufR = LocalBuf(SampleRate.ir * 2, 1);
+    wet  = [
+        TGrains.ar(1, trig, bufL, 1, BufDur.kr(bufL) / 2, 0.25),
+        TGrains.ar(1, trig, bufR, 1, BufDur.kr(bufR) / 2, 0.25)
+    ];
+    RecordBuf.ar(sig[0], bufL, loop: 1);
+    RecordBuf.ar(sig[1], bufR, loop: 1);
+    XFade2.ar(sig, wet, \mix.kr(0.5).linlin(0, 1, -1, 1)) * \amp.kr(1)
+};
+
+// Pitch shift (simple ratio version)
+// Params: \shift (ratio: 1.0=unchanged, 2.0=+octave, 0.5=-octave), \mix (0–1)
+~fxDefs[\pitchShift] = { |in, bus|
+    var sig, wet;
+    sig = In.ar(bus, 2);
+    wet = PitchShift.ar(sig, 0.1, \shift.kr(1.0), 0.01, 0.01);
+    XFade2.ar(sig, wet, \mix.kr(0.5).linlin(0, 1, -1, 1))
+};
+
+// Granular freeze — records continuously, freeze=1 holds buffer for grain playback
+// Params: \freeze (0/1), \rate (playback rate), \scatter (grain pos scatter), \mix (0–1)
+~fxDefs[\granFreeze] = { |in, bus|
+    var sig, freeze, rate, scatter, trig, bufL, bufR, wet;
+    sig     = In.ar(bus, 2);
+    freeze  = \freeze.kr(0);
+    rate    = \rate.kr(1.0);
+    scatter = \scatter.kr(0.05);
+    trig    = Impulse.ar(20);
+    bufL    = LocalBuf(SampleRate.ir * 2, 1);
+    bufR    = LocalBuf(SampleRate.ir * 2, 1);
+    // freeze=1 mutes input to RecordBuf — buffer holds last captured content
+    RecordBuf.ar(sig[0] * (1 - freeze), bufL, loop: 1);
+    RecordBuf.ar(sig[1] * (1 - freeze), bufR, loop: 1);
+    wet = [
+        TGrains.ar(1, trig, bufL, rate, BufDur.kr(bufL) * 0.5,
+            0.1, scatter * TRand.kr(-1, 1, trig), 0.5, 2),
+        TGrains.ar(1, trig, bufR, rate, BufDur.kr(bufR) * 0.5,
+            0.1, scatter * TRand.kr(-1, 1, trig), 0.5, 2)
+    ];
+    XFade2.ar(sig, wet, \mix.kr(0.8).linlin(0, 1, -1, 1))
+};
+
+// ~ufn aliases — FX functions available for Ndef / playfx experimentation.
+// Usage: Ndef(\x, { ~fxDefs[\greyhole].(0, ~r1.inbus.index) });
+~ufn = ~ufn ? ();
+~ufn[\combDelay]  = ~fxDefs[\combDelay];
+~ufn[\freeVerb]   = ~fxDefs[\freeVerb];
+~ufn[\greyhole]   = ~fxDefs[\greyhole];
+~ufn[\chorus]     = ~fxDefs[\chorus];
+~ufn[\spectral]   = ~fxDefs[\spectral];
+~ufn[\bitcrush]   = ~fxDefs[\bitcrush];
+~ufn[\ringmod]    = ~fxDefs[\ringmod];
+~ufn[\fold]       = ~fxDefs[\fold];
+~ufn[\glitch]     = ~fxDefs[\glitch];
+~ufn[\shimmer]    = ~fxDefs[\shimmer];
+~ufn[\stutter]    = ~fxDefs[\stutter];
+~ufn[\pitchShift] = ~fxDefs[\pitchShift];
+~ufn[\granFreeze] = ~fxDefs[\granFreeze];
+
 "Mixer Channel FX Defs & Setup Loaded.".postln;
 )

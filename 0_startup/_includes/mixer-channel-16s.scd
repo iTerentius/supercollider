@@ -394,5 +394,11 @@ if(~lcxlParam.notNil) {
 // // Schedule with a small delay so TOSC's OSC listener is ready to receive.
 // AppClock.sched(0.5, { ~toscMixSyncAll.(); nil });
 
+// ================= SIDECHAIN MIX BUS =================
+// Shared bus for multi-source sidechain ducking (Option A pattern).
+// Mix any number of sources into it with Out.ar (additive).
+// Point \side at ~scBus.index in any \duck Synth.
+~scBus = Bus.audio(s, 2);
+
 "Mixer channels initialized.".postln;
 )

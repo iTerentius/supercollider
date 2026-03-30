@@ -55,6 +55,7 @@ s.boot;
 s.waitForBoot {
     // --- Core synths + sample loader (always load)
     "_synthdefs/synths_common.scd".loadRelative;
+    "_synthdefs/ufn_defs.scd".loadRelative;
     "_synthdefs/analog_synthdefs.scd".loadRelative;
     "_synthdefs/neutron.scd".loadRelative;
     "_synthdefs/model_d.scd".loadRelative;
@@ -81,6 +82,7 @@ s.waitForBoot {
     // --- Mixer channels (with conditional controller bindings)
     "_includes/mixer-channel-16s.scd".loadRelative;
     "_includes/mixer-channel-stem-record.scd".loadRelative;
+    "_includes/ndef2mixer-channel.scd".loadRelative;
 
     // --- Helpers
     "_includes/_helpers/helpers.scd".loadRelative;
