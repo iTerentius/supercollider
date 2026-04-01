@@ -16,12 +16,12 @@ if(MIDIClient.initialized.not) { MIDIClient.init };
 
 pickSrcIdx = {
     MIDIClient.sources.detectIndex { |ep|
-        ep.device == "Launchpad Mini MK3" and: { ep.name.contains("MIDI") }
+        ep.device == "Launchpad Mini MK3" and: { ep.name.contains("MI") }
     }
 };
 pickDest = {
     MIDIClient.destinations.detect { |ep|
-        ep.device == "Launchpad Mini MK3" and: { ep.name.contains("MIDI") }
+        ep.device == "Launchpad Mini MK3" and: { ep.name.contains("MI") }
     }
 };
 
