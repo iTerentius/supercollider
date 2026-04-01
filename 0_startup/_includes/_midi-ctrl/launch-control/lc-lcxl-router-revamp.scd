@@ -6,7 +6,7 @@ var pickSrcIdx, pickDest, connectDevice;
 connectDevice = { |devName|
     var idx = MIDIClient.sources.detectIndex { |ep| ep.device == devName and: { ep.name != "HUI" } };
     if(idx.notNil) {
-        MIDIIn.connect(idx);
+        MIDIIn.connect(0, MIDIClient.sources[idx].uid);
         ["[LC/LCXL] Connected (index " ++ idx ++ "):", MIDIClient.sources[idx].device].postln;
     };
     idx

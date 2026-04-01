@@ -120,6 +120,32 @@ Pdef(\modCtl).stop;
   Pdef.all[\neutron].postln;                                
   ~lpMini[\bindings].select { |b| b[\key] == \neutron }.postln;
 ~t7.level
+  SynthDescLib.global.at(\neutron).postln;   // nil = SynthDef not on
+  server                                                                  
+  Pdefn(\ntron_out).source.postln;           // nil or wrong = bad bus
+  Synth(\neutron, [\out, ~t7.inbus.index, \freq, 220, \amp, 0.5]);        
+  Pbindef(\pbd_ntron).patterns.postln;                      
+    MIDIClient.sources.do { |ep, i| [i, ep.device, ep.name, ep.uid].postln }
+
+  [                                                                       
+    "apcMidiUID:", ~apcMidiUID,
+    "apcOut:", ~apcOut,                                                   
+    "apcPadMap size:", ~apcPadMap.size,
+    "apcBanks[0] size:", ~apcBanks[0].size                                
+  ].postln
+                                                                          
+  // 4. Raw MIDI test — press any pad on either controller after running
+  this                                                                    
+  MIDIdef.noteOn(\dbg, { |v, n, c, s| ["NOTE", v, n, c, s].postln })
+  MIDIIn.disconnectAll;
+  MIDIClient.sources.do { |ep, i|
+      if(ep.device.containsi("IAC Driver").not) {                         
+          MIDIIn.connect(0, ep.uid);
+          ("Connected: " ++ ep.device ++ " / " ++ ep.name).postln;        
+      };          
+  };                                                                       
+  ~roll_phrA_fnA.(); 
+  ~roll_phrA_fnB.();  
 
   ~r5.postSends.do { |s| s.postSettings };
   ~r5.inbus.index.postln;

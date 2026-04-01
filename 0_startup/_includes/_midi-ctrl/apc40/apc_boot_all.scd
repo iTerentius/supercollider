@@ -132,7 +132,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
             // macOS: connected early in midi-setup.scd to avoid CoreMIDI deadlock.
             // Linux: connect here.
             if(Platform.case(\osx, { false }, { true })) {
-                MIDIIn.connect(0, apcSrc);
+                MIDIIn.connect(0, apcSrc.uid);
             };
             ~apcMidiUID = apcSrc.uid;
             ["[APC] MIDIIn connected (port 0 -> index " ++ apcInport ++ "):", apcSrc.device, apcSrc.name].postln;
@@ -159,7 +159,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
             };
         };
     };
-    if(out.isNil) { "[APC] could not open APC out".warn } { ~apcOut = out };
+    if(out.isNil) { "[APC] could not open APC out".warn; ~apcOut = nil; } { ~apcOut = out };
     ~apcOut
 };
 
@@ -181,7 +181,6 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 ~apcLEDSet = { |note, color, chan = 0|
     ~apcLedState[note] = color;
     ~apcPadLEDch.(note, color, chan);
-    AppClock.sched(0.03, { ~apcPadLEDch.(note, color, chan) });
 };
 
 ~apcIntroGenericMode = {
@@ -280,10 +279,19 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 };
 
 ~apcAnyGridPlaying = {
-    var anyOn; anyOn = false;
-    if(~apcPadMap.notNil) {
-        ~apcPadMap.values.do { |key|
-            if(key.notNil and: { Pdef(key).isPlaying }) { anyOn = true };
+    var anyOn = false;
+    ~apcBanks.do { |bankMap|
+        bankMap.values.do { |binding|
+            var key, obj;
+            key = if(binding.isKindOf(Event)) { binding[\key] } { binding };
+            if(key.notNil) {
+                obj = if(currentEnvironment.at(\apcGetObj).notNil) { ~apcGetObj.(key) } { Pdef(key) };
+                if(currentEnvironment.at(\apcIsRunning).notNil) {
+                    if(~apcIsRunning.(obj)) { anyOn = true };
+                } {
+                    if(obj.isPlaying) { anyOn = true };
+                };
+            };
         };
     };
     anyOn
@@ -300,13 +308,28 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 };
 
 ~apcStopAll = {
-    if(~apcPadMap.notNil) {
-        ~apcPadMap.keysValuesDo { |n, k|
-            if(Pdef(k).isPlaying) { ~apcPadStop.(k) };
-            ~apcLEDByState.(n, k);
+    ~apcBanks.do { |bankMap|
+        bankMap.keysValuesDo { |n, binding|
+            var key, obj;
+            key = if(binding.isKindOf(Event)) { binding[\key] } { binding };
+            if(key.notNil) {
+                obj = if(currentEnvironment.at(\apcGetObj).notNil) { ~apcGetObj.(key) } { Pdef(key) };
+                if(currentEnvironment.at(\apcIsRunning).notNil) {
+                    if(~apcIsRunning.(obj)) {
+                        if(binding.isKindOf(Event) and: { binding[\onStop].notNil }) {
+                            binding[\onStop].value;
+                        } {
+                            obj.stop;
+                        };
+                    };
+                } {
+                    if(obj.isPlaying) { obj.stop };
+                };
+            };
         };
     };
     if(~apcStopAllNote.notNil) { ~apcStopAllLED.() };
+    AppClock.sched(0.05, { ~apcRepaintAll.() });
 };
 
 ~apcStopColLEDByChan = { |chan|
@@ -370,7 +393,6 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     chan = bankIdx.clip(0, 7);
     want = (bankIdx == (~apcBank - 1)).if(colors[\green], colors[\off]);
     ~apcPadLEDch.(~apcBankBtnNote, want, chan);
-    AppClock.sched(0.03, { ~apcPadLEDch.(~apcBankBtnNote, want, chan) });
 };
 
 ~apcPaintAllBanks = { 8.do { |i| ~apcPaintBankBtn.(i) } };

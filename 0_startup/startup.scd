@@ -94,6 +94,7 @@ s.waitForBoot {
 
     // 2. CREATE the new clock
     ~link = LinkClock(1).latency_(Server.default.latency - 0.567);
+    ~link.permanent = true;
 
     TempoClock.default = ~link;
     // 3. RESET Tempo to a sane default (120 BPM) immediately
