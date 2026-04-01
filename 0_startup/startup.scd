@@ -70,12 +70,12 @@ s.waitForBoot {
     "_includes/_midi-ctrl/midi-device-loader.scd".loadRelative;
 
     // Launch Pad Mini - uncomment if you use it
-    "_includes/_midi-ctrl/launch-pad-mini/lp-param-router.scd".loadRelative;
+    // "_includes/_midi-ctrl/launch-pad-mini/lp-param-router.scd".loadRelative;
 
     s.sync; // ensure all SynthDefs are registered on server before mixer init
 
     // --- TouchOSC OSC router (always load — no device detection needed)
-    "_includes/_osc-ctrl/tosc-router.scd".loadRelative;
+    // "_includes/_osc-ctrl/tosc-router.scd".loadRelative;
     // "_includes/_osc-ctrl/tosc-pad-router.scd".loadRelative;
     // "_includes/_osc-ctrl/tosc-fx.scd".loadRelative;
 
@@ -102,7 +102,12 @@ s.waitForBoot {
     Pdef.defaultQuant = 4;
 
     // --- Cleanup any launchpad state if present
-    if(~lpMini.notNil) { ~lpMini[\clearGrid].(); };
+    s.doWhenBooted({
+        fork {
+            3.5.wait;
+            if(~lpMini.notNil) { ~lpMini[\clearGrid].() };
+        }
+    });
 
     ("Setup done! (" ++ platform ++ ")").postln;
 };

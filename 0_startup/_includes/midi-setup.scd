@@ -129,6 +129,12 @@ case
     } {
         "WARNING: Virtual MIDI destination not found. Trying index 0...".warn;
     };
+    // VirMIDI 0-2: reserved for LP Mini LED output. Must be created here (early, alongside
+    // ~mOut) so the ALSA subscription is established before PipeWire stabilises the graph.
+    // lp-mini-bridge.service forwards VirMIDI 0-2 -> LP Mini DA via ALSA direct addressing.
+    // lp-param-router.scd uses ~lpMiniOut if non-nil rather than creating its own MIDIOut.
+    ~lpMiniOut = dests.detect { |ep| ep.name.containsi("VirMIDI 0-2") };
+    ~lpMiniOut = ~lpMiniOut !? { MIDIOut.newByName(~lpMiniOut.device, ~lpMiniOut.name) };
 };
 
 // Fallback if ~mOut is still nil

@@ -16,12 +16,24 @@ if(MIDIClient.initialized.not) { MIDIClient.init };
 
 pickSrcIdx = {
     MIDIClient.sources.detectIndex { |ep|
-        ep.device == "Launchpad Mini MK3" and: { ep.name.contains("MIDI") }
+        ep.device == "Launchpad Mini MK3" and: {
+            if(Platform.case(\osx, { false }, { true })) {
+                ep.name.endsWith("DA") // DA receives pad presses
+            } {
+                ep.name.contains("MIDI") or: { ep.name.endsWith("DA") }
+            }
+        }
     }
 };
 pickDest = {
     MIDIClient.destinations.detect { |ep|
-        ep.device == "Launchpad Mini MK3" and: { ep.name.contains("MIDI") }
+        ep.device == "Launchpad Mini MK3" and: {
+            if(Platform.case(\osx, { false }, { true })) {
+                ep.name.endsWith("MI") // MI receives LEDs (mapped by sc-midi-connect to out6)
+            } {
+                ep.name.contains("MIDI") or: { ep.name.endsWith("DA") }
+            }
+        }
     }
 };
 
@@ -29,20 +41,38 @@ pickDest = {
 srcIdx = pickSrcIdx.();
 if(srcIdx.notNil) {
     ~lpMini[\src] = MIDIClient.sources[srcIdx];
-    // macOS: connected early in midi-setup.scd to avoid CoreMIDI deadlock.
-    // Linux/ALSA: connectAll needed here.
     if(Platform.case(\osx, { false }, { true })) {
-        MIDIIn.connectAll;
+        MIDIIn.connect(0, ~lpMini[\src].uid);
     };
-    ["[LP Mini] MIDIIn connected, found device:", ~lpMini[\src].device].postln;
+    ["[LP Mini] MIDIIn connected, found device:", ~lpMini[\src].device, "on port:", ~lpMini[\src].name].postln;
 } {
     ~lpMini[\src] = nil;
 };
 ~lpMini[\dst] = pickDest.();
 
-if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
+if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI source not found!".warn; };
 
-~lpMini[\out] = ~lpMini[\dst].notNil.if({ MIDIOut.newByName(~lpMini[\dst].device, ~lpMini[\dst].name) }, { nil });
+// Connect output for LEDs (MI port on Linux, out6)
+~lpMini[\out] = ~lpMiniOut ?? {
+    ~lpMini[\dst].notNil.if({
+        MIDIOut.newByName(~lpMini[\dst].device, ~lpMini[\dst].name)
+    }, { nil })
+};
+
+// Create a separate output exclusively for SysEx to the DA port to prevent ALSA/JACK lockups
+~lpMini[\sysExOut] = {
+    if(Platform.case(\osx, { false }, { true })) {
+        var daDest = MIDIClient.destinations.detect { |ep| ep.device == "Launchpad Mini MK3" and: { ep.name.endsWith("DA") } };
+        if(daDest.notNil) {
+            MIDIOut(0, daDest.uid);
+        } {
+            nil;
+        };
+    } {
+        ~lpMini[\out];
+    }
+}.value;
+
 ~lpMini[\uid] = ~lpMini[\src].tryPerform(\uid);
 
 // --- BANKING (1-indexed: banks 1-8) ---
@@ -61,20 +91,23 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
 
 // --- HARDWARE CONTROL ---
 ~lpMini[\setProgrammerMode] = {
-    if(~lpMini[\out].notNil) {
-        ~lpMini[\out].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x01, 0xF7]);
+    // SysEx disabled: Currently crashes ALSA/JACK on Linux kernel
+    /*
+    if(~lpMini[\sysExOut].notNil) {
+        ~lpMini[\sysExOut].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x01, 0xF7]);
     };
+    */
 };
 
 ~lpMini[\clearGrid] = {
-    if(~lpMini[\out].notNil) {
+    if(~lpMini[\sysExOut].notNil) {
         fork {
-            ~lpMini[\out].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x00, 0xF7]);
+            // ~lpMini[\sysExOut].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x00, 0xF7]);
             0.05.wait;
-            ~lpMini[\out].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x01, 0xF7]);
+            // ~lpMini[\sysExOut].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x01, 0xF7]);
             ~lpMini[\ledCache] = IdentityDictionary.new;
             ~lpMini[\paintBankLEDs].();
-            "LP Mini Grid Cleared".postln;
+            "LP Mini Grid Cleared (SysEx disabled)".postln;
         }
     };
 };
@@ -98,12 +131,14 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
     ~lpMini[\bank]     = newBank;
     ~lpMini[\bindings] = ~lpMini[\banks][newBank - 1];
     fork {
-        if(~lpMini[\out].notNil) {
+        /* SysEx Disabled
+        if(~lpMini[\sysExOut].notNil) {
             // Clear grid: live mode then back to programmer
-            ~lpMini[\out].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x00, 0xF7]);
+            ~lpMini[\sysExOut].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x00, 0xF7]);
             0.05.wait;
-            ~lpMini[\out].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x01, 0xF7]);
+            ~lpMini[\sysExOut].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x01, 0xF7]);
         };
+        */
         ~lpMini[\ledCache] = IdentityDictionary.new;  // watcher repaints new bank
         ~lpMini[\paintBankLEDs].();
     };
@@ -330,11 +365,22 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
                     };
                 };
             };
-            ~lpMini[\out].control(0, 19, if(anyPlaying) { ~lpMini[\colors][\stopAll] } { 0 });
+            
+            // Cache stopAll LED to prevent flooding ALSA with 10 CCs a second
+            if(~lpMini[\ledCache][\stopAll] != anyPlaying) {
+                ~lpMini[\out].control(0, 19, if(anyPlaying) { ~lpMini[\colors][\stopAll] } { 0 });
+                ~lpMini[\ledCache][\stopAll] = anyPlaying;
+            };
         };
         0.1.wait;
     }
-}.play(AppClock);
+};
+
+ServerTree.add({
+    if(~lpMini[\watcher].isPlaying.not) {
+        ~lpMini[\watcher].play(AppClock);
+    };
+});
 
 // --- BINDING API ---
 ~lpBind = { |ref, key, color=nil, clock=nil, quant=nil, onStop=nil|
@@ -472,10 +518,23 @@ if(~lpMini[\uid].notNil) {
 // --- RECOVERY ---
 CmdPeriod.add({
     {
-        if(~lpMini[\dst].notNil) {
-             ~lpMini[\out] = MIDIOut.newByName(~lpMini[\dst].device, ~lpMini[\dst].name);
-             ~lpMini[\out].latency = 0;
+        ~lpMini[\out] = ~lpMiniOut ?? {
+            ~lpMini[\dst].notNil.if({
+                MIDIOut.newByName(~lpMini[\dst].device, ~lpMini[\dst].name)
+            }, { nil })
         };
+        if(~lpMini[\out].notNil) { ~lpMini[\out].latency = 0 };
+
+        ~lpMini[\sysExOut] = {
+            if(Platform.case(\osx, { false }, { true })) {
+                var daDest = MIDIClient.destinations.detect { |ep| ep.device == "Launchpad Mini MK3" and: { ep.name.endsWith("DA") } };
+                if(daDest.notNil) {
+                    MIDIOut(0, daDest.uid);
+                } { nil };
+            } {
+                ~lpMini[\out];
+            }
+        }.value;
         ~lpMini[\setProgrammerMode].();
         ~lpMini[\paintBankLEDs].();
         if(~lpMini[\watcher].isPlaying.not) { ~lpMini[\watcher].reset.play(AppClock) };
@@ -483,8 +542,24 @@ CmdPeriod.add({
     }.defer(0.5);
 });
 
-// Paint initial bank LED state
-~lpMini[\paintBankLEDs].();
+// Paint initial bank LED state.
+s.doWhenBooted({
+    fork {
+        3.wait;
+        if(Platform.case(\osx, { false }, { true })) {
+            ~lpMini[\setProgrammerMode].();
+            ~lpMini[\ledCache] = IdentityDictionary.new;
+            ~lpMini[\paintBankLEDs].();
+        } {
+            ~lpMini[\setProgrammerMode].();
+            ~lpMini[\paintBankLEDs].();
+        };
+        
+        if(~lpMini[\watcher].isPlaying.not) {
+            ~lpMini[\watcher].play(AppClock);
+        };
+    };
+});
 
 "--- Launchpad Mini MK3 Universal Launcher Loaded (v15 + Banking 1-8) ---".postln;
 )

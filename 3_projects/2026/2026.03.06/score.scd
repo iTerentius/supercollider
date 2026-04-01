@@ -35,4 +35,6 @@ var safeLoad = { |path|
     "Score loaded.".postln;
 }.fork(AppClock);
 )
+s.serverRunning.postln
+s.boot
 
