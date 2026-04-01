@@ -120,38 +120,13 @@ Pdef(\modCtl).stop;
   Pdef.all[\neutron].postln;                                
   ~lpMini[\bindings].select { |b| b[\key] == \neutron }.postln;
 ~t7.level
-  SynthDescLib.global.at(\neutron).postln;   // nil = SynthDef not on
-  server                                                                  
-  Pdefn(\ntron_out).source.postln;           // nil or wrong = bad bus
-  Synth(\neutron, [\out, ~t7.inbus.index, \freq, 220, \amp, 0.5]);        
-  Pbindef(\pbd_ntron).patterns.postln;                      
-    MIDIClient.sources.do { |ep, i| [i, ep.device, ep.name, ep.uid].postln }
-
-  [                                                                       
-    "apcMidiUID:", ~apcMidiUID,
-    "apcOut:", ~apcOut,                                                   
-    "apcPadMap size:", ~apcPadMap.size,
-    "apcBanks[0] size:", ~apcBanks[0].size                                
-  ].postln
-                                                                          
-  // 4. Raw MIDI test — press any pad on either controller after running
-  this                                                                    
-  MIDIdef.noteOn(\dbg, { |v, n, c, s| ["NOTE", v, n, c, s].postln })
-  MIDIIn.disconnectAll;
-  MIDIClient.sources.do { |ep, i|
-      if(ep.device.containsi("IAC Driver").not) {                         
-          MIDIIn.connect(i);
-          ("Connected: " ++ ep.device ++ " / " ++ ep.name).postln;        
-      };          
-  };                                                                       
-  ~roll_phrA_fnA.(); 
-  ~roll_phrA_fnB.();  
 
   ~r5.postSends.do { |s| s.postSettings };
   ~r5.inbus.index.postln;
   ~t8.inbus.index.postln;
 
-  [~t1,~t2,~t3,~t4,~t5,~t6,~t7,~t8,~t9].do {
+(
+[~t1,~t2,~t3,~t4,~t5,~t6,~t7,~t8,~t9].do {
   |ch|
       ch.postSends.do { |s|
           if(s.outbus.index ==
@@ -163,6 +138,7 @@ Pdef(\modCtl).stop;
   };
 
   ~r5.level_(1)
+)
 (
 Tdef(\tempo, {
   var bpms = [50,  100, 200].scramble;
@@ -215,30 +191,145 @@ MIDIFunc.trace(false); // Turn off
 ], ~t7.synthgroup, \addToTail);  // runs after input synths, before fader
 )
 ~duck_t7_bd1.free;
+
 (
-Ndef(\s1, { 
-  | out, sustain=1, freq=110, speed=1, begin=0, end=1, pan, accelerate, offest, freqmod=1, gate=1, noise=4 |
-	var e, f, s;
-	f = Array.fill(5, { | i | i + freqmod/freq * 10});
-	e = EnvGen.kr(Env.adsr(releaseTime: gate/2), gate, doneAction: 2);
-	s = Pulse.ar(f/2*Pulse.kr(LFNoise0.kr(noise)).range(0, 10) * LFPulse.kr([0.5, 0.01, 2]/freqmod, 0.5).range(1, 10))* e;
-	s = Splay.ar(s * e );
-	Out.ar(out, s *0.5);
-});
-Ndef(\s1)[1] = \pset -> Pbind(
+SynthDef(\s2, { 
+  | out, freq=110, gate=1, freqmod=1, amp=0.2,  conv=1|
+	var sig, lf,  env;
+  env = EnvGen.ar(Env.asr( 0.01, 0.3, 1.0), gate: gate, doneAction: 2 ); 
+  // sig = VarSaw.ar([freq, freq+2], env*0.1,  freqmod) * LFPulse.ar(freq/2, LFPulse.ar([freqmod-1, freqmod])) * 0.7;
+  sig = LFPulse.ar([freq, freq+2], env,  freqmod) * SinOsc.ar(freq/2, LFPulse.ar([freqmod-1, freqmod])) * 0.7;
+  // sig = sig * Convolution.ar(~t10.inbus.index, ~t1.inbus.index, 2048, 0.8);
+  sig = sig * env;
+	Out.ar(out, sig * amp);
+}).add;
+)
+(
+SynthDef(\s3, { 
+  | out, freq=110, gate=1, freqmod=1, amp=0.2,  conv=1|
+	var sig, lf,  env;
+  env = EnvGen.ar(Env.asr( 0.01, 0.7, 1.0), gate: gate, doneAction: 2 ); 
+  // sig = VarSaw.ar([freq, freq+2], env*0.1,  freqmod) * LFPulse.ar(freq/2, LFPulse.ar([freqmod-1, freqmod])) * 0.7;
+  sig = LFPulse.ar([freq, freq+2], env,  freqmod) * SinOsc.ar(freq/2, LFPulse.ar([freqmod-1, freqmod])) * 0.7;
+  // sig = sig * Convolution.ar(~t10.inbus.index, ~t1.inbus.index, 2048, 0.8);
+  sig = sig * env;
+	Out.ar(out, sig * amp);
+}).add;
+)
+(
+SynthDef(\dynklangDemo, {
+    arg out = 0, gate = 1, amp = 0.3,
+        freq0 = 220, freq1 = 440, freq2 = 660,
+        lfoRate = 0.3, lfoDepth = 0.15,
+        attackTime = 0.01, releaseTime = 2.0;
+
+    var lfo, f0, f1, f2, a0, a1, sig, env;
+
+    lfo = SinOsc.kr(lfoRate);
+
+    // Compute each modulated freq/amp as a named UGen, not inside an Array
+    f0 = freq0 * (1 + (lfo * lfoDepth));
+    f1 = freq1 * (1 + (lfo.neg * lfoDepth * 0.7));
+    f2 = freq2 * (1 + (lfo * lfoDepth * 0.5));
+
+    a0 = 0.5 + (lfo * 0.1);
+    a1 = 0.3 + (lfo.neg * 0.05);
+
+    // DynKlang: freqs, amps, rings as flat compile-time Arrays
+    // Each slot can be a UGen, but the Array *structure* must be literal
+    sig = DynKlang.ar(
+        `[ [f0, f1, f2], [a0, a1, 0.2], [2.0, 1.5, 0.8] ]
+    );
+
+    env = EnvGen.kr(Env.asr(attackTime, 1.0, releaseTime), gate, doneAction: 2);
+
+    Out.ar(out, (sig * env * amp).dup);
+}).add;
+)
+
+(
+Pdef(\s2,  Pbind(
+    \instrument, \dynklangDemo, 
+    \octave, Pseq([7, 4,  5,  6], inf),
+    \scale,  Scale.minor, 
+    \freqmod,   Pseg([Pkey(\dur).midicps/Pwhite(2,  4,  1),  Pwhite(0.5, 5.5,  2)], [3],  \sin,   inf), 
+    \freq0,  Pseq([
+      Scale.minor.degreeToFreq(-7,  60.midicps, 0),  
+      Scale.minor.degreeToFreq(-5,  60.midicps, 0),  
+  ],  inf),    
+    \freq1,  Pseq([
+      Scale.minor.degreeToFreq(-2,  60.midicps, 1),  
+      Scale.minor.degreeToFreq(0,  60.midicps, 1),  
+  ],  inf),    
+    \freq2,  Pseq([
+      Scale.minor.degreeToFreq(5,  60.midicps, 0),  
+      Scale.minor.degreeToFreq(0,  60.midicps, 1),  
+  ],  inf),    
+    \lfoRate,  Pseg([0.01, 0.1, 0.01],  [4, 8],  \step, inf),  
+    // \freq2,  (Pkey(\degree)+1).midicps, 
+    // \dur, Pseq([0.125, 0.125, 0.25, 0.25], inf),
+    \dur,  1/2, 
+    \stretch,  Pseq([4, 8,  2]/1, inf), 
+    // \degree,  Pseq([0,  1,  2,  4,  9], inf), 
+    \degree, Pseq([Prand([[0, 1,  4], [0, 2,  4]],  1), Pn(Rest(), 2)], inf),
+    // \degree,  Pseq([[2, 4,  0], [0, 5,  7], [1, 4,  0]], inf), 
+    \strum, Pseq([1/2!4,  1/4!4].flat, inf),    
+    \legato, 0.8, 
+    \amp, 0.1,
+    \out, ~t10.inbus.index,  
+)); 
+)
+(
+Pdef(\s3,  Pbind(
+    \instrument, \s3, 
+    \octave, Pseq([7, 4,  5,  6], inf),
+    \scale,  Scale.minor, 
+    \freqmod,   Pseg([Pkey(\dur).midicps/Pwhite(2,  4,  1),  Pwhite(0.5, 5.5,  2)], [3],  \sin,   inf), 
+    \dur,  1/2, 
+    \stretch,  Pseq([4, 8,  2]/1, inf), 
+    // \degree,  Pseq([0,  1,  2,  4,  9], inf), 
+    // \degree, Pseq([Prand([[0, 1,  4], [0, 2,  4]],  1), Pn(Rest(), 2)], inf),
+    \degree,  Pseq([[2, 4,  0], [0, 5,  7], [1, 4,  0]], inf), 
+    \strum, Pseq([1/2!4,  1/4!4].flat, inf),    
+    \legato, 0.9, 
+    \amp, 0.08,
+    \out, ~t10.inbus.index,  
+));
+)
+(
+Pdef(\both, Ppar([
+   Pn(Pdef(\s2), inf), 
+   // Pdef(\s3), 
+], inf));
+)
+Pdef(\both).play;
+Pdef(\both).stop;
+
+
+~s2fx_rev = ~ensurePostSend.(~t10,   ~r1, 1);
+~s2fx_rev.tryPerform(\free);
+~s2fx_bis = ~ensurePostSend.(~t10,   ~r3, 1);
+~s2fx_bis.tryPerform(\free);
+~s2fx_chor = ~ensurePostSend.(~t10,   ~r4, 1);
+~s2fx_chor.tryPerform(\free);
+~s2fx_chor = ~ensurePostSend.(~t10,   ~r5, 1);
+
+Pdef(\s2).play;
+Pdef(\s2).stop;
+(
+Pdef(\s1,  Pbind(
     \instrument, \s1,
     \octave, 5,
-    \freqMod,   4, 
+    \freqMod,   40, 
     \dur, Pseq([0.125, 0.125, 0.25, 0.25], inf),
     \degree, Pseq([0, 2, 4, 2, 5, 4, 2, 0], inf),
     \legato, 0.8,
     \amp, 0.15,
+    \out, ~t1.inbus.index,  
 
     // per‑event aux‑send amounts (0..1); these are read by a filter tap below
     \verbSend, Pwhite(0.0, 0.5, inf),
     \delSend,  Pseg(Pseq([0.0, 0.6, 0.2, 0.8], inf), 4, \lin)
-); 
+)); 
 )
-
-Ndef(\s1).play;
-Ndef(\s1).clear;
+Pdef(\s1).stop;
