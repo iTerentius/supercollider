@@ -315,6 +315,8 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
 ~lpMini[\watcher] = Routine {
     loop {
         if(~lpMini[\out].notNil) {
+            var anyPlaying = false;
+            var wantStopAllColor;
             ~lpMini[\bindings].keysValuesDo { |note, bindData|
                 var key = bindData[\key];
                 var obj = ~lpMini[\getObj].(key);
@@ -342,9 +344,8 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
                     ~lpMini[\paint].(note, bindData);
                 };
             };
-            
+
             // Handle Stop All Button LED
-            var anyPlaying = false;
             ~lpMini[\banks].do { |bankDict|
                 bankDict.do { |bData|
                     if(anyPlaying.not and: { bData[\type] != \toggleFn }) {
@@ -361,13 +362,11 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
             };
 
             // Only send if state changed
-            (
-                var wantStopAllColor = if(anyPlaying) { ~lpMini[\colors][\stopAll] } { 0 };
-                if(~lpMini[\stopAllLedCache] != wantStopAllColor) {
-                    ~lpMini[\out].control(0, 19, wantStopAllColor);
-                    ~lpMini[\stopAllLedCache] = wantStopAllColor;
-                };
-            );
+            wantStopAllColor = if(anyPlaying) { ~lpMini[\colors][\stopAll] } { 0 };
+            if(~lpMini[\stopAllLedCache] != wantStopAllColor) {
+                ~lpMini[\out].control(0, 19, wantStopAllColor);
+                ~lpMini[\stopAllLedCache] = wantStopAllColor;
+            };
         };
         0.1.wait;
     }
