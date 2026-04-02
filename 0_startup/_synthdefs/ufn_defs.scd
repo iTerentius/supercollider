@@ -248,5 +248,28 @@
     Out.ar(out, sig);
 };
 
+~ufn[\808][\hh] = {
+    arg out=0, pan=0, amp=0.3,
+        att=0.001, rel=0.05, 
+        freq=3000,      // Filter cutoff
+        res=0.1;        // Filter resonance
+
+    var env, sig, osclist;
+
+    env = EnvGen.ar(Env.perc(att, rel), doneAction: 2);
+
+    // 6 Square waves at specific ratios for that metallic "clang"
+    osclist = [2, 3, 4.1, 5.4, 6.7, 8.2] * 200; 
+    sig = Mix.fill(osclist.size, { arg i;
+        Pulse.ar(osclist[i], 0.5);
+    });
+
+    // High pass filter is the key to the hat sound
+    sig = HPF.ar(sig, freq);
+    sig = BPF.ar(sig, freq * 2, 0.5); 
+    
+    Out.ar(out, Pan2.ar(sig * env * amp, pan));
+};
+
 "ufn_defs loaded. ~ufn keys: %".format(~ufn.keys).postln;
 )
