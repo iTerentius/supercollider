@@ -235,7 +235,7 @@ SynthDef(\s3, ~ufn[\harpy1]).add;
 )
 (
 SynthDef(\dynklangDemo, {
-    arg out = 0, gate = 1, amp = 0.3,
+    arg out = 0, gate = 1, amp = 0.3, freq=110, 
         freq0 = 220, freq1 = 440, freq2 = 660,
         lfoRate = 0.3, lfoDepth = 0.15,
         attackTime = 0.01, releaseTime = 2.0;
@@ -257,6 +257,8 @@ SynthDef(\dynklangDemo, {
     sig = DynKlang.ar(
         `[ [f0, f1, f2], [a0, a1, 0.2], [2.0, 1.5, 0.8] ]
     );
+
+    // sig = sig * LFNoise1.ar(freq0);
 
     env = EnvGen.kr(Env.asr(attackTime, 1.0, releaseTime), gate, doneAction: 2);
 
@@ -285,12 +287,12 @@ Pdef(\s2,  Pbind(
     \lfoRate,  Pseg([0.01, 0.1, 0.01],  [4, 8],  \step, inf),  
     // \freq2,  (Pkey(\degree)+1).midicps, 
     // \dur, Pseq([0.125, 0.125, 0.25, 0.25], inf),
-    \dur,  1/2, 
+    \dur,  1/8, 
     \stretch,  Pseq([4, 8,  2]/1, inf), 
-    // \degree,  Pseq([0,  1,  2,  4,  9], inf), 
-    \degree, Pseq([Prand([[0, 1,  4], [0, 2,  4]],  1), Pn(Rest(), 2)], inf),
+    \degree,  Pseq([0,  1,  2,  4,  \,  \,  \], inf), 
+    // \degree, Pseq([Prand([[0, 1,  4], [0, 2,  4]],  1), Pn(Rest(), 2)], inf),
     // \degree,  Pseq([[2, 4,  0], [0, 5,  7], [1, 4,  0]], inf), 
-    \strum, Pseq([1/2!4,  1/4!4].flat, inf),    
+    // \strum, Pseq([1/2!4,  1/4!4].flat, inf),    
     \legato, 0.8, 
     \amp, 0.1,
     \out, ~t10.inbus.index,  
@@ -316,7 +318,7 @@ Pdef(\s3,  Pbind(
 (
 Pdef(\both, Ppar([
    Pn(Pdef(\s2), inf), 
-   // Pdef(\s3), 
+   Pdef(\s3), 
 ], inf));
 )
 Pdef(\both).play;

@@ -363,15 +363,15 @@
     \degree, Pseq([Pn(Pdefn(\bass_degs_a), 4)], inf))                
 };                                                                      
 
-// ~lpBindBToggleFn.(5, [1,  1], ~bd1_phrA_fnA,   ~bd1_phrA_fnB);
-// ~lpBindBToggleFn.(5, [1,  2], ~sd1_phrA_fnA,   ~sd1_phrA_fnB);
-// ~lpBindBToggleFn.(5, [1,  3], ~hh1_phrA_fnA,   ~hh1_phrA_fnB);
-// ~lpBindBToggleFn.(5, [1,  4], ~roll_phrA_fnA,  ~roll_phrA_fnB);
-// ~lpBindBToggleFn.(5, [1,  5], ~ms20_phrA_fnA,  ~ms20_phrA_fnB);
-// ~lpBindBToggleFn.(5, [1,  6], ~thingA_phrA_fnA, ~thingA_phrA_fnB);
-// ~lpBindBToggleFn.(5, [1,  7], ~ntron_phrA_fnA, ~ntron_phrA_fnB);
-// ~lpBindBToggleFn.(5, [1,  8], ~mD_phrA_fnA,    ~mD_phrA_fnB);
-// ~lpBindBToggleFn.(6, [1,  1], ~bass_phrA_fnA,  ~bass_phrA_fnB);
+~lpBindBToggleFn.(5, [1,  1], ~bd1_phrA_fnA,    ~bd1_phrA_fnB);
+~lpBindBToggleFn.(5, [1,  2], ~sd1_phrA_fnA,    ~sd1_phrA_fnB);
+~lpBindBToggleFn.(5, [1,  3], ~hh1_phrA_fnA,    ~hh1_phrA_fnB);
+~lpBindBToggleFn.(5, [1,  4], ~roll_phrA_fnA,   ~roll_phrA_fnB);
+~lpBindBToggleFn.(5, [1,  5], ~ms20_phrA_fnA,   ~ms20_phrA_fnB);
+~lpBindBToggleFn.(5, [1,  6], ~thingA_phrA_fnA, ~thingA_phrA_fnB);
+~lpBindBToggleFn.(5, [1,  7], ~ntron_phrA_fnA,  ~ntron_phrA_fnB);
+~lpBindBToggleFn.(5, [1,  8], ~mD_phrA_fnA,     ~mD_phrA_fnB);
+~lpBindBToggleFn.(6, [1,  1], ~bass_phrA_fnA,   ~bass_phrA_fnB);
 
 ~apcBindToggleFnB.(5, 32,
   ~bd1_phrA_fnA,  

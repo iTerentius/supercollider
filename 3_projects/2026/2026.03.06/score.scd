@@ -35,4 +35,12 @@ var safeLoad = { |path|
     "Score loaded.".postln;
 }.fork(AppClock);
 )
+systemctl --user restart wireplumber pipewire-pulse pipewire
+  MIDIClient.destinations.do { |ep, i| [i, ep.device, ep.name, ep.uid].postln };
+  ~lpMini[\out].postln;
+  ~lpMini[\src].postln;
+  ~lpMini[\out].port.postln;
 
+  // test if pad presses reach SC at all
+  MIDIdef.noteOn(\lpTest, { |v, n| ["pad", n, v].postln });
+  ~lpMini[\clearGrid].();

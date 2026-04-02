@@ -105,8 +105,14 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
             0.05.wait;
             ~lpMini[\out].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x01, 0xF7]);
         };
-        ~lpMini[\ledCache] = IdentityDictionary.new;  // watcher repaints new bank
+        ~lpMini[\ledCache] = IdentityDictionary.new;
         ~lpMini[\paintBankLEDs].();
+        // Explicitly repaint new bank — watcher cache check can't detect this
+        // because wantColor is nil (missing \play/\stop keys) and ledCache is
+        // also nil after clear, so nil != nil → false → watcher never fires.
+        ~lpMini[\bindings].keysValuesDo { |note, bindData|
+            ~lpMini[\paint].(note, bindData);
+        };
     };
 };
 
