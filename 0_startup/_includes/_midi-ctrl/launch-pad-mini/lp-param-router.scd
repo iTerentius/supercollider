@@ -16,12 +16,12 @@ if(MIDIClient.initialized.not) { MIDIClient.init };
 
 pickSrcIdx = {
     MIDIClient.sources.detectIndex { |ep|
-        ep.device == "Launchpad Mini MK3" and: { ep.name.contains("MIDI") }
+        ep.device == "Launchpad Mini MK3" and: { ep.name.contains("MI") }
     }
 };
 pickDest = {
     MIDIClient.destinations.detect { |ep|
-        ep.device == "Launchpad Mini MK3" and: { ep.name.contains("MIDI") }
+        ep.device == "Launchpad Mini MK3" and: { ep.name.contains("MI") }
     }
 };
 
@@ -30,9 +30,9 @@ srcIdx = pickSrcIdx.();
 if(srcIdx.notNil) {
     ~lpMini[\src] = MIDIClient.sources[srcIdx];
     // macOS: connected early in midi-setup.scd to avoid CoreMIDI deadlock.
-    // Linux/ALSA: connectAll needed here.
+    // Linux/ALSA: use targeted UID connection to avoid memory corruption / global crosstalk
     if(Platform.case(\osx, { false }, { true })) {
-        MIDIIn.connectAll;
+        MIDIIn.connect(0, ~lpMini[\src].uid);
     };
     ["[LP Mini] MIDIIn connected, found device:", ~lpMini[\src].device].postln;
 } {
@@ -50,6 +50,7 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
 ~lpMini[\bank]     = 1;  // active bank, 1-8
 ~lpMini[\bindings] = ~lpMini[\banks][0];  // banks[bank-1]
 ~lpMini[\ledCache] = IdentityDictionary.new;
+~lpMini[\stopAllLedCache] = nil;
 
 ~lpMini[\colors] = (
     empty:       0, pdefDefault: 9, ndefDefault: 95,
@@ -104,8 +105,14 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
             0.05.wait;
             ~lpMini[\out].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x01, 0xF7]);
         };
-        ~lpMini[\ledCache] = IdentityDictionary.new;  // watcher repaints new bank
+        ~lpMini[\ledCache] = IdentityDictionary.new;
         ~lpMini[\paintBankLEDs].();
+        // Explicitly repaint new bank — watcher cache check can't detect this
+        // because wantColor is nil (missing \play/\stop keys) and ledCache is
+        // also nil after clear, so nil != nil → false → watcher never fires.
+        ~lpMini[\bindings].keysValuesDo { |note, bindData|
+            ~lpMini[\paint].(note, bindData);
+        };
     };
 };
 
@@ -313,24 +320,59 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
 // --- WATCHER ---
 ~lpMini[\watcher] = Routine {
     loop {
-        ~lpMini[\bindings].keysValuesDo { |note, bindData| ~lpMini[\paint].(note, bindData); };
         if(~lpMini[\out].notNil) {
             var anyPlaying = false;
+            var wantStopAllColor;
+            ~lpMini[\bindings].keysValuesDo { |note, bindData|
+                var key = bindData[\key];
+                var obj = ~lpMini[\getObj].(key);
+                var isRunning = false;
+                var wantColor;
+
+                if(bindData[\type] == \toggleFn) {
+                    isRunning = bindData[\isActive].value;
+                    wantColor = if(isRunning) { bindData[\colorA] } { bindData[\colorB] };
+                } {
+                    if(obj.notNil) {
+                        if(obj.isKindOf(Function) or: { obj.isString }) {
+                            wantColor = bindData[\color] ?? { ~lpMini[\colors][\trigger] };
+                        } {
+                            if(obj.isKindOf(NodeProxy)) { isRunning = obj.isMonitoring } { isRunning = obj.isPlaying };
+                            wantColor = if(isRunning) { ~lpMini[\colors][\play] } { bindData[\color] ?? { ~lpMini[\colors][\stop] } };
+                        };
+                    } {
+                        wantColor = bindData[\color] ?? { ~lpMini[\colors][\stop] };
+                    };
+                };
+
+                // Only paint if state changed
+                if(~lpMini[\ledCache][note] != wantColor) {
+                    ~lpMini[\paint].(note, bindData);
+                };
+            };
+
+            // Handle Stop All Button LED
             ~lpMini[\banks].do { |bankDict|
-                bankDict.do { |bindData|
-                    if(anyPlaying.not and: { bindData[\type] != \toggleFn }) {
-                        var obj = ~lpMini[\getObj].(bindData[\key]);
-                        if(obj.notNil and: { obj.isKindOf(Function).not }) {
-                            if(obj.isKindOf(NodeProxy)) {
-                                if(obj.isMonitoring) { anyPlaying = true }
+                bankDict.do { |bData|
+                    if(anyPlaying.not and: { bData[\type] != \toggleFn }) {
+                        var o = ~lpMini[\getObj].(bData[\key]);
+                        if(o.notNil and: { o.isKindOf(Function).not }) {
+                            if(o.isKindOf(NodeProxy)) {
+                                if(o.isMonitoring) { anyPlaying = true }
                             } {
-                                if(obj.isPlaying) { anyPlaying = true }
+                                if(o.isPlaying) { anyPlaying = true }
                             };
                         };
                     };
                 };
             };
-            ~lpMini[\out].control(0, 19, if(anyPlaying) { ~lpMini[\colors][\stopAll] } { 0 });
+
+            // Only send if state changed
+            wantStopAllColor = if(anyPlaying) { ~lpMini[\colors][\stopAll] } { 0 };
+            if(~lpMini[\stopAllLedCache] != wantStopAllColor) {
+                ~lpMini[\out].control(0, 19, wantStopAllColor);
+                ~lpMini[\stopAllLedCache] = wantStopAllColor;
+            };
         };
         0.1.wait;
     }

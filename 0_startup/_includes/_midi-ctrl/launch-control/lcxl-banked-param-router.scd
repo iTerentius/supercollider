@@ -46,7 +46,7 @@ var lcxl = Environment.make({
 		// Connect only to LCXL, not all devices
 		srcIdx = MIDIClient.sources.detectIndex { |s| s.name.contains(~midiDeviceName) };
 		if(srcIdx.notNil) {
-			MIDIIn.connect(srcIdx);
+			MIDIIn.connect(0, MIDIClient.sources[srcIdx].uid);
 			["LCXL: MIDIIn connected (index " ++ srcIdx ++ ")"].postln;
 		};
 

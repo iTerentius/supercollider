@@ -75,7 +75,7 @@ s.waitForBoot {
     s.sync; // ensure all SynthDefs are registered on server before mixer init
 
     // --- TouchOSC OSC router (always load — no device detection needed)
-    "_includes/_osc-ctrl/tosc-router.scd".loadRelative;
+    // "_includes/_osc-ctrl/tosc-router.scd".loadRelative;
     // "_includes/_osc-ctrl/tosc-pad-router.scd".loadRelative;
     // "_includes/_osc-ctrl/tosc-fx.scd".loadRelative;
 
@@ -94,6 +94,7 @@ s.waitForBoot {
 
     // 2. CREATE the new clock
     ~link = LinkClock(1).latency_(Server.default.latency - 0.567);
+    ~link.permanent = true;
 
     TempoClock.default = ~link;
     // 3. RESET Tempo to a sane default (120 BPM) immediately

@@ -28,7 +28,7 @@ if(ksIdx.isNil) {
 
     // Linux: connect the MIDI input
     if(Platform.case(\linux, { true }, { false })) {
-        MIDIIn.connect(ksIdx);
+        MIDIIn.connect(0, ksSrcUid);
     };
 
     ("[KeyStep 32] Connected: " ++ ksEp.device ++ " / " ++ ksEp.name

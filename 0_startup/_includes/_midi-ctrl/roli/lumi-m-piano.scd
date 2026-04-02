@@ -28,7 +28,7 @@ if(lumiIdx.isNil) {
 
     // Linux: connect the MIDI input
     if(Platform.case(\linux, { true }, { false })) {
-        MIDIIn.connect(lumiIdx);
+        MIDIIn.connect(0, lumiSrcUid);
     };
 
     ("[LUMI] Connected: " ++ lumiEp.device ++ " / " ++ lumiEp.name

@@ -81,12 +81,17 @@ s.sync;
 ~pex1 = MixerChannel.new(\pex1, s, 2, 2, outbus: ~perc.inbus);
 ~pex2 = MixerChannel.new(\pex2, s, 2, 2, outbus: ~perc.inbus);
 
-// convenience. create or replace a post send from any track to any return
+// convenience. create or replace a post send from any track to any return.
+// Frees any existing send for the same (from, to) pair to prevent doubles.
+~postSendRegistry = Dictionary.new;
 ~ensurePostSend = { |fromChan, toChan, level = 0.0|
-    var h;
+    var key, h;
     if(fromChan.notNil and: { toChan.notNil }) {
+        key = fromChan.name.asString ++ "->" ++ toChan.name.asString;
+        ~postSendRegistry[key].tryPerform(\free);
         h = fromChan.newPostSend(toChan, level);
-    }{
+        ~postSendRegistry[key] = h;
+    } {
         h = nil;
     };
     h

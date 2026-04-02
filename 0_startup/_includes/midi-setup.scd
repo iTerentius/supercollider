@@ -14,7 +14,9 @@ var connectIdx, postSources;
 var useHui, devName, portName;
 
 // ---- init
-MIDIClient.init;
+// On Linux, MIDIClient is pre-initialized before s.boot (see startup.scd) to avoid
+// a PipeWire race condition. Guard against re-init which would drop existing connections.
+if(MIDIClient.initialized.not) { MIDIClient.init };
 srcs = MIDIClient.sources;
 dests = MIDIClient.destinations;
 

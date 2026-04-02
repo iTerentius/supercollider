@@ -68,6 +68,16 @@
     var obj = ~apcGetObj.(key);
     var clock = ~link ?? { TempoClock.default };
 
+    // Sanity check: Ensure clock is running. LinkClock.ptr becomes nil on clear/stop.
+    if(clock.isNil or: { clock.respondsTo(\ptr) and: { clock.ptr.isNil } }) {
+        " [APC] ERROR: Clock is dead! Re-running startup.scd is recommended.".warn;
+        // Attempt recovery if ~link is nil but TempoClock.default is alive
+        if(TempoClock.default.notNil and: { TempoClock.default.respondsTo(\ptr).not or: { TempoClock.default.ptr.notNil } }) {
+            clock = TempoClock.default;
+            " [APC] Recovered via TempoClock.default".postln;
+        };
+    };
+
     if(obj.notNil) {
         case
         { obj.isKindOf(Function) } {
@@ -399,49 +409,6 @@
     };
 };
 
-// ---- Watcher: polls pad state and repaints LEDs (mirrors LP Mini watcher) ----
-// Catches state changes triggered by any controller or code (not just APC presses).
-~apcLEDCache = IdentityDictionary.new;
-~apcWatcherStop = { if(~apcWatcher.notNil) { ~apcWatcher.stop; ~apcWatcher = nil } };
-~apcWatcherStop.();
-~apcWatcher = Routine {
-    loop {
-        ~apcPadMap.keysValuesDo { |note, binding|
-            var key, obj, isRunning, isRunningFn, wantColor, wantChan, colors;
-            colors = ~apcColors;
-            if(binding.isKindOf(Event)) {
-                key         = binding[\key];
-                isRunningFn = binding[\isRunning];
-            } { key = binding };
-            obj       = ~apcGetObj.(key);
-            isRunning = if(isRunningFn.notNil) { isRunningFn.value } { ~apcIsRunning.(obj) };
-            wantChan  = if(isRunning) { ~apcCfg[\playMode] ? 9 } { 0 };
-            if(binding.isKindOf(Event)) {
-                wantColor = if(isRunning) {
-                    (binding[\playColor] ?? { binding[\color] ?? { colors[\green] } })
-                } {
-                    (binding[\color] ?? { colors[\amber] })
-                };
-            } {
-                wantColor = if(isRunning) { colors[\green] } { colors[\amber] };
-            };
-            if(~apcLEDCache[note] != [wantColor, wantChan]) {
-                // Two-step transition required by APC40 mkII:
-                // clear the OTHER channel first, then set the new one.
-                // Without this: static lingers over pulse (plays don't show).
-                if(wantChan == 0) {
-                    ~apcPadLEDch.(note, 0, ~apcCfg[\playMode] ? 9);  // clear pulse
-                } {
-                    ~apcPadLEDch.(note, 0, 0);                         // clear static
-                };
-                ~apcLEDSet.(note, wantColor, wantChan);
-                ~apcLEDCache[note] = [wantColor, wantChan];
-            };
-        };
-        0.1.wait;
-    }
-}.play(AppClock);
-
 // ---- Install the extended listener ----
 ~apcInstallGridListenerExt.();
 
@@ -450,7 +417,6 @@ CmdPeriod.remove(~apcExtPanicHook);
 ~apcExtPanicHook = {
     AppClock.sched(0.1, {
         ~apcInstallGridListenerExt.();
-        ~apcLEDCache = IdentityDictionary.new;
         nil
     });
 };
