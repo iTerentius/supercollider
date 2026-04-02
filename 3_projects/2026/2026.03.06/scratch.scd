@@ -205,16 +205,7 @@ SynthDef(\s2, {
 }).add;
 )
 (
-SynthDef(\s3, { 
-  | out, freq=110, gate=1, freqmod=1, amp=0.2,  conv=1|
-	var sig, lf,  env;
-  env = EnvGen.ar(Env.asr( 0.01, 0.7, 1.0), gate: gate, doneAction: 2 ); 
-  // sig = VarSaw.ar([freq, freq+2], env*0.1,  freqmod) * LFPulse.ar(freq/2, LFPulse.ar([freqmod-1, freqmod])) * 0.7;
-  sig = LFPulse.ar([freq, freq+2], env,  freqmod) * SinOsc.ar(freq/2, LFPulse.ar([freqmod-1, freqmod])) * 0.7;
-  // sig = sig * Convolution.ar(~t10.inbus.index, ~t1.inbus.index, 2048, 0.8);
-  sig = sig * env;
-	Out.ar(out, sig * amp);
-}).add;
+SynthDef(\s3, ~ufn[\harpy1]).add;
 )
 (
 SynthDef(\dynklangDemo, {
@@ -333,3 +324,14 @@ Pdef(\s1,  Pbind(
 )); 
 )
 Pdef(\s1).stop;
+
+// --- Testing and Variations ---
+
+// Standard 808
+Synth(\kik808, [\freq, 45, \rel, 0.8, \pitchMod, 4]);
+
+// Short, punchy "club" kick
+Synth(\kik808, [\freq, 55, \rel, 0.3, \pitchMod, 8, \clickAmp, 0.5]);
+
+// Long, subby bass-heavy 808
+Synth(\kik808, [\freq, 35, \rel, 2.5, \pitchMod, 2, \dist, 2]);

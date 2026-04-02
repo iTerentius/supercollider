@@ -208,5 +208,45 @@
     Pan2.ar(sig * ampEnv * amp, pan)
 };
 
+// =============================================================================
+// RANDOM STUFF
+// =============================================================================
+~ufn[\harpy1] = { 
+  | out, freq=110, gate=1, freqmod=1, amp=0.2,  conv=1|
+	var sig, lf,  env;
+  env = EnvGen.ar(Env.asr( 0.01, 0.7, 1.0), gate: gate, doneAction: 2 ); 
+  // sig = VarSaw.ar([freq, freq+2], env*0.1,  freqmod) * LFPulse.ar(freq/2, LFPulse.ar([freqmod-1, freqmod])) * 0.7;
+  sig = LFPulse.ar([freq, freq+2], env,  freqmod) * SinOsc.ar(freq/2, LFPulse.ar([freqmod-1, freqmod])) * 0.7;
+  // sig = sig * Convolution.ar(~t10.inbus.index, ~t1.inbus.index, 2048, 0.8);
+  sig = sig * env;
+	Out.ar(out, sig * amp);
+};
+
+// =============================================================================
+// 808 Synth Kit
+// =============================================================================
+~ufn[\808] = ();
+~ufn[\808][\kik] = {
+    arg out=0, pan=0, amp=0.5, 
+        freq=50,        // Root frequency
+        att=0.001,      // Attack time
+        rel=0.8,        // Decay/Release time
+        pitchMod=4,     // How high the pitch sweep starts (multiplier)
+        pitchRel=0.1,   // How fast the pitch drops
+        clickAmp=0.2,   // Volume of the initial click
+        dist=1.5;       // Subtle saturation/distortion
+
+    var env, pitchEnv, sig, click;
+    env = EnvGen.ar(Env.perc(att, rel), doneAction: 2);
+    pitchEnv = EnvGen.ar(Env.perc(0.001, pitchRel)) * (freq * pitchMod) + freq;
+    click = BPF.ar(WhiteNoise.ar(1), 2000, 0.5) * EnvGen.ar(Env.perc(0.001, 0.01)) * clickAmp;
+    sig = SinOsc.ar(pitchEnv, 0.5pi); // Phase shift to 0.5pi starts the sine at its peak
+    sig = sig + click;
+    sig = (sig * dist).tanh; 
+    
+    sig = Pan2.ar(sig * env * amp, pan);
+    Out.ar(out, sig);
+};
+
 "ufn_defs loaded. ~ufn keys: %".format(~ufn.keys).postln;
 )
