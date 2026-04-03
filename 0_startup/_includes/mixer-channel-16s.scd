@@ -353,7 +353,7 @@ if(~lcxlParam.notNil) {
 ~t5.level_(1.0);  ~t6.level_(1.0);  ~t7.level_(1.0);  ~t8.level_(1.0);
 ~t9.level_(1.0);  ~t10.level_(1.0); ~t11.level_(1.0); ~t12.level_(1.0);
 // Submix
-~perc.level_(1.0);
+~perc.level_(1.6);
 ~pbd1.level_(1.0); ~pbd2.level_(1.0);
 ~psd1.level_(1.0); ~psd2.level_(1.0);
 ~phh1.level_(1.0); ~phh2.level_(1.0);

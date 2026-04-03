@@ -1,24 +1,31 @@
 // _voice.scd — copy this file for each new voice, rename it.
 // The ONLY lines to change are pfx and trk at the top.
 // Everything else constructs correct symbol names automatically.
+// Pdef(\v1_808k).play;
+// Pdef(\v1_808k).stop;
 (
-var pfx = \v1;    // ← change to your voice name (must match \n in slots.scd)
+var pfx = \v1_808k;    // ← change to your voice name (must match \n in slots.scd)
 var trk = ~t1;    // ← change to your mixer track
 var mk  = { |s| (pfx.asString ++ s).asSymbol };
-
 ///////////////////////////////////////////////////////////////
 // PDEF
 ///////////////////////////////////////////////////////////////
 Pdef(pfx,
   Pbindef(mk.("_pb"),
-      \instrument,  \default, 
+      \instrument, \kik808,    
       \scale,   Pn(Pdefn(mk.("_scale")), inf),
       \octave,  Pn(Pdefn(mk.("_octs")),  inf),
+      \root,    1,  
       \stretch, Pn(Pdefn(mk.("_strs")),  inf),
       \degree,  Pn(Pdefn(mk.("_degs")),  inf),
       \dur,     Pn(Pdefn(mk.("_durs")),  inf),
       \amp,     Pn(Pdefn(mk.("_amps")),  inf),
       \out,     Pn(Pdefn(mk.("_out")),   inf),
+      \rel,     Pn(Pdefn(mk.("_rel")),   inf),  
+      \clickAmp,Pn(Pdefn(mk.("_clickAmp")),   inf),  
+      \pitchMod,Pn(Pdefn(mk.("_pitchMod")),   inf),  
+      \pitchRel,Pn(Pdefn(mk.("_pitchRel")),   inf),  
+      \dist,    Pn(Pdefn(mk.("_dist")),   inf),  
 ));
 
 ///////////////////////////////////////////////////////////////
@@ -33,15 +40,15 @@ Pdefn(mk.("_scale"), Scale.minor);
 // Pdefn(mk.("_bufs"),  Pseq([Pn(Pdefn(mk.("_buf_0")), 4)], 1));
 
 // OCTS
-Pdefn(mk.("_oct_0"), 5);
+Pdefn(mk.("_oct_0"), 2);
 Pdefn(mk.("_octs"),  Pseq([Pn(Pdefn(mk.("_oct_0")), 4)], 1));
 
 // AMPS
-Pdefn(mk.("_amp_0"), 1.0);
+Pdefn(mk.("_amp_0"), 0.8);
 Pdefn(mk.("_amps"),  Pseq([Pn(Pdefn(mk.("_amp_0")), 4)], 1));
 
 // DEGS — words
-Pdefn(mk.("_deg_0"), Place([0, [2, 4]], 1));
+Pdefn(mk.("_deg_0"), 0);
 Pdefn(mk.("_deg_1"), Pseq([0, 1, \, 3, \, 0], 1));
 // sentences
 Pdefn(mk.("_degs_a"), Pseq([Pn(Pdefn(mk.("_deg_0")), 4)], 1));   // root only
@@ -62,6 +69,20 @@ Pdefn(mk.("_durs"),  Pseq([Pn(Pdefn(mk.("_durs_a")), 1)], 1));
 Pdefn(mk.("_str_0"), 1);
 Pdefn(mk.("_strs"),  Pseq([Pn(Pdefn(mk.("_str_0")), 4)], 1));
 
+Pdefn(mk.("_rel_0"),  0.8);
+Pdefn(mk.("_rel"),  Pseq([Pn(Pdefn(mk.("_rel_0")),  4)],  1));
+
+Pdefn(mk.("_clickAmp_0"),  0.2);
+Pdefn(mk.("_clickAmp"),  Pseq([Pn(Pdefn(mk.("_clickAmp_0")),  4)],  1));
+
+Pdefn(mk.("_pitchMod_0"),  2);
+Pdefn(mk.("_pitchMod"),  Pseq([Pn(Pdefn(mk.("_pitchMod_0")),  4)],  1));
+
+Pdefn(mk.("_pitchRel_0"),  0.2);
+Pdefn(mk.("_pitchRel"),  Pseq([Pn(Pdefn(mk.("_pitchRel_0")),  4)],  1));
+
+Pdefn(mk.("_dist_0"),  1);
+Pdefn(mk.("_dist"),  Pseq([Pn(Pdefn(mk.("_dist_0")),  4)],  1));
 // PHRASE VARIANT FUNCTIONS
 // These get referenced in bindings.scd Bank 5 toggle bindings.
 // Store in ~phrFns[pfx] so bindings.scd loop can find them.

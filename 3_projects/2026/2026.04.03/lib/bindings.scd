@@ -40,6 +40,8 @@
 
 // --- Bank 4 utility ---
 ~lpBindB.(4, [8, 8], \tempo, 41, nil, 4);
+~lpBindB.(4, [1, 3], \bCtl, 5, nil, 4);
+~lpBindB.(4, [1, 5], \spectral, 10, nil, 4);
 ~apcBindB.(4, 7, \tempo, 4, 4);
 
 // --- Phrase variant toggle bindings (Bank 5 LP / Bank 5 APC) ---
