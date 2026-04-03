@@ -15,5 +15,8 @@ SynthDef(\prophetLead,{ Out.ar(\out.kr(0), ~ufn[\prophetLead].())}).add;
 SynthDef(\acidBass,   { Out.ar(\out.kr(0), ~ufn[\acidBass].())   }).add;
 SynthDef(\ms20Bass,   { Out.ar(\out.kr(0), ~ufn[\ms20Bass].())   }).add;
 SynthDef(\sh101Lead,  { Out.ar(\out.kr(0), ~ufn[\sh101Lead].())  }).add;
+SynthDef(\kik808, ~ufn[\808][\kik]).add;
+SynthDef(\sn808, ~ufn[\808][\sn]).add;
+SynthDef(\hh808, ~ufn[\808][\hh]).add;
 "analog_synthdefs loaded.".postln;
 )

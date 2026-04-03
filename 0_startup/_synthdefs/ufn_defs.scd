@@ -248,6 +248,34 @@
     Out.ar(out, sig);
 };
 
+~ufn[\808][\sn] = {
+    arg out=0, pan=0, amp=0.4,
+        att=0.001, rel=0.15, 
+        snapRel=0.2,    // Length of the "snare" noise
+        toneFreq=180,   // Base frequency of the drum head
+        snappy=0.5;     // Mix between tone and noise
+
+    var env, tone, noise, sig;
+
+    // Amplitude Envelopes
+    env = EnvGen.ar(Env.perc(att, rel), doneAction: 2);
+    
+    // 1. Tone: Two sines tuned apart to simulate drum head resonance
+    tone = SinOsc.ar(toneFreq) + SinOsc.ar(toneFreq * 1.5);
+    tone = tone * EnvGen.ar(Env.perc(att, rel * 0.5));
+
+    // 2. Snappy: The noise component
+    noise = WhiteNoise.ar;
+    noise = HPF.ar(noise, 1000); // Remove low end from noise
+    noise = BPF.ar(noise, 2000, 0.5);
+    noise = noise * EnvGen.ar(Env.perc(att, snapRel)) * snappy;
+
+    sig = tone + noise;
+    sig = sig.softclip; // Glue it together
+    
+    Out.ar(out, Pan2.ar(sig * env * amp, pan));
+};
+
 ~ufn[\808][\hh] = {
     arg out=0, pan=0, amp=0.3,
         att=0.001, rel=0.05, 

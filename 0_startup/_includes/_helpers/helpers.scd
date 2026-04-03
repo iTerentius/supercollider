@@ -43,7 +43,13 @@
     stopper
 };
 
-
+// easier patterning with "x---x---x---x---"
+~p = { |str| 
+  var array = str.collectAs({ |char| 
+    if(char == $x, { 1 }, { Rest(1) }) 
+  }, Array);
+  Pseq(array, inf);
+};
 "Helpers loaded.".postln;
 )
 
