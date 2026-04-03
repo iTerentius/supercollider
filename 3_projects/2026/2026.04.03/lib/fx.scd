@@ -90,10 +90,10 @@
 // Params: \rate (0.5–4 repeats/beat), \mix (0–1)
 // Note: uses TGrains, approximate stutter not quantized
 ~fxLib[\stutter] = { |chan|
-    var bus   = chan.inbus;
-    var bufL  = LocalBuf(SampleRate.ir * 2, 1);
-    var bufR  = LocalBuf(SampleRate.ir * 2, 1);
+    var bus = chan.inbus;
     chan.playfx({ |in|
+        var bufL  = LocalBuf(SampleRate.ir * 2, 1);
+        var bufR  = LocalBuf(SampleRate.ir * 2, 1);
         var sig   = In.ar(bus, 2);
         var trig  = Impulse.kr(\rate.kr(2));
         var wet   = [

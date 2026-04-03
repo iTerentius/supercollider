@@ -22,6 +22,26 @@
     };
 };
 
+// --- Return → return FX send matrix (Bank 4 LP / Bank 4 APC) ---
+// LP:  col = src return index+1, row = dst return index+2
+//      (row 1 per column is reserved for Pdef fx control toggles)
+// APC: pad = (4 - dstIdx) * 8 + srcIdx  (col=src, row from bottom=dst)
+// Color tracks destination return (same palette as voice→return sends).
+~slotRets.do { |src, si|
+    ~slotRets.do { |dst, di|
+        if(si != di) {
+            var key     = ("r" ++ (si + 1) ++ "_fx_r" ++ (di + 1)).asSymbol;
+            var stopper = ~makeFxSendTdef.(key, src, dst);
+            ~lpBindB.(4, [di + 2, si + 1], key, ~slotFxLpCols[di], nil, nil, stopper);
+            ~apcBindB.(4, (4 - di) * 8 + si, key, 4, nil, nil, stopper);
+        };
+    };
+};
+
+// --- Bank 4 utility ---
+~lpBindB.(4, [8, 8], \tempo, 41, nil, 4);
+~apcBindB.(4, 7, \tempo, 4, 4);
+
 // --- Phrase variant toggle bindings (Bank 5 LP / Bank 5 APC) ---
 // Add per-voice below after defining ~phrFns in your parts files.
 // Pattern:

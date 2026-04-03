@@ -36,7 +36,7 @@
 
 ~slots = [
     (n:\v1, t:~t1,  lp:(b:1, r:1, c:1, col:10),  apc:(b:1, p:32, col:\orange)),
-    (n:\v2, t:~t2,  lp:(b:1, r:1, c:2, col:20),  apc:(b:1, p:33, col:\yellow)),
+    (n:\v2_bass, t:~t2,  lp:(b:1, r:1, c:2, col:20),  apc:(b:1, p:33, col:\yellow)),
     (n:\v3, t:~t3,  lp:(b:1, r:1, c:3, col:30),  apc:(b:1, p:34, col:\cyan)),
     (n:\v4, t:~t4,  lp:(b:1, r:1, c:4, col:40),  apc:(b:1, p:35, col:\blue)),
     // add more below — up to 8 voices per LP bank / APC row before overflow
