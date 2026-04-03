@@ -28,6 +28,7 @@ var safeLoad = { |path|
     // safeLoad.("parts/v3.scd");
     // --- bindings last (reads ~slots + ~phrFns populated by parts) ---
     safeLoad.("lib/bindings.scd");
+    safeLoad.("lib/tosc_biscuit.scd");
     // --- optional: stem recording (loads ~stemDiskStart, ~stemMidiWrite) ---
     // "_includes/mixer-channel-stem-record.scd".loadRelative;
     "Score loaded.".postln;

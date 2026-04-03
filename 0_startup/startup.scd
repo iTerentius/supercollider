@@ -75,9 +75,9 @@ s.waitForBoot {
     s.sync; // ensure all SynthDefs are registered on server before mixer init
 
     // --- TouchOSC OSC router (always load — no device detection needed)
-    // "_includes/_osc-ctrl/tosc-router.scd".loadRelative;
+    "_includes/_osc-ctrl/tosc-router.scd".loadRelative;
     // "_includes/_osc-ctrl/tosc-pad-router.scd".loadRelative;
-    // "_includes/_osc-ctrl/tosc-fx.scd".loadRelative;
+    "_includes/_osc-ctrl/tosc-fx.scd".loadRelative;
 
     // --- Mixer channels (with conditional controller bindings)
     "_includes/mixer-channel-16s.scd".loadRelative;
