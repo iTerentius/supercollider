@@ -1,25 +1,11 @@
 
 
 (
-SynthDef(\kik808, ~ufn[\808][\kik]).add;
-SynthDef(\sn808, ~ufn[\808][\sn]).add;
-SynthDef(\hh808, ~ufn[\808][\hh]).add;
-)
-
-(
-~p = { |str| 
-  var array = str.collectAs({ |char| 
-    if(char == $x, { 1 }, { Rest(1) }) 
-  }, Array);
-  Pseq(array, inf);
-};
-)
-(
 Pdefn(\kik_dur, ~p.("xx--x---x---x---"));
 Pdefn(\sn_dur,  ~p.("--------x-------"));
-Pdefn(\hh_dur,  ~p.("xxxxxxxxxxxxxxxx"));
+Pdefn(\hh_dur,  ~p.("-x-x-x-x-x-x-x-x"));
 Pdefn(\kik_q, Pstep(Pseq([2,  ], 1), 8));
-Pdefn(\sn_q, Pstep(Pseq([4, ], 1), 8));
+Pdefn(\sn_q, Pstep(Pseq([2, ], 1), 8));
 Pdefn(\hh_q, 2  );
 )
 

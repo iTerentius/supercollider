@@ -70,6 +70,7 @@ Pdefn(\hh1_durs, Pseq([Pn(Pdefn(\hh1_durs_a), 1)], 1));
 
 // STRS — words
 Pdefn(\hh1_str_0, 1);
+Pdefn(\hh1_str_1, Pdefn(\bd1_strs));
 // story
-Pdefn(\hh1_strs, Pseq([Pn(Pdefn(\hh1_str_0), 4)], 1));
+Pdefn(\hh1_strs, Pseq([Pn(Pdefn(\hh1_str_1)*4, 4)], 1));
 )

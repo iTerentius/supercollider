@@ -78,10 +78,10 @@ Pdefn(\bd1_durs, Pseq([Pn(Pdefn(\bd1_durs_c), 1)], 1));
 
 // STRS — words
 Pdefn(\bd1_str_0, 1);
-Pdefn(\bd1_str_1, Pstep(Pseq([1!2, 2!2].flat, 1), 1));
+Pdefn(\bd1_str_1, Pstep(Pxrand([1/2,  2], 1), Pwhite(1, 4)));
 // story
-Pdefn(\bd1_strs, Pseq([
-  Pn(Pdefn(\bd1_str_0), 8), 
-  Pn(Pdefn(\bd1_str_1), 4), 
+Pdefn(\bd1_strs, Pxrand([
+  Pn(Pdefn(\bd1_str_0), 4), 
+  Pn(Pdefn(\bd1_str_1), 2), 
 ], 1));
 )

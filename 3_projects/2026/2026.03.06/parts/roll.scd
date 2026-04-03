@@ -73,17 +73,17 @@ Pdefn(\roll_amp_1, Pwhite(0.75, 0.5, 1));
 Pdefn(\roll_amps, Pseq([Pn(Pdefn(\roll_amp_0), 4)], 1));
 
 // NSLICES — words
-Pdefn(\roll_nSlices_0, 32);
+Pdefn(\roll_nSlices_0, 4);
 Pdefn(\roll_nSlices_1, Pseq([1!4, 8, 16!4].flat, 1));
 // story
-Pdefn(\roll_nSlices, Pseq([Pn(Pdefn(\roll_nSlices_1), 1)], 1));
+Pdefn(\roll_nSlices, Pseq([Pn(Pdefn(\roll_nSlices_0), 1)], 1));
 
 // RATES — words
 Pdefn(\roll_rate_0, 0.8);
 Pdefn(\roll_rate_1, Pseq([1.2, 0.8], 1));
-Pdefn(\roll_rate_2, Pseg([0.5, 1.5, 0.5], [2, 4], \sin, 1));
+Pdefn(\roll_rate_2, Pseg([0.6, 1.5, 0.6], [2, 4], \sin, 1));
 // story
-Pdefn(\roll_rates, Pseq([Pn(Pdefn(\roll_rate_2), 1)], 1));
+Pdefn(\roll_rates, Pseq([Pn(Pdefn(\roll_rate_1), 1)], 1));
 
 // REV — words
 Pdefn(\roll_rev_0, 0);
@@ -116,10 +116,10 @@ Pdefn(\roll_deg_1, Prand([7], 1));
 Pdefn(\roll_degs_a, Pseq([Pn(Pdefn(\roll_deg_0), 1)], 1));     // static
 Pdefn(\roll_degs_b, Pseq([Pn(Pdefn(\roll_deg_1), 4)], 1));     // random
 // story
-Pdefn(\roll_degs, Pseq([Pn(Pdefn(\roll_degs_a), 1)], 1));
+Pdefn(\roll_degs, Pseq([Pn(Pdefn(\roll_degs_b), 1)], 1));
 
 // DURS — words
-Pdefn(\roll_dur_0, 2);
+Pdefn(\roll_dur_0, 8);
 Pdefn(\roll_dur_1, Pseq([1/3, 1/6!2, Pn(Rest(), 1)].flat, 1));
 Pdefn(\roll_dur_2, Pbjorklund2(5, 8, 1));
 // sentences
@@ -127,13 +127,13 @@ Pdefn(\roll_durs_a, Pseq([Pn(Pdefn(\roll_dur_2), 4)], 1));     // euclidean
 Pdefn(\roll_durs_b, Pseq([Pn(Pdefn(\roll_dur_0), 4)], 1));     // whole notes
 Pdefn(\roll_durs_c, Pseq([Pn(Pdefn(\roll_dur_1), 4)], 1));     // triplet feel
 // story
-Pdefn(\roll_durs, Pseq([Pn(Pdefn(\roll_durs_2), 1)], 1));
+Pdefn(\roll_durs, Pseq([Pn(Pdefn(\roll_durs_b), 1)], 1));
 
 // STRS — words
 Pdefn(\roll_str_0, 1);
 Pdefn(\roll_str_1, Pseq([1/4, 1/2, 1], 4));
 // story
-Pdefn(\roll_strs, Pseq([Pn(Pdefn(\roll_str_1), 32)], 1));
+Pdefn(\roll_strs, Pseq([Pn(Pdefn(\roll_str_0), 32)], 1));
 
 ///////////////////////////////////////////////////////////////
 // ROLL FX PDEFNS  (controls ~roll_fx1 = ~t2.playfx(~exp1))
