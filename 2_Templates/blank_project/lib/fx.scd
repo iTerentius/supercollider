@@ -13,6 +13,12 @@
 //
 // Swap by freeing the old node and deploying another from ~fxLib.
 // Keys are arbitrary — name them after the voice+effect, e.g. \v1_glitch.
+//
+// Ordering — FX chain runs in insertion order. Reorder live with:
+//   ~ilfx[\v1_crush].moveAfter(~ilfx[\v1_glitch]);
+//   ~ilfx[\v1_crush].moveBefore(~ilfx[\v1_glitch]);
+//   ~ilfx[\v1_crush].moveToHead(~ilfx[\v1_crush].group);  // first in chain
+//   ~ilfx[\v1_crush].moveToTail(~ilfx[\v1_crush].group);  // last in chain
 (
 ~ilfx !? { |d| d.do { |n| n.tryPerform(\free) } };
 ~ilfx = ();
@@ -90,10 +96,10 @@
 // Params: \rate (0.5–4 repeats/beat), \mix (0–1)
 // Note: uses TGrains, approximate stutter not quantized
 ~fxLib[\stutter] = { |chan|
-    var bus   = chan.inbus;
-    var bufL  = LocalBuf(SampleRate.ir * 2, 1);
-    var bufR  = LocalBuf(SampleRate.ir * 2, 1);
+    var bus = chan.inbus;
     chan.playfx({ |in|
+        var bufL  = LocalBuf(SampleRate.ir * 2, 1);
+        var bufR  = LocalBuf(SampleRate.ir * 2, 1);
         var sig   = In.ar(bus, 2);
         var trig  = Impulse.kr(\rate.kr(2));
         var wet   = [
