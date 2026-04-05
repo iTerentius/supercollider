@@ -47,6 +47,7 @@ ensureID.(\apcLedState);
 ensureID.(\apcSceneMap);
 ensureID.(\apcStopColChanMap);
 ensureID.(\apcParamBindings);
+ensureID.(\apcState);        // tracks last normalized value per param key — for save/restore
 
 /* colors bag - APC40 MK2 supports 128 colors (0-127) via velocity.
    LED mode is set by MIDI channel, not velocity:
@@ -381,7 +382,10 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 
 ~apcApplyParam = { |key, x|
     var f; f = ~apcParamBindings[key];
-    if(f.notNil) { f.value(x) } { ["[apcApplyParam] no binding for", key].postln };
+    if(f.notNil) {
+        ~apcState[key] = x;   // track for save/restore
+        f.value(x)
+    } { ["[apcApplyParam] no binding for", key].postln };
 };
 
 ~apcNorm7 = { |val| (val.asFloat.clip(0, 127)) / 127.0 };
