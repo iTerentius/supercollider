@@ -8,8 +8,8 @@
 ///////////////////////////////////////////////////////////////
 Pdef(\bCtl,
     Pbindef(\pbd_biscuit, 
-        \type,       \set,
-        \id,         Pfunc({ ~r3fx[\biscuit].nodeID }),
+        \type,       Pfunc({ ~r3fx[\biscuit].notNil.if(\set, \rest) }),
+        \id,         Pfunc({ ~r3fx[\biscuit].tryPerform(\nodeID) }),
         \args,       #[\drive, \clock, \bits,
                        \b1, \b2, \b3, \b4, \b5, \b6, \b7, \b8,
                        \fxMode, \shape,

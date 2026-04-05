@@ -56,8 +56,9 @@ Pdefn(mk.("_degs"),  Pseq([Pn(Pdefn(mk.("_degs_a")), 1)], 1));
 Pdefn(mk.("_dur_0"), 1);
 Pdefn(mk.("_dur_1"), Pbjorklund2(5, 8, 1) / 2);
 Pdefn(mk.("_dur_2"), ~p.("-x")/2);
+Pdefn(mk.("_dur_3"), ~p.("x-xx--")/2);
 // sentences
-Pdefn(mk.("_durs_a"), Pseq([Pn(Pdefn(mk.("_dur_2")), 4)], 1));   // straight
+Pdefn(mk.("_durs_a"), Pseq([Pn(Pdefn(mk.("_dur_3")), 4),  Pn(Pdefn(mk.("_dur_2")),  4)], 1));   // straight
 Pdefn(mk.("_durs_b"), Pseq([Pn(Pdefn(mk.("_dur_1")), 4)], 1));   // euclidean
 // story
 Pdefn(mk.("_durs"),  Pseq([Pn(Pdefn(mk.("_durs_a")), 1)], 1));

@@ -40,15 +40,15 @@
 
 // --- Bank 4 utility ---
 ~lpBindB.(4, [8, 8], \tempo, 41, nil, 4);
-~lpBindB.(4, [1, 3], \bCtl, 5, nil, 4);
+~lpBindB.(4, [1, 3], \bCtl, 5, nil, 4,  { ~oscState.keysValuesDo { |addr, val| ~oscParam[addr] !? { |cb| cb.(val) } });
 ~lpBindB.(4, [1, 5], \spectral, 10, nil, 4);
 ~apcBindB.(4, 7, \tempo, 4, 4);
 
 // --- Phrase variant toggle bindings (Bank 5 LP / Bank 5 APC) ---
 // Add per-voice below after defining ~phrFns in your parts files.
 // Pattern:
-//   ~lpBindBToggleFn.(5, [1, 1], ~phrFns[\v1][\a], ~phrFns[\v1][\b]);
-//   ~apcBindToggleFnB.(5, 32, ~phrFns[\v1][\a], ~phrFns[\v1][\b], \green, \blue, "phrA", "phr0");
+  ~lpBindBToggleFn.(5, [1, 1], ~phrFns[\v1_808k][\a], ~phrFns[\v1_808k][\b]);
+  ~apcBindToggleFnB.(5, 32, ~phrFns[\v1_808k][\a], ~phrFns[\v1_808k][\b], \green, \blue, "phrA", "phr0");
 
 // --- Any other fixed/special bindings below (bCtl, spectral, etc.) ---
 // ~lpBindB.(4, [1, 1], \bCtl, 21);
