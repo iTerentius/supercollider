@@ -48,7 +48,8 @@
 ~r5 = MixerChannel.new(\r5, s, 2, 2, outbus: ~m1.inbus);
 
 // Per-return fx dictionaries — populated by ~fxSetup calls
-// s.sync ensures MixerChannel groups are confirmed on server before Synth targets them
+// s.sync is NOT sufficient to confirm MixerChannel groups (doQueue runs +1ms on SystemClock).
+// ~fxSetup functions that create Synths must use ret.doWhenReady({ ... }) to defer safely.
 ~r1fx = (); ~r2fx = (); ~r3fx = (); ~r4fx = (); ~r5fx = ();
 s.sync;
 ~fxSetup[\greyhole].(~r1, ~r1fx, ds: 1, page: 1, slot: 1);
@@ -81,20 +82,40 @@ s.sync;
 ~pex1 = MixerChannel.new(\pex1, s, 2, 2, outbus: ~perc.inbus);
 ~pex2 = MixerChannel.new(\pex2, s, 2, 2, outbus: ~perc.inbus);
 
-// convenience. create or replace a post send from any track to any return.
-// Frees any existing send for the same (from, to) pair to prevent doubles.
+// Post-send registry with reference counting.
+// Multiple voices on the same track can all toggle the same src→ret send independently:
+// the send is created on first use and freed only when the last user stops.
 ~postSendRegistry = Dictionary.new;
+~postSendRefCount  = Dictionary.new;
+
 ~ensurePostSend = { |fromChan, toChan, level = 0.0|
     var key, h;
     if(fromChan.notNil and: { toChan.notNil }) {
         key = fromChan.name.asString ++ "->" ++ toChan.name.asString;
-        ~postSendRegistry[key].tryPerform(\free);
-        h = fromChan.newPostSend(toChan, level);
-        ~postSendRegistry[key] = h;
+        ~postSendRefCount[key] = (~postSendRefCount[key] ? 0) + 1;
+        h = ~postSendRegistry[key];
+        if(h.isNil) {
+            h = fromChan.newPostSend(toChan, level);
+            ~postSendRegistry[key] = h;
+        };
     } {
         h = nil;
     };
     h
+};
+
+~releasePostSend = { |fromChan, toChan|
+    if(fromChan.notNil and: { toChan.notNil }) {
+        var key  = fromChan.name.asString ++ "->" ++ toChan.name.asString;
+        var count = (~postSendRefCount[key] ? 1) - 1;
+        if(count <= 0) {
+            ~postSendRegistry[key].tryPerform(\free);
+            ~postSendRegistry.removeAt(key);
+            ~postSendRefCount.removeAt(key);
+        } {
+            ~postSendRefCount[key] = count;
+        };
+    };
 };
 
 // ================= INLINE FILTERS (HPF + LPF per channel) =================
@@ -119,15 +140,8 @@ s.sync;
 ~inlineFXmk.(~t9, \t9);   ~inlineFXmk.(~t10, \t10); ~inlineFXmk.(~t11, \t11); ~inlineFXmk.(~t12, \t12);
 // Returns
 ~inlineFXmk.(~r1, \r1);   ~inlineFXmk.(~r2, \r2);   ~inlineFXmk.(~r3, \r3);   ~inlineFXmk.(~r4, \r4); ~inlineFXmk.(~r5, \r5);
-// Perc submix + sub-channels
+// Perc submix only — sub-channels don't need per-voice HPF/LPF
 ~inlineFXmk.(~perc, \perc);
-~inlineFXmk.(~pbd1, \pbd1); ~inlineFXmk.(~pbd2, \pbd2);
-~inlineFXmk.(~psd1, \psd1); ~inlineFXmk.(~psd2, \psd2);
-~inlineFXmk.(~phh1, \phh1); ~inlineFXmk.(~phh2, \phh2);
-~inlineFXmk.(~pcp1, \pcp1); ~inlineFXmk.(~pcp2, \pcp2);
-~inlineFXmk.(~ptm1, \ptm1); ~inlineFXmk.(~ptm2, \ptm2); ~inlineFXmk.(~ptm3, \ptm3);
-~inlineFXmk.(~pcr1, \pcr1); ~inlineFXmk.(~pcr2, \pcr2);
-~inlineFXmk.(~pex1, \pex1); ~inlineFXmk.(~pex2, \pex2);
 ~inlineFXmk = nil;  // release helper
 
 // ~apcMixBind: per-strip helper — 4 bindings (f/r1/r2/r3), pan optional

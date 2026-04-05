@@ -297,7 +297,7 @@
 };
 
 // =============================================================================
-// BISCUIT  (SynthDef-based, loaded async via fork)
+// BISCUIT  (SynthDef-based)
 // TOSC layout: r1=drive, r2=clock, r3=bits, r4=shape, r5=fxMode, xy1=filter, xy2=naked|dressed, f=mix
 // =============================================================================
 
@@ -306,12 +306,20 @@
     retFx[\biscuit]    = nil;
     retFx[\setBiscuit] = nil;
 
-    retFx[\biscuit] = Synth(\biscuit, [
-        \in,      ret.inbus.index,
-        \out,     ret.inbus.index,
-        \naked,   0.0,
-        \dressed, 1.0
-    ], ret.synthgroup, \addToTail);
+    // Defer Synth creation until MixerChannelReconstructor confirms ~r3 is ready.
+    // s.sync does NOT wait for doQueue (scheduled 1ms later on SystemClock) — groups
+    // may not exist on the server yet when ~fxSetup runs. doWhenReady queues via the
+    // same serialized MixerChannelReconstructor pipeline, so it fires after groups land.
+    // \addAfter effectgroup places biscuit between effectgroup (inline HPF/LPF) and the
+    // fader synth: correct chain = filter → biscuit → fader.
+    ret.doWhenReady({
+        retFx[\biscuit] = Synth(\biscuit, [
+            \in,      ret.inbus.index,
+            \out,     ret.inbus.index,
+            \naked,   0.0,
+            \dressed, 1.0
+        ], ret.effectgroup, \addAfter);
+    });
 
     retFx[\setBiscuit] = { |drive, clock, bits, fxMode, shape, filterFreq, filterQ, naked, dressed|
         drive.notNil.if      { retFx[\biscuit].set(\drive,      drive)      };

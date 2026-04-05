@@ -23,18 +23,16 @@
 ~fxSendStop = IdentityDictionary.new;
 
 ~makeFxSendTdef = { |name, src, ret, level=1|
-    var flag = false, node = nil;
+    var flag = false;
     var stopper = { flag = false };
 
     Tdef(name, {
         protect {
             flag = true;
-            node.tryPerform(\free);
-            node = ~ensurePostSend.(src, ret, level);
+            ~ensurePostSend.(src, ret, level);  // increments refcount; creates send if first user
             while { flag } { 0.2.wait };
         } {
-            node.tryPerform(\free);
-            node = nil;
+            ~releasePostSend.(src, ret);  // decrements refcount; frees send only when last user stops
             flag = false;
         }
     });
@@ -44,11 +42,11 @@
 };
 
 // easier patterning with "x---x---x---x---"
-~p = { |str| 
+~p = { |str, rep=1, dur=1| 
   var array = str.collectAs({ |char| 
-    if(char == $x, { 1 }, { Rest(1) }) 
+    if(char == $x, { dur }, { Rest(dur) }) 
   }, Array);
-  Pseq(array, inf);
+  Pseq(array, rep);
 };
 "Helpers loaded.".postln;
 )
