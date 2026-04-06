@@ -71,15 +71,17 @@ Pdefn(mk.("_dur_3"), 16);
 
 // sentences
 Pdefn(mk.("_durs_a"), Pseq([Pn(Pdefn(mk.("_dur_1")), 4),  Pn(Pdefn(mk.("_dur_2")), 4)], 1));   // straight
-Pdefn(mk.("_durs_b"), Pseq([Pn(Pdefn(mk.("_dur_3")), 4)], 1));   // euclidean
+Pdefn(mk.("_durs_b"), Pseq([Pn(Pdefn(mk.("_dur_0")), 4)], 1));   // euclidean
 // story
-Pdefn(mk.("_durs"),  Pseq([
+Pdefn(mk.("_durs_c"),  Pseq([
   Pn(Pdefn(mk.("_dur_0")), 4), 
   Pn(Pdefn(mk.("_dur_2")), 8), 
   Pn(Pdefn(mk.("_dur_1")), 3), 
   Pn(Pdefn(mk.("_dur_3")), 1), 
   // Pn(Rest(),  16),  
 ], 1));
+
+Pdefn(mk.("_durs"), Pn(Pdefn(mk.("_durs_a")), 4));
 
 // STRS
 Pdefn(mk.("_str_0"), 1);
