@@ -8,31 +8,35 @@
 };
 
 // --- FX send matrix (voice × return) ---
-// LP:  Bank 2 + overflow, rows 1-5 = returns, cols = voice index
+// LP:  Bank 2, sub-bank overflow for >8 voices (col 9+ → sub-bank 2, etc.)
+//      rows 1-N = returns, cols = voice index within sub-bank
 // APC: Bank 2, same pad column as Bank 1, rows top→bottom = returns
 ~slots.do { |sl, vi|
-    var lpFxBank = 2 + (vi / 8).floor.asInteger;
-    var lpFxCol  = (vi % 8) + 1;
+    var lpFxSub = (vi / 8).floor.asInteger + 1;
+    var lpFxCol = (vi % 8) + 1;
     ~slotRets.do { |ret, ri|
         var key     = (sl[\n].asString ++ "_fx_" ++ (ri + 1)).asSymbol;
         var apcPad  = sl[\apc][\p] - (8 * ri);
         var stopper = ~makeFxSendTdef.(key, sl[\t], ret);
-        ~lpBindB.(lpFxBank, [ri + 1, lpFxCol], key, ~slotFxLpCols[ri], nil, nil, stopper);
+        ~lpBindSB.(2, lpFxSub, [ri + 1, lpFxCol], key, ~slotFxLpCols[ri], nil, nil, stopper);
         ~apcBindB.(2, apcPad, key, 1, ~slotFxApcCols[ri], nil, stopper);
     };
 };
 
 // --- Return → return FX send matrix (Bank 4 LP / Bank 4 APC) ---
-// LP:  col = src return index+1, row = dst return index+2
+// LP:  Bank 4, sub-bank overflow for >8 returns (src col 9+ → sub-bank 2, etc.)
+//      col = src return index within sub-bank, row = dst return index+2
 //      (row 1 per column is reserved for Pdef fx control toggles)
 // APC: pad = (4 - dstIdx) * 8 + srcIdx  (col=src, row from bottom=dst)
 // Color tracks destination return (same palette as voice→return sends).
 ~slotRets.do { |src, si|
+    var lpSub = (si / 8).floor.asInteger + 1;
+    var lpCol = (si % 8) + 1;
     ~slotRets.do { |dst, di|
         if(si != di) {
             var key     = ("r" ++ (si + 1) ++ "_fx_r" ++ (di + 1)).asSymbol;
             var stopper = ~makeFxSendTdef.(key, src, dst);
-            ~lpBindB.(4, [di + 2, si + 1], key, ~slotFxLpCols[di], nil, nil, stopper);
+            ~lpBindSB.(4, lpSub, [di + 2, lpCol], key, ~slotFxLpCols[di], nil, nil, stopper);
             ~apcBindB.(4, (4 - di) * 8 + si, key, 4, nil, nil, stopper);
         };
     };

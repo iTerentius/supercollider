@@ -1,13 +1,21 @@
 (
 // -----------------------------------------------------------------------------
-// Launchpad Mini [MK3] Universal Launcher (v15)
-// Adds: 8-bank system via Left (CC 93) / Right (CC 94) top buttons
-//   - ~lpMini[\banks][0..7]  — per-bank binding dicts
-//   - ~lpMini[\bank]         — active bank index
-//   - ~lpMini[\switchBank]   — switch banks, clears grid, repaints LEDs
-//   - ~lpBindB.(bank, ...)   — bind to a specific bank
-//   - ~lpBind.(...)          — binds to active bank (unchanged API)
-//   CC 93/94 intercepted; column launch remains on 91,92,95-98
+// Launchpad Mini [MK3] Universal Launcher (v16)
+// Adds: 8-sub-bank system via right-column buttons (CC 89→19, top→bottom)
+//   Within each of the 8 top-row banks, right column selects sub-bank 1-8
+//   64 total pages (8 banks × 8 sub-banks)
+//   ~lpMini[\banks][0..7][0..7]  — bank → subBank → binding dict
+//   ~lpMini[\bank]               — active bank index (1-8)
+//   ~lpMini[\subBank]            — active sub-bank index (1-8)
+//   ~lpMini[\switchBank].(n)     — switch bank, resets to subBank 1
+//   ~lpMini[\switchSubBank].(n)  — switch sub-bank within current bank
+//   ~lpBindSB.(bank, sub, ref, ...)  — bind to specific bank+sub-bank
+//   ~lpBindB.(bank, ref, ...)        — bind to bank sub-bank 1 (back-compat)
+//   ~lpBind.(ref, ...)               — bind to active bank+sub-bank (unchanged)
+//   CC 91-98: bank select (top row)
+//   CC 89,79,...,19: sub-bank select (right column, top→bottom = sub 1-8)
+//   Stop All: removed from hardware (CC 19 is now sub-bank 8).
+//             ~lpMini[\stopAll] still callable programmatically.
 // -----------------------------------------------------------------------------
 
 var pickSrcIdx, pickDest, srcIdx;
@@ -45,19 +53,23 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
 ~lpMini[\out] = ~lpMini[\dst].notNil.if({ MIDIOut.newByName(~lpMini[\dst].device, ~lpMini[\dst].name) }, { nil });
 ~lpMini[\uid] = ~lpMini[\src].tryPerform(\uid);
 
-// --- BANKING (1-indexed: banks 1-8) ---
-~lpMini[\banks]    = Array.fill(8, { IdentityDictionary.new });
+// --- BANKING (1-indexed: banks 1-8, sub-banks 1-8 → 64 total pages) ---
+~lpMini[\banks]    = Array.fill(8, { Array.fill(8, { IdentityDictionary.new }) });
 ~lpMini[\bank]     = 1;  // active bank, 1-8
-~lpMini[\bindings] = ~lpMini[\banks][0];  // banks[bank-1]
+~lpMini[\subBank]  = 1;  // active sub-bank, 1-8
+~lpMini[\bindings] = ~lpMini[\banks][0][0];  // always points to banks[bank-1][subBank-1]
 ~lpMini[\ledCache] = IdentityDictionary.new;
-~lpMini[\stopAllLedCache] = nil;
+
+// Right-column CCs top→bottom map to sub-banks 1-8
+~lpMini[\subBankCCs] = [89, 79, 69, 59, 49, 39, 29, 19];
 
 ~lpMini[\colors] = (
-    empty:       0, pdefDefault: 9, ndefDefault: 95,
-    funcDefault: 13, trigger: 21,
-    bankActive:  3,   // white: selected bank
-    bankOff:     0,   // off: inactive bank
-    stopAll:     9    // amber: stop-all indicator
+    empty:            0,  pdefDefault: 9, ndefDefault: 95,
+    funcDefault:      13, trigger: 21,
+    bankActive:       3,  // white: selected bank / sub-bank button
+    bankOff:          0,  // off: inactive bank
+    subBankOccupied:  1,  // dim: sub-bank has bindings but not selected
+    stopAll:          9   // amber: kept for programmatic use only
 );
 
 // --- HARDWARE CONTROL ---
@@ -80,55 +92,95 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
     };
 };
 
+// --- SUB-BANK LED INDICATOR ---
+// Right column (CC 89,79,...,19): active sub-bank = white, occupied = dim, empty = off
+~lpMini[\paintSubBankLEDs] = {
+    var sb   = ~lpMini[\subBank];
+    var bIdx = ~lpMini[\bank] - 1;
+    var out  = ~lpMini[\out];
+    if(out.notNil) {
+        ~lpMini[\subBankCCs].do { |cc, i|
+            var color = if(i + 1 == sb) {
+                ~lpMini[\colors][\bankActive]
+            } {
+                if(~lpMini[\banks][bIdx][i].size > 0) {
+                    ~lpMini[\colors][\subBankOccupied]
+                } { 0 }
+            };
+            out.control(0, cc, color);
+        };
+    };
+};
+
 // --- BANK LED INDICATOR ---
-// Lights Left (CC 93) / Right (CC 94) top buttons to show navigation availability
+// Top row (CC 91-98): active bank = white, others = off; then paints sub-bank column
 ~lpMini[\paintBankLEDs] = {
-    var b = ~lpMini[\bank];
+    var b   = ~lpMini[\bank];
     var out = ~lpMini[\out];
     if(out.notNil) {
         (1..8).do { |i|
             out.control(0, 90 + i, if(i == b) { ~lpMini[\colors][\bankActive] } { ~lpMini[\colors][\bankOff] });
         };
     };
-    "LP Mini Bank: %/8".format(b).postln;
+    ~lpMini[\paintSubBankLEDs].();
+    "LP Mini Bank: %/8  SubBank: %/8".format(~lpMini[\bank], ~lpMini[\subBank]).postln;
 };
 
 // --- BANK SWITCH ---
+// Always resets to sub-bank 1 when changing banks.
 ~lpMini[\switchBank] = { |newBank|
     newBank = newBank.clip(1, 8);
     ~lpMini[\bank]     = newBank;
-    ~lpMini[\bindings] = ~lpMini[\banks][newBank - 1];
+    ~lpMini[\subBank]  = 1;
+    ~lpMini[\bindings] = ~lpMini[\banks][newBank - 1][0];
     fork {
         if(~lpMini[\out].notNil) {
-            // Clear grid: live mode then back to programmer
             ~lpMini[\out].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x00, 0xF7]);
             0.05.wait;
             ~lpMini[\out].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x01, 0xF7]);
         };
         ~lpMini[\ledCache] = IdentityDictionary.new;
         ~lpMini[\paintBankLEDs].();
-        // Explicitly repaint new bank — watcher cache check can't detect this
-        // because wantColor is nil (missing \play/\stop keys) and ledCache is
-        // also nil after clear, so nil != nil → false → watcher never fires.
         ~lpMini[\bindings].keysValuesDo { |note, bindData|
             ~lpMini[\paint].(note, bindData);
         };
     };
 };
 
-// --- STOP ALL ---
+// --- SUB-BANK SWITCH ---
+~lpMini[\switchSubBank] = { |newSubBank|
+    newSubBank = newSubBank.clip(1, 8);
+    ~lpMini[\subBank]  = newSubBank;
+    ~lpMini[\bindings] = ~lpMini[\banks][~lpMini[\bank] - 1][newSubBank - 1];
+    fork {
+        if(~lpMini[\out].notNil) {
+            ~lpMini[\out].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x00, 0xF7]);
+            0.05.wait;
+            ~lpMini[\out].sysex(Int8Array[0xF0, 0x00, 0x20, 0x29, 0x02, 0x0D, 0x0E, 0x01, 0xF7]);
+        };
+        ~lpMini[\ledCache] = IdentityDictionary.new;
+        ~lpMini[\paintBankLEDs].();
+        ~lpMini[\bindings].keysValuesDo { |note, bindData|
+            ~lpMini[\paint].(note, bindData);
+        };
+    };
+};
+
+// --- STOP ALL (programmatic — no hardware button assigned in v16) ---
 ~lpMini[\stopAll] = {
-    ~lpMini[\banks].do { |bankDict|
-        bankDict.keysValuesDo { |note, bindData|
-            var obj = ~lpMini[\getObj].(bindData[\key]);
-            if(obj.notNil) {
-                var isRunning = if(obj.isKindOf(NodeProxy)) { obj.isMonitoring } { obj.isPlaying };
-                if(isRunning) {
-                    var q = bindData[\quant] ?? { 4 };
-                    if(bindData[\onStop].notNil) {
-                        bindData[\onStop].value;
-                    } {
-                        if(obj.respondsTo(\stopQ)) { obj.stopQ(q) } { obj.stop };
+    ~lpMini[\banks].do { |bankArr|
+        bankArr.do { |subBankDict|
+            subBankDict.keysValuesDo { |note, bindData|
+                var obj = ~lpMini[\getObj].(bindData[\key]);
+                if(obj.notNil) {
+                    var isRunning = if(obj.isKindOf(NodeProxy)) { obj.isMonitoring } { obj.isPlaying };
+                    if(isRunning) {
+                        var q = bindData[\quant] ?? { 4 };
+                        if(bindData[\onStop].notNil) {
+                            bindData[\onStop].value;
+                        } {
+                            if(obj.respondsTo(\stopQ)) { obj.stopQ(q) } { obj.stop };
+                        };
                     };
                 };
             };
@@ -318,11 +370,10 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
 };
 
 // --- WATCHER ---
+// Watches only the current page (bindings = active bank+subBank dict).
 ~lpMini[\watcher] = Routine {
     loop {
         if(~lpMini[\out].notNil) {
-            var anyPlaying = false;
-            var wantStopAllColor;
             ~lpMini[\bindings].keysValuesDo { |note, bindData|
                 var key = bindData[\key];
                 var obj = ~lpMini[\getObj].(key);
@@ -345,33 +396,9 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
                     };
                 };
 
-                // Only paint if state changed
                 if(~lpMini[\ledCache][note] != wantColor) {
                     ~lpMini[\paint].(note, bindData);
                 };
-            };
-
-            // Handle Stop All Button LED
-            ~lpMini[\banks].do { |bankDict|
-                bankDict.do { |bData|
-                    if(anyPlaying.not and: { bData[\type] != \toggleFn }) {
-                        var o = ~lpMini[\getObj].(bData[\key]);
-                        if(o.notNil and: { o.isKindOf(Function).not }) {
-                            if(o.isKindOf(NodeProxy)) {
-                                if(o.isMonitoring) { anyPlaying = true }
-                            } {
-                                if(o.isPlaying) { anyPlaying = true }
-                            };
-                        };
-                    };
-                };
-            };
-
-            // Only send if state changed
-            wantStopAllColor = if(anyPlaying) { ~lpMini[\colors][\stopAll] } { 0 };
-            if(~lpMini[\stopAllLedCache] != wantStopAllColor) {
-                ~lpMini[\out].control(0, 19, wantStopAllColor);
-                ~lpMini[\stopAllLedCache] = wantStopAllColor;
             };
         };
         0.1.wait;
@@ -379,6 +406,7 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
 }.play(AppClock);
 
 // --- BINDING API ---
+// Bind to active bank + active sub-bank (same as before).
 ~lpBind = { |ref, key, color=nil, clock=nil, quant=nil, onStop=nil|
     var note, storedKey;
     if(ref.isArray) {
@@ -395,11 +423,10 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
 
     ~lpMini[\ledCache][note] = nil;
     ~lpMini[\paint].(note, ~lpMini[\bindings][note]);
-    "LP Bound Pad % (Bank %)".format(note, ~lpMini[\bank]).postln;
+    "LP Bound Pad % (Bank % Sub %)".format(note, ~lpMini[\bank], ~lpMini[\subBank]).postln;
 };
 
-// --- BANK-TARGETED BINDING API ---
-// Bind to a specific bank regardless of active bank.
+// --- BANK-TARGETED BINDING API (back-compat: always targets sub-bank 1) ---
 ~lpBindB = { |bank, ref, key, color=nil, clock=nil, quant=nil, onStop=nil|
     var note, storedKey;
     bank = bank.clip(1, 8);
@@ -411,21 +438,43 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
 
     if(key.isKindOf(Function) or: { key.isString }) { storedKey = key; } { storedKey = key.asSymbol; };
 
-    ~lpMini[\banks][bank - 1][note] = (
+    ~lpMini[\banks][bank - 1][0][note] = (
         key: storedKey, color: color, clock: clock, quant: quant, onStop: onStop
     );
 
-    // Only update display if this is the active bank
-    if(bank == ~lpMini[\bank]) {
+    if(bank == ~lpMini[\bank] and: { ~lpMini[\subBank] == 1 }) {
         ~lpMini[\ledCache][note] = nil;
-        ~lpMini[\paint].(note, ~lpMini[\banks][bank - 1][note]);
+        ~lpMini[\paint].(note, ~lpMini[\banks][bank - 1][0][note]);
     };
-    "LP Bound Pad % (Bank %)".format(note, bank).postln;
+    "LP Bound Pad % (Bank % Sub 1)".format(note, bank).postln;
+};
+
+// --- BANK+SUB-BANK TARGETED BINDING API ---
+~lpBindSB = { |bank, subBank, ref, key, color=nil, clock=nil, quant=nil, onStop=nil|
+    var note, storedKey;
+    bank    = bank.clip(1, 8);
+    subBank = subBank.clip(1, 8);
+    if(ref.isArray) {
+        note = ((9 - ref[0]) * 10) + ref[1];
+    } {
+        note = ref;
+    };
+
+    if(key.isKindOf(Function) or: { key.isString }) { storedKey = key; } { storedKey = key.asSymbol; };
+
+    ~lpMini[\banks][bank - 1][subBank - 1][note] = (
+        key: storedKey, color: color, clock: clock, quant: quant, onStop: onStop
+    );
+
+    if(bank == ~lpMini[\bank] and: { subBank == ~lpMini[\subBank] }) {
+        ~lpMini[\ledCache][note] = nil;
+        ~lpMini[\paint].(note, ~lpMini[\banks][bank - 1][subBank - 1][note]);
+    };
+    "LP Bound Pad % (Bank % Sub %)".format(note, bank, subBank).postln;
 };
 
 // --- TOGGLE FUNCTION BINDING API ---
-// Two-state toggle: press once → fnA + colorA (pulsing); press again → fnB + colorB (static)
-// colorA/colorB are LP Mini palette indices (integers).
+// Bind to active bank + active sub-bank.
 ~lpBindToggleFn = { |ref, fnA, fnB, colorA = 21, colorB = 9|
     var note, active = false;
     if(ref.isArray) {
@@ -446,10 +495,10 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
     );
     ~lpMini[\ledCache][note] = nil;
     ~lpMini[\paint].(note, ~lpMini[\bindings][note]);
-    "LP ToggleFn Bound Pad % (Bank %)".format(note, ~lpMini[\bank]).postln;
+    "LP ToggleFn Bound Pad % (Bank % Sub %)".format(note, ~lpMini[\bank], ~lpMini[\subBank]).postln;
 };
 
-// Bank-targeted version of ~lpBindToggleFn.
+// Bank-targeted toggle fn (sub-bank 1, back-compat).
 ~lpBindBToggleFn = { |bank, ref, fnA, fnB, colorA = 21, colorB = 9|
     var note, active = false;
     bank = bank.clip(1, 8);
@@ -458,7 +507,7 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
     } {
         note = ref;
     };
-    ~lpMini[\banks][bank - 1][note] = (
+    ~lpMini[\banks][bank - 1][0][note] = (
         key: {}, type: \toggleFn,
         colorA: colorA, colorB: colorB,
         isActive: { active },
@@ -466,16 +515,132 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
             active = active.not;
             if(active) { fnA.value } { fnB.value };
             ~lpMini[\ledCache][note] = nil;
-            if(bank == ~lpMini[\bank]) {
-                ~lpMini[\paint].(note, ~lpMini[\banks][bank - 1][note]);
+            if(bank == ~lpMini[\bank] and: { ~lpMini[\subBank] == 1 }) {
+                ~lpMini[\paint].(note, ~lpMini[\banks][bank - 1][0][note]);
             };
         }
     );
-    if(bank == ~lpMini[\bank]) {
+    if(bank == ~lpMini[\bank] and: { ~lpMini[\subBank] == 1 }) {
         ~lpMini[\ledCache][note] = nil;
-        ~lpMini[\paint].(note, ~lpMini[\banks][bank - 1][note]);
+        ~lpMini[\paint].(note, ~lpMini[\banks][bank - 1][0][note]);
     };
-    "LP ToggleFn Bound Pad % (Bank %)".format(note, bank).postln;
+    "LP ToggleFn Bound Pad % (Bank % Sub 1)".format(note, bank).postln;
+};
+
+// Bank+sub-bank targeted toggle fn.
+~lpBindSBToggleFn = { |bank, subBank, ref, fnA, fnB, colorA = 21, colorB = 9|
+    var note, active = false;
+    bank    = bank.clip(1, 8);
+    subBank = subBank.clip(1, 8);
+    if(ref.isArray) {
+        note = ((9 - ref[0]) * 10) + ref[1];
+    } {
+        note = ref;
+    };
+    ~lpMini[\banks][bank - 1][subBank - 1][note] = (
+        key: {}, type: \toggleFn,
+        colorA: colorA, colorB: colorB,
+        isActive: { active },
+        toggleHandler: {
+            active = active.not;
+            if(active) { fnA.value } { fnB.value };
+            ~lpMini[\ledCache][note] = nil;
+            if(bank == ~lpMini[\bank] and: { subBank == ~lpMini[\subBank] }) {
+                ~lpMini[\paint].(note, ~lpMini[\banks][bank - 1][subBank - 1][note]);
+            };
+        }
+    );
+    if(bank == ~lpMini[\bank] and: { subBank == ~lpMini[\subBank] }) {
+        ~lpMini[\ledCache][note] = nil;
+        ~lpMini[\paint].(note, ~lpMini[\banks][bank - 1][subBank - 1][note]);
+    };
+    "LP ToggleFn Bound Pad % (Bank % Sub %)".format(note, bank, subBank).postln;
+};
+
+// --- VARIANT GROUP BINDING (radio-button: only one pad active at a time) ---
+// variants: array of [ref, fn, color] — one entry per pad
+// defaultIdx: which starts active (0-indexed)
+// Example:
+//   ~lpBindBVariants.(5, [
+//       [[1, 1], ~phrFns[\v1_808k][\a], 21],
+//       [[2, 1], ~phrFns[\v1_808k][\b], 9],
+//   ]);
+~lpBindBVariants = { |bank, variants, defaultIdx=0, colorInactive=1|
+    var cur = defaultIdx;
+    var notes = variants.collect { |v|
+        var ref = v[0];
+        if(ref.isArray) { ((9 - ref[0]) * 10) + ref[1] } { ref };
+    };
+    bank = bank.clip(1, 8);
+
+    variants.do { |v, i|
+        var note = notes[i];
+        var fn   = v[1];
+        var col  = v[2];
+        ~lpMini[\banks][bank - 1][0][note] = (
+            key: {}, type: \toggleFn,
+            colorA: col, colorB: colorInactive,
+            isActive: { cur == i },
+            toggleHandler: {
+                cur = i;
+                fn.value;
+                notes.do { |n|
+                    ~lpMini[\ledCache][n] = nil;
+                    if(bank == ~lpMini[\bank] and: { ~lpMini[\subBank] == 1 }) {
+                        ~lpMini[\paint].(n, ~lpMini[\banks][bank - 1][0][n]);
+                    };
+                };
+            }
+        );
+    };
+
+    if(bank == ~lpMini[\bank] and: { ~lpMini[\subBank] == 1 }) {
+        notes.do { |n|
+            ~lpMini[\ledCache][n] = nil;
+            ~lpMini[\paint].(n, ~lpMini[\banks][bank - 1][0][n]);
+        };
+    };
+    "LP VariantGroup Bound (Bank %, % pads, default: %)".format(bank, variants.size, defaultIdx).postln;
+};
+
+// Sub-bank targeted variant group binding.
+~lpBindSBVariants = { |bank, subBank, variants, defaultIdx=0, colorInactive=1|
+    var cur = defaultIdx;
+    var notes = variants.collect { |v|
+        var ref = v[0];
+        if(ref.isArray) { ((9 - ref[0]) * 10) + ref[1] } { ref };
+    };
+    bank    = bank.clip(1, 8);
+    subBank = subBank.clip(1, 8);
+
+    variants.do { |v, i|
+        var note = notes[i];
+        var fn   = v[1];
+        var col  = v[2];
+        ~lpMini[\banks][bank - 1][subBank - 1][note] = (
+            key: {}, type: \toggleFn,
+            colorA: col, colorB: colorInactive,
+            isActive: { cur == i },
+            toggleHandler: {
+                cur = i;
+                fn.value;
+                notes.do { |n|
+                    ~lpMini[\ledCache][n] = nil;
+                    if(bank == ~lpMini[\bank] and: { subBank == ~lpMini[\subBank] }) {
+                        ~lpMini[\paint].(n, ~lpMini[\banks][bank - 1][subBank - 1][n]);
+                    };
+                };
+            }
+        );
+    };
+
+    if(bank == ~lpMini[\bank] and: { subBank == ~lpMini[\subBank] }) {
+        notes.do { |n|
+            ~lpMini[\ledCache][n] = nil;
+            ~lpMini[\paint].(n, ~lpMini[\banks][bank - 1][subBank - 1][n]);
+        };
+    };
+    "LP VariantGroup Bound (Bank % Sub %, % pads, default: %)".format(bank, subBank, variants.size, defaultIdx).postln;
 };
 
 // --- MIDI LISTENERS ---
@@ -497,16 +662,20 @@ if(~lpMini[\uid].notNil) {
 
 if(~lpMini[\uid].notNil) {
     MIDIdef.cc(\lpMini_cc, { |val, cc, chan, src|
-    if(val > 0) {
-        // 1. Bank Select (Top Buttons CC 91-98 → banks 1-8)
-        if(cc >= 91 and: { cc <= 98 }) {
-            ~lpMini[\switchBank].(cc - 90);
-        };
+        var sbIdx;
+        if(val > 0) {
+            // 1. Bank Select (Top Buttons CC 91-98 → banks 1-8)
+            if(cc >= 91 and: { cc <= 98 }) {
+                ~lpMini[\switchBank].(cc - 90);
+            };
 
-        // 2. Stop All (Bottom-right side button CC 19)
-        if(cc == 19) { ~lpMini[\stopAll].() };
-    };
-}, nil, nil, ~lpMini[\uid]);
+            // 2. Sub-Bank Select (Right Column CC 89,79,...,19 → sub-banks 1-8)
+            sbIdx = ~lpMini[\subBankCCs].indexOf(cc);
+            if(sbIdx.notNil) {
+                ~lpMini[\switchSubBank].(sbIdx + 1);
+            };
+        };
+    }, nil, nil, ~lpMini[\uid]);
 } {
     "[LP Mini] Not connected — skipping CC listener".postln;
 };
@@ -525,28 +694,43 @@ CmdPeriod.add({
     }.defer(0.5);
 });
 
-// Paint initial bank LED state
+// Paint initial bank + sub-bank LED state
 ~lpMini[\paintBankLEDs].();
 
-"--- Launchpad Mini MK3 Universal Launcher Loaded (v15 + Banking 1-8) ---".postln;
+"--- Launchpad Mini MK3 Universal Launcher Loaded (v16 + Sub-Banking 8×8 = 64 pages) ---".postln;
 )
 // -----------------------------------------------------------------------------
-// EXAMPLES
+// API SUMMARY
 // -----------------------------------------------------------------------------
-
-// // Bind to active bank (same as before)
-// ~lpBind.([1, 1], \beat, 45);
 //
-// // Bind to a specific bank (1-8)
-// ~lpBindB.(1, [1, 1], \kick, 9);    // bank 1, bottom-left
-// ~lpBindB.(2, [1, 1], \snare, 21);  // bank 2, same pad position
+// Bind to active page (bank+subBank):
+//   ~lpBind.([row, col], \key, color, clock, quant, onStop)
 //
-// // Switch banks via hardware: press Left/Right top buttons
-// // Or programmatically:
-// ~lpMini[\switchBank].(2);
+// Bind to specific bank (sub-bank 1, back-compat):
+//   ~lpBindB.(bank, [row, col], \key, color, clock, quant, onStop)
 //
-// // Current bank index:
-// ~lpMini[\bank].postln;
+// Bind to specific bank + sub-bank:
+//   ~lpBindSB.(bank, subBank, [row, col], \key, color, clock, quant, onStop)
 //
-// // Bank LEDs: Left (CC93) lights white when bank > 0
-// //            Right (CC94) lights white when bank < 7
+// Toggle-fn variants:
+//   ~lpBindToggleFn.(ref, fnA, fnB, colorA, colorB)       // active page
+//   ~lpBindBToggleFn.(bank, ref, fnA, fnB, colorA, colorB)  // bank, sub 1
+//   ~lpBindSBToggleFn.(bank, sub, ref, fnA, fnB, colorA, colorB)
+//
+// Navigation:
+//   CC 91-98 (top row)           → ~lpMini[\switchBank].(1-8)   [resets to sub 1]
+//   CC 89,79,...,19 (right col)  → ~lpMini[\switchSubBank].(1-8)
+//   ~lpMini[\switchBank].(n)     — programmatic bank switch
+//   ~lpMini[\switchSubBank].(n)  — programmatic sub-bank switch
+//   ~lpMini[\bank]               — current bank (1-8)
+//   ~lpMini[\subBank]            — current sub-bank (1-8)
+//
+// Utilities:
+//   ~lpMini[\stopAll].()         — stop all running clips (all 64 pages)
+//   ~lpMini[\clearGrid].()       — clear display, repaint current page + LEDs
+//   ~lpMini[\launchList].(notes) — group play/stop by note list (current page)
+//
+// Layout convention (suggested):
+//   Columns = voices/tracks (stay within one column across sub-banks)
+//   Sub-bank overflow: col 9+ wraps to col 1+ on next sub-bank of same bank
+//   Right column: lit white = current sub-bank, dim = has bindings, off = empty

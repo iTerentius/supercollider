@@ -136,6 +136,9 @@
     // --- WET/DRY MIX ---
     wet = (dry * naked) + (filtered * dressed);
 
+    // Limiter guards against runaway levels from ws6/ws7 (LFSaw/LFPulse) and bit inversion spikes
+    wet = Limiter.ar(wet, 0.95, 0.01);
+
     ReplaceOut.ar(out, wet);
 }).add;
 )
