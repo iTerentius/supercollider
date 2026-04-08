@@ -49,26 +49,29 @@ Pdefn(mk.("_amps"),  Pseq([Pn(Pdefn(mk.("_amp_0")), 4)], 1));
 
 // DEGS — words
 Pdefn(mk.("_deg_0"), 0);
-Pdefn(mk.("_deg_1"), Pseq([0, 1, ], 1));
+Pdefn(mk.("_deg_1"), Pseq([0, 2], 1));
 // sentences
 Pdefn(mk.("_degs_a"), Pseq([Pn(Pdefn(mk.("_deg_0")), 4)], 1));   // root only
 Pdefn(mk.("_degs_b"), Pseq([Pn(Pdefn(mk.("_deg_1")), 4)], 1));   // short walk
 // story
-Pdefn(mk.("_degs"),  Pseq([Pn(Pdefn(mk.("_degs_b")), 1)], 1));
+Pdefn(mk.("_degs"),  Pseq([Pn(Pdefn(mk.("_degs_a")), 1)], 1));
 
 // DURS — words
 Pdefn(mk.("_dur_0"), 1);
 Pdefn(mk.("_dur_1"), Pseq([1/4, 3/4,  1!3].flat,  1));
-// Pdefn(mk.("_dur_1"), Pseq([1/8, 1,  1], 1));
-Pdefn(mk.("_dur_2"), Pbjorklund2(3, 8, 1) / 2);
+Pdefn(mk.("_dur_2"), Pseg([1, 1/32], [4], \wel,  1));
+Pdefn(mk.("_dur_3"), Pbjorklund2(3, 8, 1) / 2);
 // sentences
-Pdefn(mk.("_durs_a"), Pseq([Pn(Pdefn(mk.("_dur_1")), 4)], 1));   // straight
-Pdefn(mk.("_durs_b"), Pseq([Pn(Pdefn(mk.("_dur_2")), 4)], 1));   // euclidean
+Pdefn(mk.("_durs_a"), Pseq([Pn(Pdefn(mk.("_dur_0")), 4)], 1));   // straight
+Pdefn(mk.("_durs_b"), Pseq([Pn(Pdefn(mk.("_dur_1")), 4)], 1));   // straight
+Pdefn(mk.("_durs_c"), Pseq([Pn(Pdefn(mk.("_dur_2")), 4)], 1));   // euclidean
+Pdefn(mk.("_durs_d"), Pseq([Pn(Pdefn(mk.("_dur_3")), 4)], 1));   // euclidean
 // story
 Pdefn(mk.("_durs"),  Pseq([Pn(Pdefn(mk.("_durs_a")), 1)], 1));
 
 // STRS
 Pdefn(mk.("_str_0"), 1);
+Pdefn(mk.("_str_1"), Pseg([1/8,  1], [4], \step,  1));
 Pdefn(mk.("_strs"),  Pseq([Pn(Pdefn(mk.("_str_0")), 4)], 1));
 
 Pdefn(mk.("_rel_0"),  0.3);
@@ -78,7 +81,7 @@ Pdefn(mk.("_clickAmp_0"),  0.8);
 Pdefn(mk.("_clickAmp"),  Pseq([Pn(Pdefn(mk.("_clickAmp_0")),  4)],  1));
 
 Pdefn(mk.("_pitchMod_0"),  2);
-Pdefn(mk.("_pitchMod_1"), Pstep(Pseq([2,  3].flat,  1), 2));
+Pdefn(mk.("_pitchMod_1"), Pstep(Pseq([2,  3].flat,  1), 1));
 Pdefn(mk.("_pitchMod"),  Pseq([Pn(Pdefn(mk.("_pitchMod_1")),  4)],  1));
 
 Pdefn(mk.("_pitchRel_0"),  0.2);
@@ -95,12 +98,28 @@ Pdefn(mk.("_dist"),  Pseq([Pn(Pdefn(mk.("_dist_0")),  4)],  1));
     a: {
         Pbindef(mk.("_pb"),
             \dur,    Pseq([Pn(Pdefn(mk.("_durs_b")), 4)], inf),
-            \degree, Pseq([Pn(Pdefn(mk.("_degs_b")), 4)], inf))
+            \degree, Pseq([Pn(Pdefn(mk.("_degs_b")), 4)], inf), 
+            \stretch, Pseq([Pn(Pdefn(mk.("_str_1")), 4)], inf), 
+          )
     },
     b: {  // reset to defaults
         Pbindef(mk.("_pb"),
             \dur,    Pseq([Pn(Pdefn(mk.("_durs_a")), 4)], inf),
-            \degree, Pseq([Pn(Pdefn(mk.("_degs_a")), 4)], inf))
+            \degree, Pseq([Pn(Pdefn(mk.("_degs_a")), 4)], inf), 
+            \stretch, Pseq([Pn(Pdefn(mk.("_str_0")), 4)], inf), 
+          )
+    },
+    c: {
+        Pbindef(mk.("_pb"),
+            \dur,    Pseq([Pn(Pdefn(mk.("_durs_c")), 4)], inf),
+            \degree, Pseq([Pn(Pdefn(mk.("_degs_b")), 4)], inf),
+            \stretch, Pseq([Pn(Pdefn(mk.("_str_0")), 4)], inf))
+    },
+    d: {
+        Pbindef(mk.("_pb"),
+            \dur,    Pseq([Pn(Pdefn(mk.("_durs_d")), 4)], inf),
+            \degree, Pseq([Pn(Pdefn(mk.("_degs_b")), 4)], inf),
+            \stretch, Pseq([Pn(Pdefn(mk.("_str_0")), 4)], inf))
     },
 );
 )

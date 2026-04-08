@@ -18,8 +18,8 @@
         var key     = (sl[\n].asString ++ "_fx_" ++ (ri + 1)).asSymbol;
         var apcPad  = sl[\apc][\p] - (8 * ri);
         var stopper = ~makeFxSendTdef.(key, sl[\t], ret);
-        ~lpBindSB.(2, lpFxSub, [ri + 1, lpFxCol], key, ~slotFxLpCols[ri], nil, nil, stopper);
-        ~apcBindB.(2, apcPad, key, 1, ~slotFxApcCols[ri], nil, stopper);
+        ~lpBindSB.(3, lpFxSub, [ri + 1, lpFxCol], key, ~slotFxLpCols[ri], nil, nil, stopper);
+        ~apcBindB.(3, apcPad, key, 1, ~slotFxApcCols[ri], nil, stopper);
     };
 };
 
@@ -51,23 +51,29 @@
 // --- Phrase variant toggle bindings (Bank 5 LP / Bank 5 APC) ---
 // Add per-voice below after defining ~phrFns in your parts files.
 // Pattern:
- ~lpBindBVariants.(5, [
-      [[1, 1], ~phrFns[\v1_808k][\a], 21],
-      [[2, 1], ~phrFns[\v1_808k][\b], 9],
+ ~lpBindBVariants.(1, [
+      [[2, 1], ~phrFns[\v1_808k][\a], 21],
+      [[3, 1], ~phrFns[\v1_808k][\b], 9],
+      [[4, 1], ~phrFns[\v1_808k][\c], 9],
+      [[5, 1], ~phrFns[\v1_808k][\d], 9],
   ],  1);
-  ~lpBindBVariants.(5, [
-    [[1, 2], ~phrFns[\v1_808hh][\a], 21],
-    [[2, 2], ~phrFns[\v1_808hh][\b], 9],
-    [[3, 2], ~phrFns[\v1_808hh][\c], 9],
+  ~lpBindBVariants.(1, [
+    [[2, 2], ~phrFns[\v1_808hh][\a], 21],
+    [[3, 2], ~phrFns[\v1_808hh][\b], 9],
+    [[4, 2], ~phrFns[\v1_808hh][\c], 9],
   ],  1);
-  ~lpBindBVariants.(5, [
-      [[1, 3], ~phrFns[\v1_808sn][\a], 21],
-      [[2, 3], ~phrFns[\v1_808sn][\b], 9],
+  ~lpBindBVariants.(1, [
+      [[2, 3], ~phrFns[\v1_808sn][\a], 21],
+      [[3, 3], ~phrFns[\v1_808sn][\b], 9],
+  ],  1);
+  ~lpBindBVariants.(1, [
+      [[2, 4], ~phrFns[\v2_bass][\a], 21],
+      [[3, 4], ~phrFns[\v2_bass][\b], 9],
   ],  1);
 
-  ~lpBindBToggleFn.(5, [1, 5], ~phrFns[\v2_bass][\a], ~phrFns[\v2_bass][\b]);
+  // ~lpBindBToggleFn.(1, [2, 5], ~phrFns[\v2_bass][\a], ~phrFns[\v2_bass][\b]);
 
-  ~apcBindToggleFnB.(5, 32, ~phrFns[\v1_808k][\a], ~phrFns[\v1_808k][\b], \green, \blue);
+  ~apcBindToggleFnB.(1, 24, ~phrFns[\v1_808k][\a], ~phrFns[\v1_808k][\b], \green, \blue);
 
 // --- Any other fixed/special bindings below (bCtl, spectral, etc.) ---
 // ~lpBindB.(4, [1, 1], \bCtl, 21);

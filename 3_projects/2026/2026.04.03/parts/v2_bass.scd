@@ -37,11 +37,12 @@ Pdefn(mk.("_scale"), Scale.minor);
 // Pdefn(mk.("_bufs"),  Pseq([Pn(Pdefn(mk.("_buf_0")), 4)], 1));
 
 // OCTS
-Pdefn(mk.("_oct_0"), Pseq([4,4,5, 4], 1));
+Pdefn(mk.("_oct_0"), Pseq([4], 1));
+Pdefn(mk.("_oct_1"), Pseq([4,4,5, 4], 1));
 Pdefn(mk.("_octs"),  Pseq([Pn(Pdefn(mk.("_oct_0")), 4)], 1));
 
 // AMPS
-Pdefn(mk.("_amp_0"), 0.5);
+Pdefn(mk.("_amp_0"), 0.3);
 Pdefn(mk.("_amps"),  Pseq([Pn(Pdefn(mk.("_amp_0")), 4)], 1));
 
 // DEGS — words

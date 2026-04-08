@@ -12,7 +12,7 @@
 //   ~ilfx[\v1_crush].free; ~ilfx[\v1_crush] = nil;
 //
 // Swap by freeing the old node and deploying another from ~fxLib.
-// Keys are arbitrary — name them after the voice+effect, e.g. \v1_glitch.
+// Keys are Larbitrary — name them after the voice+effect, e.g. \v1_glitch.
 (
 ~ilfx !? { |d| d.do { |n| n.tryPerform(\free) } };
 ~ilfx = ();

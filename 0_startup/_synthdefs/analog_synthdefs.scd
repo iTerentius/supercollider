@@ -18,5 +18,6 @@ SynthDef(\sh101Lead,  { Out.ar(\out.kr(0), ~ufn[\sh101Lead].())  }).add;
 SynthDef(\kik808, ~ufn[\808][\kik]).add;
 SynthDef(\sn808, ~ufn[\808][\sn]).add;
 SynthDef(\hh808, ~ufn[\808][\hh]).add;
+SynthDef(\harpy1,   ~ufn[\harpy1]).add;
 "analog_synthdefs loaded.".postln;
 )
