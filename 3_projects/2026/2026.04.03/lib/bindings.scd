@@ -42,11 +42,11 @@
     };
 };
 
-// --- Bank 4 utility ---
-~lpBindB.(4, [8, 8], \tempo, 41, nil, 4);
-~lpBindB.(4, [1, 3], \bCtl, 5, nil, 4,  { ~oscState.keysValuesDo { |addr, val| ~oscParam[addr] !? { |cb| cb.(val) } }; Pdef(\bCtl).stop; });
-~lpBindB.(4, [1, 5], \spectral, 10, nil, 4);
-~apcBindB.(4, 7, \tempo, 4, 4);
+// --- FX automation launcher bindings (generated from ~autoSlots in slots.scd) ---
+~autoSlots.do { |sl|
+    ~lpBindB.(sl[\lp][\b], [sl[\lp][\r], sl[\lp][\c]], sl[\n], sl[\lp][\col], nil, 4, sl[\onStop]);
+    sl[\apc] !? { |a| ~apcBindB.(a[\b], a[\p], sl[\n], 4, a[\col]) };
+};
 
 // --- Phrase variant toggle bindings (Bank 5 LP / Bank 5 APC) ---
 // Add per-voice below after defining ~phrFns in your parts files.
@@ -74,7 +74,20 @@
   // ~lpBindBToggleFn.(1, [2, 5], ~phrFns[\v2_bass][\a], ~phrFns[\v2_bass][\b]);
 
   ~apcBindToggleFnB.(1, 24, ~phrFns[\v1_808k][\a], ~phrFns[\v1_808k][\b], \green, \blue);
-
+  ~lpBindBToggleFn.(2, [1, 1],
+      // ON: create node, play automation
+      {
+          ~ilfx[\v2_crush] = ~fxLib[\bitcrush].(~t1);
+          ~ilfx[\v2_crush].set(\bits, 6, \rate, 8000);
+          Pdef(\crush).play(~link);
+      },
+      // OFF: stop automation, free node
+      {
+          Pdef(\crush).stop;
+          ~ilfx[\v2_crush].free;
+          ~ilfx[\v2_crush] = nil;
+      }
+  );
 // --- Any other fixed/special bindings below (bCtl, spectral, etc.) ---
 // ~lpBindB.(4, [1, 1], \bCtl, 21);
 // ~apcBindB.(4, 32, \bCtl, 4, \cyan);
