@@ -34,6 +34,20 @@
 // So voice at APC pad 32 → FX sends at 32, 24, 16, 8, 0 in Bank 2.
 // Voices past column 8: use the next LP bank; APC wraps to next row.
 
+// FX automation slots — Pdefs that control return FX, tempo, spectral, etc.
+// \n      : Pdef key
+// \lp     : (b=bank, r=row, c=col, col=LP color)
+// \apc    : (b=bank, p=padNote, col=APC color) — or nil
+// \onStop : optional Function called instead of Pdef.stop on toggle-off
+~autoSlots = [
+    // (n: \myAuto,
+    //  lp:  (b:4, r:1, c:1, col:9),
+    //  apc: nil),
+    (n: \tempo,
+     lp:  (b:4, r:8, c:8, col:41),
+     apc: (b:4, p:7, col:4)),
+];
+
 ~slots = [
     (n:\v1, t:~t1,  lp:(b:1, r:1, c:1, col:10),  apc:(b:1, p:32, col:\orange)),
     (n:\v2, t:~t2,  lp:(b:1, r:1, c:2, col:20),  apc:(b:1, p:33, col:\yellow)),

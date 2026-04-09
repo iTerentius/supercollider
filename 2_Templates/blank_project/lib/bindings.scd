@@ -42,9 +42,11 @@
     };
 };
 
-// --- Bank 4 utility ---
-~lpBindB.(4, [8, 8], \tempo, 41, nil, 4);
-~apcBindB.(4, 7, \tempo, 4, 4);
+// --- FX automation launcher bindings (generated from ~autoSlots in slots.scd) ---
+~autoSlots.do { |sl|
+    ~lpBindB.(sl[\lp][\b], [sl[\lp][\r], sl[\lp][\c]], sl[\n], sl[\lp][\col], nil, 4, sl[\onStop]);
+    sl[\apc] !? { |a| ~apcBindB.(a[\b], a[\p], sl[\n], 4, a[\col]) };
+};
 
 // --- Phrase variant toggle bindings (Bank 5 LP / Bank 5 APC) ---
 // Add per-voice below after defining ~phrFns in your parts files.
