@@ -44,12 +44,12 @@ SynthDef(\s1, {
 SynthDef(\t1002, {
 	// arg out = 0, amp = 0.2, gate = 1, pan = 0, freq = 200, ph = 0;
 	// |out,sustain=1,freq=440,speed=1,begin=0,end=1,pan,accelerate,offset,clamp=1,ph=0, noise=0|
-	arg out = 0, amp = 0.6, gate = 1, pan = 0, freq = 200, offset, noise=0, ph=1;
-	var sig, env;
-	env = EnvGen.kr(Env.circle([0.1, 0.25, 0.5], [0.25, 0.75]), 1);
-	sig = SinOsc.ar(freq + LFPulse.ar(freq: freq * 2, iphase: ph, add: ph )) * env * ph * 3;
-	// sig = sig + LFNoise0.krnoise + freq;
-	Out.ar(out, Pan2.ar(sig, pan));
+	arg out = 0, amp = 0.6, gate = 1, pan = 1, freq = 200, offset, noise=1, ph=1,  mix=1;
+	var sig, other, env;
+	env = EnvGen.kr(Env.asr([0.1, 0.25, 0.5], [0.5, 1]), gate:gate, doneAction:2);
+	sig = SinOsc.ar([freq,  freq-2] + LFPulse.ar(freq: freq * 2, iphase: ph, add: ph ));
+  other = Pulse.ar((freq!2)*0.5, SinOsc.ar(Dust2.kr(freq/2))) + sig * env;
+	Out.ar(out, XFade2.ar(sig, other,  pan)* amp * mix);
 }).add;
 );
 
