@@ -38,7 +38,7 @@ Pdefn(mk.("_root_0"), 0);
 Pdefn(mk.("_root_1"), Pdup(8, Pseq([0,  2,  4,  1], 1)));
 
 Pdefn(mk.("_root"), Pseq([
-  Pn(Pdefn(mk.("_root_0")), 4), 
+  Pn(Pdefn(mk.("_root_1")), 4), 
 ], 1));
 // OCTS
 Pdefn(mk.("_oct_0"), 4);

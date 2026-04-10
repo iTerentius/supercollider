@@ -75,7 +75,8 @@ Pdefn(mk.("_str_1"), Pseg([1/8,  1], [4], \step,  1));
 Pdefn(mk.("_strs"),  Pseq([Pn(Pdefn(mk.("_str_0")), 4)], 1));
 
 Pdefn(mk.("_rel_0"),  0.3);
-Pdefn(mk.("_rel"),  Pseq([Pn(Pdefn(mk.("_rel_0")),  4)],  1));
+Pdefn(mk.("_rel_1"),  Pseq([0.3!3,  1.3].flat,  1));
+Pdefn(mk.("_rel"),  Pseq([Pn(Pdefn(mk.("_rel_1")),  4)],  1));
 
 Pdefn(mk.("_clickAmp_0"),  0.8);
 Pdefn(mk.("_clickAmp"),  Pseq([Pn(Pdefn(mk.("_clickAmp_0")),  4)],  1));
