@@ -211,6 +211,35 @@
 // =============================================================================
 // RANDOM STUFF
 // =============================================================================
+~ufn[\duck] = { |in=0, side=0, out=0, thresh=0.1, ratio=10, attack=0.01, release=0.1, makeup=1|
+    var sig, sideSig, sideMono, env, cond, gain;
+
+    sig      = In.ar(in, 2);    // stereo signal to be ducked
+    sideSig  = In.ar(side, 2);  // stereo sidechain signal
+    sideMono = Mix(sideSig);    // collapse to mono for envelope tracking
+
+    // envelope follower with smoothing
+    env = LagUD.kr(
+        Amplitude.kr(sideMono, 0.01, 0.1),
+        attack,
+        release
+    );
+
+    // cond is a control rate signal, 0 when below threshold, >0 when above
+    cond = env > thresh;
+
+    // Select.kr chooses index 0 or 1 based on cond (0 or 1)
+    gain = Select.kr(
+        cond,  // when 0 -> first element, when 1 -> second
+        [
+            1,                                      // below threshold
+            (env / thresh).reciprocal.pow(ratio)   // above threshold
+        ]
+    );
+
+    ReplaceOut.ar(out, sig * gain * makeup);
+};
+
 ~ufn[\harpy1] = { 
   | out, freq=110, gate=1, freqmod=1, amp=0.2,  conv=1|
 	var sig, lf,  env;

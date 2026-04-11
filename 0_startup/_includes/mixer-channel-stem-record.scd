@@ -129,7 +129,8 @@
 // =============================================================================
 ~stemDiskStart = { |tracks=#[], returns=#[], fileBase="take", dirPath="",
                     clock=nil, addAction=\addToTail, autoSplit=true, splitCodec=\pcm_s24le,
-                    captureHistory=false, captureMidi=false|
+                    captureHistory=false, captureMidi=false,
+                    encodeMp3=true, deleteMixWav=true|
 
     var tIdx, rIdx, idxs, numChans, buf, defName, d, dstr, fullPath, baseName, sessionDir, baseDir, c, startBeat, synth;
     var names, sidecarPath, stemsDir, midiDir, ffmpegPath, ffprobePath;
@@ -209,7 +210,7 @@
     ffprobePath = findBin.([ "/opt/homebrew/bin/ffprobe", "/usr/local/bin/ffprobe", "/usr/bin/ffprobe", "ffprobe" ]);
 
     doSplit = {
-        var probeCmd, chCountStr, chCount, pairs, i, key, keySafe, lch, rch, outName, codec, cmd;
+        var probeCmd, chCountStr, chCount, pairs, key, keySafe, lch, rch, outName, mp3Name, gainStr, evenChans, oddChans, mixFilter, codec, scriptLines, scriptPath, scriptStr, i;
         if(ffmpegPath.isNil or: { ffprobePath.isNil }) {
             "autoSplit: ffmpeg or ffprobe not found on PATH; skipped".warn;
             ("ffmpeg: " ++ ffmpegPath.asString ++ "  ffprobe: " ++ ffprobePath.asString).postln;
@@ -227,29 +228,62 @@
         mkDirIfNeeded.(stemsDir);
         codec = splitCodec.asString;
 
+        // Build a shell script so all ffmpeg commands run sequentially and
+        // deleteMixWav fires only after all encoding is complete.
+        scriptLines = List.with("#!/bin/sh");
+
         i = 0;
         pairs.do {
             lch = i * 2;
             rch = i * 2 + 1;
-            key = (i < names.size).if({ names[i] }, { "t" ++ (i+1).asString });
+            key     = (i < names.size).if({ names[i] }, { "t" ++ (i + 1).asString });
             keySafe = sanitize.(key);
-            outName = stemsDir +/+ (baseName ++ "_t" ++ (i+1).asString ++ "__" ++ keySafe ++ ".wav");
-
-            cmd = ffmpegPath
+            outName = stemsDir +/+ (baseName ++ "_t" ++ (i + 1).asString ++ "__" ++ keySafe ++ ".wav");
+            scriptLines.add(
+                ffmpegPath
                 ++ " -y -i " ++ fullPath.escapeChar($ )
                 ++ " -filter_complex 'pan=stereo|FL=c" ++ lch ++ "|FR=c" ++ rch ++ "'"
                 ++ " -c:a " ++ codec
                 ++ " -metadata title=" ++ key.asString.escapeChar($ )
-                ++ " " ++ outName.escapeChar($ );
-
-            if(debug) { ("[split] cmd: " ++ cmd).postln; };
-            cmd.unixCmd;
-            (" → wrote " ++ outName ++ "  L=c" ++ lch ++ " R=c" ++ rch ++ " key=" ++ key).postln;
-
+                ++ " " ++ outName.escapeChar($ )
+            );
+            (" -> " ++ outName ++ "  L=c" ++ lch ++ " R=c" ++ rch ++ " key=" ++ key).postln;
             i = i + 1;
         };
 
-        ("stems written to " ++ stemsDir).postln;
+        // Mix-down MP3: sum all channel pairs to stereo with auto-normalisation (<)
+        if(encodeMp3) {
+            gainStr   = (1.0 / pairs).round(0.001).asString;
+            evenChans = Array.series(pairs, 0, 2).collect { |ch| gainStr ++ "*c" ++ ch }.join("+");
+            oddChans  = Array.series(pairs, 1, 2).collect { |ch| gainStr ++ "*c" ++ ch }.join("+");
+            mixFilter = "[0:a]pan=stereo|FL=" ++ evenChans ++ "|FR=" ++ oddChans ++ ",loudnorm=I=-14:TP=-1[mix]";
+            mp3Name = sessionDir +/+ (baseName ++ "_mix.mp3");
+            scriptLines.add(
+                ffmpegPath
+                ++ " -y -i " ++ fullPath.escapeChar($ )
+                ++ " -filter_complex '" ++ mixFilter ++ "'"
+                ++ " -map '[mix]' -codec:a libmp3lame -b:a 320k"
+                ++ " " ++ mp3Name.escapeChar($ )
+            );
+            (" -> mix-down MP3: " ++ mp3Name).postln;
+        };
+
+        if(deleteMixWav) { scriptLines.add("rm -- " ++ fullPath.escapeChar($ )) };
+
+        scriptStr  = scriptLines.join("\n");
+        scriptPath = "/tmp/stemrec_" ++ Date.getDate.rawSeconds.asInteger.asString ++ ".sh";
+        if(debug) { ("[split] script:\n" ++ scriptStr).postln };
+        File.new(scriptPath, "w").write(scriptStr).close;
+        ("chmod +x " ++ scriptPath).unixCmdGetStdOut;
+        scriptPath.unixCmd({ |exitCode|
+            if(exitCode == 0) {
+                ("stems written to " ++ stemsDir
+                    ++ if(encodeMp3) { "\nmix MP3: " ++ mp3Name } { "" }).postln;
+            } {
+                ("[split] script exited with code " ++ exitCode ++ " — check post window").warn;
+            };
+            File.delete(scriptPath);
+        });
         nil
     };
 
@@ -403,7 +437,7 @@
             "[stemRec] MIDI capture active.".postln;
         };
 
-        ("stemDisk start " ++ startBeat ++ " → " ++ fullPath ++ "  chans " ++ numChans).postln;
+        ("stemDisk start " ++ startBeat ++ " -> " ++ fullPath ++ "  chans " ++ numChans).postln;
 
         ~stemRec = (
             baseName:    baseName,

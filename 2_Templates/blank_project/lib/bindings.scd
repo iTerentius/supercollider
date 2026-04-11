@@ -7,21 +7,29 @@
     ~apcBindB.(sl[\apc][\b], sl[\apc][\p], sl[\n], 4, sl[\apc][\col]);
 };
 
-// --- FX send matrix (voice × return) ---
-// LP:  Bank 2, sub-bank overflow for >8 voices (col 9+ → sub-bank 2, etc.)
-//      rows 1-N = returns, cols = voice index within sub-bank
-// APC: Bank 2, same pad column as Bank 1, rows top→bottom = returns
-~slots.do { |sl, vi|
-    var lpFxSub = (vi / 8).floor.asInteger + 1;
-    var lpFxCol = (vi % 8) + 1;
-    ~slotRets.do { |ret, ri|
-        var key     = (sl[\n].asString ++ "_fx_" ++ (ri + 1)).asSymbol;
-        var apcPad  = sl[\apc][\p] - (8 * ri);
-        var stopper = ~makeFxSendTdef.(key, sl[\t], ret);
-        ~lpBindSB.(2, lpFxSub, [ri + 1, lpFxCol], key, ~slotFxLpCols[ri], nil, nil, stopper);
-        ~apcBindB.(2, apcPad, key, 1, ~slotFxApcCols[ri], nil, stopper);
-    };
-};
+// --- FX send matrix (channel × return) ---
+// Deduplicated by mixer channel: one column per unique ~t, not per voice.
+// Voices sharing the same ~tN get one shared send pad.
+// LP:  Bank 2, sub-bank overflow for >8 channels
+//      rows 1-N = returns, cols = channel index within sub-bank
+// APC: Bank 2, same pad column as the first voice on that channel, rows top→bottom = returns
+{ var seen, trackSlots;
+  seen = Set.new;
+  trackSlots = ~slots.select { |sl|
+      if(seen.includes(sl[\t])) { false } { seen.add(sl[\t]); true }
+  };
+  trackSlots.do { |sl, ci|
+      var lpFxSub = (ci / 8).floor.asInteger + 1;
+      var lpFxCol = (ci % 8) + 1;
+      ~slotRets.do { |ret, ri|
+          var key     = (sl[\t].name.asString ++ "_fx_" ++ (ri + 1)).asSymbol;
+          var apcPad  = sl[\apc][\p] - (8 * ri);
+          var stopper = ~makeFxSendTdef.(key, sl[\t], ret);
+          ~lpBindSB.(2, lpFxSub, [ri + 1, lpFxCol], key, ~slotFxLpCols[ri], nil, nil, stopper);
+          ~apcBindB.(2, apcPad, key, 1, ~slotFxApcCols[ri], nil, stopper);
+      };
+  };
+}.value;
 
 // --- Return → return FX send matrix (Bank 4 LP / Bank 4 APC) ---
 // LP:  Bank 4, sub-bank overflow for >8 returns (src col 9+ → sub-bank 2, etc.)
