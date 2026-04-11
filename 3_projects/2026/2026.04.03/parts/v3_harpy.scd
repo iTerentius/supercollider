@@ -37,13 +37,23 @@ Pdefn(mk.("_scale"), Scale.minor);
 Pdefn(mk.("_root_0"), 0);
 Pdefn(mk.("_root_1"), Pdup(8, Pseq([0,  2,  4,  1], 1)));
 
+Pdefn(mk.("_root_a"),  Pseq([
+  Pn(Pdefn(mk.("_root_0")), 4),
+]));
+
+Pdefn(mk.("_root_b"),  Pseq([
+  Pn(Pdefn(mk.("_root_1")), 4),
+]));
+
 Pdefn(mk.("_root"), Pseq([
-  Pn(Pdefn(mk.("_root_1")), 4), 
+  Pn(Pdefn(mk.("_root_a")), 4), 
 ], 1));
 // OCTS
-Pdefn(mk.("_oct_0"), 4);
-Pdefn(mk.("_oct_1"),  Place(#[4, 5], 1));
-Pdefn(mk.("_octs"),  Pseq([Pn(Pdefn(mk.("_oct_1")), 4)], 1));
+Pdefn(mk.("_oct_0"),  Place(#[4,  [5]], 1));
+Pdefn(mk.("_oct_1"),  Place(#[4,  5, 6], 1));
+Pdefn(mk.("_oct_a"),  Pseq([Pn(Pdefn(mk.("_oct_0")),  4)],  1));
+Pdefn(mk.("_oct_b"),  Pseq([Pn(Pdefn(mk.("_oct_1")),  4)],  1));
+Pdefn(mk.("_octs"),  Pseq([Pn(Pdefn(mk.("_oct_a")), 4)], 1));
 
 // AMPS
 Pdefn(mk.("_amp_0"), 0.1);
@@ -78,6 +88,7 @@ Pdefn(mk.("_dur_2"), Pseq([1/4!8, 1/2!2].flat,  1));
 // sentences
 Pdefn(mk.("_durs_a"), Pseq([Pn(Pdefn(mk.("_dur_0")), 4)], 1));   // straight
 Pdefn(mk.("_durs_b"), Pseq([Pn(Pdefn(mk.("_dur_1")), 4)], 1));   // euclidean
+Pdefn(mk.("_durs_c"), Pseq([Pn(Pdefn(mk.("_dur_2")), 4)], 1));   // euclidean
 // story
 Pdefn(mk.("_durs"),  Pseq([Pn(Pdefn(mk.("_durs_a")), 1)], 1));
 
@@ -90,15 +101,26 @@ Pdefn(mk.("_strs"),  Pseq([Pn(Pdefn(mk.("_str_0")), 4)], 1));
 // Store in ~phrFns[pfx] so bindings.scd loop can find them.
 ~phrFns = ~phrFns ?? { () };
 ~phrFns[pfx] = (
-    a: {
+    def: {  // reset to defaults
+      Pbindef(mk.("_pb"),
+      \dur,    Pseq([Pn(Pdefn(mk.("_durs_a")), 4)], inf),
+      \degree, Pseq([Pn(Pdefn(mk.("_degs_a")), 4)], inf), 
+      \root,   Pseq([Pn(Pdefn(mk.("_root_a")), 4)], inf), 
+      \octs,   Pseq([Pn(Pdefn(mk.("_oct_a")), 4)], inf) 
+    )
+    },
+    b: {
         Pbindef(mk.("_pb"),
-            \dur,    Pseq([Pn(Pdefn(mk.("_durs_b")), 4)], inf),
+            \dur,    Pseq([Pn(Pdefn(mk.("_durs_c")), 4)], inf),
             \degree, Pseq([Pn(Pdefn(mk.("_degs_b")), 4)], inf))
     },
-    b: {  // reset to defaults
+    c: {  // reset to defaults
         Pbindef(mk.("_pb"),
             \dur,    Pseq([Pn(Pdefn(mk.("_durs_a")), 4)], inf),
-            \degree, Pseq([Pn(Pdefn(mk.("_degs_a")), 4)], inf))
+            \degree, Pseq([Pn(Pdefn(mk.("_degs_a")), 4)], inf), 
+            \root,   Pseq([Pn(Pdefn(mk.("_root_b")),4)],  inf),
+            \octs,   Pseq([Pn(Pdefn(mk.("_oct_b")), 4)], inf) 
+        )
     },
 );
 )

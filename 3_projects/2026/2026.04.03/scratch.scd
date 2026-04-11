@@ -7,7 +7,7 @@
 ~ilfx[\v2_ringmod] = ~fxLib[\ringmod].(~t3);
 ~ilfx[\v2_ringmod].set(\freq, 80, \mix, 0.5);
 ~ilfx[\v2_ringmod].free; ~ilfx[\v2_ringmod] = nil;
-~ilfx[\v2_fold] = ~fxLib[\fold].(~t1);
+~ilfx[\v2_fold] = ~fxLib[\fold].(~t3);
 ~ilfx[\v2_fold].set(\gain, 3, \mix, 1.0);
 ~ilfx[\v2_fold].free; ~ilfx[\v2_fold] = nil;
 ~ilfx[\v2_glitch] = ~fxLib[\glitch].(~t3);
@@ -27,6 +27,10 @@
 ~ilfx[\v2_biscuit] = ~ufn[\spectral].(~t10);
 ~ilfx[\v2_stutter].set(\mix, 0.5,  \rate, 16);
 ~ilfx[\v2_stutter].free; ~ilfx[\v1_stutter] = nil;
+
+
+~ilfx[\v3_duck] = ~fxLib[\duck].(~t3, ~t1);
+~ilfx[\v3_duck].free; ~ilfx[\v3_duck] = nil;
 // Check what's running:
 // Pdef.all;
 // ~ilfx;

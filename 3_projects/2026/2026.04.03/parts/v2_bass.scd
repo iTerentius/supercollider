@@ -42,7 +42,7 @@ Pdefn(mk.("_oct_1"), Pseq([4,4,5, 4], 1));
 Pdefn(mk.("_octs"),  Pseq([Pn(Pdefn(mk.("_oct_0")), 4)], 1));
 
 // AMPS
-Pdefn(mk.("_amp_0"), 0.3);
+Pdefn(mk.("_amp_0"), 0.4);
 Pdefn(mk.("_amps"),  Pseq([Pn(Pdefn(mk.("_amp_0")), 4)], 1));
 
 // DEGS — words

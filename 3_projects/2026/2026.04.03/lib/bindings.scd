@@ -7,21 +7,29 @@
     ~apcBindB.(sl[\apc][\b], sl[\apc][\p], sl[\n], 4, sl[\apc][\col]);
 };
 
-// --- FX send matrix (voice × return) ---
-// LP:  Bank 2, sub-bank overflow for >8 voices (col 9+ → sub-bank 2, etc.)
-//      rows 1-N = returns, cols = voice index within sub-bank
-// APC: Bank 2, same pad column as Bank 1, rows top→bottom = returns
-~slots.do { |sl, vi|
-    var lpFxSub = (vi / 8).floor.asInteger + 1;
-    var lpFxCol = (vi % 8) + 1;
-    ~slotRets.do { |ret, ri|
-        var key     = (sl[\n].asString ++ "_fx_" ++ (ri + 1)).asSymbol;
-        var apcPad  = sl[\apc][\p] - (8 * ri);
-        var stopper = ~makeFxSendTdef.(key, sl[\t], ret);
-        ~lpBindSB.(3, lpFxSub, [ri + 1, lpFxCol], key, ~slotFxLpCols[ri], nil, nil, stopper);
-        ~apcBindB.(3, apcPad, key, 1, ~slotFxApcCols[ri], nil, stopper);
-    };
-};
+// --- FX send matrix (channel × return) ---
+// Deduplicated by mixer channel: one column per unique ~t, not per voice.
+// Voices sharing the same ~tN (e.g. 808k/hh/sn all on ~t1) get one shared send pad.
+// LP:  Bank 3, sub-bank overflow for >8 channels
+//      rows 1-N = returns, cols = channel index within sub-bank
+// APC: Bank 3, same pad column as the first voice on that channel, rows top→bottom = returns
+{ var seen, trackSlots;
+  seen = Set.new;
+  trackSlots = ~slots.select { |sl|
+      if(seen.includes(sl[\t])) { false } { seen.add(sl[\t]); true }
+  };
+  trackSlots.do { |sl, ci|
+      var lpFxSub = (ci / 8).floor.asInteger + 1;
+      var lpFxCol = (ci % 8) + 1;
+      ~slotRets.do { |ret, ri|
+          var key     = (sl[\t].name.asString ++ "_fx_" ++ (ri + 1)).asSymbol;
+          var apcPad  = sl[\apc][\p] - (8 * ri);
+          var stopper = ~makeFxSendTdef.(key, sl[\t], ret);
+          ~lpBindSB.(3, lpFxSub, [ri + 1, lpFxCol], key, ~slotFxLpCols[ri], nil, nil, stopper);
+          ~apcBindB.(3, apcPad, key, 1, ~slotFxApcCols[ri], nil, stopper);
+      };
+  };
+}.value;
 
 // --- Return → return FX send matrix (Bank 4 LP / Bank 4 APC) ---
 // LP:  Bank 4, sub-bank overflow for >8 returns (src col 9+ → sub-bank 2, etc.)
@@ -70,6 +78,11 @@
       [[2, 4], ~phrFns[\v2_bass][\a], 21],
       [[3, 4], ~phrFns[\v2_bass][\b], 9],
   ],  1);
+  ~lpBindBVariants.(1, [
+      [[2, 5], ~phrFns[\v3_harpy][\def], 21],
+      [[3, 5], ~phrFns[\v3_harpy][\c], 9],
+      [[4, 5], ~phrFns[\v3_harpy][\b], 9],
+  ],  0);
 
   // ~lpBindBToggleFn.(1, [2, 5], ~phrFns[\v2_bass][\a], ~phrFns[\v2_bass][\b]);
 
@@ -77,15 +90,39 @@
   ~lpBindBToggleFn.(2, [1, 1],
       // ON: create node, play automation
       {
-          ~ilfx[\v2_crush] = ~fxLib[\bitcrush].(~t1);
-          ~ilfx[\v2_crush].set(\bits, 6, \rate, 8000);
+          ~ilfx[\v1_crush] = ~fxLib[\bitcrush].(~t1);
+          ~ilfx[\v1_crush].set(\bits, 6, \rate, 8000);
           Pdef(\crush).play(~link);
       },
       // OFF: stop automation, free node
       {
           Pdef(\crush).stop;
-          ~ilfx[\v2_crush].free;
-          ~ilfx[\v2_crush] = nil;
+          ~ilfx[\v1_crush].free;
+          ~ilfx[\v1_crush] = nil;
+      }
+  );
+  ~lpBindBToggleFn.(2, [1, 3],
+      // ON: create node, play automation
+      {
+          ~ilfx[\v3_shimmer] = ~fxLib[\shimmer].(~t3);
+          ~ilfx[\v3_shimmer].set(\mix, 0.3,  \shift, 24,  \time, 0.5);
+      },
+      // OFF: stop automation, free node
+      {
+          ~ilfx[\v3_shimmer].free;
+          ~ilfx[\v3_shimmer] = nil;
+      }
+  );
+  ~lpBindBToggleFn.(2, [2, 3],
+      // ON: create node, play automation
+      {
+          ~ilfx[\v3_duck] = ~fxLib[\duck].(~t3, ~t1,  
+            [\thresh, 0.7, \ratio, 6, \release, 0.4]);
+      },
+      // OFF: stop automation, free node
+      {
+          ~ilfx[\v3_duck].free;
+          ~ilfx[\v3_duck] = nil;
       }
   );
 // --- Any other fixed/special bindings below (bCtl, spectral, etc.) ---
