@@ -320,10 +320,15 @@
                     ~stemMidiOrigCallback = nil;
                     ("[stemRec] MIDI spy fired " ++ midiCbCount ++ " times, tracks=" ++ midiLog.size).postln;
                     if(midiLog.notNil and: { midiLog.size > 0 }) {
-                        // Sort tracks by bus index so order is deterministic; each entry = one MIDI track
-                        var tracks = midiLog.keys.asArray.sort.collect { |k| midiLog[k].asArray };
-                        "[stemRec] Writing " ++ tracks.size ++ " MIDI tracks.".postln;
-                        ~stemMidiWrite.(midiPath, tracks, bpmAtStart, ppqn);
+                        // One .mid file per voice, named after the mixer channel.
+                        var busToName = Dictionary.new;
+                        idxs.do { |idx, i| busToName[idx] = names[i] };
+                        "[stemRec] Writing " ++ midiLog.size ++ " MIDI files.".postln;
+                        midiLog.keys.asArray.sort.do { |busIdx|
+                            var vName = busToName[busIdx] ?? { "track_" ++ busIdx };
+                            var vPath = midiDir +/+ (baseName ++ "_" ++ sanitize.(vName) ++ ".mid");
+                            ~stemMidiWrite.(vPath, [midiLog[busIdx].asArray], bpmAtStart, ppqn);
+                        };
                     } {
                         "[stemRec] MIDI capture: no events recorded.".postln;
                     };
