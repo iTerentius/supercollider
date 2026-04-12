@@ -116,8 +116,7 @@
   ~lpBindBToggleFn.(2, [2, 3],
       // ON: create node, play automation
       {
-          ~ilfx[\v3_duck] = ~fxLib[\duck].(~t3, ~t1,  
-            [\thresh, 0.7, \ratio, 6, \release, 0.4]);
+          ~ilfx[\v3_duck] = ~fxLib[\duck].(~t3, ~t1, [\thresh, 0.3, \ratio, 6, \release, 0.8]);
       },
       // OFF: stop automation, free node
       {

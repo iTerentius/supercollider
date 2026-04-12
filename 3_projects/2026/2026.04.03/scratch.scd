@@ -119,3 +119,40 @@ Pdef(\h_glitch).stop;
 
 // --- Stop recording (scheduled, on beat) ---
 ~stemStop.();                 // stop 4 beats from now
+// Create a control bus
+~busBits = Bus.control(s, 1);
+~busRate = Bus.control(s, 1);
+
+
+// Run a synth that just puts Mouse data onto that bus
+~mBits = { Out.kr(~busBits, MouseX.kr(4, 24, 1)) }.play;
+~mRate = { Out.kr(~busRate, MouseY.kr(100, 2000, 1)) }.play;
+
+// Map your synth's frequency argument to that bus
+~mySynth = Synth(\default);
+~mySynth.map(\freq, ~bus); 
+
+// Now you can 'unmap' it later or .set it manually to override
+~mySynth.set(\freq, 440);
+
+~ilfx[\v2_crush].map(\bits, ~busBits, \rate, ~busRate);
+
+~mySynth = nil;
+// Only listen to the device at this specific IP
+~tablet = NetAddr("192.168.1.15", nil); 
+~ilfx[\v1_crush].free;
+(
+~ilfx[\v1_crush] = ~fxLib[\bitcrush].(~t1);
+
+OSCdef(\v1_crush, { |msg| 
+    var bits, rate;
+    bits = msg[1].linlin(0, 1,  4,  12);
+    rate = msg[2].linlin(0, 1,  100, 10000);
+    // var val = msg[1].linlin(0, 1, 4, 12);
+    ~ilfx[\v1_crush].set(\bits, bits, \rate,  rate);
+}, '/2/xy3', srcID: ~toscAddr);
+OSCdef(\v1_crush_mix, { |msg| 
+    var mix = msg[1].linlin(0, 1,  0, 1);
+    ~ilfx[\v1_crush].set(\mix, mix);
+}, '/2/fader2', srcID: ~toscAddr);
+)

@@ -20,6 +20,8 @@ Pdef(pfx,
       \dur,     Pn(Pdefn(mk.("_durs")),  inf),
       \amp,     Pn(Pdefn(mk.("_amps")),  inf),
       \mix,     Pseg([0,  1], [2], \sin, inf), 
+      \ph,      0,  
+      \noise,   Pseg([0, 3],[4], \sin,  inf), 
       \out,     Pn(Pdefn(mk.("_out")),   inf),
 ));
 

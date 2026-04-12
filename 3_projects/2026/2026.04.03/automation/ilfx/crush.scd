@@ -14,4 +14,17 @@ Pdef(\crush,  Pbind(
   \dur, Pseq([1/4!2, 1/2,   1,  1/8!4].flat, inf), 
   \stretch, Pn(Pdefn(\v1_808k_strs)/2,  inf),  
 ));
+
+OSCdef(\v1_crush, { |msg| 
+    var bits, rate;
+    bits = msg[1].linlin(0, 1,  4,  12);
+    rate = msg[2].linlin(0, 1,  100, 10000);
+    // var val = msg[1].linlin(0, 1, 4, 12);
+    ~ilfx[\v2_crush].set(\bits, bits, \rate,  rate);
+}, '/2/xy3', srcID: ~toscAddr);
+OSCdef(\v1_crush_mix, { |msg| 
+    var mix = msg[1].linlin(0, 1,  0, 1);
+    ~ilfx[\v2_crush].set(\mix, mix);
+}, '/2/fader2', srcID: ~toscAddr);
+
 )

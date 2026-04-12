@@ -48,7 +48,7 @@ SynthDef(\t1002, {
 	var sig, other, env;
 	env = EnvGen.kr(Env.asr([0.1, 0.25, 0.5], [0.5, 1]), gate:gate, doneAction:2);
 	sig = SinOsc.ar([freq,  freq-2] + LFPulse.ar(freq: freq * 2, iphase: ph, add: ph ));
-  other = Pulse.ar((freq!2)*0.5, SinOsc.ar(Dust2.kr(freq/2))) + sig * env;
+  other = Pulse.ar((freq!2)*0.5, 0, Dust2.kr(LFSaw.kr(ph)), BrownNoise.ar(LFSaw.kr(noise) + SinOsc.ar(noise*ph))) + sig * env;
 	Out.ar(out, XFade2.ar(sig, other,  pan)* amp * mix);
 }).add;
 );
