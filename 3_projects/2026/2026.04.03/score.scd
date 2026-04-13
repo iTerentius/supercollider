@@ -28,6 +28,7 @@ var safeLoad = { |path|
     safeLoad.("parts/v2_bass.scd");
     safeLoad.("parts/v3_harpy.scd");
     safeLoad.("parts/v4_dk.scd");
+    safeLoad.("parts/v5_smp1.scd");
     // --- bindings last (reads ~slots + ~phrFns populated by parts) ---
     safeLoad.("lib/bindings.scd");
     safeLoad.("lib/tosc_biscuit.scd");

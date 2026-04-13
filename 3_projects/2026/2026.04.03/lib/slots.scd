@@ -60,6 +60,7 @@
     (n:\v2_bass, t:~t2,  lp:(b:1, r:1, c:4, col:20),  apc:(b:1, p:35, col:\yellow)),
     (n:\v3_harpy, t:~t3,  lp:(b:1, r:1, c:5, col:30),  apc:(b:1, p:36, col:\cyan)),
     (n:\v4_dk, t:~t4,  lp:(b:1, r:1, c:6, col:40),  apc:(b:1, p:37, col:\purple)),
+    (n:\v5_smp1, t:~t5,  lp:(b:1, r:1, c:7, col:50),  apc:(b:1, p:37, col:\pink)),
     // (n:\v4, t:~t4,  lp:(b:1, r:1, c:6, col:40),  apc:(b:1, p:37, col:\blue)),
     // add more below — up to 8 voices per LP bank / APC row before overflow
     // (n:\v5, t:~t5, lp:(b:1, r:1, c:5, col:50), apc:(b:1, p:36, col:\purple)),
