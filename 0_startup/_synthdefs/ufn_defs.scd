@@ -251,6 +251,46 @@
 	Out.ar(out, sig * amp);
 };
 
+~ufn[\dk] = {
+    arg out = 0, gate = 1, amp = 0.3, freq=110, 
+        freq0 = 220, freq1 = 440, freq2 = 660,
+        lfoRate = 0.3, lfoDepth = 0.15,
+        attackTime = 0.01, releaseTime = 2.0;
+
+    var lfo, freqs, amps, rings, sig, env;
+
+    freq0 = freq;
+    freq1 = freq0 *1.2;
+    freq2 = freq1 *1.5;
+    // Slow LFO modulating the partials
+    lfo = LFPulse.kr(lfoRate);
+
+    // Frequencies: base + LFO-warped harmonics
+    freqs = [
+        freq0 * (1 + (lfo * lfoDepth)),
+        freq1 * (1 + (lfo.neg * lfoDepth * 0.7)),
+        freq2 * (1 + (lfo * lfoDepth * 0.5))
+    ];
+
+    // Amplitudes: slowly breathe
+    amps = [
+        0.5 + (lfo * 0.1),
+        0.3 + (lfo.neg * 0.05),
+        0.2
+    ];
+
+    // Ring times: fixed is fine here
+    rings = [2.0, 1.5, 0.8];
+
+    // DynKlang takes flat Arrays, not the backtick `[] syntax
+    sig = DynKlang.ar(`[freqs, amps, rings]);
+    // sig = 
+    env = EnvGen.kr(Env.asr(attackTime, 1.0, releaseTime), gate, doneAction: 2);
+
+    Out.ar(out, (sig * env * amp).dup);
+};
+
+
 // =============================================================================
 // 808 Synth Kit
 // =============================================================================

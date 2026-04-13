@@ -1,27 +1,27 @@
 // scratch.scd — experimental workspace, not loaded by score.scd
 
 // Quick inline FX deploy/swap:
-~ilfx[\v2_crush] = ~fxLib[\bitcrush].(~t1);
+~ilfx[\v2_crush] = ~fxLib[\bitcrush].(~t4);
 ~ilfx[\v2_crush].set(\bits, 6, \rate, 8000);
 ~ilfx[\v2_crush].free; ~ilfx[\v2_crush] = nil;
-~ilfx[\v2_ringmod] = ~fxLib[\ringmod].(~t3);
+~ilfx[\v2_ringmod] = ~fxLib[\ringmod].(~t4);
 ~ilfx[\v2_ringmod].set(\freq, 80, \mix, 0.5);
 ~ilfx[\v2_ringmod].free; ~ilfx[\v2_ringmod] = nil;
-~ilfx[\v2_fold] = ~fxLib[\fold].(~t3);
+~ilfx[\v2_fold] = ~fxLib[\fold].(~t4);
 ~ilfx[\v2_fold].set(\gain, 3, \mix, 1.0);
 ~ilfx[\v2_fold].free; ~ilfx[\v2_fold] = nil;
-~ilfx[\v2_glitch] = ~fxLib[\glitch].(~t3);
-~ilfx[\v2_glitch].set(\rate, 0.5);
+~ilfx[\v2_glitch] = ~fxLib[\glitch].(~t4);
+~ilfx[\v2_glitch].set(\rate, 0.25);
 ~ilfx[\v2_glitch].free; ~ilfx[\v2_glitch] = nil;
 // Pitch shimmer — two detuned, pitch-shifted delay lines
 // Params: \shift (semitones offset, e.g. 12), \time (0.01–0.5), \mix (0–1)
-~ilfx[\v2_shimmer] = ~fxLib[\shimmer].(~t3);
+~ilfx[\v2_shimmer] = ~fxLib[\shimmer].(~t4);
 ~ilfx[\v2_shimmer].set(\mix, 0.3,  \shift, 24,  \time, 0.5  );
 ~ilfx[\v2_shimmer].free; ~ilfx[\v1_shimmer] = nil;
 // Stutter — tape-stop/freeze-style repeating buffer
 // Params: \rate (0.5–4 repeats/beat), \mix (0–1)
 // Note: uses TGrains, approximate stutter not quantized
-~ilfx[\v2_stutter] = ~fxLib[\stutter].(~t3);
+~ilfx[\v2_stutter] = ~fxLib[\stutter].(~t4);
 ~ilfx[\v2_stutter].set(\mix, 0.9,  \amp,  1,  \rate, 16, );
 ~ilfx[\v2_stutter].free; ~ilfx[\v2_stutter] = nil;
 ~ilfx[\v2_biscuit] = ~ufn[\spectral].(~t10);
@@ -156,3 +156,93 @@ OSCdef(\v1_crush_mix, { |msg|
     ~ilfx[\v1_crush].set(\mix, mix);
 }, '/2/fader2', srcID: ~toscAddr);
 )
+
+(
+SynthDef(\dynklangDemo, {
+    arg out = 0, gate = 1, amp = 0.3, freq=110, 
+        freq0 = 220, freq1 = 440, freq2 = 660,
+        lfoRate = 0.3, lfoDepth = 0.15,
+        attackTime = 0.01, releaseTime = 2.0;
+
+    var lfo, freqs, amps, rings, sig, env;
+
+    freq0 = freq;
+    freq1 = freq0 *1.2;
+    freq2 = freq1 *1.5;
+    // Slow LFO modulating the partials
+    lfo = LFPulse.kr(lfoRate);
+
+    // Frequencies: base + LFO-warped harmonics
+    freqs = [
+        freq0 * (1 + (lfo * lfoDepth)),
+        freq1 * (1 + (lfo.neg * lfoDepth * 0.7)),
+        freq2 * (1 + (lfo * lfoDepth * 0.5))
+    ];
+
+    // Amplitudes: slowly breathe
+    amps = [
+        0.5 + (lfo * 0.1),
+        0.3 + (lfo.neg * 0.05),
+        0.2
+    ];
+
+    // Ring times: fixed is fine here
+    rings = [2.0, 1.5, 0.8];
+
+    // DynKlang takes flat Arrays, not the backtick `[] syntax
+    sig = DynKlang.ar(`[freqs, amps, rings]);
+    // sig = 
+    env = EnvGen.kr(Env.asr(attackTime, 1.0, releaseTime), gate, doneAction: 2);
+
+    Out.ar(out, (sig * env * amp).dup);
+}).add;
+)
+
+// Play it
+~k = Synth(\dynklangDemo, [freq0: 110, freq1: 330, freq2: 550, lfoRate: 0.2]);
+
+// Modulate live
+~k.set(\freq0, 165, \lfoRate, 0.6, \lfoDepth, 0.25);
+
+// Release
+~k.set(\gate, 0);
+
+(
+// Pdef(\dk, Pbind(
+//   \instrument,  \dynklangDemo,  
+//   \scale, Scale.minor,  
+//   \octave,  Pseq([4,  3,  2], inf),  
+//   \degree,  Pslide((0..7), inf, 2,  4), 
+//   \amp, 0.3,  
+//   \mix, Pstep(Pseq([1,  0,], inf),   
+//   // \gate,  Pseq([0,  1], inf), 
+//   \lfoRate, Pseg([1,  80],  [4],  \step, inf), 
+//   \lfoDepth,  Pseg([1.5, 0.5], [4],  \step, inf), 
+//   \dur, 4,  
+//   \releaseTime, Pkey(\dur), 
+//   \stretch, Pseq([1/4,  1,  2], inf),  
+//   \out,  ~t4.inbus.index, 
+// ));
+
+Pdef(\dk, Pmono(\dynklangDemo,
+    \scale, Scale.minor,
+    \octave, Pstep(Pseq([5, 4, 6], inf), Pkey(\stretch)/2), // Hold octave for 4 beats
+    \degree, Pslide((0..7), inf, 1, 3),  
+    \gate, Pn(Pstep(Pseq([1, 0], 1), 2), inf),   
+    \amp,  Pstep(Pseq([0.1, 0.3], inf), Pkey(\stretch)),   
+    // Now these can change at the \dur rate (0.5)
+    \lfoRate, Pseg([1, 10,  80], [Pkey(\stretch)/2, Pkey(\stretch)], \sin, inf), 
+    \lfoDepth, Pseg([1.5, 0.5], [Pkey(\stretch)], \step, inf),
+    \releaseTime, Pkey(\dur), 
+    // The "Engine" speed
+    \dur, 1/4, 
+    
+    // Optional: stretch still works, but it will stretch the 0.5
+    \stretch, Pseg([1/8, 2], [4],  \step,  inf), 
+    
+    \out, ~t4.inbus.index,
+));
+)
+
+Pdef(\dk).play;
+Pdef(\dk).stop;
