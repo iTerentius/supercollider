@@ -86,6 +86,7 @@
   ~lpBindBVariants.(1, [
       [[2, 7], ~phrFns[\v5_smp1][\a], 21],
       [[3, 7], ~phrFns[\v5_smp1][\b], 9],
+      [[4, 7], ~phrFns[\v5_smp1][\c], 9],
   ],  1);
 
   // ~lpBindBToggleFn.(1, [2, 5], ~phrFns[\v2_bass][\a], ~phrFns[\v2_bass][\b]);

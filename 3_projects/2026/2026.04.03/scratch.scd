@@ -147,19 +147,27 @@ Pdef(\h_test).stop;
 ~tablet = NetAddr("192.168.1.15", nil); 
 ~ilfx[\v1_crush].free;
 (
-~ilfx[\v1_crush] = ~fxLib[\bitcrush].(~t1);
+// ~ilfx[\v1_crush] = ~fxLib[\bitcrush].(~t1);
 
-OSCdef(\v1_crush, { |msg| 
-    var bits, rate;
-    bits = msg[1].linlin(0, 1,  4,  12);
-    rate = msg[2].linlin(0, 1,  100, 10000);
+OSCdef(\v5_shimmer, { |msg| 
+    var shift = msg[1].linexp(0, 1,  -24,  24);
+    var time = msg[2].linexp(0, 1,  0.01, 50);
     // var val = msg[1].linlin(0, 1, 4, 12);
-    ~ilfx[\v1_crush].set(\bits, bits, \rate,  rate);
+    ~ilfx[\v5_shimmer].set(\shift, shift, \time,  time);
 }, '/2/xy3', srcID: ~toscAddr);
-OSCdef(\v1_crush_mix, { |msg| 
+OSCdef(\v5_shimmer, { |msg| 
     var mix = msg[1].linlin(0, 1,  0, 1);
-    ~ilfx[\v1_crush].set(\mix, mix);
+    ~ilfx[\v5_shimmer].set(\mix, mix);
 }, '/2/fader2', srcID: ~toscAddr);
+OSCdef(\v5_ringmod, { |msg| 
+    var freq = msg[1].linexp(0, 1,  0.01, 30);
+    // var val = msg[1].linlin(0, 1, 4, 12);
+    ~ilfx[\v5_ringmod].set(\freq, freq );
+}, '/2/fader3', srcID: ~toscAddr);
+OSCdef(\v5_ringmod, { |msg| 
+    var mix = msg[1].linlin(0, 1,  0, 1);
+    ~ilfx[\v5_ringmod].set(\mix, mix);
+}, '/2/fader4', srcID: ~toscAddr);
 )
 
 (
