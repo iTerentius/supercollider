@@ -124,6 +124,19 @@
     s
 };
 
+// Ducker — sidechain-driven gain reduction
+// Params: \thresh (0–1), \ratio (1–20), \attack, \release
+// Note: placed in effectgroup (not synthgroup) so bus signals are present
+~fxLib[\duck] = { |chan, sideChannel, args=#[], target=nil, addAction=\addToTail|
+    var t = target ?? { chan.effectgroup };
+    var s = Synth(\duck, [
+        \in,   chan.inbus.index,
+        \side, sideChannel.inbus.index,
+        \out,  chan.inbus.index
+    ] ++ args, t, addAction);
+    s
+};
+
 // ---- Project-level inline FX nodes ----
 // Deploy from ~fxLib here for FX you want active on load.
 // Examples:

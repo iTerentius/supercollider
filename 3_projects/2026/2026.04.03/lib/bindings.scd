@@ -83,6 +83,10 @@
       [[3, 5], ~phrFns[\v3_harpy][\c], 9],
       [[4, 5], ~phrFns[\v3_harpy][\b], 9],
   ],  0);
+  ~lpBindBVariants.(1, [
+      [[2, 7], ~phrFns[\v5_smp1][\a], 21],
+      [[3, 7], ~phrFns[\v5_smp1][\b], 9],
+  ],  1);
 
   // ~lpBindBToggleFn.(1, [2, 5], ~phrFns[\v2_bass][\a], ~phrFns[\v2_bass][\b]);
 
@@ -116,12 +120,47 @@
   ~lpBindBToggleFn.(2, [2, 3],
       // ON: create node, play automation
       {
-          ~ilfx[\v3_duck] = ~fxLib[\duck].(~t3, ~t1, [\thresh, 0.3, \ratio, 6, \release, 0.8]);
+          ~ilfx[\v3_duck] = ~fxLib[\duck].(~t3, ~t1, [\thresh, 0.3, \ratio, 6, \release, 0.8],   ~t5.effectgroup);
       },
       // OFF: stop automation, free node
       {
           ~ilfx[\v3_duck].free;
           ~ilfx[\v3_duck] = nil;
+      }
+  );
+  ~lpBindBToggleFn.(2, [1, 7],
+      // ON: create node, play automation
+      {
+          ~ilfx[\v5_duck] = ~fxLib[\duck].(~t5, ~t1, [\thresh, 0.3, \ratio, 6, \release, 0.8]);
+      },
+      // OFF: stop automation, free node
+      {
+          ~ilfx[\v5_duck].free;
+          ~ilfx[\v5_duck] = nil;
+      }
+  );
+  ~lpBindBToggleFn.(2, [2, 7],
+      // ON: create node, play automation
+      {
+          ~ilfx[\v5_shimmer] = ~fxLib[\shimmer].(~t5);
+          ~ilfx[\v5_shimmer].set(\mix, 0.8,  \shift, 3,  \time, 0.5);
+      },
+      // OFF: stop automation, free node
+      {
+          ~ilfx[\v5_shimmer].free;
+          ~ilfx[\v5_shimmer] = nil;
+      }
+  );
+  ~lpBindBToggleFn.(2, [3, 7],
+      // ON: create node, play automation
+      {
+          ~ilfx[\v5_ringmod] = ~fxLib[\ringmod].(~t5);
+          ~ilfx[\v5_ringmod].set(\mix, 0.5,  \freq, 10);
+      },
+      // OFF: stop automation, free node
+      {
+          ~ilfx[\v5_ringmod].free;
+          ~ilfx[\v5_ringmod] = nil;
       }
   );
 // --- Any other fixed/special bindings below (bCtl, spectral, etc.) ---

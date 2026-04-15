@@ -1,36 +1,36 @@
 // scratch.scd — experimental workspace, not loaded by score.scd
 
 // Quick inline FX deploy/swap:
-~ilfx[\v2_crush] = ~fxLib[\bitcrush].(~t4);
+~ilfx[\v2_crush] = ~fxLib[\bitcrush].(~t5);
 ~ilfx[\v2_crush].set(\bits, 6, \rate, 8000);
 ~ilfx[\v2_crush].free; ~ilfx[\v2_crush] = nil;
-~ilfx[\v2_ringmod] = ~fxLib[\ringmod].(~t4);
+~ilfx[\v2_ringmod] = ~fxLib[\ringmod].(~t5);
 ~ilfx[\v2_ringmod].set(\freq, 80, \mix, 0.5);
 ~ilfx[\v2_ringmod].free; ~ilfx[\v2_ringmod] = nil;
-~ilfx[\v2_fold] = ~fxLib[\fold].(~t4);
+~ilfx[\v2_fold] = ~fxLib[\fold].(~t5);
 ~ilfx[\v2_fold].set(\gain, 3, \mix, 1.0);
 ~ilfx[\v2_fold].free; ~ilfx[\v2_fold] = nil;
-~ilfx[\v2_glitch] = ~fxLib[\glitch].(~t4);
-~ilfx[\v2_glitch].set(\rate, 0.25);
+~ilfx[\v2_glitch] = ~fxLib[\glitch].(~t5);
+~ilfx[\v2_glitch].set(\rate, 0.1);
 ~ilfx[\v2_glitch].free; ~ilfx[\v2_glitch] = nil;
 // Pitch shimmer — two detuned, pitch-shifted delay lines
 // Params: \shift (semitones offset, e.g. 12), \time (0.01–0.5), \mix (0–1)
-~ilfx[\v2_shimmer] = ~fxLib[\shimmer].(~t4);
+~ilfx[\v2_shimmer] = ~fxLib[\shimmer].(~t5);
 ~ilfx[\v2_shimmer].set(\mix, 0.3,  \shift, 24,  \time, 0.5  );
 ~ilfx[\v2_shimmer].free; ~ilfx[\v1_shimmer] = nil;
 // Stutter — tape-stop/freeze-style repeating buffer
 // Params: \rate (0.5–4 repeats/beat), \mix (0–1)
 // Note: uses TGrains, approximate stutter not quantized
-~ilfx[\v2_stutter] = ~fxLib[\stutter].(~t4);
-~ilfx[\v2_stutter].set(\mix, 0.9,  \amp,  1,  \rate, 16, );
+~ilfx[\v2_stutter] = ~fxLib[\stutter].(~t5);
+~ilfx[\v2_stutter].set(\mix, 0.9,  \amp,  4,  \rate, 8, );
 ~ilfx[\v2_stutter].free; ~ilfx[\v2_stutter] = nil;
-~ilfx[\v2_biscuit] = ~ufn[\spectral].(~t10);
 ~ilfx[\v2_stutter].set(\mix, 0.5,  \rate, 16);
 ~ilfx[\v2_stutter].free; ~ilfx[\v1_stutter] = nil;
 
+~ilfx[\v5_spec] = ~ufn[\spectral].(~t5);
 
-~ilfx[\v3_duck] = ~fxLib[\duck].(~t3, ~t1);
-~ilfx[\v3_duck].free; ~ilfx[\v3_duck] = nil;
+~ilfx[\v5_duck] = ~fxLib[\duck].(~t5, ~t1);
+~ilfx[\v5_duck].free; ~ilfx[\v5_duck] = nil;
 // Check what's running:
 // Pdef.all;
 // ~ilfx;
@@ -91,17 +91,22 @@ Pdef(\harpy).play;
 Pdef(\harpy).stop;
 
 (
-Pdef(\h_glitch, Pbind( 
+~ilfx[\v2_stutter].free; ~ilfx[\v2_stutter] = nil;
+~ilfx[\v2_stutter] = ~fxLib[\stutter].(~t5);
+Pdef(\h_test, Pbind( 
   \type,   \set,  
-  \id,  Pfunc({ ~ilfx[\v2_glitch].nodeID }),  
-  \args,  #[\rate,  \mix], 
-  \rate,   Pseg([0.5, 1,  1.5],[1,  2], \step, inf ),  
-  \mix,  Pseg([1, 0],[2], \lin,  inf), 
-  \dur,  1/16, 
+  \id,  Pfunc({ ~ilfx[\v2_stutter].nodeID }),  
+  \args,  #[\rate,  \mix, \amp],
+  \amp, 2,  
+  \rate,   Pseg([2, 80],[4], \step, inf ),  
+  // \mix,  Pseg([1, 0.5],[4], \sin,  inf), 
+  \mix, 0.8,  
+  \dur,  1/2, 
+  \stretch, Pwhite(1/2, 2,  inf), 
 ));
 )
-Pdef(\h_glitch).play;
-Pdef(\h_glitch).stop;
+Pdef(\h_test).play;
+Pdef(\h_test).stop;
 
 (
 ~stemStop = ~stemDiskStart.(

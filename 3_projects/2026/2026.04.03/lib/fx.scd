@@ -120,7 +120,7 @@
 
 ~fxLib[\duck] = { |chan, sideChannel, args=#[], target=nil,
   addAction=\addToTail|
-      var t = target ?? { chan.synthgroup };
+      var t = target ?? { chan.effectgroup };
       var s = Synth(\duck, [
           \in,   chan.inbus.index,
           \side, sideChannel.inbus.index,

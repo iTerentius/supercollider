@@ -22,22 +22,22 @@ var mk  = { |s| (pfx.asString ++ s).asSymbol };
 // ));
 Pdef(pfx, 
   Pbindef(mk.("_pb"),
-    \type,  \mono, 
-    \instrument,  \dk,  
+    // \type,  \mono, 
+    \instrument,  Pseq([\sh101Lead],  inf),   
     \scale, Scale.minor,
     \octave, Pstep(Pseq([5, 4, 6], inf), Pkey(\stretch)/2), // Hold octave for 4 beats
     \degree, Pslide((0..7), inf, 1, 3),  
     \gate, Pn(Pstep(Pseq([1, 0], 1), 2), inf),   
-    \amp,  Pstep(Pseq([0.1, 0.3], inf), Pkey(\stretch)),   
+    \amp,  Pstep(Pseq([0.01, 0.2], inf), Pkey(\stretch)),   
     // Now these can change at the \dur rate (0.5)
     \lfoRate, Pseg([1, 10,  80], [Pkey(\stretch)/2, Pkey(\stretch)], \sin, inf), 
     \lfoDepth, Pseg([1.5, 0.5], [Pkey(\stretch)], \step, inf),
     \releaseTime, Pkey(\dur), 
     // The "Engine" speed
-    \dur, 1/4, 
+    \dur, 1/8, 
     
     // Optional: stretch still works, but it will stretch the 0.5
-    \stretch, Pseg([1/8, 2], [4],  \step,  inf), 
+    \stretch, Pseg([2, 1/2, 1/8], [4,  8],  \wel,  inf), 
     
     \out, ~t4.inbus.index,
 ));

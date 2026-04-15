@@ -24,7 +24,7 @@ case
     s.options.sampleRate = 48000;
     s.options.memSize = 131072;
     s.options.numBuffers = 1024;
-    s.options.maxNodes = 1024;
+    s.options.maxNodes = 4096;
     s.options.blockSize = 64;
     // CoreAudio uses device name directly, or nil for default
     // s.options.device = "Scarlett 2i2 USB";
@@ -37,7 +37,7 @@ case
     s.options.sampleRate = 48000;
     s.options.memSize = 131072;
     s.options.numBuffers = 1024;
-    s.options.maxNodes = 1024;
+    s.options.maxNodes = 4096;
     s.options.blockSize = 64;
     s.options.hardwareBufferSize = 128;     // match JACK frames/period
     s.options.device = "JACK";              // route through JACK
