@@ -129,6 +129,60 @@
       s
   };
 
+  ~fxLib[\pitchGate] = { |chan, args=#[]|
+    var bus = chan.inbus;
+    var s = chan.playfx({ |in|
+        var sig, dry, wet, localBuf, recTrig, gate, pEnv, rate, phase;
+        
+        // Setup Parameters
+        var speed = \speed.kr(2);        // Frequency of the stutter/rhythm
+        var len   = \len.kr(0.5);          // Length of the sample window (0 to 1)
+        var pStart = \pStart.kr(0);       // Pitch start (semitones)
+        var pEnd   = \pEnd.kr(-12);       // Pitch end (semitones)
+        var width  = \width.kr(0.5);       // Gate duty cycle
+        
+        sig = In.ar(bus, 2);
+        dry = sig;
+        
+        // 1. Internal Buffer (e.g., 2 seconds max)
+        localBuf = LocalBuf(SampleRate.ir * 2, 2);
+        
+        // 2. Triggering Logic
+        // We trigger a "record" and a "pitch envelope" at the same speed
+        recTrig = Impulse.ar(speed);
+        RecordBuf.ar(sig, localBuf, trigger: recTrig, loop: 0);
+        
+        // 3. Rhythmic Gate
+        // Use a slight lag to prevent pops
+        gate = LFPulse.ar(speed, 0, width).lag(0.01);
+        
+        // 4. The Pitch Glide
+        // This envelope restarts every time the gate triggers
+        pEnv = EnvGen.ar(
+            Env([pStart, pStart, pEnd], [0.001, 1/speed], \lin),
+            gate
+        );
+        rate = pEnv.midiratio;
+        
+        // 5. Playback
+        // Phasor drives the reading of the captured buffer
+        phase = Phasor.ar(
+            trig: recTrig, 
+            rate: BufRateScale.ir(localBuf) * rate, 
+            start: 0, 
+            end: len * SampleRate.ir
+        );
+        
+        wet = BufRd.ar(2, localBuf, phase, interpolation: 4);
+        // wet = SinOsc.ar(100);
+        
+        XFade2.ar(dry, wet * gate, \mix.kr(0.5).linlin(0, 1, -1, 1)) * \amp.kr(1);
+    });
+    
+    if(args.notEmpty) { s.set(*args) };
+    s
+};
+
 // ---- Project-level inline FX nodes ----
 // Deploy from ~fxLib here for FX you want active on load.
 // Examples:

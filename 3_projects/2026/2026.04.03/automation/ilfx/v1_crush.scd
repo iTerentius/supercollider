@@ -1,6 +1,6 @@
 
 (
-Pdef(\crush,  Pbind(
+Pdef(\v1_crush,  Pbind(
   \type,   \set,  
   \id,    Pfunc({ ~ilfx[\v1_crush].nodeID }), 
   \args,  #[\rate,  \bits,  \mix, \amp],

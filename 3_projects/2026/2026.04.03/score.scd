@@ -20,7 +20,8 @@ var safeLoad = { |path|
     safeLoad.("automation/biscuit.scd");       // define ~slots before parts + bindings
     safeLoad.("automation/spectral.scd");       // define ~slots before parts + bindings
     safeLoad.("automation/tempo.scd");       // define ~slots before parts + bindings
-    safeLoad.("automation/ilfx/crush.scd");       // define ~slots before parts + bindings
+    safeLoad.("automation/ilfx/v1_crush.scd");       // define ~slots before parts + bindings
+    safeLoad.("automation/ilfx/v5_pitchGate.scd");       // define ~slots before parts + bindings
     // --- parts (one per voice, in any order) ---
     safeLoad.("parts/v1_808k.scd");
     safeLoad.("parts/v1_808hh.scd");

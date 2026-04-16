@@ -31,6 +31,13 @@
 
 ~ilfx[\v5_duck] = ~fxLib[\duck].(~t5, ~t1);
 ~ilfx[\v5_duck].free; ~ilfx[\v5_duck] = nil;
+
+~ilfx[\v2_shimmerStutter] = ~fxLib[\stutter].(~t5);
+~ilfx[\v2_shimmerStutter].set(\speed, 4,  \pStart,  0, \pEnd, -12 );
+~shimmer.set(\speed, 4);      // Faster rhythm
+~shimmer.set(\pStart, 12);    // Start an octave up
+~shimmer.set(\pEnd, 0);       // Drop down to original pitch
+~shimmer.set(\width, 0.2);    // Short, stabby stutters
 // Check what's running:
 // Pdef.all;
 // ~ilfx;

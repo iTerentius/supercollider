@@ -14,7 +14,7 @@ Pdef(pfx,
         \instrument,  \slice_m, 
         \buf,     Pn(Pdefn(mk.("_bufs")), inf),
         \bufnum,  Pkey(\buf),
-        \nSlices, Pkey(\stretch)*Pseg([3, 16],  [1],  \sin, inf), 
+        \nSlices, Pkey(\stretch)*Pseg([3, 8],  [1],  \sin, inf), 
         \sliceDur,  Pkey(\stretch)*4, 
         \sliceIndex,  Pwhite(0, Pkey(\nSlices), inf), 
         \spread,  0.45,
@@ -58,7 +58,7 @@ Pdefn(mk.("_degs_b"), Pseq([Pn(Pdefn(mk.("_deg_1")), 4)], 1));   // short walk
 Pdefn(mk.("_degs"),  Pseq([Pn(Pdefn(mk.("_degs_b")), 1)], 1));
 
 // DURS — words
-Pdefn(mk.("_dur_0"), 2);
+Pdefn(mk.("_dur_0"), 1);
 Pdefn(mk.("_dur_1"), Pbjorklund2(5, 8, 1) / 2);
 // sentences
 Pdefn(mk.("_durs_a"), Pseq([Pn(Pdefn(mk.("_dur_0")), 4)], 1));   // straight
@@ -91,7 +91,7 @@ Pdefn(mk.("_strs"),  Pseq([Pn(Pdefn(mk.("_str_a")), 4)], 1));
     },
     c: {  // reset to defaults
         Pbindef(mk.("_pb"),
-            \buf, Pn(Prand(~sTree[\hoarder_mono].values[2..4])), 
+            \buf, Pn(Pxrand(~sTree[\hoarder_mono].values[4..4])), 
             \stretch,    Pseq([Pn(Pdefn(mk.("_str_b")), 4)], inf));  
     },
 );

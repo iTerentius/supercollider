@@ -97,11 +97,11 @@
       {
           ~ilfx[\v1_crush] = ~fxLib[\bitcrush].(~t1);
           ~ilfx[\v1_crush].set(\bits, 6, \rate, 8000);
-          Pdef(\crush).play(~link);
+          Pdef(\v1_crush).play(~link);
       },
       // OFF: stop automation, free node
       {
-          Pdef(\crush).stop;
+          Pdef(\v1_crush).stop;
           ~ilfx[\v1_crush].free;
           ~ilfx[\v1_crush] = nil;
       }
@@ -164,6 +164,20 @@
           ~ilfx[\v5_ringmod] = nil;
       }
   );
+    ~lpBindBToggleFn.(2, [4, 7],
+      // ON: create node, play automation
+      {
+          ~ilfx[\v5_pitchGate] = ~fxLib[\pitchGate].(~t5);
+          Pdef(\v5_pitchGate).play(~link);
+      },
+      // OFF: stop automation, free node
+      {
+          Pdef(\v5_pitchGate).stop;
+          ~ilfx[\v5_pitchGate].free;
+          ~ilfx[\v5_pitchGate] = nil;
+      }
+  );
+
 // --- Any other fixed/special bindings below (bCtl, spectral, etc.) ---
 // ~lpBindB.(4, [1, 1], \bCtl, 21);
 // ~apcBindB.(4, 32, \bCtl, 4, \cyan);
