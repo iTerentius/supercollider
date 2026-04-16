@@ -14,7 +14,7 @@ Pdef(pfx,
         \instrument,  \slice_m, 
         \buf,     Pn(Pdefn(mk.("_bufs")), inf),
         \bufnum,  Pkey(\buf),
-        \nSlices, Pkey(\stretch)*Pseg([3, 8],  [1],  \sin, inf), 
+        \nSlices, Pkey(\stretch)*Pseg([1, 3],  [1],  \sin, inf), 
         \sliceDur,  Pkey(\stretch)*4, 
         \sliceIndex,  Pwhite(0, Pkey(\nSlices), inf), 
         \spread,  0.45,
@@ -81,7 +81,7 @@ Pdefn(mk.("_strs"),  Pseq([Pn(Pdefn(mk.("_str_a")), 4)], 1));
 ~phrFns[pfx] = (
     a: {
         Pbindef(mk.("_pb"),
-            \buf, Pn(Prand(~sTree[\stuff].values[2..2])), 
+            \buf, Pn(Prand(~sTree[\_mono].values[2..2])), 
             \stretch,    Pseq([Pn(Pdefn(mk.("_str_b")), 4)], inf));
     },
     b: {  // reset to defaults
