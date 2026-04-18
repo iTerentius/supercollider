@@ -23,21 +23,29 @@ var mk  = { |s| (pfx.asString ++ s).asSymbol };
 Pdef(pfx, 
   Pbindef(mk.("_pb"),
     // \type,  \mono, 
-    \instrument,  Pseq([\sh101Lead],  inf),   
+    \instrument,  Pseq([\prophetLead],  inf),   
     \scale, Scale.minor,
-    \octave, Pstep(Pseq([5, 4, 6], inf), Pkey(\stretch)/2), // Hold octave for 4 beats
-    \degree, Pslide((0..7), inf, 1, 3),  
+    \octave, Pstep(Pseq([3, 4, 5], inf), Pkey(\stretch)/2), // Hold octave for 4 beats
+    \degree, Pslide((0..7), inf, 2, 4),  
     \gate, Pn(Pstep(Pseq([1, 0], 1), 2), inf),   
-    \amp,  Pstep(Pseq([0.01, 0.2], inf), Pkey(\stretch)),   
-    // Now these can change at the \dur rate (0.5)
+    \amp,  Pstep(Pseq([0.2, 0.2], inf), Pkey(\stretch)),   
+    \osc1Shape, 3, \osc2Shape,  1,     
+    \oscMix,  Pwhite(0.0, 1.0,  inf), 
+    \sync,  0,  
+    \cutoff, Pseg([200,  4000], [4],  \sin, inf), 
+    \resonance, Pseg([0.1,  0.5], [4],  \wel, inf), 
     \lfoRate, Pseg([1, 10,  80], [Pkey(\stretch)/2, Pkey(\stretch)], \sin, inf), 
     \lfoDepth, Pseg([1.5, 0.5], [Pkey(\stretch)], \step, inf),
-    \releaseTime, Pkey(\dur), 
+    \lfoToOsc1, 0,  
+    \lfoToOsc2, 0,  
+    \lfoToFilter, 1,  
+    \releaseTime, Pkey(\stretch), 
     // The "Engine" speed
-    \dur, 1/8, 
+    \dur, 1/4, 
     
     // Optional: stretch still works, but it will stretch the 0.5
-    \stretch, Pseg([2, 1/2, 1/8], [4,  8],  \wel,  inf), 
+    \stretch, 1,  
+    // \stretch, Pseg([2, 1/2, 1/8], [4,  8],  \wel,  inf), 
     
     \out, ~t4.inbus.index,
 ));

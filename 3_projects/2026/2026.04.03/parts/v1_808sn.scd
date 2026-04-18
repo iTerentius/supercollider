@@ -57,7 +57,7 @@ Pdefn(mk.("_degs_b"), Pseq([Pn(Pdefn(mk.("_deg_1")), 4)], 1));   // short walk
 Pdefn(mk.("_degs"),  Pseq([Pn(Pdefn(mk.("_degs_a")), 1)], 1));
 
 // DURS — words
-Pdefn(mk.("_dur_0"), Pseq([Pn(Rest(), 1/4), 1.25], 1)*2);
+Pdefn(mk.("_dur_0"), Pseq([Pn(Rest(), 1/8), 1.125], 1)*2);
 Pdefn(mk.("_dur_1"), Pbjorklund2(5, 16, 1) );
 Pdefn(mk.("_dur_3"), Pseq([Pn(Rest(), 1), 1,  1/2!2, 1/4!4].flat,  1));
 // sentences
@@ -71,15 +71,17 @@ Pdefn(mk.("_str_0"), 1);
 Pdefn(mk.("_strs"),  Pseq([Pn(Pdefn(mk.("_str_0")), 4)], 1));
 
 Pdefn(mk.("_rel_0"),  0.2);
-Pdefn(mk.("_rel"),  Pseq([Pn(Pdefn(mk.("_rel_0")),  4)],  1));
+Pdefn(mk.("_rel_1"),  Pseq([0.2!3,  0.4].flat,  1));
+Pdefn(mk.("_rel"),  Pseq([Pn(Pdefn(mk.("_rel_1")),  4)],  1));
 
 Pdefn(mk.("_snapRel_0"),  0.3);
 Pdefn(mk.("_snapRel"),  Pseq([Pn(Pdefn(mk.("_snapRel_0")),  4)],  1));
 
 Pdefn(mk.("_toneFreq_0"),  100);
-Pdefn(mk.("_toneFreq"),  Pseq([Pn(Pdefn(mk.("_toneFreq_0")),  4)],  1));
+Pdefn(mk.("_toneFreq_1"),  Pseg([80,  100], [4],  \lin, 1));
+Pdefn(mk.("_toneFreq"),  Pseq([Pn(Pdefn(mk.("_toneFreq_1")),  4)],  1));
 
-Pdefn(mk.("_snappy_0"),  0.3);
+Pdefn(mk.("_snappy_0"),  0.8);
 Pdefn(mk.("_snappy"),  Pseq([Pn(Pdefn(mk.("_snappy_0")),  4)],  1));
 // PHRASE VARIANT FUNCTIONS
 // These get referenced in bindings.scd Bank 5 toggle bindings.

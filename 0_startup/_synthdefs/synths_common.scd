@@ -44,12 +44,13 @@ SynthDef(\s1, {
 SynthDef(\t1002, {
 	// arg out = 0, amp = 0.2, gate = 1, pan = 0, freq = 200, ph = 0;
 	// |out,sustain=1,freq=440,speed=1,begin=0,end=1,pan,accelerate,offset,clamp=1,ph=0, noise=0|
-	arg out = 0, amp = 0.6, gate = 1, pan = 1, freq = 200, offset, noise=1, ph=1,  mix=1;
+	arg out = 0, amp = 0.6, gate = 1, pan = 1, freq = 200, offset, noise=1, ph=0,  mix=1;
 	var sig, other, env;
-	env = EnvGen.kr(Env.asr([0.1, 0.25, 0.5], [0.5, 1]), gate:gate, doneAction:2);
-	sig = SinOsc.ar([freq,  freq-2] + LFPulse.ar(freq: freq * 2, iphase: ph, add: ph ));
-  other = Pulse.ar((freq!2)*0.5, 0, Dust2.kr(LFSaw.kr(ph)), BrownNoise.ar(LFSaw.kr(noise) + SinOsc.ar(noise*ph))) + sig * env;
-	Out.ar(out, XFade2.ar(sig, other,  pan)* amp * mix);
+	env = EnvGen.kr(Env.asr(0.01, 0.2, 1.2), gate:gate, doneAction:2);
+	sig = SinOsc.ar([freq,  freq-2] + Lag.ar(LFPulse.ar(freq: freq / 2, iphase: ph, width: ph,  add: ph )));
+  // sig = SinOsc.ar([freq,  freq-2]);
+  other = Pulse.ar((freq!2)*0.5, 0, Lag.kr(Dust2.kr(LFPulse.kr(ph*2)), 0.005), BrownNoise.ar(LFSaw.kr(noise,  0,  ph) + VarSaw.ar(noise, ph))) + sig * env * noise;
+  Out.ar(out, XFade2.ar(sig * env, other, pan) * amp * mix);
 }).add;
 );
 

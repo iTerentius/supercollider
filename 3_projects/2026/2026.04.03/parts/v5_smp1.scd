@@ -81,7 +81,7 @@ Pdefn(mk.("_strs"),  Pseq([Pn(Pdefn(mk.("_str_a")), 4)], 1));
 ~phrFns[pfx] = (
     a: {
         Pbindef(mk.("_pb"),
-            \buf, Pn(Prand(~sTree[\_mono].values[2..2])), 
+            \buf, Pn(Prand(~sTree[\stuff].values[2..2])), 
             \stretch,    Pseq([Pn(Pdefn(mk.("_str_b")), 4)], inf));
     },
     b: {  // reset to defaults

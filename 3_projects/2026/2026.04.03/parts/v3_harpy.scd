@@ -19,9 +19,12 @@ Pdef(pfx,
       \degree,  Pn(Pdefn(mk.("_degs")),  inf),
       \dur,     Pn(Pdefn(mk.("_durs")),  inf),
       \amp,     Pn(Pdefn(mk.("_amps")),  inf),
-      \mix,     Pseg([0,  1], [2], \sin, inf), 
-      \ph,      0,  
-      \noise,   Pseg([0, 3],[4], \sin,  inf), 
+      \ctranspose, Pn(PHarmony(\minor)),
+      \strum,  1/4,  
+      \mix,     Pseg([0.2,  0.6], [Pkey(\dur)*4], \sin, inf), 
+      \ph,      Pseg([0.5,  0.25], [Pkey(\dur)*4],  \sin, inf),  
+      \noise,   Pseg([0.0, 4.0],[Pkey(\dur)*16], \cub,  inf), 
+      // \noise, 0,  
       \out,     Pn(Pdefn(mk.("_out")),   inf),
 ));
 
@@ -58,7 +61,7 @@ Pdefn(mk.("_oct_b"),  Pseq([Pn(Pdefn(mk.("_oct_1")),  4)],  1));
 Pdefn(mk.("_octs"),  Pseq([Pn(Pdefn(mk.("_oct_a")), 4)], 1));
 
 // AMPS
-Pdefn(mk.("_amp_0"), 0.1);
+Pdefn(mk.("_amp_0"), 0.2);
 Pdefn(mk.("_amps"),  Pseq([Pn(Pdefn(mk.("_amp_0")), 4)], 1));
 
 // DEGS — words

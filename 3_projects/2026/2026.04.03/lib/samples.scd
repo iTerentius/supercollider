@@ -4,6 +4,3 @@
 ~loadSamps.("~/Music/supercollider/_samples/goldbaby/Cassette808/");
 ~loadSamps.("~/Music/supercollider/_samples/_mono/");
 ) 
-~sTree.keys.postln;
-  ~sTree[\mm].postln;
-  (\_mono == '_mono').postln;

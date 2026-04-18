@@ -243,22 +243,49 @@ SynthDef(\dynklangDemo, {
 //   \stretch, Pseq([1/4,  1,  2], inf),  
 //   \out,  ~t4.inbus.index, 
 // ));
-
-Pdef(\dk, Pmono(\dynklangDemo,
+Pdef(\dk, 
+  // Pbindef(mk.("_pb"),
+  Pbind(
+    // \type,  \mono, 
+    \instrument,  Pseq([\neutron],  inf),   
     \scale, Scale.minor,
-    \octave, Pstep(Pseq([5, 4, 6], inf), Pkey(\stretch)/2), // Hold octave for 4 beats
-    \degree, Pslide((0..7), inf, 1, 3),  
+    \octave, Pstep(Pseq([3, [4]], inf), Pkey(\stretch)), // Hold octave for 4 beats
+    // \root,  Pstep(Pseq([0,  4,  2,  1], inf), 16),  
+    // \degree, Pslide([0,  2, 1,  0],  inf, 1,  3),  
+    \degree,  Pseg([7,  -0], [2],  \lin, inf),  
+    \ctranspose, Pn(PHarmony(\minor)),
+    // \legato,  Pseq([Pkey(\stretch)/2, Pkey(\stretch)*1.1],  inf), 
     \gate, Pn(Pstep(Pseq([1, 0], 1), 2), inf),   
-    \amp,  Pstep(Pseq([0.1, 0.3], inf), Pkey(\stretch)),   
-    // Now these can change at the \dur rate (0.5)
-    \lfoRate, Pseg([1, 10,  80], [Pkey(\stretch)/2, Pkey(\stretch)], \sin, inf), 
-    \lfoDepth, Pseg([1.5, 0.5], [Pkey(\stretch)], \step, inf),
-    \releaseTime, Pkey(\dur), 
+    \amp,  Pstep(Pseq([0.1, 0.2], inf), Pkey(\stretch)),   
+    \osc1Blend, 0, \osc2Blend,  0,     
+    \osc1PW,  Pseg([0.0,  1.0], [Pkey(\stretch)],  \wel, inf),  
+    \osc2Track, 1,  
+    \osc2Oct, Pkey(\octave)-3,    
+    \oscMix,  Pwhite(0.0, 1.0,  inf), 
+    \sync,  0,  
+    \cutoff, Pseg([2000,  400,  2000], [Pkey(\stretch)],  \sin, inf), 
+    \noiceLvl,  0.8,  
+    \env1Amt, Pseg([0.0,  1.0], [Pkey(\stretch)], \sin, inf), 
+    \subLvl,  0.8,  
+    \drive, Pkey(\amp)*1.1,  
+    \filterMode,  Pstep(Pseq([0,  0,  0,  2], inf), Pkey(\stretch)*2),   
+    // \res, Pseg([0.2,  0.6], [Pkey(\dur)*Pkey(\div)],  \wel, inf), 
+    \lfoRate, Pseg([1, 2,  4], [Pkey(\stretch)/2, Pkey(\stretch)], \sqr, inf), 
+    \lfoDepth, Pseg([1.5, 1.0], [Pkey(\stretch)], \lin, inf),
+    \lfoToOsc1, 0,  
+    \lfoToOsc2, 0,  
+    \lfoToFilter, 1,  
+    \releaseTime, Pkey(\stretch), 
+    // \ctranspose, Pn(PHarmony(\minor)),
+    // \strum, 0.5,  
     // The "Engine" speed
-    \dur, 1/4, 
-    
+    // \dur, Pseq([1/4!2, 1/2!2, Pn(Rest(),  1+1/2)].flat, inf),  
+    \dur, Pbjorklund(Pstep(Pseq([3,  5,  7],inf),  8), 8, inf), 
+
     // Optional: stretch still works, but it will stretch the 0.5
-    \stretch, Pseg([1/8, 2], [4],  \step,  inf), 
+    \stretch, 1,  
+    // \stretch, Pstep(Pseq([1/2,  1], inf), 1),  
+    // \stretch, Pseg([1, 1/4], [8],  \lin,  inf), 
     
     \out, ~t4.inbus.index,
 ));
@@ -266,3 +293,43 @@ Pdef(\dk, Pmono(\dynklangDemo,
 
 Pdef(\dk).play;
 Pdef(\dk).stop;
+
+// Simple chord progression
+// (
+// Pbind(
+//   \instrument,  \
+// 	\degree, Prand([0,2,4,5], inf),
+//     \ctranspose, Pn(PHarmony(\minor)),
+//     \dur, 0.5
+// ).play;
+// )
+//
+// // Complex arpeggiation
+// (
+// Pbind(
+//     \ctranspose, PHarmony(
+//         [\major, \minor7, \diminished],
+//         [\blossomup, \updown, \random]
+//     ),
+//     \dur, 0.125
+// ).play;
+// )
+//
+// // Combining with other patterns
+// (
+// Pbind(
+//     \ctranspose, Pseq([
+//
+//         // Major chord
+//         PHarmony(\major),
+//
+//         // Major 9
+//         PHarmony(\major9),
+//
+//         // Major 9 with chord operations
+//         PHarmony(Harmony(\major9).withDouble(\root, octaves: -1).withInversion(\first))
+//     ], inf).trace,
+//     \dur, 0.25
+// ).play;
+// )
+// )stop;

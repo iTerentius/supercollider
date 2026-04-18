@@ -6,13 +6,14 @@ Pdef(\v1_crush,  Pbind(
   \args,  #[\rate,  \bits,  \mix, \amp],
   // \rate,  Pseg([800,  8000],  [2],  \lin, inf), 
   // \mix, Pseg([0.01,  1.0], [2],  \lin, inf),  
-  \mix,  Pbjorklund(3, 8,  inf), 
-  // \mix, Pwhite(0.5, 1.0,  inf), 
+  // \mix,  Pbjorklund(3, 8,  inf), 
+  \mix, Pwhite(0.5, 1.0,  inf), 
   \amp, 0.8,  
-  \rate,  Pseg([2500, 80000], [2],  \sin, inf),  
-  \bits,  4,  
-  \dur, Pseq([1/4!2, 1/2,   1,  1/8!4].flat, inf), 
-  \stretch, Pn(Pdefn(\v1_808k_strs)/2,  inf),  
+  \rate,  Pseg([2500, 20000], [3],  \step, inf),  
+  \bits,  Pseg([4,  6], [3], \step,  inf),  
+  // \dur, Pseq([1/4!2, 1/2,   1,  1/8!4].flat, inf), 
+  \dur, Pseg([1,  1/8], [3],  \step, inf), 
+  \stretch, Pn(Pdefn(\v1_808k_strs),  inf),  
 ));
 
 OSCdef(\v1_crush, { |msg| 

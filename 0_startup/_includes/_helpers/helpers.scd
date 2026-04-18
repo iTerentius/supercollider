@@ -90,6 +90,15 @@
   }, Array);
   Pseq(array, rep);
 };
+~deg = { |str, rep=1, dur=1|
+    var array = str.collectAs({ |char|
+      if(char.isDecDigit, { char.digitValue }, { Rest(dur) })
+    }, Array);
+    Pseq(array, rep);
+  };
+~hit = { |str, note, dur=0.125, rep=inf|
+      Pseq(str.collectAs({ |c| if(c == $x, note, Pn(Rest(), 1)) }, Array), rep)
+  };
 "Helpers loaded.".postln;
 )
 

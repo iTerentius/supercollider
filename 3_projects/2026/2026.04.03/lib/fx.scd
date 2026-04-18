@@ -140,7 +140,7 @@
         var pStart = \pStart.kr(0);       // Pitch start (semitones)
         var pEnd   = \pEnd.kr(-12);       // Pitch end (semitones)
         var width  = \width.kr(0.5);       // Gate duty cycle
-        var rate = \rate.kr(44100);
+        var c_rate = \rate.kr(44100);
         var bits = \bits.kr(8); 
         var crush = \crush.kr(0.5);
         
@@ -177,7 +177,7 @@
         );
         
         wet = BufRd.ar(2, localBuf, phase, interpolation: 4);
-        wet = wet + (Decimator.ar(sig, \rate.kr, \bits.kr)) * \crush);
+        wet = wet + (Decimator.ar(sig, c_rate, bits)) * crush;
 
         
         XFade2.ar(dry, wet * gate, \mix.kr(0.5).linlin(0, 1, -1, 1)) * \amp.kr(1);

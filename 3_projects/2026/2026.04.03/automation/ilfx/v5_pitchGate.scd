@@ -18,7 +18,7 @@ Pdef(\v5_pitchGate,  Pbind(
   \dur, 1/32,  
   \rate,  Pseg([4400,  44],  [4],  \sin,  inf), 
   \bits,  4, 
-  \crush, 1,  
+  \crush, Pseg([0.2,  0.7], [4],  \sin, inf),  
   // \stretch, Pn(Pdefn(\v5_smp1_strs),  inf)*4,   
   \stretch, 1,  
 
