@@ -96,7 +96,7 @@
     }, Array);
     Pseq(array, rep);
   };
-~hit = { |str, note, dur=0.125, rep=inf|
+~hit = { |str, note, rep=inf, dur=0.125 |
       Pseq(str.collectAs({ |c| if(c == $x, note, Pn(Rest(), 1)) }, Array), rep)
   };
 "Helpers loaded.".postln;

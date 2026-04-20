@@ -67,7 +67,7 @@ s.waitForBoot {
     "_includes/midi-setup.scd".loadRelative;
 
     // --- MIDI Controllers (auto-detect: APC40 mkII > Launch Control XL)
-    "_includes/_midi-ctrl/midi-device-loader.scd".loadRelative;
+    // "_includes/_midi-ctrl/midi-device-loader.scd".loadRelative;
 
     // Launch Pad Mini - uncomment if you use it
     "_includes/_midi-ctrl/launch-pad-mini/lp-param-router.scd".loadRelative;
@@ -75,9 +75,9 @@ s.waitForBoot {
     s.sync; // ensure all SynthDefs are registered on server before mixer init
 
     // --- TouchOSC OSC router (always load — no device detection needed)
-    "_includes/_osc-ctrl/tosc-router.scd".loadRelative;
+    // "_includes/_osc-ctrl/tosc-router.scd".loadRelative;
     // "_includes/_osc-ctrl/tosc-pad-router.scd".loadRelative;
-    "_includes/_osc-ctrl/tosc-fx.scd".loadRelative;  // defines ~toscFXBind/~toscFXSync used by fx_defs ~fxSetup functions
+    // "_includes/_osc-ctrl/tosc-fx.scd".loadRelative;  // defines ~toscFXBind/~toscFXSync used by fx_defs ~fxSetup functions
 
     // --- Mixer channels (with conditional controller bindings)
     "_includes/mixer-channel-16s.scd".loadRelative;
@@ -101,6 +101,17 @@ s.waitForBoot {
     ~link.tempo = 120/60;
 
     Pdef.defaultQuant = 4;
+
+    q = q ?? (); // A common SC pattern to create a global storage dict
+    q.bw = NetAddr("127.0.0.1", 9001);
+    Event.addEventType(\bw, {
+        // We use q.bw instead of ~bw to avoid nil receiver errors
+        // ~val.postl
+        var path = ~path.asString;
+        if(path.beginsWith("//")) { path = path.keep(path.size * -1 + 1) };
+        // ~path.postln;
+        q.bw.sendMsg(path, ~val);
+    });
 
     // --- Cleanup any launchpad state if present
     if(~lpMini.notNil) { ~lpMini[\clearGrid].(); };
