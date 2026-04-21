@@ -1,4 +1,3 @@
-
 (
 Pdefn(\kk0, ~hit.("x--x--", 0,  1));
 Pdefn(\kk1, ~hit.("-xx--x------", 0,  1));
@@ -9,13 +8,9 @@ Pdefn(\kkA, Pseq([
   Pn(Pdefn(\kk1), 2), 
 ],  1));
 Pdefn(\kkB, Pseq([
-  Pn(Pdefn(\kk0), 4), 
-  Pn(Pdefn(\kk1), 2), 
-],  inf));
-Pdefn(\kkB, Pseq([
   Pn(Pdefn(\kk2), 4), 
   Pn(Pdefn(\kk3), 2), 
-],  inf));
+],  1));
 Pdefn(\kk,  Pseq([Pdefn(\kkA)], inf));
 
 Pdefn(\sn0, ~hit.("----x-x-", 1,  1));
@@ -35,10 +30,10 @@ Pdefn(\hhA, Pseq([
 Pdefn(\hh,  Pseq([Pdefn(\hh0)], inf));
 
 ~kitBase = Pbind(\type, \midi, \midiout, ~mOut, \chan, 0, 
-  \dur, 1/4,  
+  \dur, 1/8,  
   \scale, Scale.chromatic,  
   \octave,  Pseq([3,  Pseq([ 3], 1)], inf),   
-  \stretch, 1,  
+  \stretch, 2,  
 );
 Pdef(\kitm, Ppar([
   Ppar([
