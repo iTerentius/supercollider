@@ -21,7 +21,7 @@
 //   ~ilfx[\v1_crush].moveToTail(~ilfx[\v1_crush].group);  // last in chain
 (
 ~ilfx !? { |d| d.do { |n| n.tryPerform(\free) } };
-~ilfx = ();
+~ilfx = AutoFreeDict.new;
 
 // ---- Library entries ----
 

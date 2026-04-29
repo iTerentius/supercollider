@@ -208,6 +208,46 @@
     Pan2.ar(sig * ampEnv * amp, pan)
 };
 
+~ufn[\thickPad] = {
+    |
+    out = 0, freq = 440, amp = 0.5, 
+    gate = 1, attack = 2, release = 3, 
+    cutoff = 1200, rq = 0.6, detune = 0.005,
+    pan = 0
+    |
+    var sig, env, filterEnv, lfo;
+
+    // 1. Envelopes
+    // Main amplitude envelope (ASR)
+    env = EnvGen.kr(Env.asr(attack, 1, release), gate, doneAction: 2);
+    
+    // Filter envelope: opens up the cutoff over the attack time
+    filterEnv = EnvGen.kr(Env.adsr(attack * 1.5, 1, 1, release), gate);
+
+    // 2. Oscillators
+    // We create 8 detuned voices for a thick sound
+    sig = Splay.ar(
+        Array.fill(8, { |i|
+            LFPulse.ar(
+                freq * LFNoise1.kr(0.5).range(1 - detune, 1 + detune) * (1 + (i * 0.001))
+            )
+        })
+    );
+
+    // 3. Modulation & Filtering
+    lfo = SinOsc.kr(0.1).range(0.8, 1.2); // Subtle movement
+    sig = MoogFF.ar(
+        sig, 
+        (cutoff * filterEnv * lfo).clip(20, 20000), 
+        gain: rq * 2
+    );
+
+    // 4. Stereo Width & Output
+    sig = Balance2.ar(sig[0], sig[1], pan, amp * env);
+    
+    Out.ar(out, sig);
+};
+
 // =============================================================================
 // RANDOM STUFF
 // =============================================================================
@@ -244,9 +284,9 @@
   | out, freq=110, gate=1, freqmod=1, amp=0.2,  conv=1|
 	var sig, lf,  env;
   env = EnvGen.ar(Env.asr( 0.01, 0.7, 1.0), gate: gate, doneAction: 2 ); 
-  // sig = VarSaw.ar([freq, freq+2], env*0.1,  freqmod) * LFPulse.ar(freq/2, LFPulse.ar([freqmod-1, freqmod])) * 0.7;
-  sig = LFPulse.ar([freq, freq+2], env,  freqmod) * SinOsc.ar(freq/2, LFPulse.ar([freqmod-1, freqmod])) * 0.7;
-  // sig = sig * Convolution.ar(~t10.inbus.index, ~t1.inbus.index, 2048, 0.8);
+  sig = SinOsc.ar([freq, freq+2], env*0.1,  freqmod) * LFPulse.ar(freq/2, LFPulse.ar([freqmod-1, freqmod])) * 0.7;
+  // sig = LFPulse.ar([freq, freq+2], env,  freqmod) * SinOsc.ar(freq/2, LFPulse.ar([freqmod-1, freqmod])) * 0.7;
+  // sig = sig * Convolution.ar(~t3.inbus.index, ~t1.inbus.index, 2048, 0.8);
   sig = sig * env;
 	Out.ar(out, sig * amp);
 };
@@ -347,9 +387,10 @@
 
 ~ufn[\808][\hh] = {
     arg out=0, pan=0, amp=0.3,
-        att=0.001, rel=0.05, 
+        att=0.001, rel=0.05,
         freq=3000,      // Filter cutoff
-        res=0.1;        // Filter resonance
+        res=0.1,        // Filter resonance
+        gate=1;
 
     var env, sig, osclist;
 

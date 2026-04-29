@@ -8,7 +8,7 @@ Pdefn(\kkA, Pseq([
   Pn(Pdefn(\kk1), 2), 
 ],  1));
 Pdefn(\kkB, Pseq([
-  Pn(Pdefn(\kk2), 4), 
+  Pn(Pdefn(\kk2), 2), 
   Pn(Pdefn(\kk3), 2), 
 ],  1));
 Pdefn(\kk,  Pseq([Pdefn(\kkA)], inf));
@@ -29,17 +29,16 @@ Pdefn(\hhA, Pseq([
 ], 1));
 Pdefn(\hh,  Pseq([Pdefn(\hh0)], inf));
 
-~kitBase = Pbind(\type, \midi, \midiout, ~mOut, \chan, 0, 
-  \dur, 1/8,  
-  \scale, Scale.chromatic,  
-  \octave,  Pseq([3,  Pseq([ 3], 1)], inf),   
-  \stretch, 2,  
+~kitBase = Pbind(\type, \midi, \midiout, ~mOut, \chan, 0,
+  \scale, Scale.chromatic,
+  \octave,  Pseq([3,  Pseq([ 3], 1)], inf),
+  \stretch, Pstep(Pseq([1,  2,  4], inf), 8),
 );
 Pdef(\kitm, Ppar([
   Ppar([
-    Pchain(Pbind(\degree, Pdefn(\kk)),  ~kitBase),
-    Pchain(Pbind(\degree, Pdefn(\sn)),  ~kitBase),
-    Pchain(Pbind(\degree, Pdefn(\hh)),  ~kitBase),
+    Pchain(Pdefn(\kk),  ~kitBase),
+    Pchain(Pdefn(\sn),  ~kitBase),
+    Pchain(Pdefn(\hh),  ~kitBase),
   ]),
   Pbind(
       \type, \midi, \midiout, ~mOut, \chan, 15,
@@ -50,8 +49,8 @@ Pdef(\kitm, Ppar([
 ]));
 ~lpBindB.(1, [1, 1], \kitm,  9);     // bank 1, pad [1,1]
 ~lpBindBToggleFn.(1, [2, 1],
-    { Pdefn(\kk, Pseq([Pdefn(\kkB)], 4)) },
-    { Pdefn(\kk, Pseq([Pdefn(\kkA)], 4)) }
+    { Pdefn(\kk, Pseq([Pdefn(\kkB)], inf)) },
+    { Pdefn(\kk, Pseq([Pdefn(\kkA)], inf)) }
 );
 )
 Pdef(\kitm).play(~link);

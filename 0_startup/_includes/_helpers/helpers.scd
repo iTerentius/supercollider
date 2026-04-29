@@ -83,22 +83,40 @@
     };
 };
 
-// easier patterning with "x---x---x---x---"
-~p = { |str, rep=1, dur=1| 
-  var array = str.collectAs({ |char| 
-    if(char == $x, { dur }, { Rest(dur) }) 
-  }, Array);
-  Pseq(array, rep);
+// ~hit.("x--x_-", note, rep, stepDur)  — 'x' fires note, '_' sustains previous note.
+// Returns Pbind(\degree, ..., \dur, ...) — drop \dur from ~kitBase and use
+// Pchain(Pdefn(\x), ~kitBase) instead of Pchain(Pbind(\degree, Pdefn(\x)), ~kitBase).
+~hit = { |str, note, rep=inf, stepDur=0.125|
+    var degrees = [], durs = [], i = 0;
+    while { i < str.size } {
+        if(str[i] == $x) {
+            var span = 1;
+            while { (i + span) < str.size && (str[i+span] == $_) } { span = span + 1 };
+            degrees = degrees.add(note);
+            durs    = durs.add(span * stepDur);
+            i = i + span;
+        } {
+            degrees = degrees.add(Rest());
+            durs    = durs.add(stepDur);
+            i = i + 1;
+        }
+    };
+    Pbind(\degree, Pseq(degrees, rep), \dur, Pseq(durs, rep))
 };
+
+// ~deg.("0--2-4", rep, dur) — digits set scale degree, anything else = rest.
+// Returns a plain value pattern (degree only); pair with a separate \dur in Pbind.
 ~deg = { |str, rep=1, dur=1|
-    var array = str.collectAs({ |char|
-      if(char.isDecDigit, { char.digitValue }, { Rest(dur) })
+    var array = str.collectAs({ |c|
+        if(c.isDecDigit, { c.digitValue }, { Rest(dur) })
     }, Array);
-    Pseq(array, rep);
-  };
-~hit = { |str, note, rep=inf, dur=0.125 |
-      Pseq(str.collectAs({ |c| if(c == $x, note, Pn(Rest(), 1)) }, Array), rep)
-  };
+    Pseq(array, rep)
+};
+
+// ~p.("x---x---", rep, dur) — 'x' = dur value, anything else = rest. Plain value pattern.
+~p = { |str, rep=1, dur=1|
+    Pseq(str.collectAs({ |c| if(c == $x, dur, Rest(dur)) }, Array), rep)
+};
 "Helpers loaded.".postln;
 )
 

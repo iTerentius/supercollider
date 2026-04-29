@@ -21,5 +21,6 @@ SynthDef(\hh808, ~ufn[\808][\hh]).add;
 SynthDef(\duck, ~ufn[\duck]).add;
 SynthDef(\harpy1,   ~ufn[\harpy1]).add;
 SynthDef(\dk,   ~ufn[\dk]).add;
+SynthDef(\thickPad,   ~ufn[\thickPad]).add;
 "analog_synthdefs loaded.".postln;
 )

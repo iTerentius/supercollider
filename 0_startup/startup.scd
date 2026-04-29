@@ -67,7 +67,7 @@ s.waitForBoot {
     "_includes/midi-setup.scd".loadRelative;
 
     // --- MIDI Controllers (auto-detect: APC40 mkII > Launch Control XL)
-    // "_includes/_midi-ctrl/midi-device-loader.scd".loadRelative;
+    "_includes/_midi-ctrl/midi-device-loader.scd".loadRelative;
 
     // Launch Pad Mini - uncomment if you use it
     "_includes/_midi-ctrl/launch-pad-mini/lp-param-router.scd".loadRelative;

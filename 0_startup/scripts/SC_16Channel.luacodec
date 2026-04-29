@@ -1,0 +1,19 @@
+function remote_init()
+	local items = {}
+	for i=1,16 do
+		table.insert(items, {name="Keyboard "..i, input="keyboard"})
+	end
+	remote.define_items(items)
+end
+
+function remote_process_midi(event)
+	-- This checks the incoming MIDI channel (event.channel) 
+	-- and maps it to the corresponding Keyboard item (1-16)
+	if event.type == remote.note_on or event.type == remote.note_off or event.type == remote.control_change then
+		local res = remote.handle_input(event, "Keyboard "..event.channel)
+		return res
+	end
+	return false
+end
+
+function remote_probe() return nil end

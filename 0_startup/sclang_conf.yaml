@@ -23,7 +23,7 @@ includePaths:
     -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/XML
     -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/wslib
     -   /Users/isaaclinder/Library/Application Support/SuperCollider/downloaded-quarks/HarmonicToolkitSC
-    -   /Users/isaaclinder/Music/sc_system/Extensions
+    -   /Users/isaaclinder/Music/supercollider/Extensions
 excludePaths:
     []
 postInlineWarnings: false
