@@ -137,14 +137,15 @@ Pdef(\all).stopQ(4);
                 
 
 (
-// var cut = Pseg([13,  7,  9, 7],[16,  2,  4], \lin,  inf).asStream;
-var cut = Pstep(Pseq([9, 7,  9, 7], inf), Pseq([3,  4,  8,  4], inf)).asStream;
+// var cut = Pseg([13,  7,  9, 7],[15,  3,  5], \lin,  inf).asStream;
+var cut = Pstep(Pseq([9, 7,  9, 7], inf), Pseq([3,  4,  8,  4], inf)/4).asStream;
 ///////////////////////////////////////////////////////////////
 // PDEF
 ///////////////////////////////////////////////////////////////
 
 Pdefn(\kdiv, Pseq([5], inf));
-Pdefn(\str, Pstep(Pseq([1,  2,   4, 1/3], inf), 3));
+// Pdefn(\str, Pstep(Pseq([1,  2,   4, 1/3], inf), Pseq([4,  4,  4,  1], 1)));
+Pdefn(\str, 1);
 Pdef(\t1,
   Pn(Plazy({
     Pfindur(cut.next, 
@@ -153,7 +154,7 @@ Pdef(\t1,
           \instrument,  \kik808, 
           \scale,   Scale.major,
           \octave,  2,  
-          \stretch, Pdefn(\str),  
+          \stretch, Pdefn(\str) * 2,  
           \degree,  ~deg.("0-12-040",  inf),  
           // \legato,  Pwhite(0.4, 1.8,  inf), 
           \dur,     1/Pdefn(\kdiv),  
