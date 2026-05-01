@@ -86,6 +86,7 @@ s.waitForBoot {
 
     // --- Helpers
     "_includes/_helpers/helpers.scd".loadRelative;
+    "_includes/cc-logger.scd".loadRelative;
 
     // --- LinkClock setup
     // 1. CLEAR existing clocks to kill Zombies

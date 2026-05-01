@@ -129,11 +129,11 @@
 // =============================================================================
 ~stemDiskStart = { |tracks=#[], returns=#[], fileBase="take", dirPath="",
                     clock=nil, addAction=\addToTail, autoSplit=true, splitCodec=\pcm_s24le,
-                    captureHistory=false, captureMidi=false,
+                    captureHistory=false, captureMidi=false, captureCC=false,
                     encodeMp3=true, deleteMixWav=true|
 
     var tIdx, rIdx, idxs, numChans, buf, defName, d, dstr, fullPath, baseName, sessionDir, baseDir, c, startBeat, synth;
-    var names, sidecarPath, stemsDir, midiDir, ffmpegPath, ffprobePath;
+    var names, sidecarPath, stemsDir, midiDir, ffmpegPath, ffprobePath, ccLogPath;
     var sanitize, writeSidecar, doSplit, mkDirIfNeeded, findBin, debug, makeFinalize, finalize, didFinalize;
     // MIDI capture state
     var midiLog, midiStartBeat, bpmAtStart, ppqn, midiActive, midiCbOrig, midiCbCount;
@@ -185,6 +185,7 @@
     stemsDir    = sessionDir +/+ "stems";
     midiDir     = sessionDir +/+ "midi";
     midiPath    = midiDir +/+ (baseName ++ ".mid");
+    ccLogPath   = sessionDir +/+ (baseName ++ ".cc.scd");
 
     mkDirIfNeeded = { |path| if(File.exists(path).not) { File.mkdir(path) } };
 
@@ -311,6 +312,9 @@
                     } { |e| ("[stemRec] History save failed: " ++ e.errorString).warn };
                 };
 
+                // --- CC logger close ---
+                if(captureCC) { ~ccLogClose !? { ~ccLogClose.() } };
+
                 // --- MIDI write ---
                 if(captureMidi) {
                     // Stop capture first so no new events sneak in
@@ -388,6 +392,16 @@
         if(captureHistory) {
             try { History.start } { |e| ("[stemRec] History.start failed: " ++ e.errorString).warn };
             "[stemRec] History recording started.".postln;
+        };
+
+        // --- CC logger open ---
+        if(captureCC) {
+            if(~ccLogOpen.isNil) {
+                "[stemRec] captureCC: cc-logger.scd not loaded — load _includes/cc-logger.scd first".warn;
+            } {
+                ~ccLogOpen.(ccLogPath);
+                "[stemRec] CC logger active: ".post; ccLogPath.postln;
+            };
         };
 
         // --- MIDI spy setup ---

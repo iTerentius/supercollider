@@ -127,7 +127,7 @@ s.sync;
 ~inlineFXmk = { |ch, sym|
     ~inlineFX[sym] = ch.playfx({ |in|
         var sig = In.ar(ch.inbus.index, 2);
-        HPF.ar(LPF.ar(sig, \lpfreq.kr(18000)), \hpfreq.kr(100))
+        HPF.ar(LPF.ar(sig, \lpfreq.kr(18000)), \hpfreq.kr(50))
     });
 };
 
@@ -140,8 +140,15 @@ s.sync;
 ~inlineFXmk.(~t9, \t9);   ~inlineFXmk.(~t10, \t10); ~inlineFXmk.(~t11, \t11); ~inlineFXmk.(~t12, \t12);
 // Returns
 ~inlineFXmk.(~r1, \r1);   ~inlineFXmk.(~r2, \r2);   ~inlineFXmk.(~r3, \r3);   ~inlineFXmk.(~r4, \r4); ~inlineFXmk.(~r5, \r5);
-// Perc submix only — sub-channels don't need per-voice HPF/LPF
+// Perc submix + sub-channels
 ~inlineFXmk.(~perc, \perc);
+~inlineFXmk.(~pbd1, \pbd1); ~inlineFXmk.(~pbd2, \pbd2);
+~inlineFXmk.(~psd1, \psd1); ~inlineFXmk.(~psd2, \psd2);
+~inlineFXmk.(~phh1, \phh1); ~inlineFXmk.(~phh2, \phh2);
+~inlineFXmk.(~pcp1, \pcp1); ~inlineFXmk.(~pcp2, \pcp2);
+~inlineFXmk.(~ptm1, \ptm1); ~inlineFXmk.(~ptm2, \ptm2); ~inlineFXmk.(~ptm3, \ptm3);
+~inlineFXmk.(~pcr1, \pcr1); ~inlineFXmk.(~pcr2, \pcr2);
+~inlineFXmk.(~pex1, \pex1); ~inlineFXmk.(~pex2, \pex2);
 ~inlineFXmk = nil;  // release helper
 
 // ~apcMixBind: per-strip helper — 4 bindings (f/r1/r2/r3), pan optional

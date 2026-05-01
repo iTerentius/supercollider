@@ -85,7 +85,10 @@ MIDIdef.cc(\lcn_cc, { |val, num, chan, src|
             key = ("b" ++ ~lcn[\bankIdx] ++ "_s" ++ (strip+1) ++ "_r2").asSymbol;
         };
     };
-    if (key.notNil and: { ~lcn[key].notNil }) { ~lcn[key].(val) };
+    if (key.notNil and: { ~lcn[key].notNil }) {
+        ~lcn[key].(val);
+        ~ccLog !? { ~ccLog.(key, "~lcn[" ++ key.asCompileString ++ "].(" ++ val ++ ");") };
+    };
 }).permanent_(true);
 
 // --- Launch Control XL Router ---
@@ -131,6 +134,7 @@ MIDIdef.cc(\lcxl_cc, { |val, num, chan, src|
             var key = ~lcxlParam[\makeKey].(idx, row);
             if (~lcxlParam[key].notNil) {
                 ~lcxlParam[key].(val);
+                ~ccLog !? { ~ccLog.(key, "~lcxlParam[" ++ key.asCompileString ++ "].(" ++ val ++ ");") };
             };
         };
     };

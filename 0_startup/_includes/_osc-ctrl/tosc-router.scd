@@ -92,12 +92,23 @@ if(~toscRecvFunc.notNil) {
         var yKey = (key.asString ++ "/y").asSymbol;
         var xVal = normVal.(msg[1]);
         var yVal = normVal.(msg[2]);
-        ~oscState[xKey] = xVal; ~oscParam[xKey] !? { |cb| cb.(xVal) };
-        ~oscState[yKey] = yVal; ~oscParam[yKey] !? { |cb| cb.(yVal) };
+        ~oscState[xKey] = xVal;
+        if(~oscParam[xKey].notNil) {
+            ~oscParam[xKey].(xVal);
+            ~ccLog !? { ~ccLog.(xKey, "~toscSend.(" ++ xKey.asCompileString ++ ", " ++ xVal.round(0.001) ++ ");", \osc) };
+        };
+        ~oscState[yKey] = yVal;
+        if(~oscParam[yKey].notNil) {
+            ~oscParam[yKey].(yVal);
+            ~ccLog !? { ~ccLog.(yKey, "~toscSend.(" ++ yKey.asCompileString ++ ", " ++ yVal.round(0.001) ++ ");", \osc) };
+        };
     } {
         var val = normVal.(msg[1]);
         ~oscState[key] = val;
-        ~oscParam[key] !? { |cb| cb.(val) };
+        if(~oscParam[key].notNil) {
+            ~oscParam[key].(val);
+            ~ccLog !? { ~ccLog.(key, "~toscSend.(" ++ key.asCompileString ++ ", " ++ val.round(0.001) ++ ");", \osc) };
+        };
     };
 };
 thisProcess.addOSCRecvFunc(~toscRecvFunc);

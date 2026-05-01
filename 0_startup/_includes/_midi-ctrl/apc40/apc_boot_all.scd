@@ -47,6 +47,7 @@ ensureID.(\apcLedState);
 ensureID.(\apcSceneMap);
 ensureID.(\apcStopColChanMap);
 ensureID.(\apcParamBindings);
+ensureID.(\apcParamDesc);    // optional human-readable description per key (for CC log comments)
 ensureID.(\apcState);        // tracks last normalized value per param key — for save/restore
 
 /* colors bag - APC40 MK2 supports 128 colors (0-127) via velocity.
@@ -375,16 +376,22 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     ("b" ++ b ++ "_s" ++ s ++ "_r" ++ r).asSymbol
 };
 
-~apcBindParam = { |key, func|
-    var f; f = func; ~apcParamBindings[key] = f;
+~apcBindParam = { |key, func, desc=nil|
+    ~apcParamBindings[key] = func;
+    if(desc.notNil) { ~apcParamDesc[key] = desc.asString };
     ["[apcBindParam] bound", key].postln;
 };
 
 ~apcApplyParam = { |key, x|
     var f; f = ~apcParamBindings[key];
     if(f.notNil) {
-        ~apcState[key] = x;   // track for save/restore
-        f.value(x)
+        ~apcState[key] = x;
+        f.value(x);
+        ~ccLog !? {
+            var desc = ~apcParamDesc[key];
+            var comment = if(desc.notNil) { "  // " ++ desc } { "" };
+            ~ccLog.(key, "~apcApplyParam.(" ++ key.asCompileString ++ ", " ++ x.round(0.001) ++ ");" ++ comment);
+        };
     } { ["[apcApplyParam] no binding for", key].postln };
 };
 

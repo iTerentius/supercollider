@@ -300,6 +300,9 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
                         if(obj.respondsTo(\stopQ)) { obj.stopQ(quant) } { obj.stop };
                     };
                     "[%] Stopping: %".format(note, key).postln;
+                    if(History.started and: { key.isKindOf(Symbol) }) {
+                        History.enter(obj.class.name ++ "(" ++ key.asCompileString ++ ").stopQ(" ++ quant ++ ");", \lp);
+                    };
                 } {
                     if(obj.isKindOf(NodeProxy)) {
                         obj.quant = quant; obj.play;
@@ -307,6 +310,14 @@ if (~lpMini[\src].isNil) { "CRITICAL: LP Mini MIDI not found!".warn; };
                         obj.play(clock, quant: quant);
                     };
                     "[%] Playing: %".format(note, key).postln;
+                    if(History.started and: { key.isKindOf(Symbol) }) {
+                        var line = if(obj.isKindOf(NodeProxy)) {
+                            obj.class.name ++ "(" ++ key.asCompileString ++ ").play;"
+                        } {
+                            obj.class.name ++ "(" ++ key.asCompileString ++ ").play(~link, quant: " ++ quant ++ ");"
+                        };
+                        History.enter(line, \lp);
+                    };
                 };
             };
         };
