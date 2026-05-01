@@ -35,7 +35,7 @@ Pdefn(\v3_oct_0,  Pseq([4,  5], 1));
 Pdefn(\v3_octs,  Pseq([Pn(Pdefn(\v3_oct_0), 4)], 1));
 
 // AMPS
-Pdefn(\v3_amp_0, 0.3);
+Pdefn(\v3_amp_0, 0.1);
 Pdefn(\v3_amps,  Pseq([Pn(Pdefn(\v3_amp_0), 4)], 1));
 
 // DEGS — words

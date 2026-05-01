@@ -38,11 +38,11 @@ Pdefn(\v2_scale, Scale.major);
 
 // OCTS
 // Pdefn(\v2_oct_0, Pseq((9..10),  1));
-Pdefn(\v2_oct_0, Pstep(Pseq([10,  5], 1), 3));
+Pdefn(\v2_oct_0, Pstep(Pseq([10,  5], 1), 1));
 Pdefn(\v2_octs,  Pseq([Pn(Pdefn(\v2_oct_0), 4)], 1));
 
 // AMPS
-Pdefn(\v2_amp_0, Pstep(Pseq([0.3, 0.1], inf), 3));
+Pdefn(\v2_amp_0, Pstep(Pseq([0.1, 0.1], inf), 3));
 Pdefn(\v2_amps,  Pseq([Pn(Pdefn(\v2_amp_0), 4)], 1));
 
 // DEGS — words
@@ -61,7 +61,7 @@ Pdefn(\v2_dur_1, Pbjorklund(7, 8, 1) );
 Pdefn(\v2_durs_a, Pseq([Pn(Pdefn(\v2_dur_0), 4)], 1));   // straight
 Pdefn(\v2_durs_b, Pseq([Pn(Pdefn(\v2_dur_1), 4)], 1));   // euclidean
 // story
-Pdefn(\v2_durs,  Pseq([Pn(Pdefn(\v2_durs_a), 4)], 1));
+Pdefn(\v2_durs,  Pseq([Pn(Pdefn(\v2_durs_b), 4)], 1));
 
 // STRS
 // Pdefn(\v2_str_0, 1/4); 

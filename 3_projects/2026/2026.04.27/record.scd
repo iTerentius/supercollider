@@ -1,4 +1,7 @@
 
+// Load CC logger before starting if not already in startup
+"_includes/cc-logger.scd".loadRelative;
+
 (
 ~stemStop = ~stemDiskStart.(
   tracks:  [~t1, ~t2, ~t3 ],    // MixerChannels to record
@@ -9,13 +12,18 @@
   autoSplit: true,                   // auto-split interleaved WAV into stems via ffmpeg
   splitCodec: \pcm_s24le,            // codec for split files
   captureHistory: true,              // saves jam_<timestamp>.history.scd (live code log)
-  captureMidi: true                  // saves jam_<timestamp>.mid (one track per stem)
+  captureMidi: true,                 // saves jam_<timestamp>.mid (one track per stem)
+  captureCC: true                    // saves jam_<timestamp>.cc.scd (debounced CC/OSC changes)
 );
 )
 
 // --- Stop recording (scheduled, on beat) ---
 ~stemStop.();                 // stop 4 beats from now
 
-History.readFromDoc("~/Music/recordings/naipa_2026-04-28_16-32-17/naipa_2026-04-28_16-32-17.history.scd");
+History.start();
+History.end();
+History.saveStory("~/Downloads/ccTest.scd");
+History.loadStory("~/Downloads/ccTest.scd");
 History.play();
 History.stop();
+
