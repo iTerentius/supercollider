@@ -79,6 +79,16 @@ Pdef(\v4).stopQ(4);
 ~ilfx[\v4_stutter] = ~fxLib[\stutter].(~t4, [\amp, 5,  \rate,  8,  \mix, 0.5]);
 ~ilfx[\v4_stutter].free; ~ilfx[\v4_stutter] = nil;
 
+~ilfx[\v6_shimmer] = ~fxLib[\shimmer].(~t6, [\shift, 24,  \time,  1,  \mix, 0.5]);
+~ilfx[\v6_shimmer].free; ~ilfx[\v6_shimmer] = nil;
+
+~ilfx[\v6_crush] = ~fxLib[\bitcrush].(~t6, [\bits, 4, \rate,  8000,  \mix, 0.5]);
+~ilfx[\v6_crush].free; ~ilfx[\v6_crush] = nil;
+
+~ilfx[\v6_stutter] = ~fxLib[\stutter].(~t6, [\amp, 9,  \rate,  1,  \mix, 0.9]);
+~ilfx[\v6_stutter].free; ~ilfx[\v6_stutter] = nil;
+
+
 (
 Pdef(\v1_crush,  Pbind(
   \type,   \set,  
@@ -118,6 +128,9 @@ Pdef(\v1).clear;
 ~v3_2_r3.free; ~v3_2_r3 = nil;
 ~v2_2_r3 = ~t3.newPostSend(~r3, 1.0);
 
+~v6_2_r5 = ~t6.newPostSend(~r5, 0.8);
+~v6_2_r5.free; ~v6_2_r5 = nil;
+
 ~ilfx[\r1_stutter] = ~fxLib[\stutter].(~r1, [\amp, 9,  \rate,  0.5,  \mix, 0.9]);
 ~ilfx[\r1_stutter].free; ~ilfx[\r1_stutter] = nil;
 ~ilfx[\r1_spectral] = ~r1.playfx({ |in| ~ufn[\spectral].(in, ~r1.inbus.index) });
@@ -129,6 +142,8 @@ Pdef(\v1).clear;
 ~ilfx[\r1_glitch].free; ~ilfx[\r1_glitch] = nil;
 Pdef(\bCtl).play(~link);
 Pdef(\bCtl).stopQ(4);
+Pdef(\spectral).play(~link);
+Pdef(\spectral).stopQ(4);
 
 Pdef(\all).play(~link);
 Pdef(\all).stopQ(4);

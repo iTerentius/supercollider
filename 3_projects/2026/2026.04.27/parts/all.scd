@@ -66,6 +66,29 @@ Pdef(\all,
         ))
       }), 
     inf),                          
+    Pn(
+      Plazy({
+        Pfindur(~all_cut.next*8,   Pbind( 
+          \instrument,  \bass8,  
+          \amp, 0.1,  
+          \scale,  Scale.dorian, 
+          \octave,  4,  
+          \dur, 1/Pdefn(\all_div)/2,  
+          \stretch, Pseq([4], inf),  
+          // \degree, Pn(Pslide((0..7), Pseq([8, 3,  5], inf),  3,  1), 1), 
+          \degree,  Pseq([
+            Pn(~deg.("0-74-2--"),  1), 
+            Pn(~deg.("4-0--001"),  1), 
+            Pn(Rest(),  3), 
+            // Pn(~deg.("---7----"),  1), 
+            // Pn(Pslide((7..14), Pseq([8, 3,  5], 1),  2,  2), 1),
+          ],  inf),           
+          // \legato,  0.005,  
+          \pan, 0,  
+          \out,  ~t6.inbus.index, 
+        ))
+      }), 
+    inf),                          
   ])
 );
 )
