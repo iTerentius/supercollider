@@ -14,4 +14,4 @@ Tdef(\tempo, {
 Tdef(\tempo).play;
 Tdef(\tempo).stop;
 
-~link.tempo = 90/60;
+~link.tempo = 60/60;

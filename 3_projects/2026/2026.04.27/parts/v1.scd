@@ -5,8 +5,8 @@ var cut = Pseq([3,  5 ], inf).asStream;
 // PDEF
 ///////////////////////////////////////////////////////////////
 Pdef(\v1,
-  Pn(Plazy({
-    Pfindur(cut.next,  
+  // Pn(Plazy({
+    // Pfindur(cut.next,  
     Pbindef(\v1_pb,
     \instrument,  \kik808,
     \scale,   Pn(Pdefn(\v1_scale), inf),
@@ -21,14 +21,16 @@ Pdef(\v1,
     \rel, Pseg([0.2,  1.0,  0.2], [3],  \exp, inf),  
     \pitchRel,  Pstep(Pseq([0.5,  2],  inf), 3),    
     \out,     Pn(Pdefn(\v1_out),   inf),
-  ))
-  }), inf)
+  )
+// )
+  // })
+  , inf)
 );
 
 ///////////////////////////////////////////////////////////////
 // PDEFNS
 ///////////////////////////////////////////////////////////////
-Pdefn(\v1_out,   ~t1.inbus.index);
+Pdefn(\v1_out,   ~pbd2.inbus.index);
 Pdefn(\v1_scale, Scale.major);
 
 // BUFS — point at your sample folder

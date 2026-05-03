@@ -9,9 +9,9 @@ var cut = Pseq([7], inf).asStream;
 ///////////////////////////////////////////////////////////////
 Pdef(\v2,
   Pn(Plazy({
-    Pfindur(cut.next,  
+    // Pfindur(cut.next,  
     Pbindef(\v2_pb,
-    \instrument,  Pstep(Pseq([\hh808,\t1002], inf),  1), 
+    \instrument,  Pstep(Pseq([\hh808,\harpy1], inf),  1), 
     \scale,   Pn(Pdefn(\v2_scale), inf),
     \octave,  Pn(Pdefn(\v2_octs),  inf),
     \stretch, Pn(Pdefn(\v2_strs),  inf),
@@ -21,14 +21,15 @@ Pdef(\v2,
     \amp,     Pn(Pdefn(\v2_amps),  inf),
     \out,     Pn(Pdefn(\v2_out),   inf),
     \rel,     Pn(Pdefn(\v2_rel),   inf),
-  ))
+  )
+// )
   }), inf)
 );
 
 ///////////////////////////////////////////////////////////////
 // PDEFNS
 ///////////////////////////////////////////////////////////////
-Pdefn(\v2_out,   ~t2.inbus.index);
+Pdefn(\v2_out,   ~phh2.inbus.index);
 Pdefn(\v2_scale, Scale.major);
 
 // BUFS — point at your sample folder

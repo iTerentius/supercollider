@@ -13,7 +13,7 @@ Pdef(\v1).stopQ(4);
 ~ilfx[\v1_glitch] = ~fxLib[\glitch].(~t1, [\rate, 4.5,  \mix, 0.5]);
 ~ilfx[\v1_glitch].free; ~ilfx[\v1_glitch] = nil;
 
-~ilfx[\v1_shimmer] = ~fxLib[\shimmer].(~t1, [\shift, 24,  \time,  0.5,  \mix, 0.9]);
+~ilfx[\v1_shimmer] = ~fxLib[\shimmer].(~t1, [\shift, 24,  \time,  3,  \mix, 0.9]);
 ~ilfx[\v1_shimmer].free; ~ilfx[\v1_shimmer] = nil;
 
 ~ilfx[\v1_stutter] = ~fxLib[\stutter].(~t1, [\amp, 4,  \rate,  4,  \mix, 0.9]);
@@ -28,7 +28,7 @@ Pdef(\v2).stopQ(4);
 ~ilfx[\v2_ringmod].free; ~ilfx[\v2_ringmod] = nil;
 
 ~ilfx[\v2_fold] = ~fxLib[\fold].(~t2, [\gain, 3,  \mix, 0.5]);
-~ilfx[\v2_fold].free; ~ilfx[\v2_fold] = nil;
+~ilfx[\v2_fold].free; ~ilfx[\v2_foldn] = nil;
 
 ~ilfx[\v2_glitch] = ~fxLib[\glitch].(~t2, [\rate, 0.5,  \mix, 0.5]);
 ~ilfx[\v2_glitch].free; ~ilfx[\v2_glitch] = nil;
@@ -85,15 +85,15 @@ Pdef(\v1_crush,  Pbind(
   \id,    Pfunc({ ~ilfx[\v1_crush].nodeID }), 
   \args,  #[\rate,  \bits,  \mix, \amp],
   // \rate,  Pseg([800,  8000],  [2],  \lin, inf), 
-  \mix, Pseg([0.01,  1.0, 0.01], [4,  4],  \exp, inf),  
+  // \mix, Pseg([0.01,  1.0, 0.01], [4,  4],  \exp, inf),  
   // \mix,  Pbjorklund2(3, 8,  inf), 
-  // \mix, Pseg([0.0, 1.0],[1],  \step, inf), 
+  \mix, Pstep(Pseq([0.0!2, 1.0].flat, inf), 3), 
   \amp, 0.8,  
   \rate,  Pseg([2500, 20000], [1],  \sin, inf),  
   \bits,  Pseg([4,  6], [3], \step,  inf),  
   // \dur, Pseq([1/4!2, 1/2,   1,  1/8!4].flat, inf), 
-  \dur, Pseg([1,  1/8], [3],  \step, inf), 
-  \stretch, Pn(Pdefn(\v1_durs),  inf)/4,  
+  \dur, Pseg([1/3,  1/5], [3],  \step, inf), 
+  \stretch, Pn(Pdefn(\all_div),  inf),  
 ));
 )
 Pdef(\v1_crush).play(~link);
@@ -113,22 +113,83 @@ Pdef(\v1).clear;
 
 ~v2_2_r1.free; ~v2_2_r1 = nil;
 ~v2_2_r1 = ~t2.newPostSend(~r1, 1.0);
+~v2_2_r2.free; ~v2_2_r2 = nil;
+~v2_2_r1 = ~t2.newPostSend(~r2, 1.0);
 ~v3_2_r3.free; ~v3_2_r3 = nil;
 ~v2_2_r3 = ~t3.newPostSend(~r3, 1.0);
 
-~ilfx[\r1_stutter] = ~fxLib[\stutter].(~r1, [\amp, 4,  \rate,  16,  \mix, 0.9]);
-~ilfx[\r1_glitch] = ~fxLib[\glitch].(~r1, [\rate, 0.5,  \mix, 0.5]);
+~ilfx[\r1_stutter] = ~fxLib[\stutter].(~r1, [\amp, 9,  \rate,  16,  \mix, 0.9]);
 ~ilfx[\r1_stutter].free; ~ilfx[\r1_stutter] = nil;
+~ilfx[\r1_glitch] = ~fxLib[\glitch].(~r1, [\rate, 0.5,  \mix, 0.5]);
+~ilfx[\r1_glitch].free; ~ilfx[\r1_glitch] = nil;
+~ilfx[\r2_glitch] = ~fxLib[\glitch].(~r2, [\rate, 0.3,  \mix, 0.5]);
+~ilfx[\r1_glitch].free; ~ilfx[\r1_glitch] = nil;
 Pdef(\bCtl).play(~link);
 Pdef(\bCtl).stopQ(4);
 
 (
-var cut = Pseq([3,  1,  7, 5], inf).asStream;
+~cut = Pseq([3,  5,  3,  9], inf).asStream;
+// ~cut = Pstep(Pseq([9, 7,  9, 7], inf), Pseq([3,  4,  8,  4], inf)/4).asStream;
+Pdefn(\cut, Pseq([2,  3,  7, 5],  inf));
+Pdefn(\all_div, Pseq([5], inf));
 Pdef(\all,  
   Ppar([                                                    
-    Pn(Pfindur(cut.next+1, Pdef(\v1)), inf),
-    // Pn(Pfindur(cut.next,   Pdef(\v2)), inf),                          
-    Pn(Pfindur(cut.next+1, Pdef(\v3)), inf),                          
+    Pn(
+      Plazy({
+        Pfindur(~cut.next*2, Pbind(  
+          // Pn(Pfin(Pdefn(\cut), Pbind(  
+          \instrument,  \kik808,  
+          \scale, Scale.dorian,
+          \octave,  Pseq([2,2], inf),   
+          // \dur, 1/Pdefn(\all_div)/Pseq([2,  1!1].flat, inf),  
+          \dur, 1/Pdefn(\all_div),  
+          \stretch, Pseq([2,  ],   inf),  
+          \degree,  Pseq([
+            Pn(~deg.("0201-"),1),  
+            Pn(~deg.("040-1"),1),  
+            Pn(~deg.("--124-0---"),1),    
+            // Pn(~deg.("7-1-4-2", 1),1),    
+          ],  inf),  
+          \amp, 0.5,  
+          \out, ~pbd1.inbus.index,  
+        ))
+      }),  
+    inf),
+    Pn(
+      Plazy({
+        Pfindur(~cut.next*4, Pbind(  
+          // Pn(Pfin(Pdefn(\cut), Pbind(  
+          \instrument,  \sn808,  
+          \scale, Scale.dorian,
+          \octave,  Pseq([2,2], inf),   
+          \dur, 1/Pdefn(\all_div)/Pseq([2,  1!1].flat, inf),  
+          // \dur, 1/Pdefn(\all_div),  
+          \stretch, Pseq([2,  1],   inf),  
+          \degree,  Pseq([
+            Pn(~deg.("------------02"),1),  
+          ],  inf),  
+          \amp, 0.0,  
+          \out, ~psd1.inbus.index,  
+        ))
+      }),  
+    inf),
+    Pn(
+      Plazy({
+        Pfindur(~cut.next*2,   Pbind( 
+          \instrument,  \hh808,  
+          \amp, 0.4,  
+          \scale,  Scale.minor, 
+          \octave,  9,  
+          \degree,  ~deg.("-77-7"), 
+          \legato,  0.005,  
+          \pan, 0,  
+          \dur, 1/Pdefn(\all_div),  
+          \rel, Pseq([0.1!4, 0.2].flat),     
+          \stretch, 1,  
+          \out,  ~phh1.inbus.index, 
+        ))
+      }), 
+    inf),                          
   ])
 );
 )
@@ -136,60 +197,5 @@ Pdef(\all).play(~link);
 Pdef(\all).stopQ(4);
                 
 
-(
-// var cut = Pseg([13,  7,  9, 7],[15,  3,  5], \lin,  inf).asStream;
-var cut = Pstep(Pseq([9, 7,  9, 7], inf), Pseq([3,  4,  8,  4], inf)/4).asStream;
-///////////////////////////////////////////////////////////////
-// PDEF
-///////////////////////////////////////////////////////////////
-
-Pdefn(\kdiv, Pseq([5], inf));
-// Pdefn(\str, Pstep(Pseq([1,  2,   4, 1/3], inf), Pseq([4,  4,  4,  1], 1)));
-Pdefn(\str, 1);
-Pdef(\t1,
-  Pn(Plazy({
-    Pfindur(cut.next, 
-      Ppar([
-        Pbind(
-          \instrument,  \kik808, 
-          \scale,   Scale.major,
-          \octave,  2,  
-          \stretch, Pdefn(\str) * 2,  
-          \degree,  ~deg.("0-12-040",  inf),  
-          // \legato,  Pwhite(0.4, 1.8,  inf), 
-          \dur,     1/Pdefn(\kdiv),  
-          \amp,     0.3,  
-          \out,     ~pbd1.inbus.index,  
-          \rel,     0.4,  
-        ),  
-        Pbind(
-          \instrument,  \sn808, 
-          \scale,   Scale.major,
-          \octave,  3,  
-          \stretch, 2 + Pdefn(\str),  
-          \degree,  ~deg.("-------1",  inf),  
-          // \degree,  0,  
-          \dur,     1/Pdefn(\kdiv),  
-          \amp,     0.3,  
-          \out,     ~psd1.inbus.index,  
-          \rel,     0.4,  
-        ),  
-        Pbind(
-          \instrument,  Place([\hh808],  inf), 
-          \scale,   Scale.major,
-          \octave,  9,  
-          \stretch, 1 + Pdefn(\str),  
-          \degree,  ~deg.("---97-7-----",  inf),  
-          // \degree,  0,  
-          \legato,   0.005, 
-          \dur,     1/Pdefn(\kdiv),  
-          \amp,     0.3,  
-          \out,     ~phh1.inbus.index,  
-          \rel,     0.1,  
-        ),  
-      ]))
-  }), inf)
-);
-)
 Pdef(\t1).play(~link);
 Pdef(\t1).stop;
