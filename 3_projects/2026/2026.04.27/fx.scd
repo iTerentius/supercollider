@@ -118,6 +118,13 @@
     s
 };
 
+~fxLib[\spectral] = { |chan,   args=#[]|
+  var bus = chan.inbus;
+  var s = chan.playfx({ |in| ~fxDefs[\spectral].(in, bus) });
+  if(args.notEmpty) { s.set(*args)};
+  s
+};
+
 ~fxLib[\duck] = { |chan, sideChannel, args=#[], target=nil,
   addAction=\addToTail|
       var t = target ?? { chan.effectgroup };

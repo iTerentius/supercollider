@@ -101,7 +101,7 @@ Pdef(\v1_crush).stopQ(4);
 Pdef(\v1).clear;
 
 ~v1_2_r1.free; ~v1_2_r1 = nil;
-~v1_2_r1 = ~t1.newPostSend(~r1, 0.6);
+~v1_2_r1 = ~t1.newPostSend(~r1, 0.8);
 ~v1_2_r2.free; ~v1_2_r2 = nil;
 ~v1_2_r2 = ~t1.newPostSend(~r2, 0.6);
 ~v1_2_r3.free; ~v1_2_r3 = nil;
@@ -118,8 +118,11 @@ Pdef(\v1).clear;
 ~v3_2_r3.free; ~v3_2_r3 = nil;
 ~v2_2_r3 = ~t3.newPostSend(~r3, 1.0);
 
-~ilfx[\r1_stutter] = ~fxLib[\stutter].(~r1, [\amp, 9,  \rate,  16,  \mix, 0.9]);
+~ilfx[\r1_stutter] = ~fxLib[\stutter].(~r1, [\amp, 9,  \rate,  0.5,  \mix, 0.9]);
 ~ilfx[\r1_stutter].free; ~ilfx[\r1_stutter] = nil;
+~ilfx[\r1_spectral] = ~r1.playfx({ |in| ~ufn[\spectral].(in, ~r1.inbus.index) });
+~ilfx[\r1_spectral].set(\amp, 1, \chunk, 4096, \freeze, 1, \mix, 0.5);
+~ilfx[\r1_spectral].free; ~ilfx[\r1_spectral] = nil;
 ~ilfx[\r1_glitch] = ~fxLib[\glitch].(~r1, [\rate, 0.5,  \mix, 0.5]);
 ~ilfx[\r1_glitch].free; ~ilfx[\r1_glitch] = nil;
 ~ilfx[\r2_glitch] = ~fxLib[\glitch].(~r2, [\rate, 0.3,  \mix, 0.5]);
@@ -127,75 +130,36 @@ Pdef(\v1).clear;
 Pdef(\bCtl).play(~link);
 Pdef(\bCtl).stopQ(4);
 
-(
-~cut = Pseq([3,  5,  3,  9], inf).asStream;
-// ~cut = Pstep(Pseq([9, 7,  9, 7], inf), Pseq([3,  4,  8,  4], inf)/4).asStream;
-Pdefn(\cut, Pseq([2,  3,  7, 5],  inf));
-Pdefn(\all_div, Pseq([5], inf));
-Pdef(\all,  
-  Ppar([                                                    
-    Pn(
-      Plazy({
-        Pfindur(~cut.next*2, Pbind(  
-          // Pn(Pfin(Pdefn(\cut), Pbind(  
-          \instrument,  \kik808,  
-          \scale, Scale.dorian,
-          \octave,  Pseq([2,2], inf),   
-          // \dur, 1/Pdefn(\all_div)/Pseq([2,  1!1].flat, inf),  
-          \dur, 1/Pdefn(\all_div),  
-          \stretch, Pseq([2,  ],   inf),  
-          \degree,  Pseq([
-            Pn(~deg.("0201-"),1),  
-            Pn(~deg.("040-1"),1),  
-            Pn(~deg.("--124-0---"),1),    
-            // Pn(~deg.("7-1-4-2", 1),1),    
-          ],  inf),  
-          \amp, 0.5,  
-          \out, ~pbd1.inbus.index,  
-        ))
-      }),  
-    inf),
-    Pn(
-      Plazy({
-        Pfindur(~cut.next*4, Pbind(  
-          // Pn(Pfin(Pdefn(\cut), Pbind(  
-          \instrument,  \sn808,  
-          \scale, Scale.dorian,
-          \octave,  Pseq([2,2], inf),   
-          \dur, 1/Pdefn(\all_div)/Pseq([2,  1!1].flat, inf),  
-          // \dur, 1/Pdefn(\all_div),  
-          \stretch, Pseq([2,  1],   inf),  
-          \degree,  Pseq([
-            Pn(~deg.("------------02"),1),  
-          ],  inf),  
-          \amp, 0.0,  
-          \out, ~psd1.inbus.index,  
-        ))
-      }),  
-    inf),
-    Pn(
-      Plazy({
-        Pfindur(~cut.next*2,   Pbind( 
-          \instrument,  \hh808,  
-          \amp, 0.4,  
-          \scale,  Scale.minor, 
-          \octave,  9,  
-          \degree,  ~deg.("-77-7"), 
-          \legato,  0.005,  
-          \pan, 0,  
-          \dur, 1/Pdefn(\all_div),  
-          \rel, Pseq([0.1!4, 0.2].flat),     
-          \stretch, 1,  
-          \out,  ~phh1.inbus.index, 
-        ))
-      }), 
-    inf),                          
-  ])
-);
-)
 Pdef(\all).play(~link);
 Pdef(\all).stopQ(4);
                 
 
 Pdef(\t1).play(~link);
 Pdef(\t1).stop;
+
+(
+Pdef(\r1_glitch_c, Pbind(
+  \type, Pfunc({ ~ilfx[\r1_glitch].notNil.if(\set, \rest) }),
+  \id,   Pfunc({ ~ilfx[\r1_glitch].tryPerform(\nodeID) }),
+  \args, #[\rate, \mix],  
+  \rate,  Pseg([0.3,  3,  0.3], [16],  \lin, inf), 
+));
+)
+Pdef(\r1_glitch_c).play(~link);
+Pdef(\r1_glitch_c).stopQ(4);
+(
+Pdef(\r1_spect_c, Pbind(
+  \type, Pfunc({ ~ilfx[\r1_spectral].notNil.if(\set, \rest) }),
+  \id,   Pfunc({ ~ilfx[\r1_spectral].tryPerform(\nodeID) }),
+  \args, #[\amp, \freeze, \mix],  
+  \freeze,   Pseq([0, 1], inf), 
+  \chunk, 4096, 
+  \mix, 1.8,  
+  \amp, 2,  
+  \dur, 2,  
+));
+)
+Pdef(\r1_spect_c).play(~link);
+Pdef(\r1_spect_c).stopQ(4);
+
+

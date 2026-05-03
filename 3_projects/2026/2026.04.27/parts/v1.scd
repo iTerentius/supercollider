@@ -8,23 +8,23 @@ Pdef(\v1,
   // Pn(Plazy({
     // Pfindur(cut.next,  
     Pbindef(\v1_pb,
-    \instrument,  \kik808,
-    \scale,   Pn(Pdefn(\v1_scale), inf),
-    \octave,  Pn(Pdefn(\v1_octs),  inf),
-    \stretch, Pn(Pdefn(\v1_strs),  inf),
-    \degree,  Pn(Pdefn(\v1_degs),  inf),
-    \dur,     Pn(Pdefn(\v1_durs),  inf),
-    \amp,     Pn(Pdefn(\v1_amps),  inf),
-    \dist,    0.8,  
-    \pitchMod,  0.8,  
-    \clickAmp,  0.5,  
-    \rel, Pseg([0.2,  1.0,  0.2], [3],  \exp, inf),  
-    \pitchRel,  Pstep(Pseq([0.5,  2],  inf), 3),    
-    \out,     Pn(Pdefn(\v1_out),   inf),
-  )
+      \instrument,  \kik808,
+      \scale,   Pn(Pdefn(\v1_scale), inf),
+      \octave,  Pn(Pdefn(\v1_octs),  inf),
+      \stretch, Pn(Pdefn(\v1_strs),  inf),
+      \degree,  Pn(Pdefn(\v1_degs),  inf),
+      \dur,     Pn(Pdefn(\v1_durs),  inf),
+      \amp,     Pn(Pdefn(\v1_amps),  inf),
+      \dist,    0.8,  
+      \pitchMod,  0.8,  
+      \clickAmp,  0.5,  
+      \rel, Pseg([0.2,  1.0,  0.2], [3],  \exp, inf),  
+      \pitchRel,  Pstep(Pseq([0.5,  2],  inf), 3),    
+      \out,     Pn(Pdefn(\v1_out),   inf),
+    )
 // )
   // })
-  , inf)
+  // , inf)
 );
 
 ///////////////////////////////////////////////////////////////
@@ -85,5 +85,5 @@ Pdefn(\v1_strs,  Pseq([Pn(Pdefn(\v1_str_0), 4)], 1));
             \dur,    Pseq([Pn(Pdefn(\v1_durs_a), 4)], inf),
             \degree, Pseq([Pn(Pdefn(\v1_degs_a), 4)], inf))
     },
-);
+  );
 )

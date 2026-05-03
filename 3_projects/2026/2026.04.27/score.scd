@@ -11,8 +11,8 @@ var safeLoad = { |path|
     };
 };
 {
-    (dir +/+ "lib/samples.scd").load;
-    s.sync;  // wait for Buffer.read /done callbacks
+    // (dir +/+ "lib/samples.scd").load;
+    // s.sync;  // wait for Buffer.read /done callbacks
     // safeLoad.("lib/config.scd");
     safeLoad.("fx.scd");
     safeLoad.("synths.scd");
@@ -22,9 +22,12 @@ var safeLoad = { |path|
     // safeLoad.("automation/ilfx/v1_crush.scd");
     // --- parts (one per voice, in any order) ---
     safeLoad.("parts/v1_kit.scd");
+    safeLoad.("parts/all.scd");
     safeLoad.("parts/v1.scd");
     safeLoad.("parts/v2.scd");
     safeLoad.("parts/v3.scd");
+    safeLoad.("automation/biscuit.scd");
+    safeLoad.("automation/spectral.scd");
     // --- bindings last (reads ~slots + ~autoSlots + ~phrFns populated by parts) ---
     safeLoad.("bindings.scd");
     safeLoad.("tosc_biscuit.scd");
