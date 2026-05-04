@@ -41,7 +41,7 @@ Pdef(\all,
             Pn(~deg.("---0---4"),1),  
             Pn(~deg.("----04"),1),  
           ],  inf),  
-          \amp, 0.0,  
+          \amp, 0.0, //0.5  
           \snappy,  Pwhite(0.2, 1.0, inf),  
           \snapRel, 2,  
           \tonFreq, Pkey(\degree).midicps,  
@@ -53,7 +53,7 @@ Pdef(\all,
       Plazy({
         Pfindur(~all_cut.next*2,   Pbind( 
           \instrument,  Pseq([\hh808, \t1002], inf),  
-          \amp, 0.4,  
+          \amp, 0.0, // 0.4  
           \scale,  Scale.minor, 
           \octave,  9,  
           \degree,  ~deg.("-77-7"), 
@@ -70,13 +70,13 @@ Pdef(\all,
       Plazy({
         Pfindur(~all_cut.next*8,   Pbind( 
           \instrument,  \bass8,  
-          \amp, 0.1,  
+          \amp, 0.0, // 0.15  
           \scale,  Scale.dorian, 
           \octave,  4,  
           \dur, 1/Pdefn(\all_div)/2,  
           \stretch, Pseq([4], inf),  
           // \degree, Pn(Pslide((0..7), Pseq([8, 3,  5], inf),  3,  1), 1), 
-          \degree,  Pseq([
+          \degree,  Pxrand([
             Pn(~deg.("0-74-2--"),  1), 
             Pn(~deg.("4-0--001"),  1), 
             Pn(Rest(),  3), 

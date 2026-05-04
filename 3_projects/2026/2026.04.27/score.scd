@@ -22,7 +22,8 @@ var safeLoad = { |path|
     // safeLoad.("automation/ilfx/v1_crush.scd");
     // --- parts (one per voice, in any order) ---
     safeLoad.("parts/v1_kit.scd");
-    safeLoad.("parts/all.scd");
+    // safeLoad.("parts/all.scd");
+    safeLoad.("parts/all2.scd");
     safeLoad.("parts/v1.scd");
     safeLoad.("parts/v2.scd");
     safeLoad.("parts/v3.scd");
