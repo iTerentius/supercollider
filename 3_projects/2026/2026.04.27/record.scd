@@ -22,8 +22,8 @@
 
 History.start();
 History.end();
-History.saveStory("~/Downloads/ccTest.scd");
-History.loadStory("~/Downloads/ccTest.scd");
+History.saveStory("~/Music/supercollider/3_projects/2026/2026.04.27/t1.scd");
+History.loadStory("~/Music/supercollider/3_projects/2026/2026.04.27/t1.scd");
 History.play();
 History.stop();
 

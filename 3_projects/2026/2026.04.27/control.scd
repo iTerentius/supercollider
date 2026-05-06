@@ -3,20 +3,22 @@ Pdef(\v1).play(~link);
 Pdef(\v1).stopQ(4);
 ~ilfx[\v1_crush] = ~fxLib[\bitcrush].(~t1,  [\bits, 6,  \rate,  8000, \mix, 0.8]);
 ~ilfx[\v1_crush].free; ~ilfx[\v1_crush] = nil;
+~ilfx[\kik_crush] = ~fxLib[\bitcrush].(~pbd1,  [\bits, 6,  \rate,  8000, \mix, 0.8]);
+~ilfx[\kik_crush].free; ~ilfx[\kik_crush] = nil;
 
-~ilfx[\v1_ringmod] = ~fxLib[\ringmod].(~t1, [\freq, 10, \mix, 0.1]);
+~ilfx[\v1_ringmod] = ~fxLib[\ringmod].(~t1, [\freq, 100, \mix, 0.1]);
 ~ilfx[\v1_ringmod].free; ~ilfx[\v1_ringmod] = nil;
 
-~ilfx[\v1_fold] = ~fxLib[\fold].(~t1, [\gain, 3,  \mix, 0.5]);
+~ilfx[\v1_fold] = ~fxLib[\fold].(~t1, [\gain, 1,  \mix, 0.2]);
 ~ilfx[\v1_fold].free; ~ilfx[\v1_fold] = nil;
 
 ~ilfx[\v1_glitch] = ~fxLib[\glitch].(~t1, [\rate, 4.5,  \mix, 0.5]);
 ~ilfx[\v1_glitch].free; ~ilfx[\v1_glitch] = nil;
 
-~ilfx[\v1_shimmer] = ~fxLib[\shimmer].(~t1, [\shift, 24,  \time,  3,  \mix, 0.9]);
+~ilfx[\v1_shimmer] = ~fxLib[\shimmer].(~t1, [\shift, 12,  \time,  5,  \mix, 0.9]);
 ~ilfx[\v1_shimmer].free; ~ilfx[\v1_shimmer] = nil;
 
-~ilfx[\v1_stutter] = ~fxLib[\stutter].(~t1, [\amp, 4,  \rate,  4,  \mix, 0.9]);
+~ilfx[\v1_stutter] = ~fxLib[\stutter].(~t1, [\amp, 8,  \rate,  3,  \mix, 0.9]);
 ~ilfx[\v1_stutter].free; ~ilfx[\v1_stutter] = nil;
 // v2
 Pdef(\v2).play(~link);
@@ -92,17 +94,17 @@ Pdef(\v4).stopQ(4);
 (
 Pdef(\v1_crush,  Pbind(
   \type,   \set,  
-  \id,    Pfunc({ ~ilfx[\v1_crush].nodeID }), 
+  \id,    Pfunc({ ~ilfx[\kik_crush].nodeID }), 
   \args,  #[\rate,  \bits,  \mix, \amp],
   // \rate,  Pseg([800,  8000],  [2],  \lin, inf), 
   // \mix, Pseg([0.01,  1.0, 0.01], [4,  4],  \exp, inf),  
   // \mix,  Pbjorklund2(3, 8,  inf), 
-  \mix, Pstep(Pseq([0.0!2, 1.0].flat, inf), 3), 
+  \mix, Pstep(Pseg([0.0, 1.0],  [8], \lin, inf), 4), 
   \amp, 0.8,  
   \rate,  Pseg([2500, 20000], [1],  \sin, inf),  
-  \bits,  Pseg([4,  6], [3], \step,  inf),  
-  // \dur, Pseq([1/4!2, 1/2,   1,  1/8!4].flat, inf), 
-  \dur, Pseg([1/3,  1/5], [3],  \step, inf), 
+  \bits,  Pseg([5,  8], [4], \lin,  inf),  
+  \dur, Pseq([1/4!2, 1/2,   1,  1/8!4].flat, inf), 
+  // \dur, Pseg([1/10,  1/5], [4],  \step, inf), 
   \stretch, Pn(Pdefn(\all_div),  inf),  
 ));
 )
@@ -157,7 +159,7 @@ Pdef(\r1_glitch_c, Pbind(
   \type, Pfunc({ ~ilfx[\r1_glitch].notNil.if(\set, \rest) }),
   \id,   Pfunc({ ~ilfx[\r1_glitch].tryPerform(\nodeID) }),
   \args, #[\rate, \mix],  
-  \rate,  Pseg([0.3,  3,  0.3], [16],  \lin, inf), 
+  \rate,  Pseg([1,  3,  1], [16],  \lin, inf), 
 ));
 )
 Pdef(\r1_glitch_c).play(~link);
