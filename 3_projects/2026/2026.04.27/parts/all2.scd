@@ -25,7 +25,6 @@ Pdefn(\bass_str,  2);
 
 /* [kick] */
 (
-~sbd1 = ~sTree[\bass_drums].values[1..2];
 Pbindef(\all_kick,
   \instrument, \kik808,
   \scale,   Pn(Pdefn(\all_scale), inf),
@@ -48,10 +47,9 @@ Pbindef(\all_kick,
     Pn(~deg.("----------"),  1), */
     /* Pn(~deg.("0----21---4----"), 1),  */
     /* Pn(~deg.("02-0--0-2---0-----"), 1),  */
-    /* Pn(~deg.("------0-----------"), 1),  */
     Pn(~deg.("0-------0-------"), 1), 
-    Pn(~deg.("0-------0-0-----"), 1), 
-    Pn(~deg.("0-------0-0---0-"), 1), 
+    Pn(~deg.("0-------0-------"), 1), 
+    Pn(~deg.("0-------0-0---0-"), 1),
   ], inf),
 );
 );
@@ -79,14 +77,14 @@ Pbindef(\all_sn,
 /* [hh] */
 (
 Pbindef(\all_hh,
-  \instrument, Pseq([\hh808, \t1002], inf),
-  \scale,   Scale.minor,
+  \instrument, Pseq([\hh808!4,  \harpy1].flat, inf),
+  \scale,   Scale.dorian,
   \octave,  9,
-  \degree,  ~deg.("-77-7"),
+  \degree,  ~deg.("4747"),
   \legato,  0.005,
   \pan,     0,
   \dur,     1/Pdefn(\all_div),
-  \rel,     Pseq([0.1!4, 0.2].flat),
+  \rel,     Pseq([0.1!4, 0.4].flat),
   \stretch, 2,
   \amp,     0.4,
   \out,     ~phh1.inbus.index,
@@ -98,12 +96,12 @@ Pbindef(\all_hh,
 Pbindef(\all_bass,
   \instrument, \bass8,
   \scale,   Scale.dorian,
-  \octave,  Pseq([3,  4], inf),
-  \root,    Pstep(Pseq([0,  2,  4,  1], inf), 1),  
-  /* \root,   0,  */
+  \octave,  Pseq([4,  4], inf),
+  /* \root,    Pstep(Pseq([0,  2,  4,  1], inf), 1),   */
+  \root,   0, 
   \dur,     1/Pdefn(\all_div),
   \stretch, Pdefn(\bass_str), 
-  \legato,  Pseg([0.5, 0.9, 1.2], [2, 4], \sin,  inf), 
+  \legato,  Pseg([0.3, 0.9, 1.2], [2, 4], \sin,  inf), 
   \amp,     0.15,
   \pan,     0,
   \out,     ~t6.inbus.index,

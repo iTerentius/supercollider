@@ -1,7 +1,7 @@
 // v1
 Pdef(\v1).play(~link);
 Pdef(\v1).stopQ(4);
-~ilfx[\v1_crush] = ~fxLib[\bitcrush].(~t1,  [\bits, 6,  \rate,  8000, \mix, 0.8]);
+~ilfx[\v1_crush] = ~fxLib[\bitcrush].(~t1,  [\bits, 6,  \rate,  8000, \mix, 0.3]);
 ~ilfx[\v1_crush].free; ~ilfx[\v1_crush] = nil;
 ~ilfx[\kik_crush] = ~fxLib[\bitcrush].(~pbd1,  [\bits, 6,  \rate,  8000, \mix, 0.8]);
 ~ilfx[\kik_crush].free; ~ilfx[\kik_crush] = nil;
@@ -84,7 +84,7 @@ Pdef(\v4).stopQ(4);
 ~ilfx[\v6_shimmer] = ~fxLib[\shimmer].(~t6, [\shift, 24,  \time,  1,  \mix, 0.5]);
 ~ilfx[\v6_shimmer].free; ~ilfx[\v6_shimmer] = nil;
 
-~ilfx[\v6_crush] = ~fxLib[\bitcrush].(~t6, [\bits, 4, \rate,  8000,  \mix, 0.5]);
+~ilfx[\v6_crush] = ~fxLib[\bitcrush].(~t6, [\bits, 4, \rate,  8000,  \mix, 1.0]);
 ~ilfx[\v6_crush].free; ~ilfx[\v6_crush] = nil;
 
 ~ilfx[\v6_stutter] = ~fxLib[\stutter].(~t6, [\amp, 9,  \rate,  1,  \mix, 0.9]);
@@ -178,5 +178,33 @@ Pdef(\r1_spect_c, Pbind(
 )
 Pdef(\r1_spect_c).play(~link);
 Pdef(\r1_spect_c).stopQ(4);
+
+(
+Tdef(\seq, {
+  Pdef(\all).play(~link,  quant:4);
+  /* section 1 */
+  ~allMul = (kick: 4, sn: 1, hh: 1, bass: 1);
+  Pbindef(\all_kick, \degree, Pseq([Pn(~deg.("0-------0-------"), 1)], inf));
+  32.wait;
+
+  /* section 2 */
+  ~allMul[\kick] = 2;
+  Pbindef(\all_kick, \degree, Pseq([
+    Pn(~deg.("0-------0-------"), 1),
+    Pn(~deg.("0-------0-0-----"), 1),
+  ], inf));
+  ~mkCut = { Pseq([3, 5, 3, 9].mirror, inf).asStream };
+  ~kickCut = ~mkCut.(); ~bassCut = ~mkCut.();
+  32.wait;
+
+  Pbindef(\all_kick, \degree, Pseq([
+    Pn(~deg.("----------------"), 1),
+  ], inf));
+  32.wait;
+
+  Pdef(\all).stop;
+})
+)
+Tdef(\seq).play(~link, quant: 4);
 
 
