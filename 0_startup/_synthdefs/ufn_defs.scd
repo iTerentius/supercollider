@@ -336,22 +336,30 @@
 // =============================================================================
 ~ufn[\808] = ();
 ~ufn[\808][\kik] = {
-    arg out=0, pan=0, amp=0.5, 
-        freq=50,        // Root frequency
-        att=0.001,      // Attack time
-        rel=0.8,        // Decay/Release time
-        pitchMod=4,     // How high the pitch sweep starts (multiplier)
-        pitchRel=0.1,   // How fast the pitch drops
-        clickAmp=0.2,   // Volume of the initial click
-        dist=1.5;       // Subtle saturation/distortion
+    arg out=0, pan=0, amp=0.5, freq=50, rel=0.8, 
+        pitchMod=4, pitchRel=0.1, clickAmp=0.2, 
+        dist=1.5, subAmp=0.4; // Added sub control
 
-    var env, pitchEnv, sig, click;
-    env = EnvGen.ar(Env.perc(att, rel), doneAction: 2);
-    pitchEnv = EnvGen.ar(Env.perc(0.001, pitchRel)) * (freq * pitchMod) + freq;
+    var env, pitchEnv, sig, click, sub;
+
+    env = EnvGen.ar(Env.perc(0.001, rel), doneAction: 2);
+    
+    // Use an exponential curve for the pitch drop - much punchier
+    pitchEnv = EnvGen.ar(Env([freq * pitchMod, freq], [pitchRel], \exp));
+    
+    // THE BODY: Sweeping sine
+    sig = SinOsc.ar(pitchEnv, 0.5pi);
+    
+    // THE SUB: Solid, non-moving low end
+    sub = SinOsc.ar(freq, 0.5pi) * EnvGen.ar(Env.perc(0.01, rel * 1.2));
+    
     click = BPF.ar(WhiteNoise.ar(1), 2000, 0.5) * EnvGen.ar(Env.perc(0.001, 0.01)) * clickAmp;
-    sig = SinOsc.ar(pitchEnv, 0.5pi); // Phase shift to 0.5pi starts the sine at its peak
-    sig = sig + click;
+    
+    sig = sig + (sub * subAmp) + click;
+    
+    // CHARACTER: Use tanh for warmth, but try softclip for more "edge"
     sig = (sig * dist).tanh; 
+    sig = LeakDC.ar(sig); // Keeps the signal centered after distortion
     
     sig = Pan2.ar(sig * env * amp, pan);
     Out.ar(out, sig);
