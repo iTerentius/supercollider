@@ -142,7 +142,7 @@ s.sync;
 ~inlineFXmk.(~r1, \r1);   ~inlineFXmk.(~r2, \r2);   ~inlineFXmk.(~r3, \r3);   ~inlineFXmk.(~r4, \r4); ~inlineFXmk.(~r5, \r5);
 // Perc submix + sub-channels
 ~inlineFXmk.(~perc, \perc);
-~inlineFXmk.(~pbd1, \pbd1); ~inlineFXmk.(~pbd2, \pbd2);
+~inlineFXmk.(~pbd1, \pbd1); ~inlineFXmk.(~pbd1, \pbd1);
 ~inlineFXmk.(~psd1, \psd1); ~inlineFXmk.(~psd2, \psd2);
 ~inlineFXmk.(~phh1, \phh1); ~inlineFXmk.(~phh2, \phh2);
 ~inlineFXmk.(~pcp1, \pcp1); ~inlineFXmk.(~pcp2, \pcp2);
