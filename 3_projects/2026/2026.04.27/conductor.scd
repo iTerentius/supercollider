@@ -89,38 +89,76 @@ Tdef(\seq).play(~link,  quant: 4);
 Pdef(\all).stop; Tdef(\seq).stop;
 
 (
+~sc = ();
+~sc[\all_on] = {
+Pbindef(\all_kick,  \amp, 0.8);
+Pbindef(\all_sn,  \amp, 0.4);
+Pbindef(\all_hh,  \amp, 0.4);
+Pbindef(\all_bass,  \amp, 0.18);
+};
+~sc[\solo_bass_hh] = {
+Pbindef(\all_sn,  \amp, 0);
+Pbindef(\all_kick,  \amp, 0);
+};
+Pdefn(\kk_dd,  Pseq([0], inf));
+Pdefn(\kk_d1,  Pseq([0, 1,], inf));
+Pdefn(\kk_d2,  ~deg.("010-0---0---"));
+Pdefn(\kk_d8,  Pseq([
+  /* Pn(~deg.("0201-"),  1),
+  Pn(~deg.("0-14-2"), 1),
+  Pn(~deg.("--0--"),  1),
+  Pn(~deg.("----------"),  1), */
+  /* Pn(~deg.("0----21---4----"), 1),  */
+  /* Pn(~deg.("02-0--0-2---0-----"), 1),  */
+  Pn(~deg.("0-------0-------"), 1), 
+  Pn(~deg.("0-------0-------"), 1), 
+  Pn(~deg.("0-------0-0---0-"), 1),
+], 1));
+Pdefn(\kk_deg,  Pseq([
+  Pn(Pdefn(\kk_dd), 4), 
+  // Pn(Pdefn(\kk_d1), 1), 
+],  1));
+)
+(
 Tdef(\alt1, {
-  // ~sc[\reset].value;
-  // 1.wait;
-  Pbindef(\all_sn,  \amp, 0);
-  Pbindef(\all_hh,  \amp, 0);
-  Pbindef(\all_bass,  \amp, 0);
-  Pdefn(\kick_str,  4); 
-  Pbindef(\all_kick,  
-    \degree,  Pseq((0..0), inf), 
-    \dist,  0.6,  
-    \clickAmp, 0.4, 
-    \pitchMod,  0.0,  
-    \pitchRel,  0.1,  
-    \rel,  Pseq([0.5!3, 2].flat,   inf),   
-    // \rel, 0.5,  
-    \subAmp,  1.2,  
-    \amp,     0.8,
-  );
-
-  Pdef(\all).play(~link);
+"parts/all2.scd".loadRelative;
+~sc[\all_on].value;
+Pbindef(\all_kick, \stretch,  Pseq([1,  2,  4],  inf));
+Pbindef(\all_sn,  \amp, 0);
+Pbindef(\all_hh,  \amp, 0);
+Pbindef(\all_bass,  \amp, 0);
+Pdef(\all).play(~link);
+8.wait;
+Pbindef(\all_bass,  \amp, 0.18);
+16.wait;
+~allMul  = (kick: 4, sn: 1, hh: 1, bass: 4);
+~hh_rev = ~ensurePostSend.(~phh1, ~r1,  1.0);
+~sn_chr = ~ensurePostSend.(~psd1, ~r4,  1.0);
+Pbindef(\all_sn,  \amp, 0.4);
+Pbindef(\all_hh,  \amp, 0.4);
+16.wait;
+~sc[\solo_bass_hh].value;
+8.wait;
+~sc[\all_on].value;
+32.wait;
+Pdef(\all).stop;
 });
 )
 Tdef(\alt1).play(~link,  quant: 4);
+Pdef(\all).play(~link);
 Pdef(\all).stop; Tdef(\alt1).stop;
 ~allMul  = (kick: 4, sn: 1, hh: 1, bass: 4);
-  Pbindef(\all_sn,  \amp, 0.4);
-  Pbindef(\all_hh,  \amp, 0.4);
-  Pbindef(\all_bass,  \amp, 0.1);
-  Pdefn(\kick_str,  1/2); 
-  Pdefn(\bass_str,  1);
-  Pbindef(\all_kick, \degree,  Pseq([4, 2,  1], inf), \stretch,  Pseg([1,  2,  4, 1],[4, 1, 5], \sin,  inf)/2, \dist,  0.4, \subAmp,  0.2,  \rel, 1);
-  Pbindef(\all_kick, \degree,  Pseq([0, 1], inf), \stretch,  Pseq([1,  2,  4],  inf));
-  Pbindef(\all_bass, \degree,  Pseq([0, 1,  2], inf), \stretch,  Place([1,  [2,  1,  3]],  inf),  \dur, 1/4);
+~hh_rev = ~ensurePostSend.(~phh1, ~r1,  1.0);
+~sn_chr = ~ensurePostSend.(~psd1, ~r4,  1.0);
+Pbindef(\all_sn,  \amp, 0.4);
+Pbindef(\all_hh,  \amp, 0.4);
+Pbindef(\all_bass,  \amp, 0.08);
+Pdefn(\kick_str,  1/2); 
+Pdefn(\bass_str,  1);
+Pbindef(\all_kick, \degree,  Pseq([4, 2,  1], inf), \stretch,  Pseg([1,  2,  4, 1],[4, 1, 5], \sin,  inf)/2, \dist,  0.4, \subAmp,  0.2,  \rel, 1);
+Pbindef(\all_kick, \stretch,  Pseq([1,  2,  4],  inf));
+Pbindef(\all_kick, \degree, Pn(Pdefn(\kk_deg),  inf), \stretch,  Pn(Pdefn(\kick_str),  inf));
+Pbindef(\all_bass, \degree,  Pseq([0, 1,  2], inf), \stretch,  Place([1,  [2,  1,  3]],  inf),  \dur, 1/4);
 
+~ilfx[\v6_crush] = ~fxLib[\bitcrush].(~t6, [\bits, 4, \rate,  800,  \mix, 1.0]);
 s.freqscope;

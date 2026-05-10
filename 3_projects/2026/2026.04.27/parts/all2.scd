@@ -9,7 +9,7 @@
 ~odd = 0;
 ~mkCut = { 
   /* Pseq([16,  2,  4]+odd, inf).asStream  */
-  Pseq([16]+~odd, inf).asStream;
+  Pseq([1,  4,  1!3,  8].flat+~odd, inf).asStream;
 };
 /* var ~mkCut = { Pstep(Pseq([9, 7, 9, 7], inf), Pseq([3, 4, 8, 4], inf)/4).asStream }; */
 ~kickCut = ~mkCut.(); ~snCut = ~mkCut.(); ~hhCut = ~mkCut.(); ~bassCut = ~mkCut.();
@@ -29,28 +29,17 @@ Pbindef(\all_kick,
   \instrument, \kik808,
   \scale,   Pn(Pdefn(\all_scale), inf),
   \octave,  Pseq([3, 3], inf),
+  \degree, Pn(Pdefn(\kk_deg),  inf),  
   \dur,     1/Pdefn(\all_div),
-  \stretch, Pdefn(\kick_str),
-  \dist,  0.4,  
-  \clickAmp, 0.5, 
+  \stretch, Pn(Pdefn(\kick_str), inf),  
+  \dist,  0.8,  
+  \clickAmp, 0.4, 
   \pitchMod,  0.0,  
-  \pitchRel,  0.0,  
-  \rel,  Pseq([0.5!3, 1].flat,   inf),   
-  // \rel, 0.5,  
-  \subAmp,  0.3,  
-  \amp,     0.9,
+  \pitchRel,  0.101,  
+  \rel,  Pseq([0.5!3, 2].flat,   inf),   
+  \subAmp,  1.5,  
+  \amp,     0.8,
   \out,     ~pbd1.inbus.index,
-  \degree,  Pseq([
-    /* Pn(~deg.("0201-"),  1),
-    Pn(~deg.("0-14-2"), 1),
-    Pn(~deg.("--0--"),  1),
-    Pn(~deg.("----------"),  1), */
-    /* Pn(~deg.("0----21---4----"), 1),  */
-    /* Pn(~deg.("02-0--0-2---0-----"), 1),  */
-    Pn(~deg.("0-------0-------"), 1), 
-    Pn(~deg.("0-------0-------"), 1), 
-    Pn(~deg.("0-------0-0---0-"), 1),
-  ], inf),
 );
 );
 
@@ -62,7 +51,7 @@ Pbindef(\all_sn,
   \octave,  Pseq([2, 2], inf),
   \dur,     1/Pdefn(\all_div),
   \stretch, Pseq([1], inf),
-  \amp,     0.3,
+  \amp,     0.2,
   \snappy,  Pwhite(0.2, 1.0, inf),
   \snapRel, 4,
   \tonFreq, Pkey(\degree).midicps,
@@ -77,10 +66,10 @@ Pbindef(\all_sn,
 /* [hh] */
 (
 Pbindef(\all_hh,
-  \instrument, Pseq([\hh808!4,  \harpy1].flat, inf),
+  \instrument, Pseq([\hh808!4].flat, inf),
   \scale,   Scale.dorian,
   \octave,  9,
-  \degree,  ~deg.("4747"),
+  \degree,  ~deg.("947-4-"),
   \legato,  0.005,
   \pan,     0,
   \dur,     1/Pdefn(\all_div),
