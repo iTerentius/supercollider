@@ -90,63 +90,60 @@ Pdef(\all).stop; Tdef(\seq).stop;
 
 (
 ~sc = ();
+~pc = ();
+~pc[\bass_default] = { 
+  Pdefn(\bass_str, 2); 
+  Pdefn(\bass_deg,  Pseq([Pn(Pdefn(\bass_d),  1), ],  1));
+};
+~pc[\bass_solo1] = {
+  Pdefn(\bass_str,  1);
+  Pdefn(\bass_deg,  Pseq([
+    Pn(Pdefn(\bass_s1), 1), 
+  ],  1));
+};
 ~sc[\all_on] = {
-Pbindef(\all_kick,  \amp, 0.8);
-Pbindef(\all_sn,  \amp, 0.4);
-Pbindef(\all_hh,  \amp, 0.4);
-Pbindef(\all_bass,  \amp, 0.18);
+  ~inlineFX[\t6].set(\hpfreq, 100);
+  ~inlineFX[\pbd1].set(\hpfreq, 100);
+  Pbindef(\all_kick,  \amp, 0.8);
+  Pbindef(\all_sn,  \amp, 0.4);
+  Pbindef(\all_hh,  \amp, 0.4);
+  Pbindef(\all_bass,  \amp, 0.18);
+  ~pc[\bass_default].value;
 };
 ~sc[\solo_bass_hh] = {
-Pbindef(\all_sn,  \amp, 0);
-Pbindef(\all_kick,  \amp, 0);
+  ~pc[\bass_solo1].value;
+  Pbindef(\all_sn,  \amp, 0);
+  Pbindef(\all_hh,  \amp, 0);
+  Pbindef(\all_kick,  \amp, 0);
 };
-Pdefn(\kk_dd,  Pseq([0], inf));
-Pdefn(\kk_d1,  Pseq([0, 1,], inf));
-Pdefn(\kk_d2,  ~deg.("010-0---0---"));
-Pdefn(\kk_d8,  Pseq([
-  /* Pn(~deg.("0201-"),  1),
-  Pn(~deg.("0-14-2"), 1),
-  Pn(~deg.("--0--"),  1),
-  Pn(~deg.("----------"),  1), */
-  /* Pn(~deg.("0----21---4----"), 1),  */
-  /* Pn(~deg.("02-0--0-2---0-----"), 1),  */
-  Pn(~deg.("0-------0-------"), 1), 
-  Pn(~deg.("0-------0-------"), 1), 
-  Pn(~deg.("0-------0-0---0-"), 1),
-], 1));
-Pdefn(\kk_deg,  Pseq([
-  Pn(Pdefn(\kk_dd), 4), 
-  // Pn(Pdefn(\kk_d1), 1), 
-],  1));
-)
-(
 Tdef(\alt1, {
-"parts/all2.scd".loadRelative;
-~sc[\all_on].value;
-Pbindef(\all_kick, \stretch,  Pseq([1,  2,  4],  inf));
-Pbindef(\all_sn,  \amp, 0);
-Pbindef(\all_hh,  \amp, 0);
-Pbindef(\all_bass,  \amp, 0);
-Pdef(\all).play(~link);
-8.wait;
-Pbindef(\all_bass,  \amp, 0.18);
-16.wait;
-~allMul  = (kick: 4, sn: 1, hh: 1, bass: 4);
-~hh_rev = ~ensurePostSend.(~phh1, ~r1,  1.0);
-~sn_chr = ~ensurePostSend.(~psd1, ~r4,  1.0);
-Pbindef(\all_sn,  \amp, 0.4);
-Pbindef(\all_hh,  \amp, 0.4);
-16.wait;
-~sc[\solo_bass_hh].value;
-8.wait;
-~sc[\all_on].value;
-32.wait;
-Pdef(\all).stop;
+  "parts/all2.scd".loadRelative;
+  ~sc[\all_on].value;
+  Pbindef(\all_kick, \stretch,  Pseq([1,  2,  4],  inf));
+  Pbindef(\all_sn,  \amp, 0);
+  Pbindef(\all_hh,  \amp, 0);
+  Pbindef(\all_bass,  \amp, 0);
+  Pdef(\all).play(~link);
+  8.wait;
+  Pbindef(\all_bass,  \amp, 0.18);
+  16.wait;
+  ~allMul  = (kick: 4, sn: 1, hh: 1, bass: 4);
+  ~hh_rev = ~ensurePostSend.(~phh1, ~r1,  1.0);
+  ~sn_chr = ~ensurePostSend.(~psd1, ~r4,  1.0);
+  Pbindef(\all_sn,  \amp, 0.4);
+  Pbindef(\all_hh,  \amp, 0.4);
+  16.wait;
+  ~sc[\solo_bass_hh].value;
+  8.wait;
+  ~sc[\all_on].value;
+  32.wait;
+  Pdef(\all).stop;
 });
 )
 Tdef(\alt1).play(~link,  quant: 4);
 Pdef(\all).play(~link);
 Pdef(\all).stop; Tdef(\alt1).stop;
+
 ~allMul  = (kick: 4, sn: 1, hh: 1, bass: 4);
 ~hh_rev = ~ensurePostSend.(~phh1, ~r1,  1.0);
 ~sn_chr = ~ensurePostSend.(~psd1, ~r4,  1.0);

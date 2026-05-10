@@ -21,6 +21,7 @@ var safeLoad = { |path|
     // --- automation Pdefs (FX control, tempo, etc.) ---
     // safeLoad.("automation/ilfx/v1_crush.scd");
     // --- parts (one per voice, in any order) ---
+    safeLoad.("patterns/all_pats.scd");
     safeLoad.("parts/v1_kit.scd");
     safeLoad.("parts/all.scd");
     safeLoad.("parts/all2.scd");
