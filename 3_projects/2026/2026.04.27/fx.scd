@@ -28,7 +28,8 @@
     var s = chan.playfx({ |in|
         var sig = In.ar(bus, 2);
         var wet = Decimator.ar(sig, \rate.kr(44100), \bits.kr(8));
-        XFade2.ar(sig, wet, \mix.kr(1).linlin(0, 1, -1, 1)) * \amp.kr(1)
+        var effectiveMix = \mix.kr(1) * (1 - \mute.kr(0));
+        XFade2.ar(sig, wet, effectiveMix.linlin(0, 1, -1, 1)) * \amp.kr(1);
     });
     if(args.notEmpty) { s.set(*args) };
     s

@@ -107,9 +107,29 @@
 // ~deg.("0--2-4", rep, dur) — digits set scale degree, anything else = rest.
 // Returns a plain value pattern (degree only); pair with a separate \dur in Pbind.
 ~deg = { |str, rep=1, dur=1|
-    var array = str.collectAs({ |c|
-        if(c.isDecDigit, { c.digitValue }, { Rest(dur) })
-    }, Array);
+    var array = [], i = 0, c, j, inner, commaIdx, deg, len;
+    while { i < str.size } {
+        c = str[i];
+        if (c == $[) {
+            j = i + 1;
+            while { (j < str.size) and: { str[j] != $] } } { j = j + 1 };
+            inner = str.copyRange(i + 1, j - 1);
+            commaIdx = inner.detectIndex({ |ch| ch == $, });
+            if (commaIdx.notNil) {
+                deg = inner.copyRange(0, commaIdx - 1).asInteger;
+                len = inner.copyRange(commaIdx + 1, inner.size - 1).asInteger;
+            } {
+                deg = inner.asInteger;
+                len = 1;
+            };
+            len.do { array = array.add(deg) };
+            i = j + 1;
+        } {
+            if (c.isDecDigit) { array = array.add(c.digitValue) }
+                              { array = array.add(Rest(dur)) };
+            i = i + 1;
+        };
+    };
     Pseq(array, rep)
 };
 

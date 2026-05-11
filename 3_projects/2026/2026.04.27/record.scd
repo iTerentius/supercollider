@@ -22,8 +22,8 @@
 
 History.start();
 History.end();
-History.saveStory("~/Music/supercollider/3_projects/2026/2026.04.27/t1.scd");
-History.loadStory("~/Music/supercollider/3_projects/2026/2026.04.27/t1.scd");
+History.saveStory("~/Music/supercollider/3_projects/2026/2026.04.27/at1.scd");
+History.loadStory("~/Music/supercollider/3_projects/2026/2026.04.27/at1.scd");
 History.play();
 History.stop();
 

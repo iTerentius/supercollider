@@ -30,6 +30,8 @@ var safeLoad = { |path|
     safeLoad.("parts/v3.scd");
     safeLoad.("automation/biscuit.scd");
     safeLoad.("automation/spectral.scd");
+    // safeLoad.("automation/ilfx/v1_crush.scd");
+    safeLoad.("automation/ilfx/bass_crush.scd");
     // --- bindings last (reads ~slots + ~autoSlots + ~phrFns populated by parts) ---
     safeLoad.("bindings.scd");
     safeLoad.("tosc_biscuit.scd");

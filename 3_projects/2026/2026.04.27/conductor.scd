@@ -93,13 +93,15 @@ Pdef(\all).stop; Tdef(\seq).stop;
 ~pc = ();
 ~pc[\bass_default] = { 
   Pdefn(\bass_str, 2); 
-  Pdefn(\bass_deg,  Pseq([Pn(Pdefn(\bass_d),  1), ],  1));
+  Pdefn(\bass_deg,  Pseq([Pn(Pdefn(\bass_deg_d),  1), ],  1));
+  Pdefn(\bass_root, Pdefn(\bass_root_d));
 };
 ~pc[\bass_solo1] = {
   Pdefn(\bass_str,  1);
   Pdefn(\bass_deg,  Pseq([
-    Pn(Pdefn(\bass_s1), 1), 
+    Pn(Pdefn(\bass_deg_s1), 1), 
   ],  1));
+  Pdefn(\bass_root, Pdefn(\bass_root_00));
 };
 ~sc[\all_on] = {
   ~inlineFX[\t6].set(\hpfreq, 100);
@@ -118,6 +120,10 @@ Pdef(\all).stop; Tdef(\seq).stop;
 };
 Tdef(\alt1, {
   "parts/all2.scd".loadRelative;
+  Pdef(\bass_crush).stop;
+  ~ilfx[\v6_crush] = ~fxLib[\bitcrush].(~t6);
+  1.wait;
+  ~ilfx[\v6_crush].set(\mute,  1, \mix, 1.0);
   ~sc[\all_on].value;
   Pbindef(\all_kick, \stretch,  Pseq([1,  2,  4],  inf));
   Pbindef(\all_sn,  \amp, 0);
@@ -134,10 +140,17 @@ Tdef(\alt1, {
   Pbindef(\all_hh,  \amp, 0.4);
   16.wait;
   ~sc[\solo_bass_hh].value;
+  // ~ilfx[\v6_crush].free; ~ilfx[\v6_crush] = nil;
   8.wait;
+  ~ilfx[\v6_crush].set(\mute, 0);
+  Pdef(\bass_crush).play(~link,  quant: 4);
   ~sc[\all_on].value;
-  32.wait;
-  Pdef(\all).stop;
+  Pdefn(\bass_str,  Pseq([Pn(Pdefn(\bass_str_00), 1)],  1));
+  Pdefn(\bass_dur,  Pseq([Pn(Pdefn(\bass_dur_00), 1)],  1));
+  16.wait;
+  Pdefn(\bass_deg,  Pseq([Pn(Pdefn(\bass_deg_00), 1), Pn(Pdefn(\bass_deg_00a),  1)],  1));
+  16.wait;
+  // Pdef(\all).stop;
 });
 )
 Tdef(\alt1).play(~link,  quant: 4);
@@ -150,12 +163,13 @@ Pdef(\all).stop; Tdef(\alt1).stop;
 Pbindef(\all_sn,  \amp, 0.4);
 Pbindef(\all_hh,  \amp, 0.4);
 Pbindef(\all_bass,  \amp, 0.08);
-Pdefn(\kick_str,  1/2); 
+Pdefn(\kick_str,  1); 
 Pdefn(\bass_str,  1);
 Pbindef(\all_kick, \degree,  Pseq([4, 2,  1], inf), \stretch,  Pseg([1,  2,  4, 1],[4, 1, 5], \sin,  inf)/2, \dist,  0.4, \subAmp,  0.2,  \rel, 1);
-Pbindef(\all_kick, \stretch,  Pseq([1,  2,  4],  inf));
+Pbindef(\all_kick, \stretch,  Pseq([1/2,  1,  2],  inf));
 Pbindef(\all_kick, \degree, Pn(Pdefn(\kk_deg),  inf), \stretch,  Pn(Pdefn(\kick_str),  inf));
 Pbindef(\all_bass, \degree,  Pseq([0, 1,  2], inf), \stretch,  Place([1,  [2,  1,  3]],  inf),  \dur, 1/4);
 
 ~ilfx[\v6_crush] = ~fxLib[\bitcrush].(~t6, [\bits, 4, \rate,  800,  \mix, 1.0]);
+~ilfx[\v6_crush].set(\amp, 1.8, \mix, 0.0);
 s.freqscope;

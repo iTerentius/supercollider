@@ -1,5 +1,7 @@
 
 (
+~ilfx[\v1_crush].free; ~ilfx[\v1_crush] = nil;
+~ilfx[\v1_crush] = ~fxLib[\bitcrush].(~t6);
 Pdef(\v1_crush,  Pbind(
   \type,   \set,  
   \id,    Pfunc({ ~ilfx[\v1_crush].nodeID }), 
@@ -21,11 +23,11 @@ OSCdef(\v1_crush, { |msg|
     bits = msg[1].linlin(0, 1,  4,  12);
     rate = msg[2].linlin(0, 1,  100, 10000);
     // var val = msg[1].linlin(0, 1, 4, 12);
-    ~ilfx[\v2_crush].set(\bits, bits, \rate,  rate);
+    ~ilfx[\v1_crush].set(\bits, bits, \rate,  rate);
 }, '/2/xy3', srcID: ~toscAddr);
 OSCdef(\v1_crush_mix, { |msg| 
     var mix = msg[1].linlin(0, 1,  0, 1);
-    ~ilfx[\v2_crush].set(\mix, mix);
+    ~ilfx[\v1_crush].set(\mix, mix);
 }, '/2/fader2', srcID: ~toscAddr);
 
-)
+);
