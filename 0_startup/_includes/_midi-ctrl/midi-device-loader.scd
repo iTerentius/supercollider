@@ -39,10 +39,10 @@ if(hasEndpoint.("APC40 mkII")) {
     chosen.loadRelative;
 } {
     if(hasEndpoint.("Launch Control") or: { hasEndpoint.("Launch Control XL") }) {
-        chosen = "/launch-control/lc_loader.scd";
+        // chosen = "/launch-control/lc_loader.scd";
         ("[MIDI loader] Launch Control detected").postln;
         // loadInclude.(chosen);
-        chosen.loadRelative;
+        // chosen.loadRelative;
     } {
         "[MIDI loader] No known controllers detected — skipping include".postln;
     }

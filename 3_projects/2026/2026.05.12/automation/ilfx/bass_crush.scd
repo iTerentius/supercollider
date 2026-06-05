@@ -1,4 +1,4 @@
-/2
+
 (
 // ~ilfx[\v6_crush].free; ~ilfx[\v6_crush] = nil;
 // ~ilfx[\v6_crush] = ~fxLib[\bitcrush].(~t6);
@@ -7,18 +7,15 @@ Pdef(\bass_crush,  Pbind(
   \id,    Pfunc({ ~ilfx[\v6_crush].nodeID }), 
   \args,  #[\rate,  \bits,  \mix, \amp],
   // \rate,  Pseg([800,  8000],  [2],  \lin, inf), 
-  // \mix, Pseg([0.6,  1.0, 0.6], [4,  4],  \step, inf),  
-  \mix,  Pbjorklund2(5, 8,  inf), 
+  \mix, Pseg([0.6,  1.0, 0.6], [4,  4],  \step, inf),  
+  // \mix,  Pbjorklund2(3, 8,  inf), 
   // \mix, Pstep(Pseg([0.0, 1.0, 1.0],  [1,  8], \step, inf), 4), 
-  // \mix, 1.0,  
   \amp, 0.8,  
   \rate,  Pseg([2500, 80000,  20000], [4, 4],  \lin, inf),  
-  \bits,  Pseg([6,  8,  4], [8, 8], \lin,  inf),  
-  // \dur, Pseq([1/4!2, 1/2,   1,  1/8!4].flat, inf), 
-  \dur, 1/16,  
+  \bits,  Pseg([4,  8,  6], [8, 8], \lin,  inf),  
+  \dur, Pseq([1/4!2, 1/2,   1,  1/8!4].flat, inf), 
   // \dur, Pseg([1/10,  1/5], [4],  \step, inf), 
-  // \stretch, Pn(Pdefn(\all_div),  inf),  
-  \stretch,  1/2, 
+  \stretch, Pn(Pdefn(\all_div),  inf),  
 ));
 
 // OSCdef(\bass_crush, { |msg| 

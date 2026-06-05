@@ -1,0 +1,181 @@
+/* all2.scd
+   Eval [0] once at load.
+   Eval voice blocks individually to update a voice mid-performance.
+   Eval [structure] once; it reads Pbindefs by name — never needs re-eval.
+*/
+
+/* [0] global spine — re-eval to reset cut streams or change division */
+(
+~odd = 0;
+~mkCut = {
+  /* Pseq([16,  2,  4]+odd, inf).asStream  */
+  Pseq([1,  4,  1!3,  8].flat+~odd, inf).asStream;
+};
+/* var ~mkCut = { Pstep(Pseq([9, 7, 9, 7], inf), Pseq([3, 4, 8, 4], inf)/4).asStream }; */
+~kickCut = ~mkCut.(); ~snCut = ~mkCut.(); ~hhCut = ~mkCut.(); ~bassCut = ~mkCut.();
+/* shared stream for intentional drift: ~all_cut = ~mkCut.(); */
+~allMul  = (kick: 4, sn: 1, hh: 1, bass: 3);
+Pdefn(\all_div,   Pstep(Pseq([4+~odd], inf), 1));
+Pdefn(\all_scale, Scale.dorian);
+/* Pdefn(\kick_str,  Pseq([4, 2, 1!8].flat, inf)); */
+/* Pdefn(\kick_str,  Pseq([8, 4, 2!8].flat, inf)); */
+Pdefn(\kick_str,  1/2);
+Pdefn(\bass_str,  2);
+
+// --- output mode ---------------------------------------------------------
+// Flip all voices between SC synths and DAW MIDI without stopping the pattern.
+//   Pdefn(\all_type, \note);   // → SC (default)
+//   Pdefn(\all_type, \midi);   // → DAW
+//
+// Drum MIDI notes default to General MIDI channel 10 (0-indexed = 9).
+// Remap Pdefn(\all_*_note) to match your DAW drum kit.
+// Bass goes to its own melodic channel — SC derives note from \degree + \scale + \octave.
+Pdefn(\all_type,       \midi);   // \note = SC synth  |  \midi = DAW
+Pdefn(\all_drum_chan,  9);       // MIDI ch 10 (0-indexed) — GM drums
+Pdefn(\all_kick_chan,  10);       // MIDI ch 10 (0-indexed) — GM drums
+Pdefn(\all_sn_chan,  11);       // MIDI ch 10 (0-indexed) — GM drums
+Pdefn(\all_hh_chan,  12);       // MIDI ch 10 (0-indexed) — GM drums
+Pdefn(\all_bass_chan,  0);       // MIDI ch 1 — melodic bass
+Pdefn(\all_kick_note,  36);     // GM: Bass Drum 1
+Pdefn(\all_sn_note,    38);     // GM: Acoustic Snare
+Pdefn(\all_hh_note,    42);     // GM: Closed Hi Hat
+);
+
+/* [kick] */
+(
+Pbindef(\all_kick,
+  \instrument, \kik808,
+  \scale,   Pn(Pdefn(\all_scale), inf),
+  \octave,  Pseq([3, 3], inf),
+  \degree, Pn(Pdefn(\kk_deg),  inf),
+  \dur,     1/Pdefn(\all_div),
+  \stretch, Pn(Pdefn(\kick_str), inf),
+  \dist,  0.8,
+  \clickAmp, 0.4,
+  \pitchMod,  0.0,
+  \pitchRel,  0.101,
+  \rel,  Pseq([0.5!3, 2].flat,   inf),
+  \subAmp,  1.5,
+  \amp,     0.8,
+  \out,     ~pbd1.inbus.index,
+  // MIDI — ignored when \type = \note
+  \type,     Pdefn(\all_type),
+  \midiout,  ~mOut,
+  \chan,     Pdefn(\all_kick_chan),
+  // \midinote, Pdefn(\all_kick_note),
+);
+);
+
+/* [snare] */
+(
+Pbindef(\all_sn,
+  \instrument, \sn808,
+  \scale,   Pn(Pdefn(\all_scale), inf),
+  \octave,  Pseq([2, 2], inf),
+  \dur,     1/Pdefn(\all_div),
+  \stretch, Pseq([1], inf),
+  \amp,     1.0,
+  \snappy,  Pwhite(0.2, 1.0, inf),
+  \snapRel, 4,
+  \tonFreq, Pkey(\degree).midicps,
+  \out,     ~psd1.inbus.index,
+  \degree,  Pseq([
+    Pn(~deg.("--------0-------"), 1),
+    Pn(~deg.("------------4---"),   1),
+  ], inf),
+  // MIDI — ignored when \type = \note
+  \type,     Pdefn(\all_type),
+  \midiout,  ~mOut,
+  \chan,     Pdefn(\all_sn_chan),
+  // \midinote, Pdefn(\all_sn_note),
+);
+);
+
+/* [hh] */
+(
+Pbindef(\all_hh,
+  \instrument, Pseq([\hh808!4].flat, inf),
+  \scale,   Scale.chromatic,
+  \octave,  3,
+  \degree,  Pseq([~deg.("7"), ~deg.("10")],  inf),  
+  // \degree,  Pseq([0!3,  1].flat,  inf),
+  \legato,  0.001,
+  \pan,     0,
+  \dur,     1/Pdefn(\all_div),
+  \rel,     Pseq([0.05!4, 0.2].flat),
+  \stretch, 2,
+  \amp,     0.4,
+  \out,     ~phh1.inbus.index,
+  // MIDI — ignored when \type = \note
+  \type,     Pdefn(\all_type),
+  \midiout,  ~mOut,
+  \chan,     Pdefn(\all_hh_chan),
+  // \midinote, Pdefn(\all_hh_note),
+);
+);
+
+/* [bass] */
+(
+Pbindef(\all_bass,
+  \instrument, \bass8,
+  \scale,   Scale.dorian,
+  \octave,  Pseq([4,  4], inf),
+  \root,   Pn(Pdefn(\bass_root),  inf),
+  \degree,  Pn(Pdefn(\bass_deg),  inf),
+  \dur,     1/Pdefn(\all_div),
+  \stretch, Pdefn(\bass_str),
+  \legato,  Pseg([0.3, 0.9, 1.2], [2, 4], \sin,  inf),
+  \amp,     0.15,
+  \pan,     0,
+  \out,     ~t6.inbus.index,
+  // MIDI — no \midinote: SC derives note from \degree + \scale + \octave
+  \type,    Pdefn(\all_type),
+  \midiout, ~mOut,
+  \chan,    Pdefn(\all_bass_chan),
+);
+);
+
+/* [structure] — eval once; reads Pbindefs by name at stream time */
+(
+Pdef(\all,
+  Ppar([
+    Pn(Plazy({ Pfindur(~kickCut.next * ~allMul[\kick], Pbindef(\all_kick)) }), inf),
+    Pn(Plazy({ Pfindur(~snCut.next   * ~allMul[\sn],   Pbindef(\all_sn))   }), inf),
+    Pn(Plazy({ Pfindur(~hhCut.next   * ~allMul[\hh],   Pbindef(\all_hh))   }), inf),
+    Pn(Plazy({ Pfindur(~bassCut.next * ~allMul[\bass], Pbindef(\all_bass)) }), inf),
+  ])
+);
+);
+
+/* snippets — eval any of these as one-liners during performance */
+
+/* switch output mode while playing (takes effect on the next pattern cycle): */
+/* Pdefn(\all_type, \midi);   // → DAW   */
+/* Pdefn(\all_type, \note);   // → SC    */
+
+/* remap drum MIDI notes to your kit: */
+/* Pdefn(\all_kick_note, 36); */
+/* Pdefn(\all_sn_note,   38); */
+/* Pdefn(\all_hh_note,   42); */
+
+/* bass MIDI channel: */
+/* Pdefn(\all_bass_chan, 1); */
+
+/* change cut multiplier per voice: */
+/* ~allMul[\kick] = 4; */
+
+/* reset all cuts in phase (same sequence, independent streams): */
+/* { var ~mkCut = { Pseq([3, 5, 3, 9].mirror, inf).asStream }; ~kickCut = ~mkCut.(); ~hhCut = ~mkCut.(); ~bassCut = ~mkCut.(); }; */
+
+/* switch to shared stream for intentional drift: */
+/* ~all_cut = Pseq([3, 5, 3, 9].mirror, inf).asStream; */
+/* then update [structure] to use ~all_cut.next for all voices */
+
+/* update one key on a running voice without restarting it: */
+/* Pbindef(\all_kick, \amp, 0.8); */
+
+/* swap kick degrees: */
+/* Pbindef(\all_kick, \degree, Pseq([Pn(~deg.("040-1"),1), Pn(~deg.("--224-0---"),1)], inf)); */
+
+/* swap bass to Pslide: */
+/* Pbindef(\all_bass, \degree, Pn(Pslide((0..7), Pseq([8, 3, 5], inf), 3, 1), 1)); */
