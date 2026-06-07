@@ -78,17 +78,46 @@ OSCdef(\arcRouter, { |msg|
 }, "/arc/trigger");
 
 // ---- utility functions
-~play   = { |sym| Pdef(sym).play(~link) };
-~stop   = { |sym| Pdef(sym).stop };
+// ~activePdefs tracks what's playing so ~songStop only hits song patterns.
+~activePdefs = Set.new;
+
+~play = { |sym|
+    Pdef(sym).play(~link);
+    ~activePdefs.add(sym);
+};
+
+~stop = { |sym|
+    Pdef(sym).stop;
+    ~activePdefs.remove(sym);
+};
+
 ~toggle = { |sym|
-    if(Pdef(sym).isPlaying) { Pdef(sym).stop } { Pdef(sym).play(~link) }
+    if(Pdef(sym).isPlaying) {
+        Pdef(sym).stop;
+        ~activePdefs.remove(sym);
+    } {
+        Pdef(sym).play(~link);
+        ~activePdefs.add(sym);
+    }
 };
 
 // Play for N bars then stop. Default 1 bar; pass bars: 2 for a 2-bar fill.
 ~oneshot = { |sym, bars=1|
     var p = Pdef(sym);
     p.play(~link);
-    ~link.sched(~link.beatsPerBar * bars, { p.stop; nil });
+    ~activePdefs.add(sym);
+    ~link.sched(~link.beatsPerBar * bars, {
+        p.stop;
+        ~activePdefs.remove(sym);
+        nil
+    });
+};
+
+// Stop only patterns started via this router — leaves anything else in SC running.
+~songStop = {
+    ~activePdefs.do { |sym| Pdef(sym).stop };
+    ~activePdefs = Set.new;
+    "songStop: all patterns stopped".postln;
 };
 
 "norns-router: loaded".postln;

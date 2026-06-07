@@ -82,12 +82,18 @@
 // =============================================================================
 // UTILITY FUNCTIONS
 // =============================================================================
-~play.(\bassline);              // Pdef(\bassline).play(TempoClock.default)
-~stop.(\bassline);              // Pdef(\bassline).stop
-~toggle.(\bassline);            // play if stopped, stop if playing
+~play.(\bassline);              // Pdef(\bassline).play(~link), registers in ~activePdefs
+~stop.(\bassline);              // Pdef(\bassline).stop, removes from ~activePdefs
+~toggle.(\bassline);            // play if stopped / stop if playing — tracks state
 
-~oneshot.(\fill);               // play for 1 bar then stop
+~oneshot.(\fill);               // play for 1 bar then auto-stop
 ~oneshot.(\fill, 2);            // play for 2 bars then stop
+
+// Stop all song patterns (only those started via this router):
+~songStop.();                   // call when pausing arcologies
+
+// Inspect what's currently tracked as playing:
+~activePdefs.postln;
 
 // =============================================================================
 // OSC LISTENER
