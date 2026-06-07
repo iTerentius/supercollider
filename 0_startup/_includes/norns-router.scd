@@ -38,28 +38,27 @@ if(delugeOutEp.notNil) {
 // ---- SC → Deluge MIDI clock (SC is tempo master)
 // SC drives Deluge tempo via 24ppqn MIDI clock. ~link is master;
 // tempo changes propagate to Norns via Link and to Deluge via this clock.
+// Uses SystemClock (isolated from ~link) to avoid disrupting Link beat phase.
 // Change tempo from anywhere: ~link.tempo = bpm / 60
 //
 // ~startDelugeClock.()  — sends MIDI start + begins clock pulses
 // ~stopDelugeClock.()   — sends MIDI stop + halts pulses
-~delugeClockRunning = false;
+~delugeClockTask = nil;
 
 ~startDelugeClock = {
-    var sendPulse;
-    ~delugeClockRunning = true;
+    ~delugeClockTask.stop;
     ~delugeOut.start;
-    sendPulse = {
-        if(~delugeClockRunning) {
+    ~delugeClockTask = Task({
+        loop {
             ~delugeOut.midiClock;
-            ~link.sched(1/24, sendPulse);
-        };
-    };
-    ~link.sched(0, sendPulse);
+            (1 / (~link.tempo * 24)).wait;
+        }
+    }).play(SystemClock);
     "Deluge clock: started".postln;
 };
 
 ~stopDelugeClock = {
-    ~delugeClockRunning = false;
+    ~delugeClockTask.stop;
     ~delugeOut.stop;
     "Deluge clock: stopped".postln;
 };
