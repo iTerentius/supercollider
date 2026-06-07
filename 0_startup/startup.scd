@@ -114,6 +114,9 @@ s.waitForBoot {
         q.bw.sendMsg(path, ~val);
     });
 
+    // --- Norns arcologies router (uncomment when using Norns + Deluge workflow)
+    // "_includes/norns-router.scd".loadRelative;
+
     // --- Cleanup any launchpad state if present
     if(~lpMini.notNil) { ~lpMini[\clearGrid].(); };
 
