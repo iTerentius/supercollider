@@ -37,10 +37,10 @@ if(delugeOutEp.notNil) {
 
 // ---- OSC listener
 // Receives /arc/trigger from arcologies BEACON cells.
-// msg format: [path, time, id] — id is msg[3].
+// msg format: [path, arg1, ...] — id is msg[1].
 // Norns default send port is 57120 (SC default receive port).
 OSCdef(\arcRouter, { |msg|
-    var id = msg[3];
+    var id = msg[1];
     var handler = ~song[id];
     if(handler.notNil) {
         handler.((id: id));

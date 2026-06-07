@@ -110,7 +110,8 @@ MIDIClient.sources.do { |ep, i| [i, ep.device, ep.name].postln };
 // OSC LISTENER
 // =============================================================================
 // Set up automatically by norns-router.scd on load.
-// Listens on /arc/trigger, port 57120. msg[3] is the integer ID.
+// Listens on /arc/trigger, port 57120. msg[1] is the integer ID.
+// OSCdef msg format: [path, arg1, arg2, ...] — time is a separate function param.
 
 // Debug — trace incoming messages while testing BEACON cells:
 OSCdef(\arcRouter).trace;
