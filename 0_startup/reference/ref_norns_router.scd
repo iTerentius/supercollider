@@ -15,17 +15,26 @@
 //
 // Standalone rack topology (RasPad3 as SC device):
 //
-//   [Deluge] ──USB──► [Anker powered hub] ──USB──► [SC device (RasPad3 or Mac)]
+//   [Deluge] ──USB──────────────────────► [Anker hub] ──► [SC device]
 //   [LCXL]   ──USB──► [Norns]
-//   [Norns]  ──WiFi─► [SC device]   (OSC /arc/trigger)
+//   [Norns]  ──WiFi (OSC /arc/trigger)──► [SC device]
+//   [Norns]  ──WiFi (Ableton Link)──────► [SC device]
 //
 // SC device is the USB host. Deluge plugs into the powered hub.
 // SC sees Deluge as both a MIDI output destination (patterns out)
 // and a MIDI input source (clock in).
 //
-// Norns and SC device must be on the same local network — either a shared
-// WiFi router or a small travel router in the rack. No internet required.
-// Set the SC device's IP in arcologies: Norns PARAMS → BEACON / OSC.
+// Tempo sync chain:
+//   Deluge MIDI clock ──► SC (~link.tempo updated from 24ppqn pulses)
+//   SC ~link ──► Norns via Ableton Link (local WiFi only, no internet)
+//
+// Norns set to Link mode (not internal clock, not MIDI clock).
+// SC and Norns share beat phase automatically via Link.
+// Deluge↔Link phase alignment is loose — start Deluge and Link together.
+//
+// Norns and SC must be on the same local network (shared WiFi router or
+// small travel router in the rack). Set the SC device's IP in arcologies:
+//   Norns PARAMS → BEACON / OSC → IP OCTET 1-4 + OSC PORT
 //
 // LCXL stays connected to Norns; Norns passthrough mod routes it to Deluge
 // for param modulation. No change to that part of the rig.
@@ -40,10 +49,15 @@
 //   Norns and Mac on same WiFi network. No other changes.
 
 // =============================================================================
-// TEMPO SYNC  (Deluge MIDI clock → TempoClock)
+// TEMPO SYNC  (Deluge MIDI clock → ~link → Norns via Link)
 // =============================================================================
 // Deluge is tempo master. Enable MIDI clock out in Deluge MIDI settings.
 // Evaluate this block once after boot; re-evaluate if Deluge reconnects.
+//
+// Setting ~link.tempo propagates to all Link peers (including Norns) automatically.
+// LinkClock manages beat phase internally — do not attempt to set ~link.beats.
+// Beat phase between SC and Norns stays aligned via Link protocol.
+// Deluge↔Link phase is loose (tempo matches; start them together for alignment).
 (
 var times = Array.new(24);
 var last;
@@ -55,20 +69,16 @@ MIDIdef.midiClock(\delugeSync, {
         if(dt > 0.008 and: { dt < 0.125 }) {   // valid range: ~20-300 BPM
             times = times.add(dt).keep(-24);     // rolling 1-beat window
             if(times.size >= 8) {
-                TempoClock.default.tempo = 1.0 / (times.mean * 24);
+                ~link.tempo = 1.0 / (times.mean * 24);
             };
         };
     };
     last = now;
 });
-
-// Phase-lock beat 1 to Deluge on start/continue
-MIDIdef.midiStart(\delugeStart,    { TempoClock.default.beats = 0 });
-MIDIdef.midiContinue(\delugeCont,  { TempoClock.default.beats = 0 });
 )
 
 // Stop clock sync:
-// MIDIdef(\delugeSync).free; MIDIdef(\delugeStart).free; MIDIdef(\delugeCont).free;
+// MIDIdef(\delugeSync).free;
 
 // Find Deluge MIDI source if clock isn't arriving:
 MIDIClient.sources.do { |ep, i| [i, ep.device, ep.name].postln };

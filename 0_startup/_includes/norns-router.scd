@@ -50,17 +50,17 @@ OSCdef(\arcRouter, { |msg|
 }, "/arc/trigger");
 
 // ---- utility functions
-~play   = { |sym| Pdef(sym).play(TempoClock.default) };
+~play   = { |sym| Pdef(sym).play(~link) };
 ~stop   = { |sym| Pdef(sym).stop };
 ~toggle = { |sym|
-    if(Pdef(sym).isPlaying) { Pdef(sym).stop } { Pdef(sym).play(TempoClock.default) }
+    if(Pdef(sym).isPlaying) { Pdef(sym).stop } { Pdef(sym).play(~link) }
 };
 
 // Play for N bars then stop. Default 1 bar; pass bars: 2 for a 2-bar fill.
 ~oneshot = { |sym, bars=1|
     var p = Pdef(sym);
-    p.play(TempoClock.default);
-    TempoClock.default.sched(TempoClock.default.beatsPerBar * bars, { p.stop; nil });
+    p.play(~link);
+    ~link.sched(~link.beatsPerBar * bars, { p.stop; nil });
 };
 
 "norns-router: loaded".postln;
