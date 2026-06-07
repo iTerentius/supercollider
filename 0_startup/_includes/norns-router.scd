@@ -40,7 +40,7 @@ if(delugeOutEp.notNil) {
 // msg format: [path, arg1, ...] — id is msg[1].
 // Norns default send port is 57120 (SC default receive port).
 OSCdef(\arcRouter, { |msg|
-    var id = msg[1];
+    var id = msg[1].asInteger;
     var handler = ~song[id];
     if(handler.notNil) {
         handler.((id: id));
