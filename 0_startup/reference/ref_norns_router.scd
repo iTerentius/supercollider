@@ -49,39 +49,22 @@
 //   Norns and Mac on same WiFi network. No other changes.
 
 // =============================================================================
-// TEMPO SYNC  (Deluge MIDI clock → ~link → Norns via Link)
+// TEMPO SYNC  (SC → Deluge MIDI clock, SC is master)
 // =============================================================================
-// Deluge is tempo master. Enable MIDI clock out in Deluge MIDI settings.
-// Evaluate this block once after boot; re-evaluate if Deluge reconnects.
+// SC ~link is tempo master. Clock pulses sent to Deluge at 24ppqn.
+// Tempo changes propagate to Norns via Link and to Deluge via MIDI clock.
+// Set Deluge to external/slave clock mode.
 //
-// Setting ~link.tempo propagates to all Link peers (including Norns) automatically.
-// LinkClock manages beat phase internally — do not attempt to set ~link.beats.
+// Change tempo from SC:
+~link.tempo = 120/60;
+~link.tempo = 90/60;
+
+// Start/stop Deluge clock (defined in norns-router.scd):
+~startDelugeClock.();
+~stopDelugeClock.();
+
+// The clock uses ~link.sched(1/24) so it automatically tracks tempo changes.
 // Beat phase between SC and Norns stays aligned via Link protocol.
-// Deluge↔Link phase is loose (tempo matches; start them together for alignment).
-(
-var times = Array.new(24);
-var last;
-
-MIDIdef.midiClock(\delugeSync, {
-    var now = Main.elapsedTime;
-    if(last.notNil) {
-        var dt = now - last;
-        if(dt > 0.008 and: { dt < 0.125 }) {   // valid range: ~20-300 BPM
-            times = times.add(dt).keep(-24);     // rolling 1-beat window
-            if(times.size >= 8) {
-                ~link.tempo = 1.0 / (times.mean * 24);
-            };
-        };
-    };
-    last = now;
-});
-)
-
-// Stop clock sync:
-// MIDIdef(\delugeSync).free;
-
-// Find Deluge MIDI source if clock isn't arriving:
-MIDIClient.sources.do { |ep, i| [i, ep.device, ep.name].postln };
 
 // =============================================================================
 // SONG HANDLERS

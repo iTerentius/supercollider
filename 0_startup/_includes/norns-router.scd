@@ -35,26 +35,34 @@ if(delugeOutEp.notNil) {
 //   ~song[2] = { ~oneshot.(\fill, 2) };
 ~song = ();
 
-// ---- Deluge MIDI clock → ~link tempo sync
-// Requires Deluge transport to be running (clock only sent when playing).
-// Setting ~link.tempo propagates to all Link peers (Norns) automatically.
-{
-    var times = Array.new(24);
-    var last;
-    MIDIdef.midiClock(\delugeSync, {
-        var now = Main.elapsedTime;
-        if(last.notNil) {
-            var dt = now - last;
-            if(dt > 0.008 and: { dt < 0.125 }) {
-                times = times.add(dt).keep(-24);
-                if(times.size >= 8) {
-                    ~link.tempo = 1.0 / (times.mean * 24);
-                };
-            };
+// ---- SC → Deluge MIDI clock (SC is tempo master)
+// SC drives Deluge tempo via 24ppqn MIDI clock. ~link is master;
+// tempo changes propagate to Norns via Link and to Deluge via this clock.
+// Change tempo from anywhere: ~link.tempo = bpm / 60
+//
+// ~startDelugeClock.()  — sends MIDI start + begins clock pulses
+// ~stopDelugeClock.()   — sends MIDI stop + halts pulses
+~delugeClockRunning = false;
+
+~startDelugeClock = {
+    var sendPulse;
+    ~delugeClockRunning = true;
+    ~delugeOut.start;
+    sendPulse = {
+        if(~delugeClockRunning) {
+            ~delugeOut.midiClock;
+            ~link.sched(1/24, sendPulse);
         };
-        last = now;
-    });
-}.();
+    };
+    ~link.sched(0, sendPulse);
+    "Deluge clock: started".postln;
+};
+
+~stopDelugeClock = {
+    ~delugeClockRunning = false;
+    ~delugeOut.stop;
+    "Deluge clock: stopped".postln;
+};
 
 // ---- OSC listener
 // Receives /arc/trigger from arcologies BEACON cells.
