@@ -35,6 +35,27 @@ if(delugeOutEp.notNil) {
 //   ~song[2] = { ~oneshot.(\fill, 2) };
 ~song = ();
 
+// ---- Deluge MIDI clock → ~link tempo sync
+// Requires Deluge transport to be running (clock only sent when playing).
+// Setting ~link.tempo propagates to all Link peers (Norns) automatically.
+{
+    var times = Array.new(24);
+    var last;
+    MIDIdef.midiClock(\delugeSync, {
+        var now = Main.elapsedTime;
+        if(last.notNil) {
+            var dt = now - last;
+            if(dt > 0.008 and: { dt < 0.125 }) {
+                times = times.add(dt).keep(-24);
+                if(times.size >= 8) {
+                    ~link.tempo = 1.0 / (times.mean * 24);
+                };
+            };
+        };
+        last = now;
+    });
+}.();
+
 // ---- OSC listener
 // Receives /arc/trigger from arcologies BEACON cells.
 // msg format: [path, arg1, ...] — id is msg[1].
