@@ -21,8 +21,12 @@ delugeOutEp = MIDIClient.destinations.detect { |ep|
     ep.device.containsi("Deluge") or: { ep.name.containsi("Deluge") }
 };
 if(delugeOutEp.notNil) {
+    // ~delugeOut: latency-compensated, for pattern output (Pbind etc.)
     ~delugeOut = MIDIOut.newByName(delugeOutEp.device, delugeOutEp.name);
     ~delugeOut.latency = s.latency;
+    // ~delugeCtrl: zero latency, for real-time CC passthrough (MIDIFollow)
+    ~delugeCtrl = MIDIOut.newByName(delugeOutEp.device, delugeOutEp.name);
+    ~delugeCtrl.latency = 0;
     ("norns-router: delugeOut → " ++ delugeOutEp.device ++ " / " ++ delugeOutEp.name).postln;
 } {
     "norns-router: Deluge not found in MIDIClient.destinations — connect device and re-evaluate, or set ~delugeOut manually.".warn;
@@ -34,13 +38,13 @@ if(delugeOutEp.notNil) {
 // ~lcxlSrcUid is set by midi-setup.scd; run ~reconnectMidi.() if nil.
 if(~lcxlSrcUid.notNil) {
     MIDIdef.cc(\lcxlToDeluge, { |val, num, chan|
-        ~delugeOut.control(chan, num, val);
+        ~delugeCtrl.control(chan, num, val);
     }, srcID: ~lcxlSrcUid);
     MIDIdef.noteOn(\lcxlNoteOnToDeluge, { |vel, note, chan|
-        ~delugeOut.noteOn(chan, note, vel);
+        ~delugeCtrl.noteOn(chan, note, vel);
     }, srcID: ~lcxlSrcUid);
     MIDIdef.noteOff(\lcxlNoteOffToDeluge, { |vel, note, chan|
-        ~delugeOut.noteOff(chan, note, vel);
+        ~delugeCtrl.noteOff(chan, note, vel);
     }, srcID: ~lcxlSrcUid);
     "norns-router: LCXL → Deluge passthrough active".postln;
 } {
