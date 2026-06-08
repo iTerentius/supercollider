@@ -28,6 +28,25 @@ if(delugeOutEp.notNil) {
     "norns-router: Deluge not found in MIDIClient.destinations — connect device and re-evaluate, or set ~delugeOut manually.".warn;
 };
 
+// ---- LCXL → Deluge passthrough (MIDIFollow param control)
+// Routes LCXL CCs and notes directly to Deluge so MIDIFollow templates work
+// when LCXL is connected to this machine instead of Norns.
+// ~lcxlSrcUid is set by midi-setup.scd; run ~reconnectMidi.() if nil.
+if(~lcxlSrcUid.notNil) {
+    MIDIdef.cc(\lcxlToDeluge, { |val, num, chan|
+        ~delugeOut.control(chan, num, val);
+    }, srcID: ~lcxlSrcUid);
+    MIDIdef.noteOn(\lcxlNoteOnToDeluge, { |vel, note, chan|
+        ~delugeOut.noteOn(chan, note, vel);
+    }, srcID: ~lcxlSrcUid);
+    MIDIdef.noteOff(\lcxlNoteOffToDeluge, { |vel, note, chan|
+        ~delugeOut.noteOff(chan, note, vel);
+    }, srcID: ~lcxlSrcUid);
+    "norns-router: LCXL → Deluge passthrough active".postln;
+} {
+    "norns-router: LCXL not found — run ~reconnectMidi.() if connected".warn;
+};
+
 // ---- song handler table
 // Keys are the integer IDs set on BEACON cells in arcologies (1-99).
 // Populate per project:
