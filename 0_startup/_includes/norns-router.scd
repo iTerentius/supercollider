@@ -73,8 +73,9 @@ if(~lcxlSrcUid.notNil) {
     ~delugeOut.start;
     ~delugeClockTask = Task({
         loop {
+            var bpm = (~link.tempo * 60).round(1);
             ~delugeOut.midiClock;
-            (1 / (~link.tempo * 24)).wait;
+            (60 / (bpm * 24)).wait;
         }
     }).play(SystemClock);
     "Deluge clock: started".postln;
