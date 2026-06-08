@@ -102,11 +102,17 @@ OSCdef(\arcRouter, { |msg|
 
 // ---- utility functions
 // ~activePdefs tracks what's playing so ~songStop only hits song patterns.
+// ~songLocked is set by ~songStop and cleared by ~songResume (or /arc/start).
+// While locked, ~play/~toggle/~oneshot are no-ops — residual BEACON signals
+// that fire after arcologies pauses cannot restart patterns.
 ~activePdefs = Set.new;
+~songLocked  = false;
 
 ~play = { |sym|
-    Pdef(sym).play(~link);
-    ~activePdefs.add(sym);
+    if(~songLocked.not) {
+        Pdef(sym).play(~link);
+        ~activePdefs.add(sym);
+    };
 };
 
 ~stop = { |sym|
@@ -115,33 +121,49 @@ OSCdef(\arcRouter, { |msg|
 };
 
 ~toggle = { |sym|
-    if(Pdef(sym).isPlaying) {
-        Pdef(sym).stop;
-        ~activePdefs.remove(sym);
-    } {
-        Pdef(sym).play(~link);
-        ~activePdefs.add(sym);
-    }
+    if(~songLocked.not) {
+        if(Pdef(sym).isPlaying) {
+            Pdef(sym).stop;
+            ~activePdefs.remove(sym);
+        } {
+            Pdef(sym).play(~link);
+            ~activePdefs.add(sym);
+        };
+    };
 };
 
 // Play for N bars then stop. Default 1 bar; pass bars: 2 for a 2-bar fill.
 ~oneshot = { |sym, bars=1|
-    var p = Pdef(sym);
-    p.play(~link);
-    ~activePdefs.add(sym);
-    ~link.sched(~link.beatsPerBar * bars, {
-        p.stop;
-        ~activePdefs.remove(sym);
-        nil
-    });
+    if(~songLocked.not) {
+        var p = Pdef(sym);
+        p.play(~link);
+        ~activePdefs.add(sym);
+        ~link.sched(~link.beatsPerBar * bars, {
+            p.stop;
+            ~activePdefs.remove(sym);
+            nil
+        });
+    };
 };
 
 // Stop only patterns started via this router — leaves anything else in SC running.
 ~songStop = {
+    ~songLocked = true;
     ~activePdefs.do { |sym| Pdef(sym).stop };
     ~activePdefs = Set.new;
     "songStop: all patterns stopped".postln;
 };
+
+~songResume = {
+    ~songLocked = false;
+    "songResume: patterns unlocked".postln;
+};
+
+// ---- arcologies transport sync
+// Arcologies pause → /arc/stop  → ~songStop  (lock + stop all)
+// Arcologies play  → /arc/start → ~songResume (unlock)
+OSCdef(\arcStop,  { ~songStop.()   }, "/arc/stop");
+OSCdef(\arcStart, { ~songResume.() }, "/arc/start");
 
 "norns-router: loaded".postln;
 )
