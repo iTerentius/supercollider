@@ -1,6 +1,7 @@
 ~stopDelugeClock.();
 ~startDelugeClock.();
 ~mOut;
+~midiO = ~maschineOut;
 ~maschineOut;
 ~maschineOut.noteOn(1, 36, 100)
 ~delugeOut.noteOn(0, 36, 100)
@@ -34,7 +35,7 @@ Pdef(\kit).stop(~link);
 Pdef(\bassline,
     Pbind(
         \type,     \midi,
-        \midiout,  ~delugeOut,
+        \midiout,  ~midiO,
         \chan,     0,            // Deluge synth track (0-indexed)
         \scale,    Scale.dorian,  
         \octave,  5,  
@@ -53,7 +54,7 @@ Pdef(\bassline,
 Pdef(\arp,
     Pbind(
         \type,     \midi,
-        \midiout,  ~delugeOut,
+        \midiout,  ~midiO,
         \chan,     1,
         \scale,  Scale.dorian,  
         \octave,  Pseq([6,  5], inf),  
@@ -71,7 +72,7 @@ Pdef(\arp,
 Pdef(\kit,
     Pbind(
         \type,     \midi,
-        \midiout,  ~delugeOut,
+        \midiout,  ~midiO,
         \chan,     2,
         \octave, 3, 
         \scale,  Scale.chromatic, 
@@ -91,7 +92,7 @@ Pdef(\kit,
 Pdef(\fill,
     Pbind(
         \type,     \midi,
-        \midiout,  ~delugeOut,
+        \midiout,  ~midiO,
         \chan,     3,
         \midinote, Pseq([60, 63, 65, 67, 65, 63, 60, 58, 55, 53, 50, 48, 50, 53, 55, 58], 1),
         \dur,      0.5,
@@ -105,7 +106,7 @@ Pdef(\fill,
 Pdef(\chaos,
     Pbind(
         \type,     \midi,
-        \midiout,  ~delugeOut,
+        \midiout,  ~midiO,
         \chan,     4,
         \midinote, Pwrand(
             [36, 43, 48, 55, 60, 67, 72, 79],
