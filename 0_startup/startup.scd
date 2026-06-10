@@ -73,12 +73,30 @@ Server.killAll;  // ensure previous scsynth is gone before boot (avoids macOS AV
 // ("server 'localhost' already booting") and can leave the booting flag stuck → "not started".
 s.waitForBoot {
     if(hostname == "raspberrypi") {
-        // --- Raspberry Pi: minimal boot
+        // --- Raspberry Pi: lean control layer (host for norns + Maschine+/Deluge)
+        // Flow: norns (arcologies) OSC → SC functions → MIDI out to Maschine+/Deluge.
+        // Link syncs norns / Maschine+ / SC; Deluge is MIDI-slaved (~startDelugeClock).
+        // SC-internal audio (synthdefs/samples/mixer) is intentionally NOT loaded here.
+
+        // --- MIDI setup (cross-platform): ~mOut, ~lcxlSrcUid, ~reconnectMidi
+        "/home/hypo/Music/supercollider/0_startup/_includes/midi-setup.scd".load;
+
+        // --- LinkClock setup
+        // 1. CLEAR existing clocks to kill zombies (safe on re-evaluation)
+        if (~link.notNil) { ~link.clear; ~link = nil; };
+        LinkClock.all.do({ |c| c.clear }); // scorched earth: clear ALL LinkClocks
+        // 2. CREATE fresh clock + sane default tempo
         ~link = LinkClock(1);
         ~link.permanent = true;
         TempoClock.default = ~link;
         ~link.tempo = 120/60;
         Pdef.defaultQuant = 4;
+
+        // --- Norns arcologies router
+        // Defines ~song / ~play / ~toggle / ~oneshot and OSC handlers (/arc/trigger,
+        // /arc/stop, /arc/start). Auto-loads midi-out-maschine.scd + midi-out-deluge.scd.
+        "/home/hypo/Music/supercollider/0_startup/_includes/norns-router.scd".load;
+
         ("Setup done! (" ++ platform ++ " / " ++ hostname ++ ")").postln;
     } {
         // --- Core synths + sample loader (always load)
