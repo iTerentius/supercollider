@@ -70,10 +70,12 @@
 // SONG HANDLERS
 // =============================================================================
 // Keys match the integer ID set on each BEACON cell in arcologies (1-99).
+// ~song entries are plain Functions — retrigger cooldown is set per-cell on the
+// Norns grid (BEACON RETRIG param, in beats) and sent in the OSC message.
 ~song[1] = { ~toggle.(\bassline) };
 ~song[2] = { ~toggle.(\arp) };
 ~song[3] = { ~toggle.(\pad) };
-~song[4] = { ~oneshot.(\fill, 2) };   // 2-bar one-shot
+~song[4] = { ~oneshot.(\fill, 2) };
 ~song[5] = { ~toggle.(\chaos) };
 
 // Handler receives (id:) event — id available if needed:

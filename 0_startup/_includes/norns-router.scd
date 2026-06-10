@@ -17,17 +17,27 @@
 // Populate per project:
 //   ~song[1] = { ~toggle.(\bassline) };
 //   ~song[2] = { ~oneshot.(\fill, 2) };
+// Retrigger cooldown is set per-cell on the Norns grid (BEACON RETRIG param, in beats).
+// 0 = fire every trigger (default). SC enforces the lockout via ~lastTriggerBeat.
 ~song = ();
+
+// Tracks the ~link beat at which each ID last fired, for cooldown gating.
+~lastTriggerBeat = ();
 
 // ---- OSC listener
 // Receives /arc/trigger from arcologies BEACON cells.
-// msg format: [path, arg1, ...] — id is msg[1].
+// msg[1] = integer id, msg[2] = retrigger cooldown in beats (0 = no lockout).
 // SC default receive port is 57120; set target IP in Norns PARAMS → BEACON / OSC.
 OSCdef(\arcRouter, { |msg|
-    var id = msg[1].asInteger;
-    var handler = ~song[id];
+    var id       = msg[1].asInteger;
+    var cooldown = msg[2].asFloat;
+    var handler  = ~song[id];
     if(handler.notNil) {
-        handler.((id: id));
+        var last = (~lastTriggerBeat[id] ? -1e10);
+        if((~link.beats - last) >= cooldown) {
+            ~lastTriggerBeat[id] = ~link.beats;
+            handler.value((id: id));
+        };
     } {
         ("norns-router: unhandled id " ++ id).postln;
     };
@@ -84,6 +94,7 @@ OSCdef(\arcRouter, { |msg|
     ~songLocked = true;
     ~activePdefs.do { |sym| Pdef(sym).stop };
     ~activePdefs = Set.new;
+    ~lastTriggerBeat = ();
     "songStop: all patterns stopped".postln;
 };
 
