@@ -14,29 +14,48 @@
 
 // ---- song handler table
 // Keys are the integer IDs set on BEACON cells in arcologies (1-99).
-// Populate per project:
-//   ~song[1] = { ~toggle.(\bassline) };
-//   ~song[2] = { ~oneshot.(\fill, 2) };
-// Retrigger cooldown is set per-cell on the Norns grid (BEACON RETRIG param, in beats).
-// 0 = fire every trigger (default). SC enforces the lockout via ~lastTriggerBeat.
+// Three forms — mode/retrig come from the Norns BEACON cell params:
+//
+//   ~song[1] = \kk;                      // sym: mode+retrig fully from Norns
+//   ~song[2] = (sym: \fill, bars: 2);    // sym+bars: mode from Norns, bars override
+//   ~song[3] = { |ev| ~toggle.(\pad) };  // function: full custom, ev has id/mode/retrig
 ~song = ();
 
 // Tracks the ~link beat at which each ID last fired, for cooldown gating.
 ~lastTriggerBeat = ();
 
+// Dispatch a sym using the mode sent from Norns (0=oneshot, 1=toggle, 2=play).
+~dispatchMode = { |sym, mode, bars=1|
+    switch(mode,
+        0, { ~oneshot.(sym, bars) },
+        1, { ~toggle.(sym) },
+        2, { ~play.(sym) }
+    );
+};
+
 // ---- OSC listener
 // Receives /arc/trigger from arcologies BEACON cells.
-// msg[1] = integer id, msg[2] = retrigger cooldown in beats (0 = no lockout).
+// msg[1]=id, msg[2]=retrigger cooldown (beats), msg[3]=mode (0=oneshot,1=toggle,2=play).
 // SC default receive port is 57120; set target IP in Norns PARAMS → BEACON / OSC.
 OSCdef(\arcRouter, { |msg|
     var id       = msg[1].asInteger;
     var cooldown = msg[2].asFloat;
-    var handler  = ~song[id];
-    if(handler.notNil) {
+    var mode     = msg[3].asInteger;
+    var entry    = ~song[id];
+    if(entry.notNil) {
         var last = (~lastTriggerBeat[id] ? -1e10);
         if((~link.beats - last) >= cooldown) {
             ~lastTriggerBeat[id] = ~link.beats;
-            handler.value((id: id));
+            case
+            { entry.isKindOf(Symbol) } {
+                ~dispatchMode.(entry, mode);
+            }
+            { entry.isKindOf(Event) } {
+                ~dispatchMode.(entry[\sym], mode, entry[\bars] ? 1);
+            }
+            { entry.isKindOf(Function) } {
+                entry.value((id: id, mode: mode, retrig: cooldown));
+            };
         };
     } {
         ("norns-router: unhandled id " ++ id).postln;
