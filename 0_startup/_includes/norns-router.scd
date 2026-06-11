@@ -48,8 +48,11 @@ OSCdef(\arcRouter, { |msg|
 // ~songLocked is set on arcologies pause and cleared on resume.
 // While locked, ~play/~toggle/~oneshot are no-ops — residual BEACON signals
 // that fire after arcologies pauses cannot restart patterns.
-~activePdefs = Set.new;
-~songLocked  = false;
+~activePdefs  = Set.new;
+~songLocked   = false;
+// Per-sym cancelation tokens for ~oneshot. Each call mints a new Object;
+// the scheduled stop checks identity so a superseded stop is a no-op.
+~oneshotFlags = ();
 
 ~play = { |sym|
     if(~songLocked.not) {
@@ -76,14 +79,27 @@ OSCdef(\arcRouter, { |msg|
 };
 
 // Play for N bars then stop. Default 1 bar; pass bars: 2 for a 2-bar fill.
+// Uses nextTimeOnGrid so the stop is scheduled from when the Pdef actually
+// starts (next quant boundary), not from when ~oneshot is called. Without
+// this, a trigger arriving just after a boundary queues the Pdef to the
+// next boundary but fires the stop at now+4, cutting off after 1 note.
+// The flag token ensures a superseded stop (from a previous call) never
+// kills a freshly-restarted instance.
 ~oneshot = { |sym, bars=1|
     if(~songLocked.not) {
-        var p = Pdef(sym);
+        var p         = Pdef(sym);
+        var q         = Pdef.defaultQuant ? 1;
+        var startBeat = ~link.nextTimeOnGrid(q);
+        var flag      = Object.new;
+        ~oneshotFlags[sym] = flag;
         p.play(~link);
         ~activePdefs.add(sym);
-        ~link.sched(~link.beatsPerBar * bars, {
-            p.stop;
-            ~activePdefs.remove(sym);
+        ~link.schedAbs(startBeat + (~link.beatsPerBar * bars), {
+            if(~oneshotFlags[sym] === flag) {
+                p.stop;
+                ~activePdefs.remove(sym);
+                ~oneshotFlags.removeAt(sym);
+            };
             nil
         });
     };
@@ -93,8 +109,9 @@ OSCdef(\arcRouter, { |msg|
 ~songStop = {
     ~songLocked = true;
     ~activePdefs.do { |sym| Pdef(sym).stop };
-    ~activePdefs = Set.new;
+    ~activePdefs  = Set.new;
     ~lastTriggerBeat = ();
+    ~oneshotFlags = ();
     "songStop: all patterns stopped".postln;
 };
 
