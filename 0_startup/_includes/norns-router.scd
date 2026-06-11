@@ -39,8 +39,8 @@
 // SC default receive port is 57120; set target IP in Norns PARAMS → BEACON / OSC.
 OSCdef(\arcRouter, { |msg|
     var id       = msg[1].asInteger;
-    var cooldown = msg[2].asFloat;
-    var mode     = msg[3].asInteger;
+    var cooldown = (msg[2] ? 0).asFloat;
+    var mode     = (msg[3] ? 0).asInteger;
     var entry    = ~song[id];
     if(entry.notNil) {
         var last = (~lastTriggerBeat[id] ? -1e10);
