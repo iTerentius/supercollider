@@ -33,6 +33,10 @@ case
 }
 { platform == \linux } {
     case
+    { hostname == "zynthian" } {
+        // Zynthian: MIDI-only host, scsynth will not be booted
+        "Audio config: Zynthian (MIDI only, no scsynth)".postln;
+    }
     { hostname == "raspberrypi" } {
         // localhost resolves to ::1 on this Pi — force IPv4 so sclang finds scsynth
         Server.default.addr = NetAddr("127.0.0.1", 57110);
@@ -67,38 +71,13 @@ case
     "Audio config: using defaults".postln;
 };
 
-Server.killAll;  // ensure previous scsynth is gone before boot (avoids macOS AVAudio race)
+// Boot scsynth only on hosts that use it
+if((hostname != "zynthian") && (hostname != "raspberrypi")) {
+    Server.killAll;  // ensure previous scsynth is gone before boot (avoids macOS AVAudio race)
 
-// waitForBoot handles the boot itself; a separate s.boot here double-triggers it
-// ("server 'localhost' already booting") and can leave the booting flag stuck → "not started".
-s.waitForBoot {
-    if(hostname == "raspberrypi") {
-        // --- Raspberry Pi: lean control layer (host for norns + Maschine+/Deluge)
-        // Flow: norns (arcologies) OSC → SC functions → MIDI out to Maschine+/Deluge.
-        // Link syncs norns / Maschine+ / SC; Deluge is MIDI-slaved (~startDelugeClock).
-        // SC-internal audio (synthdefs/samples/mixer) is intentionally NOT loaded here.
-
-        // --- MIDI setup (cross-platform): ~mOut, ~lcxlSrcUid, ~reconnectMidi
-        "/home/hypo/Music/supercollider/0_startup/_includes/midi-setup.scd".load;
-
-        // --- LinkClock setup
-        // 1. CLEAR existing clocks to kill zombies (safe on re-evaluation)
-        if (~link.notNil) { ~link.clear; ~link = nil; };
-        LinkClock.all.do({ |c| c.clear }); // scorched earth: clear ALL LinkClocks
-        // 2. CREATE fresh clock + sane default tempo
-        ~link = LinkClock(1);
-        ~link.permanent = true;
-        TempoClock.default = ~link;
-        ~link.tempo = 120/60;
-        Pdef.defaultQuant = 4;
-
-        // --- Norns arcologies router
-        // Defines ~song / ~play / ~toggle / ~oneshot and OSC handlers (/arc/trigger,
-        // /arc/stop, /arc/start). Auto-loads midi-out-maschine.scd + midi-out-deluge.scd.
-        "/home/hypo/Music/supercollider/0_startup/_includes/norns-router.scd".load;
-
-        ("Setup done! (" ++ platform ++ " / " ++ hostname ++ ")").postln;
-    } {
+    // waitForBoot handles the boot itself; a separate s.boot here double-triggers it
+    // ("server 'localhost' already booting") and can leave the booting flag stuck → "not started".
+    s.waitForBoot {
         // --- Core synths + sample loader (always load)
         "_synthdefs/synths_common.scd".loadRelative;
         "_synthdefs/ufn_defs.scd".loadRelative;
@@ -126,9 +105,9 @@ s.waitForBoot {
         // "_includes/_osc-ctrl/tosc-fx.scd".loadRelative;  // defines ~toscFXBind/~toscFXSync used by fx_defs ~fxSetup functions
 
         // --- Mixer channels (with conditional controller bindings)
-        "_includes/mixer-channel-16s.scd".loadRelative;
-        "_includes/mixer-channel-stem-record.scd".loadRelative;
-        "_includes/ndef2mixer-channel.scd".loadRelative;
+        // "_includes/mixer-channel-16s.scd".loadRelative;
+        // "_includes/mixer-channel-stem-record.scd".loadRelative;
+        // "_includes/ndef2mixer-channel.scd".loadRelative;
 
         // --- Helpers
         "_includes/_helpers/helpers.scd".loadRelative;
@@ -166,5 +145,56 @@ s.waitForBoot {
 
         ("Setup done! (" ++ platform ++ " / " ++ hostname ++ ")").postln;
     };
+};
+
+// --- Raspberry Pi: lean control layer (host for norns + Maschine+/Deluge)
+// Flow: norns (arcologies) OSC → SC functions → MIDI out to Maschine+/Deluge.
+// Link syncs norns / Maschine+ / SC; Deluge is MIDI-slaved (~startDelugeClock).
+// SC-internal audio (synthdefs/samples/mixer) is intentionally NOT loaded here.
+if(hostname == "raspberrypi") {
+    // --- MIDI setup (cross-platform): ~mOut, ~lcxlSrcUid, ~reconnectMidi
+    "/home/hypo/Music/supercollider/0_startup/_includes/midi-setup.scd".load;
+
+    // --- LinkClock setup
+    // 1. CLEAR existing clocks to kill zombies (safe on re-evaluation)
+    if (~link.notNil) { ~link.clear; ~link = nil; };
+    LinkClock.all.do({ |c| c.clear }); // scorched earth: clear ALL LinkClocks
+    // 2. CREATE fresh clock + sane default tempo
+    ~link = LinkClock(1);
+    ~link.permanent = true;
+    TempoClock.default = ~link;
+    ~link.tempo = 120/60;
+    Pdef.defaultQuant = 4;
+
+    // --- Norns arcologies router
+    // Defines ~song / ~play / ~toggle / ~oneshot and OSC handlers (/arc/trigger,
+    // /arc/stop, /arc/start). Auto-loads midi-out-maschine.scd + midi-out-deluge.scd.
+    "/home/hypo/Music/supercollider/0_startup/_includes/norns-router.scd".load;
+
+    ("Setup done! (" ++ platform ++ " / " ++ hostname ++ ")").postln;
+};
+
+// --- Zynthian: MIDI-only control layer (no scsynth)
+if(hostname == "zynthian") {
+    MIDIClient.init;
+    ~out = MIDIOut.newByName("Midi Through", "Midi Through Port-0");
+    ~out.latency = 0;
+
+    // Route Midi Through into ZynMidiRouter so SC MIDI reaches Zynthian chains.
+    // Midi Through is ALSA-only; a2jmidid bridges it to JACK where ZynMidiRouter lives.
+    "jack_connect \"a2j:Midi Through [14] (capture): Midi Through Port-0\" \"ZynMidiRouter:seq_in\"".unixCmd;
+
+    // --- LinkClock setup
+    // 1. CLEAR existing clocks to kill zombies (safe on re-evaluation)
+    if (~link.notNil) { ~link.clear; ~link = nil; };
+    LinkClock.all.do({ |c| c.clear }); // scorched earth: clear ALL LinkClocks
+    // 2. CREATE fresh clock + sane default tempo
+    ~link = LinkClock(1);
+    ~link.permanent = true;
+    TempoClock.default = ~link;
+    ~link.tempo = 120/60;
+    Pdef.defaultQuant = 4;
+
+    "Setup done! (zynthian)".postln;
 };
 )
