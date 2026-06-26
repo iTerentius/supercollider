@@ -58,3 +58,39 @@ MIDIdef(\delugeAny, { |a, b, c, d| [a, b, c, d].postln }, msgType: \noteOn);
 
   ~delugeCtrl.control(0, 13, 127);  // ch 1, CC 13, mid value
 
+  (
+
+~midiTrace = (
+    noteOn: MIDIFunc.noteOn({ |vel, num, chan, src|
+        "NOTE ON  | ch: % | note: % (%) | vel: %".format(
+            chan + 1, num, num.midicps.round(0.01), vel
+        ).postln;
+    }),
+
+    noteOff: MIDIFunc.noteOff({ |vel, num, chan, src|
+        "NOTE OFF | ch: % | note: % | vel: %".format(
+            chan + 1, num, vel
+        ).postln;
+    }),
+
+    cc: MIDIFunc.cc({ |val, num, chan, src|
+        "CC       | ch: % | cc: % | val: %".format(
+            chan + 1, num, val
+        ).postln;
+    }),
+
+    bend: MIDIFunc.bend({ |val, chan, src|
+        "BEND     | ch: % | val: %".format(chan + 1, val).postln;
+    }),
+
+    clock: MIDIFunc.midiClock({
+        "CLOCK".postln;
+    }),
+
+    start: MIDIFunc.start({ "CLOCK START".postln; }),
+    stop: MIDIFunc.stop({  "CLOCK STOP".postln;  }),
+);
+
+"MIDI trace active — all ports monitored".postln;
+)
+

@@ -30,7 +30,7 @@ Pdefn(\bass_str,  2);
 // Drum MIDI notes default to General MIDI channel 10 (0-indexed = 9).
 // Remap Pdefn(\all_*_note) to match your DAW drum kit.
 // Bass goes to its own melodic channel — SC derives note from \degree + \scale + \octave.
-Pdefn(\all_type,       \midi);   // \note = SC synth  |  \midi = DAW
+Pdefn(\all_type,       \note);   // \note = SC synth  |  \midi = DAW
 Pdefn(\all_drum_chan,  9);       // MIDI ch 10 (0-indexed) — GM drums
 Pdefn(\all_kick_chan,  10);       // MIDI ch 10 (0-indexed) — GM drums
 Pdefn(\all_sn_chan,  11);       // MIDI ch 10 (0-indexed) — GM drums

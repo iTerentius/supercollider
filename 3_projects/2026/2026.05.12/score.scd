@@ -58,24 +58,29 @@ var safeLoad = { |path|
     \midiout,  ~deluge, 
     \chan,  1, 
     \amp, 1,  
-    // \octave,  5,  
-    // \degree,  Pseq((0..7),  inf), 
-    // \octave,  Pseq([5,  3,  4], inf), 
-    // \degree,  Pslide((0..2),  inf,  3,  4),  
-    // \legato,  Pwhite(0.8, Pkey(\stretch),  inf), 
-    \sustain,  Pkey(\stretch)*2, 
-    // \degree,  Pseq([
-    //   // [0],  [0, 1], \,  \,  [1, 2], [0],  [0, 1], [0],   
-    //   0, 1
-    // ],  inf), 
-    // \degree,  Pseq([1,  2], inf), 
-    // \note,  Pseq([60, 61, 62],  inf), 
-    \degree,  Pseq([[0, 2],  [1,  2],  [2], [0, 1]], inf),  
-    // \dur,  Pseq([1/8!4, 1/2].flat, inf), 
-    \dur, 1,  
+    \octave,  5,  
+    \degree,  Pseq(
+      [0,  0,  0,  1,  \,  \], inf), 
+    \dur, 1/2,  
     // \stretch, Pseg([1,  1/2,  2], [2, 4], \lin, inf),  
-    \stretch,  Pseq([1, 1/4!3,  1.25].flat, inf), 
+    // \stretch,  Pseq([1, 1/4!3,  1.25].flat, inf), 
   ));
 )
 Pdef(\del).play;
 Pdef(\del).stop;
+
+MIDIClient.init;
+~out = MIDIOut.newByName("IAC Driver", "Bus 2");
+
+Tdef(\cc, )
+~out.control(chan: 0, ctlNum: 74, val: 22); 
+(
+Tdef(\ccLearn, {
+    loop {
+        ~out.control(chan: 0, ctlNum: 74, val: 64);
+        0.2.wait; // sends every 200ms - adjust if needed
+    }
+}).play;
+)
+// Stop it once Maschine has learned
+Tdef(\ccLearn).stop;

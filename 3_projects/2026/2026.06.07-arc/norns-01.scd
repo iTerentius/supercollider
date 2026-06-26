@@ -1,7 +1,6 @@
 ~stopDelugeClock.();
 ~startDelugeClock.();
 ~mOut;
-~midiO = ~maschineOut;
 ~maschineOut;
 ~maschineOut.noteOn(1, 36, 100)
 ~delugeOut.noteOn(0, 36, 100)
@@ -34,17 +33,18 @@ Pdef(\kit).stop(~link);
 // ---- bassline: loops until toggled off  [BEACON id=1]
 Pdef(\bassline,
     Pbind(
-        \type,     \midi,
-        \midiout,  ~midiO,
-        \chan,     0,            // Deluge synth track (0-indexed)
+        // \type,     \midi,
+        // \midiout,  ~delugeOut,
+        // \chan,     0,            // Deluge synth track (0-indexed)
+        \instrument,  \modelD,  
         \scale,    Scale.dorian,  
-        \octave,  5,  
+        \octave,  3,  
         \degree,   Pseq([0, 1], inf), 
         \dur,      1/2, 
         \amp,      0.8,
-        \vel,     Pkey(\amp), 
         // \stretch, Pseq([1,  2], inf), 
         // \legato,  Pwhite(0.5, 2,   inf),  
+        \out, ~t1.inbus.index,  
     )
 );
 // ~song[1] = { ~toggle.(\bassline) };
@@ -53,72 +53,28 @@ Pdef(\bassline,
 // ---- arp: generative, loops until toggled off  [BEACON id=2]
 Pdef(\arp,
     Pbind(
-        \type,     \midi,
-        \midiout,  ~midiO,
+        \instrument,  \neutron, 
+        // \type,     \midi,
+        \midiout,  ~delugeOut,
         \chan,     1,
         \scale,  Scale.dorian,  
-        \octave,  Pseq([6,  5], inf),  
+        \octave,  Pseq([4,  5], inf),  
         \degree,  Pslide((0..7),  inf,  2,  3), 
-        \dur,      1, 
+        \dur,      1/2, 
         \amp,      0.6,
         \vel,     Pkey(\amp), 
         \stretch, Pseq([1/4,  1,  2], inf), 
         // \legato,  Pwhite(0.5, 2,   inf),  
+        \out, ~t2.inbus.index,  
     )
 );
-~song[2] = { ~oneshot.(\arp,  1) };
+~song[2] = { ~oneshot.(\arp,  3) };
 
-// ---- pad: sustained chords, toggled  [BEACON id=3]
-Pdef(\kit,
-    Pbind(
-        \type,     \midi,
-        \midiout,  ~midiO,
-        \chan,     2,
-        \octave, 3, 
-        \scale,  Scale.chromatic, 
-        // \midinote, Pseq([[48, 55, 60], [46, 53, 58], [43, 50, 55]], inf),
-        \degree,  Pseq([[0!3].flat, [\],  [0, 1], [0,  2]], inf), 
-        // \degree,  0,  
-        \dur,      2,
-        \amp,      0.6,
-        \sustain,  1.8,
-        // \stretch,  Pseq([1/2, 2,  3], inf), 
-        \stretch, Pseg([1/4,  1,  1/8], [2, 2], \sin, inf), 
-    )
-);
-~song[3] = { ~toggle.(\kit) };
-
-// ---- fill: one-shot, plays for 2 bars then stops automatically  [BEACON id=4]
-Pdef(\fill,
-    Pbind(
-        \type,     \midi,
-        \midiout,  ~midiO,
-        \chan,     3,
-        \midinote, Pseq([60, 63, 65, 67, 65, 63, 60, 58, 55, 53, 50, 48, 50, 53, 55, 58], 1),
-        \dur,      0.5,
-        \amp,      0.85,
-        \sustain,  0.12,
-    )
-);
-~song[4] = { ~oneshot.(\fill, 2) };
-
-// ---- chaos: weighted generative  [BEACON id=5]
-Pdef(\chaos,
-    Pbind(
-        \type,     \midi,
-        \midiout,  ~midiO,
-        \chan,     4,
-        \midinote, Pwrand(
-            [36, 43, 48, 55, 60, 67, 72, 79],
-            [0.2, 0.2, 0.2, 0.15, 0.1, 0.08, 0.05, 0.02].normalizeSum,
-            inf
-        ),
-        \dur,      Pwrand([0.25, 0.5, 1.0], [0.5, 0.35, 0.15], inf),
-        \amp,      Pwhite(0.4, 1.0),
-        \sustain,  Pkey(\dur) * 0.5,
-    )
-);
-~song[5] = { ~toggle.(\chaos) };
+Pdef(\bd, 
+  Pbind(
+  
+  )
+)
 
 "norns-song-template: handlers registered".postln;
 );
