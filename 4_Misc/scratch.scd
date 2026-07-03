@@ -397,3 +397,39 @@ Ndef(\bg1)[1] = nil;
   });
   "--- press a button on the LC ---".postln;
   )
+(
+Pdef(\midiNotes,
+  Pbind(
+      \type, \midi,
+      \midiout,  ~out,
+      \chan, 1,                 // MIDI channel 0..15
+      \scale,  Scale.dorian,  
+      \octave, 4,
+      // \degree, Pstep(Pseq([0, -1, -5, -4], inf), 4),  
+      // \degree,  Pn(Pdefn(\degs),  inf), 
+      \degree, Place([0,[-1,-5,-4]],inf),
+      \sustain, 1.5,  
+      \dur, 1,               // pattern step duration
+      \amp, Pwhite(0.76,  0.9, inf),                    // 0..1 mapped to velocity 1..127
+      \stretch,  Pseq([1/4!4, 1].flat, inf),   
+  ));
+);
+Pdef(\midiNotes).play(~link,  quant:4);
+Pdef(\midiNotes).stop;
+
+~link.tempo *60;
+
+~out.control(1, 21, 0);
+
+(
+Pdef(\cc_1, Pbind(
+  \type, \midi,
+  \midicmd, \control,
+  \midiout, ~out,
+  \chan, 1,
+  \ctlNum, 21,
+  \control, Pseg([0,Pwhite(20,127,inf),0],[8],\sin, inf),
+  \dur, 1/16,
+))
+)
+Pdef(\cc_1).play(~link);

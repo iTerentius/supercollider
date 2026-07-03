@@ -14,6 +14,52 @@ platform = Platform.case(
 hostname = "hostname".unixCmdGetStdOut.stripWhiteSpace;
 ("Platform detected: " ++ platform ++ " / " ++ hostname).postln;
 
+// ---- ddwMixerChannel quark (mixer-channel-16s.scd / mixer-channel-stem-record.scd
+// depend on its MixerChannel class). Auto-installs on first boot on a fresh machine
+// (e.g. after a re-image); a no-op on every boot after that.
+if(Quarks.isInstalled("ddwMixerChannel").not) {
+    "ddwMixerChannel not found — installing (first run on this machine)...".postln;
+    Quarks.install("ddwMixerChannel");
+
+    // Headless sclang builds (no Qt/GUI kit compiled in — true of this Zynthian's
+    // build) can't compile any of the *Gui.sc files pulled in by ddwMixerChannel's
+    // dependency chain (crucial-library, ddwGUIEnhancements): they reference
+    // View/Window/ObjectGui etc., which don't exist here, and abort class-library
+    // compilation entirely. None of that GUI code is needed for MixerChannel's core
+    // routing/send/stem-record functionality, so on a headless build it's excluded.
+    // On a machine with a real GUI kit (Mac/desktop Linux), skip this — those files
+    // are legitimately useful there (the mixer GUI board).
+    if('GUI'.asClass.isNil) {
+        "No GUI kit in this sclang build — excluding GUI-only quark files.".postln;
+        Quarks.uninstall("ddwGUIEnhancements");
+        [
+            "crucial-library/Gui",
+            "crucial-library/Sample/SampleGui.sc",
+            "crucial-library/Crucial.sc",   // GUI skin setup only; base SC already has \unipolar/\bipolar specs
+            "crucial-library/UncoupledUsefulThings/KeyCodeResponderGui.sc",
+            "crucial-library/Editors/NumberEditorGui.sc",
+            "crucial-library/Editors/EnvEditorGui.sc",
+            "crucial-library/Sequencers/HasSubjectGui.sc",
+            "crucial-library/Instr/InstrGui.sc",
+            "crucial-library/Instr/PatchGui.sc",
+            "crucial-library/Scheduling/TempoGui.sc",
+            "crucial-library/ServerTools/ServerGui.sc",
+            "crucial-library/deprecated-3.5.sc",
+            "crucial-library/Players/PlayerMixerGui.sc",
+            "crucial-library/Players/PlayerBasicOpsGui.sc",
+            "crucial-library/Players/SFP/SFPGui.sc",
+            "crucial-library/Players/SimpleTriggerGui.sc",
+            "crucial-library/Players/AbstractPlayerGui.sc",
+            "crucial-library/Players/BeatClockPlayerGui.sc",
+            "ddwMixerChannel/MixerScopeGui.sc"
+        ].do { |rel| LanguageConfig.addExcludePath(Quarks.folder +/+ rel) };
+        LanguageConfig.store(LanguageConfig.currentPath);
+    };
+
+    "ddwMixerChannel install complete — recompiling class library to load it...".postln;
+    thisProcess.recompile;
+};
+
 // ---- platform-specific audio configuration
 case
 { platform == \macos } {
@@ -174,15 +220,58 @@ if(hostname == "raspberrypi") {
     ("Setup done! (" ++ platform ++ " / " ++ hostname ++ ")").postln;
 };
 
-// --- Zynthian: MIDI-only control layer (no scsynth)
+// --- Zynthian: MIDI control layer + scsynth (audio, joined onto Zynthian's own JACK server)
 if(hostname == "zynthian") {
     MIDIClient.init;
     ~out = MIDIOut.newByName("Midi Through", "Midi Through Port-0");
     ~out.latency = 0;
 
+    // Boot scsynth as just another client of Zynthian's already-running jackd
+    // (which owns the HiFiBerry hw directly, so scsynth must NOT try to open its
+    // own audio device). Channel count/rate/period mirror jackd's actual invocation
+    // (`ps aux | grep jackd`): stereo I/O, 48kHz, 128-frame period.
+    // Scsynth's own ports land unconnected in the JACK graph — nothing is wired to
+    // zynmixer or system:playback yet; that's the next step once we decide which
+    // Zynthian chain outputs to tap for stems.
+    // localhost resolves to ::1 on this Pi (same gotcha as the raspberrypi host
+    // above) — scsynth's OSC listener is IPv4-only, so force it or sclang spawns
+    // scsynth fine but never completes the boot handshake (stuck "booting" forever).
+    Server.default.addr = NetAddr("127.0.0.1", 57110);
+    s.options.device = "JACK";
+    s.options.numOutputBusChannels = 2;
+    s.options.numInputBusChannels = 2;
+    s.options.sampleRate = 48000;
+    s.options.memSize = 65536;
+    s.options.numBuffers = 1024;
+    s.options.maxNodes = 1024;
+    s.options.blockSize = 64;
+    s.options.hardwareBufferSize = 128;
+
+    // s.boot relies internally on fork/OSCFunc-based timeouts (Server:prPingApp)
+    // to detect "no server yet" before spawning scsynth. Calling it synchronously
+    // during startup.scd's own special early execution (before the interpreter's
+    // clock scheduler is fully pumping) leaves that fork's callback stuck forever —
+    // scsynth never even gets spawned (booting stays true, pid stays nil indefinitely).
+    // A short AppClock defer sidesteps this; confirmed s.boot works immediately when
+    // not called synchronously at startup-file top level.
+    AppClock.sched(0.1, {
+        s.waitForBoot {
+            "scsynth booted as a JACK client".postln;
+        };
+        nil
+    });
+
     // Route Midi Through into ZynMidiRouter so SC MIDI reaches Zynthian chains.
     // Midi Through is ALSA-only; a2jmidid bridges it to JACK where ZynMidiRouter lives.
     "jack_connect \"a2j:Midi Through [14] (capture): Midi Through Port-0\" \"ZynMidiRouter:seq_in\"".unixCmd;
+
+    // Also fan the same stream straight to the mio hardware MIDI out (dev0), which
+    // is DIN-wired to the Deluge. jackd owns the mio rawmidi device directly (-X raw),
+    // so it's only reachable as the JACK port "system:midi_playback_1" — a direct ALSA
+    // seq connect to the "mio" client fails with EAGAIN because jackd already holds it.
+    // Result: everything ~out sends reaches BOTH a Zynthian chain (via ZynMidiRouter,
+    // per its own channel routing) AND the Deluge (always, regardless of chain config).
+    "jack_connect \"a2j:Midi Through [14] (capture): Midi Through Port-0\" \"system:midi_playback_1\"".unixCmd;
 
     // --- LinkClock setup
     // 1. CLEAR existing clocks to kill zombies (safe on re-evaluation)
@@ -194,6 +283,31 @@ if(hostname == "zynthian") {
     TempoClock.default = ~link;
     ~link.tempo = 120/60;
     Pdef.defaultQuant = 4;
+
+    // --- Push Link tempo into Zynthian's own tempo (zynseq)
+    // Zynthian has no Link support, so it never picks up the Deluge/M+ tempo on its
+    // own. Its GUI/CUIA OSC server (zynthian_gui.py) listens on 127.0.0.1:1370 and
+    // /CUIA/SET_TEMPO <bpm> sets zynseq's tempo directly — no MIDI clock or clock-source
+    // mode change needed, unlike the Deluge (which has no such OSC endpoint and is
+    // slaved via M+'s Link-driven MIDI clock over USB instead).
+    // ~link.tempo already tracks the live Link session (M+ is presumably a Link peer),
+    // so polling it here closes the loop: M+ tempo change → Link → ~link.tempo → OSC → Zynthian.
+    ~zynOSC = NetAddr("127.0.0.1", 1370);
+    ~syncZynTempo = { ~zynOSC.sendMsg("/CUIA/SET_TEMPO", (~link.tempo * 60).asFloat) };
+    ~syncZynTempo.();
+
+    if(~zynTempoWatch.notNil) { ~zynTempoWatch.stop };
+    ~zynTempoWatch = Task({
+        var lastBpm = (~link.tempo * 60).round(0.01);
+        loop {
+            var bpm = (~link.tempo * 60).round(0.01);
+            if(bpm != lastBpm) {
+                lastBpm = bpm;
+                ~syncZynTempo.();
+            };
+            1.wait;
+        };
+    }).play(SystemClock);
 
     "Setup done! (zynthian)".postln;
 };
