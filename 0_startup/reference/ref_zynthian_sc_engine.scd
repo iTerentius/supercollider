@@ -93,6 +93,17 @@
 //            control names), and every setterFunc can just be {} (a no-op)
 //            since ~zynRegisterParam's ~zynCurrentParams tracking is what
 //            actually matters — there's no "sustained voice" to live-update.
+//    Multiple "kits" sharing one SynthDef/mechanism, each backed by its own
+//    FOLDER of samples (rather than one fixed file): see
+//    slice-multi-patch.scd's ~zynMakeMultiSlicePatch — a builder Function,
+//    not a patch itself, called once per folder/preset name at the bottom
+//    of the file. Each call captures its own buffer list / sequencing state,
+//    so switching between kits never mixes up which buffer comes next.
+//    Adding more files to an existing kit's folder needs an SC restart (the
+//    folder is scanned once at boot) but NOT a code change. \mode picks
+//    seq (cycle in order, like Pseq) vs rand (random, no immediate repeat,
+//    like Pxrand) — see the "is_toggle sends real OSC booleans" gotcha
+//    below if adding a similar toggle-controlled param.
 //
 // 2. Create the matching Zynthian preset directory — TWO levels deep,
 //    bank then preset (a single level silently gets misread as an empty
@@ -197,6 +208,20 @@
 //   invisible (no error, they just never appear anywhere). Fixed to chunk
 //   like zynthian_engine_puredata does: bare group name if it fits on one
 //   screen, "<group>#1", "<group>#2", ... if it needs more.
+//
+// - `is_toggle: true` params arrive as REAL OSC booleans, not 0.0/1.0
+//   floats: zynthian_controller.get_ctrl_osc_val() sends `self.value > 0` (a
+//   Python bool), and liblo encodes that as an OSC 'T'/'F' type tag, which
+//   SC's OSC receiver decodes as an SC Boolean (true/false), not a Float.
+//   Confirmed live: a patch comparing a toggle param with `< 0.5` threw
+//   "Message '<' not understood. RECEIVER: false" on the FIRST toggle touch
+//   — and since that comparison lived inside ~zynPatchNoteOn, the exception
+//   silently killed every note-on afterward (no Synth ever got created,
+//   total silence, "even setting it back" doesn't help since the stored
+//   value is a Boolean either way). Fixed generically in
+//   ~zynRegisterParam's OSCdef: `msg[1].asFloat` before storing into
+//   ~zynCurrentParams — true/false -> 1.0/0.0, plain floats pass through
+//   unchanged. Applies automatically to every param, not just toggles.
 //
 // - gb1-patch.scd is intentionally NOT in startup.scd's patch-loading list.
 //   It still runs its setup at top level (not wrapped in ~zynPatches[\gb1])

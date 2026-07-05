@@ -72,7 +72,18 @@ OSCdef(\zynLoadPatch, { |msg| ~zynLoadPatch.value(msg[1].asSymbol) }, "/scengine
         setterFunc.value(v);
     };
     OSCdef(("zynParam_" ++ sym).asSymbol, { |msg|
-        ~zynParamTable[sym].value(msg[1]);
+        // zynthian_controller.get_ctrl_osc_val() (zyngine/zynthian_controller.py)
+        // sends `self.value > 0` — a real Python bool — for any zctrl with
+        // is_toggle: true, which liblo encodes as an OSC 'T'/'F' type tag,
+        // not a 0.0/1.0 float. SC's OSC receiver decodes that as an SC
+        // Boolean (true/false), not a Float — confirmed live: a patch
+        // comparing ~zynCurrentParams[\mode] < 0.5 threw
+        // "Message '<' not understood. RECEIVER: false" the first time a
+        // toggle knob was touched, silently killing every note-on
+        // afterward (an exception inside ~zynPatchNoteOn means no Synth
+        // ever gets created). .asFloat normalizes both cases: true/false
+        // -> 1.0/0.0, plain floats pass through unchanged.
+        ~zynParamTable[sym].value(msg[1].asFloat);
     }, "/scengine/" ++ sym);
 };
 
