@@ -1,7 +1,15 @@
 // zyn-engine-bridge.scd — bridges the Zynthian "SC" chain engine (Python side:
 // zynthian-sc-engine repo, symlinked into zynthian-ui/zyngine/) to a live SC session.
 //
-// Only loaded on the zynthian host, from startup.scd. Two responsibilities:
+// Only loaded on the zynthian host, from startup.scd. Three responsibilities:
+//   0. ~zynPatches / ~zynLoadPatch — real preset switching. Every patch file
+//      loaded at boot registers an "activate" Function into
+//      ~zynPatches[\name] instead of setting ~zynPatchNoteOn/calling
+//      ~zynRegisterParam directly — it only actually becomes the live
+//      instrument once ~zynLoadPatch.(\name) runs that Function. Triggered
+//      by the engine's set_preset() sending "/scengine/loadpatch <name>"
+//      (a plain liblo.send, not a per-parameter zynthian_controller message
+//      — this is a command, not a knob value).
 //   1. ~zynRegisterParam(name) — zynthian_controller.send_value() (zyngine/
 //      zynthian_controller.py:472-489) sends ONE OSC message PER PARAMETER when
 //      its engine doesn't override send_controller_value(): liblo.send(osc_target,
@@ -29,6 +37,23 @@
 ~zynParamTable = IdentityDictionary.new;   // \paramName (Symbol) -> Function(value)
 ~zynCurrentParams = IdentityDictionary.new; // \paramName (Symbol) -> last-set value
 ~zynVoice = nil;                           // currently sounding Synth, if any
+
+~zynPatches = IdentityDictionary.new;       // \patchName (Symbol) -> activate Function
+~zynActivePatch = nil;                      // \patchName of whichever is currently live
+
+~zynLoadPatch = { |name|
+    var sym = name.asSymbol;
+    var fn = ~zynPatches[sym];
+    if(fn.notNil) {
+        fn.value;
+        ~zynActivePatch = sym;
+        ("[zyn-engine-bridge] activated patch: " ++ sym).postln;
+    } {
+        ("[zyn-engine-bridge] no such patch registered: " ++ sym).warn;
+    };
+};
+
+OSCdef(\zynLoadPatch, { |msg| ~zynLoadPatch.value(msg[1].asSymbol) }, "/scengine/loadpatch");
 
 // `default` is applied immediately to ~zynCurrentParams so a patch's
 // ~zynPatchNoteOn can read a sane value even before any knob has been

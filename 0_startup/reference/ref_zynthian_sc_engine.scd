@@ -28,10 +28,20 @@
 //     -> liblo.send(osc_target, "/scengine/<param>", value)
 //     -> SC OSCdef (zyn-engine-bridge.scd) -> ~zynParamTable[sym].value(v)
 //
+//   Zynthian touchscreen (preset selection)
+//     -> engine.set_preset() [zynthian_engine_supercollider.py]
+//     -> liblo.send(osc_target, "/scengine/loadpatch", presetDirName)
+//     -> SC OSCdef -> ~zynLoadPatch.(name) -> runs ~zynPatches[name],
+//        which is what actually sets ~zynPatchNoteOn / calls
+//        ~zynRegisterParam for that patch (see "Real preset switching"
+//        below — every patch file loads at boot but stays inert until
+//        selected this way).
+//
 //   Zynthian MIDI (ZynMidiRouter, via a2jmidid bridge)
 //     -> SC's own ALSA MIDI-in port "in0" (dedicated — see jackname_midi
 //        regex in zynthian_engine_supercollider.py)
 //     -> MIDIdef.noteOn/noteOff (zyn-engine-bridge.scd) -> ~zynPatchNoteOn
+//        (whichever patch is currently active)
 //
 //   SC itself is ONE PERSISTENT process (sclang+scsynth), booted once by
 //   startup.scd's `if(hostname == "zynthian")` branch — NOT spawned per
@@ -39,6 +49,14 @@
 //   Ndef/Pbind live-coding state alive across chain add/remove, but means
 //   the framework's normal "engine.start() sets things up" assumption
 //   doesn't hold for us — see Gotchas below, this bit hard.
+//
+// Real preset switching: every patch file loaded at SC boot defines its
+// SynthDef(s) and registers an "activate" Function into ~zynPatches[\name]
+// — it does NOT call ~zynRegisterParam / set ~zynPatchNoteOn at load time.
+// Only ~zynLoadPatch.(\name) (triggered by set_preset()'s OSC message, or
+// once at boot for the default patch) actually makes a patch live. This is
+// why a patch's setup code has to be wrapped in a Function rather than run
+// directly — see step 1 below.
 
 // =============================================================================
 // HOW TO ADD A NEW PATCH/PRESET
@@ -47,25 +65,41 @@
 // 1. Write the instrument as a self-contained file:
 //      0_startup/_includes/_zyn-patches/<name>-patch.scd
 //    Must define:
-//      - its own SynthDef(s) — don't `.load` the shared _synthdefs/ files
-//        (see "Shared synthdefs file" gotcha below)
-//      - ~zynPatchNoteOn = { |note, vel| Synth(\yourDef, [...]) }
-//        Must return the Synth (zyn-engine-bridge.scd stores it as
-//        ~zynVoice so note-off can release it via .set(\gate, 0) — your
-//        SynthDef needs a `gate` arg feeding an EnvGen with doneAction: 2).
-//      - One ~zynRegisterParam.(\name, setterFunc, defaultValue) call per
-//        knob you want exposed. setterFunc should update ~zynVoice:
-//          ~zynRegisterParam.(\cutoff, { |v| ~zynVoice !? { |s| s.set(\cutoff, v) } }, 2000);
-//        IMPORTANT: ~zynPatchNoteOn must read ~zynCurrentParams[\cutoff]
-//        (not a hardcoded default) when building each new Synth — a synth
-//        only exists between note-on/note-off, so it does NOT inherit
-//        whatever the previous note had its knobs turned to. See the
-//        "knob reverts after under a second" gotcha below.
+//      - its own SynthDef(s), OUTSIDE the ~zynPatches Function (defined
+//        unconditionally at load time, same on every boot) — don't `.load`
+//        the shared _synthdefs/ files (see "Shared synthdefs file" gotcha).
+//      - ~zynPatches[\<name>] = { ... } wrapping the patch's actual setup:
+//          ~zynPatches[\yourPatch] = {
+//              ~zynPatchNoteOn = { |note, vel| Synth(\yourDef, [...]) };
+//              ~zynRegisterParam.(\cutoff, { |v| ~zynVoice !? { |s| s.set(\cutoff, v) } }, 2000);
+//              // ...one ~zynRegisterParam call per knob you want exposed
+//          };
+//        This Function does NOT run at load time — only when
+//        ~zynLoadPatch.(\yourPatch) is called (touchscreen preset select,
+//        or the one hardcoded default-patch call in startup.scd). This is
+//        what lets multiple patches coexist without one clobbering another
+//        at boot.
+//      - ~zynPatchNoteOn must return the Synth (zyn-engine-bridge.scd
+//        stores it as ~zynVoice so note-off can try to release it via
+//        .set(\gate, 0)) and must read ~zynCurrentParams[\cutoff] (not a
+//        hardcoded default) when building each new Synth — see the "knob
+//        reverts after under a second" gotcha below. Two shapes exist:
+//          - Sustained/gated (subtractive1-patch.scd): SynthDef has a
+//            `gate` arg feeding EnvGen(..., doneAction: 2); setterFuncs do
+//            real work, .set()-ing the live ~zynVoice.
+//          - One-shot (slice1-patch.scd): SynthDef frees itself on a fixed
+//            internal envelope, no `gate` arg at all — note-off's
+//            .set(\gate, 0) harmlessly no-ops (SC ignores .set on unknown
+//            control names), and every setterFunc can just be {} (a no-op)
+//            since ~zynRegisterParam's ~zynCurrentParams tracking is what
+//            actually matters — there's no "sustained voice" to live-update.
 //
 // 2. Create the matching Zynthian preset directory — TWO levels deep,
 //    bank then preset (a single level silently gets misread as an empty
-//    bank — see gotcha below):
-//      /zynthian/zynthian-sc-engine/presets/sc/<BankName>/<presetName>/zynconfig.yml
+//    bank — see gotcha below). The preset directory's own NAME must match
+//    the ~zynPatches key exactly (set_preset() derives it via
+//    os.path.basename):
+//      /zynthian/zynthian-sc-engine/presets/sc/<BankName>/<name>/zynconfig.yml
 //    Shape (same schema zynthian_engine_puredata.py uses):
 //      GroupTitle:
 //        paramName:
@@ -74,14 +108,21 @@
 //          value_min: <min>
 //          value_max: <max>
 //          osc_path: "/scengine/<paramName>"   // must match ~zynRegisterParam's name
+//          is_integer: true    // optional, for whole-number knobs
+//          is_toggle: true     // optional, for on/off knobs
+//    More than 4 params in one GroupTitle auto-paginates into "<Group>#1",
+//    "<Group>#2", ... (touchscreen shows at most 4 knobs per screen) —
+//    nothing to do here, just don't be surprised by the extra page.
 //
-// 3. Point startup.scd at the new patch file — inside the
-//    `if(hostname == "zynthian")` branch's post-boot AppClock.sched
-//    callback, alongside zyn-engine-bridge.scd. Only ONE patch file loads
-//    at a time currently (multi-patch switching isn't wired up — see
-//    "Not yet built" below), so swap the line rather than adding a second:
-//      "/root/.../0_startup/_includes/_zyn-patches/zyn-engine-bridge.scd".load;
+// 3. Add the new file to startup.scd's explicit patch-loading list — inside
+//    the `if(hostname == "zynthian")` branch's post-boot AppClock.sched
+//    callback, alongside zyn-engine-bridge.scd and the other patch files
+//    (an explicit list, not an auto-scan of the directory — see the
+//    "gb1-patch.scd stays inert" gotcha below for why):
 //      "/root/.../0_startup/_includes/_zyn-patches/<name>-patch.scd".load;
+//    If this is meant to be the boot default, update the
+//    `~zynLoadPatch.(\...)` call right after the load list too — otherwise
+//    it's only reachable by selecting its preset on the touchscreen.
 //
 // 4. Restart both:
 //      tmux kill-session -t sc; tmux new-session -d -s sc 'sclang'
@@ -91,7 +132,8 @@
 //    only need the service restart; .scd patch changes only need SC.)
 //
 // 5. On the touchscreen: Add Instrument Chain -> Sampler -> SuperCollider ->
-//    <BankName> -> <presetName>. Knobs should appear immediately.
+//    <BankName> -> <name>. Knobs should appear immediately, and selecting
+//    it should swap which SynthDef actually sounds on the next MIDI note.
 //
 // Test the SC side standalone BEFORE touching Zynthian at all — this
 // environment's own tmux session lets you eval code directly and catches
@@ -148,6 +190,22 @@
 //   presets/sc/<preset>/zynconfig.yml gets silently misread as a BANK
 //   (empty of real presets, nothing shows up).
 //
+// - get_controllers_dict() must paginate into screens of at most 4
+//   controllers — the touchscreen shows 4 knobs per screen with no
+//   scroll/pagination WITHIN a screen, so a naive "one screen per
+//   zynconfig.yml group" implementation silently makes the 5th+ controller
+//   invisible (no error, they just never appear anywhere). Fixed to chunk
+//   like zynthian_engine_puredata does: bare group name if it fits on one
+//   screen, "<group>#1", "<group>#2", ... if it needs more.
+//
+// - gb1-patch.scd is intentionally NOT in startup.scd's patch-loading list.
+//   It still runs its setup at top level (not wrapped in ~zynPatches[\gb1])
+//   from before real preset switching existed — loading it alongside the
+//   others would activate it immediately and clobber whichever patch loads
+//   after it, since it doesn't go through ~zynLoadPatch at all. It'll need
+//   converting to the ~zynPatches pattern (see step 1 above) before it can
+//   safely coexist with other patches, whenever it's revisited.
+//
 // - The touchscreen's "Add Instrument Chain" engine list comes from a
 //   SEPARATE cache, /zynthian/config/engine_config.json, generated from
 //   zyngine/zynthian_lv2.py's `standalone_engine_info` dict — NOT directly
@@ -184,15 +242,6 @@
 // =============================================================================
 // NOT YET BUILT
 // =============================================================================
-// - Multi-preset switching: only one patch file loads at a time (step 3
-//   above). set_preset() doesn't send SC any "switch active patch" message —
-//   selecting a different preset on the touchscreen only reloads its
-//   zynconfig.yml (knobs), not the actual running SynthDef/note-on function.
-//   To support real preset switching, set_preset() would need to OSC-message
-//   SC with which patch to activate, and zyn-engine-bridge.scd would need a
-//   registry of patches (keyed by preset name) to swap ~zynPatchNoteOn /
-//   ~zynRegisterParam calls against, rather than one .scd file being
-//   hardcoded in startup.scd.
 // - Removing/disabling the SC chain from the touchscreen does NOT stop
 //   sound — stop() only calls osc_end(), by design (see architecture note
 //   above: no subprocess to kill). Acceptable for a personal live-coding
@@ -222,3 +271,7 @@
 //
 // Check for python-side errors:
 // journalctl -u zynthian.service --no-pager -n 200 | grep -iE "error|traceback"
+//
+// Manually switch the active patch (bypassing the touchscreen entirely),
+// from within the sc tmux session:
+// NetAddr("127.0.0.1", 57120).sendMsg("/scengine/loadpatch", "slice1");

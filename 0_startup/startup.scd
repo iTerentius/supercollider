@@ -273,7 +273,18 @@ if(hostname == "zynthian") {
             // SC-as-Zynthian-chain bridge — needs a booted server (Buffer.read/
             // sendCollection below), so this must run post-boot, not at top level.
             "/root/Music/supercollider/0_startup/_includes/_zyn-patches/zyn-engine-bridge.scd".load;
+
+            // Each patch file registers itself into ~zynPatches (see
+            // zyn-engine-bridge.scd) rather than activating immediately —
+            // explicit list, not an auto-scan of the directory, so that
+            // gb1-patch.scd (still broken, still runs its setup at top
+            // level rather than registering — see reference doc) can stay
+            // in the folder without clobbering whichever patch loads after
+            // it. Add new patches here as they're written.
             "/root/Music/supercollider/0_startup/_includes/_zyn-patches/subtractive1-patch.scd".load;
+            "/root/Music/supercollider/0_startup/_includes/_zyn-patches/slice1-patch.scd".load;
+
+            ~zynLoadPatch.(\subtractive1);   // boot default; touchscreen preset selection overrides
         };
         nil
     });
