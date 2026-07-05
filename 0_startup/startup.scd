@@ -230,14 +230,19 @@ if(hostname == "zynthian") {
     // (which owns the HiFiBerry hw directly, so scsynth must NOT try to open its
     // own audio device). Channel count/rate/period mirror jackd's actual invocation
     // (`ps aux | grep jackd`): stereo I/O, 48kHz, 128-frame period.
-    // Scsynth's own ports land unconnected in the JACK graph — nothing is wired to
-    // zynmixer or system:playback yet; that's the next step once we decide which
-    // Zynthian chain outputs to tap for stems.
+    // Scsynth's own out ports get wired into zynmixer chain 4 (input_04a/b) once
+    // booted, below — a free chain slot, independent of chains 1-3 which are live
+    // instruments. Gives SC its own fader/FX/mute strip on the Zynthian touchscreen.
     // localhost resolves to ::1 on this Pi (same gotcha as the raspberrypi host
     // above) — scsynth's OSC listener is IPv4-only, so force it or sclang spawns
     // scsynth fine but never completes the boot handshake (stuck "booting" forever).
     Server.default.addr = NetAddr("127.0.0.1", 57110);
-    s.options.device = "JACK";
+    // On the JACK driver, ServerOptions.device is the JACK CLIENT NAME, not a
+    // backend selector (this build is JACK-only already). Setting it to the
+    // literal string "JACK" previously named the client "JACK" instead of
+    // "SuperCollider", silently breaking any jack_connect targeting the
+    // expected client name.
+    s.options.device = "SuperCollider";
     s.options.numOutputBusChannels = 2;
     s.options.numInputBusChannels = 2;
     s.options.sampleRate = 48000;
@@ -257,6 +262,18 @@ if(hostname == "zynthian") {
     AppClock.sched(0.1, {
         s.waitForBoot {
             "scsynth booted as a JACK client".postln;
+            // jackd auto-connects new clients straight to hardware on boot —
+            // remove that so the "SC" Zynthian chain's own zynmixer routing
+            // (owned by zynautoconnect now that SC is a registered chain engine —
+            // see zynthian-sc-engine/zyngine/zynthian_engine_supercollider.py)
+            // is the only path to the speakers, not a hardcoded second one.
+            "jack_disconnect \"SuperCollider:out_1\" \"system:playback_1\"".unixCmd;
+            "jack_disconnect \"SuperCollider:out_2\" \"system:playback_2\"".unixCmd;
+
+            // SC-as-Zynthian-chain bridge — needs a booted server (Buffer.read/
+            // sendCollection below), so this must run post-boot, not at top level.
+            "/root/Music/supercollider/0_startup/_includes/_zyn-patches/zyn-engine-bridge.scd".load;
+            "/root/Music/supercollider/0_startup/_includes/_zyn-patches/subtractive1-patch.scd".load;
         };
         nil
     });

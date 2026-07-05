@@ -16,6 +16,7 @@
 //   ref_linkclock.scd        — ~link (LinkClock) tempo/sync
 //   ref_extensions.scd       — .stopQ and other extensions
 //   ref_common_patterns.scd  — full workflow examples
+//   ref_zynthian_sc_engine.scd — SC as a real Zynthian chain (knobs, MIDI-in, presets)
 //
 // Files loaded via startup.scd (in order):
 //   _synthdefs/synths_common.scd
