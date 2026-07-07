@@ -303,18 +303,21 @@ if(hostname == "zynthian") {
     // moved between devices) — silently does nothing if the Deluge isn't
     // currently on USB. 2026-07: was previously wired via mio+DIN instead
     // (jackd owned that rawmidi device directly as a JACK port,
-    // "system:midi_playback_1") — moved to USB to sidestep Deluge clock-sync
-    // bugs; mio is now expected to carry Norns -> Deluge instead, a separate
-    // path this doesn't need to touch.
+    // "system:midi_playback_1") — moved to USB to sidestep a Zynthian-side
+    // clock-sync issue (Vangelis' zynseq runs its internal clock at 1920 PPQN
+    // vs Oram's 24 PPQN, and per the lead dev, deriving a stable 1920 PPQN
+    // internal clock from a 24 PPQN external MIDI clock signal isn't
+    // currently reliable — unrelated to this connection, just why DIN got
+    // dropped in favor of USB here). mio is now expected to carry
+    // Norns -> Deluge instead, a separate path this doesn't need to touch.
     if("aconnect -l | grep -q \"client.*'Deluge'\"".systemCmd == 0) {
         if("aconnect \"Midi Through\" \"Deluge\"".systemCmd == 0) {
             "Connected Midi Through -> Deluge (USB).".postln;
         } {
-            // Synthstrom has a known USB MIDI firmware issue (the same class of
-            // bug behind the clock-sync problems) that can reject this
-            // subscription even when the device is right there — non-fatal,
-            // SC keeps booting either way.
-            "Deluge seen via USB but couldn't auto-connect (known firmware flakiness) — connect manually if needed.".postln;
+            // Reason unconfirmed (EAGAIN from ALSA) - not the same thing as
+            // the zynseq clock-resolution issue above, as far as we know.
+            // Non-fatal either way - SC keeps booting.
+            "Deluge seen via USB but couldn't auto-connect (EAGAIN) — connect manually if needed.".postln;
         };
     } {
         "Deluge not found via USB — skipping (fine if it's on DIN/mio today instead).".postln;
