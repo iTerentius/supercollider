@@ -294,13 +294,31 @@ if(hostname == "zynthian") {
     // Midi Through is ALSA-only; a2jmidid bridges it to JACK where ZynMidiRouter lives.
     "jack_connect \"a2j:Midi Through [14] (capture): Midi Through Port-0\" \"ZynMidiRouter:seq_in\"".unixCmd;
 
-    // Also fan the same stream straight to the mio hardware MIDI out (dev0), which
-    // is DIN-wired to the Deluge. jackd owns the mio rawmidi device directly (-X raw),
-    // so it's only reachable as the JACK port "system:midi_playback_1" — a direct ALSA
-    // seq connect to the "mio" client fails with EAGAIN because jackd already holds it.
-    // Result: everything ~out sends reaches BOTH a Zynthian chain (via ZynMidiRouter,
-    // per its own channel routing) AND the Deluge (always, regardless of chain config).
-    "jack_connect \"a2j:Midi Through [14] (capture): Midi Through Port-0\" \"system:midi_playback_1\"".unixCmd;
+    // Also fan the same stream straight to the Deluge, if it's currently
+    // connected via USB (its own ALSA seq client, "Deluge" — not bridged into
+    // JACK at all: a2j_control --status shows "Hardware not exported" on this
+    // box, so hardware MIDI only ever shows up via plain ALSA seq, never as a
+    // jack_connect-able port). Detected by name rather than hardcoded, since
+    // the physical cabling changes often (USB vs DIN-via-mio, cables get
+    // moved between devices) — silently does nothing if the Deluge isn't
+    // currently on USB. 2026-07: was previously wired via mio+DIN instead
+    // (jackd owned that rawmidi device directly as a JACK port,
+    // "system:midi_playback_1") — moved to USB to sidestep Deluge clock-sync
+    // bugs; mio is now expected to carry Norns -> Deluge instead, a separate
+    // path this doesn't need to touch.
+    if("aconnect -l | grep -q \"client.*'Deluge'\"".systemCmd == 0) {
+        if("aconnect \"Midi Through\" \"Deluge\"".systemCmd == 0) {
+            "Connected Midi Through -> Deluge (USB).".postln;
+        } {
+            // Synthstrom has a known USB MIDI firmware issue (the same class of
+            // bug behind the clock-sync problems) that can reject this
+            // subscription even when the device is right there — non-fatal,
+            // SC keeps booting either way.
+            "Deluge seen via USB but couldn't auto-connect (known firmware flakiness) — connect manually if needed.".postln;
+        };
+    } {
+        "Deluge not found via USB — skipping (fine if it's on DIN/mio today instead).".postln;
+    };
 
     // --- LinkClock setup
     // 1. CLEAR existing clocks to kill zombies (safe on re-evaluation)
