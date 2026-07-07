@@ -115,3 +115,103 @@ SynthDef(\slice_s, { |out=0, bufnum=0, sliceIndex=0, nSlices=8, amp=0.5, rate=1,
 
 ~zynMakeMultiSlicePatch.(\JTTCOT,  "/root/Music/supercollider/_samples/_mono/jttcot");
 ~zynMakeMultiSlicePatch.(\Hoarder, "/root/Music/supercollider/_samples/Hoarder/hoarder");
+
+// --- auto-scan kits: drop a folder of wav files under _samples/_kits/<name>/
+// and it becomes a playable kit at boot -- no code edit needed. Kit name is
+// the folder name, canonicalized the same way sample_loader.scd's ~canon
+// does (lowercase, spaces/dashes/dots -> underscore). Self-contained (own
+// canon fn, not sample_loader.scd's ~canon) for the same reason the rest of
+// this file is self-contained -- see the top-of-file comment on why.
+//
+// Also writes a matching touchscreen preset dir (zynconfig.yml, copied from
+// Hoarder/JTTCOT's identical generic template -- same knobs for every kit)
+// under zynthian-sc-engine's presets/sc/Slice/<name>/ if one doesn't already
+// exist there, so a new folder shows up in the "Add Instrument Chain" preset
+// list too, not just as a live-codeable ~zynPatches entry. Safe to run every
+// boot: skips any kit that already has a zynconfig.yml (so a manually-tuned
+// preset is never clobbered), and zynthian-ui's get_bank_list/get_preset_list
+// scan this directory live (os.listdir per browse, not cached like
+// engine_config.json), so no zynthian.service restart is needed for a new
+// kit to appear -- just (re)booting SC to run this scan is enough.
+{
+    var kitsRoot, canon, presetsRoot, yamlTemplate;
+
+    canon = { |str|
+        str.asString.toLower.replace($ , $_).replace($-, $_).replace($., $_).asSymbol;
+    };
+
+    kitsRoot = PathName("/root/Music/supercollider/_samples/_kits");
+    presetsRoot = "/root/zynthian-sc-engine/presets/sc/Slice";
+
+    yamlTemplate = "Slice:\n"
+        "  amp:\n"
+        "    name: \"Amp\"\n"
+        "    value: 0.5\n"
+        "    value_min: 0.0\n"
+        "    value_max: 1.0\n"
+        "    osc_path: \"/scengine/amp\"\n"
+        "  nSlices:\n"
+        "    name: \"Num Slices\"\n"
+        "    value: 8\n"
+        "    value_min: 1\n"
+        "    value_max: 32\n"
+        "    is_integer: true\n"
+        "    osc_path: \"/scengine/nSlices\"\n"
+        "  rate:\n"
+        "    name: \"Rate\"\n"
+        "    value: 1.0\n"
+        "    value_min: 0.25\n"
+        "    value_max: 4.0\n"
+        "    osc_path: \"/scengine/rate\"\n"
+        "  pan:\n"
+        "    name: \"Pan\"\n"
+        "    value: 0.0\n"
+        "    value_min: -1.0\n"
+        "    value_max: 1.0\n"
+        "    osc_path: \"/scengine/pan\"\n"
+        "  spread:\n"
+        "    name: \"Spread\"\n"
+        "    value: 0.0\n"
+        "    value_min: 0.0\n"
+        "    value_max: 1.0\n"
+        "    osc_path: \"/scengine/spread\"\n"
+        "  rev:\n"
+        "    name: \"Reverse\"\n"
+        "    value: 0\n"
+        "    value_min: 0\n"
+        "    value_max: 1\n"
+        "    is_toggle: true\n"
+        "    osc_path: \"/scengine/rev\"\n"
+        "  mode:\n"
+        "    name: \"Seq/Rand\"\n"
+        "    value: 0\n"
+        "    value_min: 0\n"
+        "    value_max: 1\n"
+        "    is_toggle: true\n"
+        "    osc_path: \"/scengine/mode\"\n";
+
+    if(kitsRoot.isFolder) {
+        kitsRoot.folders.do { |folder|
+            var kitName, presetDir, configPath, f;
+            kitName = canon.(folder.folderName);
+            ~zynMakeMultiSlicePatch.(kitName, folder.fullPath);
+
+            presetDir = presetsRoot ++ "/" ++ kitName;
+            configPath = presetDir ++ "/zynconfig.yml";
+            if(File.exists(configPath).not) {
+                ("mkdir -p " ++ presetDir.quote).unixCmdGetStdOut;
+                f = File(configPath, "w");
+                if(f.notNil) {
+                    f.write(yamlTemplate);
+                    f.close;
+                    ("[slice-multi-patch] wrote touchscreen preset for " ++ kitName ++ " -> " ++ configPath).postln;
+                } {
+                    ("[slice-multi-patch] could not open " ++ configPath ++ " for writing").postln;
+                };
+            };
+        };
+        ("[slice-multi-patch] auto-registered " ++ kitsRoot.folders.size ++ " kit(s) from " ++ kitsRoot.fullPath).postln;
+    } {
+        ("[slice-multi-patch] no _kits folder at " ++ kitsRoot.fullPath ++ " -- create subfolders of wav files there to add kits without editing code.").postln;
+    };
+}.value;
