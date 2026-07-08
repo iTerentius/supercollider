@@ -50,9 +50,12 @@ SynthDef(\gb1, { |out=0, amp=1, ampLag=0.02, gate=1,
 };
 
 // Defaults mirror gb1's own SynthDef defaults; \rate is driven by note, not a knob.
-~zynRegisterParam.(\amp,       { |v| ~zynVoice !? { |s| s.set(\amp, v) } });
-~zynRegisterParam.(\trig_rate, { |v| ~zynVoice !? { |s| s.set(\trig_rate, v) } });
-~zynRegisterParam.(\grain_dur, { |v| ~zynVoice !? { |s| s.set(\grain_dur, v) } });
-~zynRegisterParam.(\pan_rate,  { |v| ~zynVoice !? { |s| s.set(\pan_rate, v) } });
+// Uses ~zynSetAllVoices (zyn-engine-bridge.scd), not a single ~zynVoice — see
+// the per-note tracking note there (still inert here: gb1 isn't in startup.scd's
+// load list, per the reference doc, but kept consistent in case it's revived).
+~zynRegisterParam.(\amp,       { |v| ~zynSetAllVoices.(\amp, v) });
+~zynRegisterParam.(\trig_rate, { |v| ~zynSetAllVoices.(\trig_rate, v) });
+~zynRegisterParam.(\grain_dur, { |v| ~zynSetAllVoices.(\grain_dur, v) });
+~zynRegisterParam.(\pan_rate,  { |v| ~zynSetAllVoices.(\pan_rate, v) });
 
 "[gb1-patch] loaded — gb1 active as the Zynthian-chain voice.".postln;

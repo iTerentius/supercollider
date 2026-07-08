@@ -282,8 +282,7 @@ if(hostname == "zynthian") {
             // in the folder without clobbering whichever patch loads after
             // it. Add new patches here as they're written.
             "/root/Music/supercollider/0_startup/_includes/_zyn-patches/subtractive1-patch.scd".load;
-            "/root/Music/supercollider/0_startup/_includes/_zyn-patches/slice1-patch.scd".load;
-            "/root/Music/supercollider/0_startup/_includes/_zyn-patches/slice-multi-patch.scd".load;
+            "/root/Music/supercollider/0_startup/_includes/_zyn-patches/slicer-patch.scd".load;
 
             ~zynLoadPatch.(\subtractive1);   // boot default; touchscreen preset selection overrides
         };

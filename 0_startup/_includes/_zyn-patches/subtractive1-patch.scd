@@ -29,6 +29,11 @@ SynthDef(\scBasic, { |out=0, freq=440, amp=0.3, gate=1,
     // told the last-set knob values itself; it doesn't inherit them from
     // whatever the previous (now-freed) synth had.
     ~zynPatchNoteOn = { |note, vel|
+        // .register(true): lets isPlaying track reality (via NodeWatcher's
+        // /n_end notification), so both noteOff and every setterFunc below
+        // can tell whether this voice already freed itself before calling
+        // .set() on it — a stale node ID is a real server-side failure
+        // ("Node not found"), not a silent no-op.
         Synth(\scBasic, [
             \out, 0,
             \freq, note.midicps,
@@ -38,17 +43,20 @@ SynthDef(\scBasic, { |out=0, freq=440, amp=0.3, gate=1,
             \attack, ~zynCurrentParams[\attack],
             \release, ~zynCurrentParams[\release],
             \gate, 1
-        ]);
+        ]).register(true);
     };
 
     // \amp here is a gain multiplier on top of MIDI velocity (default 1.0 =
     // velocity-only, matching prior behavior); every other param is applied
     // directly. Defaults mirror both the SynthDef's own defaults and zynconfig.yml.
-    ~zynRegisterParam.(\amp,     { |v| ~zynVoice !? { |s| s.set(\amp, (~zynLastVel ? 127) / 127 * v) } }, 1.0);
-    ~zynRegisterParam.(\cutoff,  { |v| ~zynVoice !? { |s| s.set(\cutoff, v) } }, 2000);
-    ~zynRegisterParam.(\res,     { |v| ~zynVoice !? { |s| s.set(\res, v) } }, 0.3);
-    ~zynRegisterParam.(\attack,  { |v| ~zynVoice !? { |s| s.set(\attack, v) } }, 0.01);
-    ~zynRegisterParam.(\release, { |v| ~zynVoice !? { |s| s.set(\release, v) } }, 0.3);
+    // Applied to every currently-held voice (~zynSetAllVoices, zyn-engine-bridge.scd)
+    // rather than a single ~zynVoice — turning a knob affects all held notes,
+    // not just whichever was triggered last.
+    ~zynRegisterParam.(\amp,     { |v| ~zynSetAllVoices.(\amp, (~zynLastVel ? 127) / 127 * v) }, 1.0);
+    ~zynRegisterParam.(\cutoff,  { |v| ~zynSetAllVoices.(\cutoff, v) }, 2000);
+    ~zynRegisterParam.(\res,     { |v| ~zynSetAllVoices.(\res, v) }, 0.3);
+    ~zynRegisterParam.(\attack,  { |v| ~zynSetAllVoices.(\attack, v) }, 0.01);
+    ~zynRegisterParam.(\release, { |v| ~zynSetAllVoices.(\release, v) }, 0.3);
 };
 
 "[subtractive1-patch] loaded — scBasic SynthDef ready, registered as \\subtractive1.".postln;

@@ -22,10 +22,12 @@
 //      param, which both stores its setter in ~zynParamTable and registers the
 //      one literal OSCdef for "/scengine/<name>". zynconfig.yml's osc_path
 //      entries must match: "/scengine/<paramName>".
-//   2. MIDIdef.noteOn/noteOff on ~zynVoice — triggers/releases the active patch's
-//      Synth. Fed by ZynMidiRouter via zynautoconnect once the "SC" chain exists;
-//      dedicated to SC's own MIDI-in port "in0" specifically (zynautoconnect only
-//      wires that one port — see jackname_midi regex in the engine's .py file).
+//   2. MIDIdef.noteOn/noteOff on ~zynVoices — triggers/releases the active patch's
+//      Synth, tracked PER NOTE NUMBER (not a single global voice — see the
+//      "overlapping notes" gotcha below). Fed by ZynMidiRouter via zynautoconnect
+//      once the "SC" chain exists; dedicated to SC's own MIDI-in port "in0"
+//      specifically (zynautoconnect only wires that one port — see jackname_midi
+//      regex in the engine's .py file).
 //
 // No srcID filtering, and this is deliberate, not a shortcut: checked
 // /proc/asound/seq/clients live — a2jmidid bridges ALL JACK MIDI into ALSA
@@ -36,7 +38,27 @@
 
 ~zynParamTable = IdentityDictionary.new;   // \paramName (Symbol) -> Function(value)
 ~zynCurrentParams = IdentityDictionary.new; // \paramName (Symbol) -> last-set value
-~zynVoice = nil;                           // currently sounding Synth, if any
+
+// note number (Integer) -> currently sounding Synth for THAT note. Was a
+// single ~zynVoice global — bug found 2026-07-08: if note B's note-on
+// arrived before note A's note-off (any overlap — chords, fast playing,
+// even just testing on the touchscreen), ~zynVoice got overwritten to B,
+// so A's note-off then sent gate=0 to B's synth instead of A's. A's synth
+// never got released and sustained forever (Env.adsr's sustain stage holds
+// indefinitely until gate drops) — the only fix was removing the whole
+// chain, since stop() only calls osc_end(), it doesn't kill live synths.
+// Per-note tracking means each note-off can only ever target its own note's
+// synth, regardless of what else is held.
+~zynVoices = IdentityDictionary.new;
+
+// Apply a control change to every CURRENTLY PLAYING held voice — for
+// live-tweaking a gated/sustained patch's knobs (subtractive1) while notes
+// are held. isPlaying-guarded for the same reason noteOff is: a stale/freed
+// node ID would otherwise throw "FAILURE IN SERVER /n_set Node <n> not
+// found" on the next knob turn.
+~zynSetAllVoices = { |ctrlName, value|
+    ~zynVoices.do { |synth| if(synth.notNil and: { synth.isPlaying }) { synth.set(ctrlName, value) } };
+};
 
 ~zynPatches = IdentityDictionary.new;       // \patchName (Symbol) -> activate Function
 ~zynActivePatch = nil;                      // \patchName of whichever is currently live
@@ -81,19 +103,46 @@ OSCdef(\zynLoadPatch, { |msg| ~zynLoadPatch.value(msg[1].asSymbol) }, "/scengine
         // "Message '<' not understood. RECEIVER: false" the first time a
         // toggle knob was touched, silently killing every note-on
         // afterward (an exception inside ~zynPatchNoteOn means no Synth
-        // ever gets created). .asFloat normalizes both cases: true/false
-        // -> 1.0/0.0, plain floats pass through unchanged.
-        ~zynParamTable[sym].value(msg[1].asFloat);
+        // ever gets created).
+        //
+        // Bug found 2026-07-08, this fix's PREDECESSOR (`.asFloat`) doesn't
+        // actually work on THIS box's SC build: confirmed live that
+        // `true.asFloat` itself throws "Message 'asFloat' not understood" —
+        // Boolean/True/False don't implement asFloat in this class library,
+        // even though real Numbers do. Every is_toggle param (rev, mode, and
+        // any future one) was silently crashing this OSCdef on every touch
+        // from the real touchscreen (Python's liblo sends genuine OSC 'T'/'F'
+        // tags) — never updating ~zynCurrentParams at all, which is why e.g.
+        // Reverse looked like it did nothing. `.if()` IS implemented on real
+        // Booleans (confirmed live) and is the actual control-flow primitive,
+        // not a numeric-conversion convenience method — so branch on
+        // isKindOf(Boolean) explicitly rather than relying on a conversion
+        // method that isn't there.
+        var raw = msg[1];
+        var val = if(raw.isKindOf(Boolean)) { raw.if(1.0, 0.0) } { raw.asFloat };
+        ~zynParamTable[sym].value(val);
     }, "/scengine/" ++ sym);
 };
 
 MIDIdef.noteOn(\zynNoteOn, { |vel, note|
     ~zynLastVel = vel;
-    ~zynVoice = ~zynPatchNoteOn.value(note, vel);
+    ~zynVoices[note] = ~zynPatchNoteOn.value(note, vel);
 }, chan: nil);
 
 MIDIdef.noteOff(\zynNoteOff, { |vel, note|
-    ~zynVoice !? { |v| v.set(\gate, 0) };
+    // Guarded by isPlaying, not just !?: one-shot patches (slicer) free
+    // their Synth on their own short internal envelope, often well before
+    // note-off arrives — .set() on an
+    // already-freed node ID isn't a silent no-op like an unknown control
+    // name is, it's a real server-side failure ("FAILURE IN SERVER /n_set
+    // Node <n> not found"), logged on every one-shot trigger whose note-off
+    // shows up late. isPlaying only tracks reality if the Synth was created
+    // with .register(true) (NodeWatcher) — see every ~zynPatchNoteOn.
+    var synth = ~zynVoices[note];
+    synth !? { |v| if(v.isPlaying) { v.set(\gate, 0) } };
+    // Remove (not just nil the value) so ~zynVoices doesn't accumulate a
+    // stale entry per distinct note number over a long session.
+    ~zynVoices.removeAt(note);
 }, chan: nil);
 
 "[zyn-engine-bridge] loaded — ~zynParamTable ready, MIDIdef \\zynNoteOn/\\zynNoteOff bound.".postln;
