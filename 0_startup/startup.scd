@@ -378,6 +378,17 @@ if(hostname == "zynthian" and: { zynInstance != "bass" }) {
 // this session only needs its own scsynth + MIDI note-in via its own
 // dedicated ALSA client, same mechanism the branch above already uses.
 if(hostname == "zynthian" and: { zynInstance == "bass" }) {
+    // MIDIClient.init is what actually CREATES this process's ALSA/JACK MIDI
+    // client and its in0-in7/out0-out5 ports (confirmed live 2026-07-13:
+    // without this, no "SCBass" ALSA client ever appears in
+    // /proc/asound/seq/clients at all, so zynthian_engine_sc_bass's
+    // _refresh_midi_jackname() finds nothing and this chain gets no MIDI
+    // note-in path whatsoever — the port isn't just unwired, it doesn't
+    // exist). No MIDIOut.newByName("Midi Through", ...) needed here (unlike
+    // the main branch) — this session doesn't send MIDI out anywhere, only
+    // receives note-in from ZynMidiRouter via zynautoconnect.
+    MIDIClient.init;
+
     // localhost resolves to ::1 on this Pi — same IPv4 gotcha as the main
     // zynthian branch above.
     Server.default.addr = NetAddr("127.0.0.1", 57111);
