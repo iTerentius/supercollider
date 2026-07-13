@@ -2,7 +2,7 @@
 // Cross-platform startup.scd
 // Detects platform and configures audio/MIDI accordingly
 
-var platform, hostname;
+var platform, hostname, zynInstance;
 
 // ---- detect platform + host
 platform = Platform.case(
@@ -12,7 +12,13 @@ platform = Platform.case(
     { \unknown }
 );
 hostname = "hostname".unixCmdGetStdOut.stripWhiteSpace;
-("Platform detected: " ++ platform ++ " / " ++ hostname).postln;
+// Distinguishes the two concurrent sclang processes on the zynthian host
+// itself (both run this SAME startup.scd, via the same ~/.config/
+// SuperCollider/startup.scd symlink) — empty string for the original/
+// slicer+subtractive1 session, "bass" for the second process launched by
+// supercollider-bass.service (SC_ZYN_INSTANCE=bass sclang -u 57121).
+zynInstance = "echo $SC_ZYN_INSTANCE".unixCmdGetStdOut.stripWhiteSpace;
+("Platform detected: " ++ platform ++ " / " ++ hostname ++ (if(zynInstance.size > 0) { " / instance=" ++ zynInstance } { "" })).postln;
 
 // ---- ddwMixerChannel quark (mixer-channel-16s.scd / mixer-channel-stem-record.scd
 // depend on its MixerChannel class). Auto-installs on first boot on a fresh machine
@@ -221,7 +227,10 @@ if(hostname == "raspberrypi") {
 };
 
 // --- Zynthian: MIDI control layer + scsynth (audio, joined onto Zynthian's own JACK server)
-if(hostname == "zynthian") {
+// Gated to the ORIGINAL/slicer+subtractive1 process only — the second
+// (bass) sclang process runs the separate branch below instead, so the two
+// don't both try to boot a Server on the same port/JACK device.
+if(hostname == "zynthian" and: { zynInstance != "bass" }) {
     MIDIClient.init;
     ~out = MIDIOut.newByName("Midi Through", "Midi Through Port-0");
     ~out.latency = 0;
@@ -359,5 +368,52 @@ if(hostname == "zynthian") {
     }).play(SystemClock);
 
     "Setup done! (zynthian)".postln;
+};
+
+// --- Zynthian: second sclang process, dedicated to the "SB" (SuperCollider
+// Bass) chain — runs concurrently with the branch above instead of sharing
+// its scsynth/JACK client/OSC port. Launched by supercollider-bass.service
+// as `SC_ZYN_INSTANCE=bass sclang -u 57121`. No MIDI-Through/Deluge-USB/
+// LinkClock-tempo-push setup here (that's the master/slicer session's job);
+// this session only needs its own scsynth + MIDI note-in via its own
+// dedicated ALSA client, same mechanism the branch above already uses.
+if(hostname == "zynthian" and: { zynInstance == "bass" }) {
+    // localhost resolves to ::1 on this Pi — same IPv4 gotcha as the main
+    // zynthian branch above.
+    Server.default.addr = NetAddr("127.0.0.1", 57111);
+    // Distinct JACK client name — must NOT contain "SuperCollider" as a
+    // substring (found 2026-07-13): zynautoconnect wires processor audio via
+    // jclient.get_ports(processor.get_jackname(True), ...), and JACK's
+    // get_ports treats that name as an UNANCHORED REGEX. A name like
+    // "SuperColliderBass" would also match the other chain's "SuperCollider"
+    // pattern and get its ports pulled into the wrong chain.
+    s.options.device = "SCBass";
+    s.options.numOutputBusChannels = 2;
+    s.options.numInputBusChannels = 2;
+    s.options.sampleRate = 48000;
+    s.options.memSize = 65536;
+    s.options.numBuffers = 1024;
+    s.options.maxNodes = 1024;
+    s.options.blockSize = 64;
+    s.options.hardwareBufferSize = 128;
+
+    // Same AppClock.sched-deferred boot as the main branch — s.boot's
+    // internal fork/OSCFunc-based timeout detection doesn't work reliably
+    // called synchronously at startup.scd's own top-level execution.
+    AppClock.sched(0.1, {
+        s.waitForBoot {
+            "scsynth (bass) booted as a JACK client".postln;
+            "jack_disconnect \"SCBass:out_1\" \"system:playback_1\"".unixCmd;
+            "jack_disconnect \"SCBass:out_2\" \"system:playback_2\"".unixCmd;
+
+            "/root/Music/supercollider/0_startup/_includes/_zyn-patches/zyn-engine-bridge.scd".load;
+            "/root/Music/supercollider/0_startup/_includes/_zyn-patches/bass8-patch.scd".load;
+
+            ~zynLoadPatch.(\bass8);
+        };
+        nil
+    });
+
+    "Setup done! (zynthian / instance=bass)".postln;
 };
 )
