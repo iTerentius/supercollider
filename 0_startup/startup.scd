@@ -232,6 +232,20 @@ if(hostname == "raspberrypi") {
 // don't both try to boot a Server on the same port/JACK device.
 if(hostname == "zynthian" and: { zynInstance != "bass" }) {
     MIDIClient.init;
+    // Found 2026-07-13, once a second concurrent sclang process existed to
+    // compare against: SC's ALSA MIDI client name is a FIXED "SuperCollider"
+    // string baked into its ALSA MIDI backend — it is NOT derived from
+    // s.options.device, so every persistent sclang process on this box ends
+    // up with an ALSA client of the exact same name, differing only by
+    // numeric client ID. zynthian_engine_supercollider.py's MIDI-jackname
+    // discovery used to scan /proc/asound/seq/clients BY NAME — harmless
+    // with only one such process, but genuinely ambiguous (and a real
+    // regression risk to whichever chain the wrong scsynth session's MIDI
+    // got wired into) now that a second one exists. Writing this process's
+    // own MIDIClient.getClientID to a fixed, per-instance file lets the
+    // Python engine read the exact right ID directly instead of guessing
+    // from a non-unique name.
+    File.use("/tmp/sc_midi_clientid", "w", { |f| f.write(MIDIClient.getClientID.asString) });
     ~out = MIDIOut.newByName("Midi Through", "Midi Through Port-0");
     ~out.latency = 0;
 
@@ -388,6 +402,11 @@ if(hostname == "zynthian" and: { zynInstance == "bass" }) {
     // the main branch) — this session doesn't send MIDI out anywhere, only
     // receives note-in from ZynMidiRouter via zynautoconnect.
     MIDIClient.init;
+    // Same fixed-ALSA-client-name issue as the main branch above (SC's ALSA
+    // MIDI client is always literally named "SuperCollider" regardless of
+    // s.options.device) — write THIS process's own client ID to its own
+    // file so zynthian_engine_sc_bass reads the right one directly.
+    File.use("/tmp/scbass_midi_clientid", "w", { |f| f.write(MIDIClient.getClientID.asString) });
 
     // localhost resolves to ::1 on this Pi — same IPv4 gotcha as the main
     // zynthian branch above.
