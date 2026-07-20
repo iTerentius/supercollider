@@ -2,7 +2,7 @@
 // Cross-platform startup.scd
 // Detects platform and configures audio/MIDI accordingly
 
-var platform, hostname, zynInstance;
+var platform, hostname, zynInstance, effectiveHost;
 
 // ---- detect platform + host
 platform = Platform.case(
@@ -12,6 +12,16 @@ platform = Platform.case(
     { \unknown }
 );
 hostname = "hostname".unixCmdGetStdOut.stripWhiteSpace;
+// RaspPad3 also reports hostname "zynthian" (never renamed from the Zynthian
+// OS default), colliding with the main Zynthian's own hostname == "zynthian"
+// branches below. It's a different physical box — Scarlett Solo 4th Gen over
+// JACK, no zynthian-ui SC engine wiring — so it needs the plain scsynth-boot
+// path (synthdefs/mixer/samples), not the MIDI-only/zynmixer-wired one.
+// Distinguish by actual sound card instead of hostname: the real Zynthian
+// has a HiFiBerry, RaspPad3 has a Scarlett.
+effectiveHost = if(
+    (hostname == "zynthian") and: { "aplay -l | grep -qi Scarlett".systemCmd == 0 }
+) { "raspad" } { hostname };
 // Distinguishes the two concurrent sclang processes on the zynthian host
 // itself (both run this SAME startup.scd, via the same ~/.config/
 // SuperCollider/startup.scd symlink) — empty string for the original/
@@ -85,9 +95,25 @@ case
 }
 { platform == \linux } {
     case
-    { hostname == "zynthian" } {
+    { effectiveHost == "zynthian" } {
         // Zynthian: MIDI-only host, scsynth will not be booted
         "Audio config: Zynthian (MIDI only, no scsynth)".postln;
+    }
+    { effectiveHost == "raspad" } {
+        // RaspPad3: Scarlett Solo 4th Gen over JACK, straight to its main out —
+        // no zynthian-ui chain wiring, no jack_disconnect from system:playback
+        // (jackd's default auto-connect IS the desired routing here).
+        Server.default.addr = NetAddr("127.0.0.1", 57110);  // localhost -> ::1 gotcha, same as raspberrypi/zynthian below
+        s.options.numOutputBusChannels = 2;
+        s.options.numInputBusChannels  = 2;
+        s.options.sampleRate = 48000;
+        s.options.memSize = 65536;
+        s.options.numBuffers = 1024;
+        s.options.maxNodes = 1024;
+        s.options.blockSize = 64;
+        s.options.hardwareBufferSize = 512;  // matches this box's actual jackd -p 512
+        s.options.device = "JACK";
+        "Audio config: RaspPad3 / Scarlett Solo via JACK".postln;
     }
     { hostname == "raspberrypi" } {
         // localhost resolves to ::1 on this Pi — force IPv4 so sclang finds scsynth
@@ -124,7 +150,7 @@ case
 };
 
 // Boot scsynth only on hosts that use it
-if((hostname != "zynthian") && (hostname != "raspberrypi")) {
+if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
     Server.killAll;  // ensure previous scsynth is gone before boot (avoids macOS AVAudio race)
 
     // waitForBoot handles the boot itself; a separate s.boot here double-triggers it
@@ -157,9 +183,9 @@ if((hostname != "zynthian") && (hostname != "raspberrypi")) {
         // "_includes/_osc-ctrl/tosc-fx.scd".loadRelative;  // defines ~toscFXBind/~toscFXSync used by fx_defs ~fxSetup functions
 
         // --- Mixer channels (with conditional controller bindings)
-        // "_includes/mixer-channel-16s.scd".loadRelative;
-        // "_includes/mixer-channel-stem-record.scd".loadRelative;
-        // "_includes/ndef2mixer-channel.scd".loadRelative;
+        "_includes/mixer-channel-16s.scd".loadRelative;
+        "_includes/mixer-channel-stem-record.scd".loadRelative;
+        "_includes/ndef2mixer-channel.scd".loadRelative;
 
         // --- Helpers
         "_includes/_helpers/helpers.scd".loadRelative;
@@ -230,7 +256,7 @@ if(hostname == "raspberrypi") {
 // Gated to the ORIGINAL/slicer+subtractive1 process only — the second
 // (bass) sclang process runs the separate branch below instead, so the two
 // don't both try to boot a Server on the same port/JACK device.
-if(hostname == "zynthian" and: { zynInstance != "bass" }) {
+if(effectiveHost == "zynthian" and: { zynInstance != "bass" }) {
     MIDIClient.init;
     // Found 2026-07-13, once a second concurrent sclang process existed to
     // compare against: SC's ALSA MIDI client name is a FIXED "SuperCollider"
@@ -391,7 +417,7 @@ if(hostname == "zynthian" and: { zynInstance != "bass" }) {
 // LinkClock-tempo-push setup here (that's the master/slicer session's job);
 // this session only needs its own scsynth + MIDI note-in via its own
 // dedicated ALSA client, same mechanism the branch above already uses.
-if(hostname == "zynthian" and: { zynInstance == "bass" }) {
+if(effectiveHost == "zynthian" and: { zynInstance == "bass" }) {
     // MIDIClient.init is what actually CREATES this process's ALSA/JACK MIDI
     // client and its in0-in7/out0-out5 ports (confirmed live 2026-07-13:
     // without this, no "SCBass" ALSA client ever appears in
