@@ -8,7 +8,7 @@
 // Find Deluge source UID to filter forwarding MIDIdefs.
 ~delSrcUID = MIDIClient.sources.detect({|s| s.device == "Deluge" }).uid;
 
-MIDIdef.noteOn(\fwd,  {|vel,  note,   chan| ~masO.noteOn(chan,  note,   vel) }, srcID: ~delSrcUID);
+MIDIdef.noteOn(\fwd,  {|vel,  note,   chan| ~masO.noteOn(chan,  note,   vel); chan.postln; }, srcID: ~delSrcUID);
 MIDIdef.noteOff(\fwd,  {|vel,  note,   chan| ~masO.noteOff(chan,  note,   vel) }, srcID: ~delSrcUID);
 MIDIdef.cc(\fwdCC,  {|val,  num,   chan| ~masO.control(chan,  num,   val) }, srcID: ~delSrcUID);
 
@@ -24,8 +24,8 @@ Pdefn(\degs,  Pseq([
 Pdef(\midiNotes,
   Pbind(
       \type, \midi,
-      \midiout,  ~mOut,
-      \chan, 2,                 // MIDI channel 0..15
+      \midiout,  ~delO,
+      \chan, 0,                 // MIDI channel 0..15
       \scale,  Scale.dorian,  
       \octave, 4,
       // \degree, Pstep(Pseq([0, -1, -5, -4], inf), 4),  
