@@ -32,7 +32,10 @@
     tapName = ~fxTapName;
 
     // discover current instruments
-    tracks = Ndef.all.keys.asArray.select({ |k| k.asString.beginsWith(insPrefix) });
+    // Ndef.all is keyed by SERVER NAME (server.name -> ProxySpace), not by Ndef
+    // name — scanning it directly always finds nothing. Actual Ndef keys live
+    // one level deeper, in that server's ProxySpace .envir.
+    tracks = Ndef.dictFor(s).envir.keys.asArray.select({ |k| k.asString.beginsWith(insPrefix) });
     ~fxState[\tracks] = tracks.copy;
 
     // taps  set source first then play
@@ -47,7 +50,6 @@
                 src = Ndef.ar(tr, 2) * amt;
                 src
             };
-            Ndef(tn).play;
         };
     };
 
@@ -64,7 +66,6 @@
             mix = if(items.isEmpty, { Silent.ar(2) }, { Mix(items) });
             mix * amp
         };
-        Ndef(sn).play;
     };
 
     // dry mix from instruments
@@ -76,24 +77,21 @@
         mix = if(items.isEmpty, { Silent.ar(2) }, { Mix(items) });
         mix * amp
     };
-    Ndef(\dry_mix).play;
 
     // buses and master
     if(Ndef.all[\dry_bus].isNil) { Ndef(\dry_bus) };
     Ndef(\dry_bus).fadeTime = 0.02;
     Ndef(\dry_bus).source = { Ndef.ar(\dry_mix, 2) };
-    Ndef(\dry_bus).play;
 
     if(Ndef.all[\wet_bus].isNil) { Ndef(\wet_bus) };
     Ndef(\wet_bus).fadeTime = 0.02;
-    fxNames = Ndef.all.keys.asArray.select({ |k| k.asString.beginsWith(fxPrefix) });
+    fxNames = Ndef.dictFor(s).envir.keys.asArray.select({ |k| k.asString.beginsWith(fxPrefix) });
     Ndef(\wet_bus).source = {
         var items, mix;
         items = fxNames.collect({ |fx| Ndef.ar(fx, 2) });
         mix = if(items.isEmpty, { Silent.ar(2) }, { Mix(items) });
         mix
     };
-    Ndef(\wet_bus).play;
 
     if(Ndef.all[master].isNil) { Ndef(master) };
     Ndef(master).fadeTime = 0.02;
@@ -110,54 +108,44 @@
 
 // set or change a send amount  auto registers tracks and keeps sums updated
 ~fxSetSend = { |trackSym, sendSym, amt|
-    var sends, tracks, tn, sn, tapsForSend;
+    var sends, tracks, tn, sn, tapsForSend, isNewTrack;
 
     sends  = ~fxState[\sends];
     tracks = ~fxState[\tracks];
+    isNewTrack = tracks.includes(trackSym).not;
 
-    // auto register new track into state and dry mix
-    if(tracks.includes(trackSym).not) {
+    if(isNewTrack) {
         ~fxState[\tracks] = tracks.add(trackSym);
-
         Ndef(\dry_mix).source = { |amp = 1|
-            var items, mix;
-            items = ~fxState[\tracks].collect({ |tr| Ndef.ar(tr, 2) });
-            mix = if(items.isEmpty, { Silent.ar(2) }, { Mix(items) });
-            mix * amp
+            var items = ~fxState[\tracks].collect({ |tr| Ndef.ar(tr, 2) });
+            (if(items.isEmpty, { Silent.ar(2) }, { Mix(items) })) * amp
         };
-        Ndef(\dry_mix).play;
 
-        // create and play taps for this new track across all sends
         sends.do { |s|
-            var tnm;
-            tnm = ~fxTapName.(trackSym, s);
-            if(Ndef.all[tnm].isNil) { Ndef(tnm) };
-            Ndef(tnm).fadeTime = 0.02;
-            Ndef(tnm).source = { |amt = 0| var src; src = Ndef.ar(trackSym, 2) * amt; src };
-            Ndef(tnm).play;
+            var tnm = ~fxTapName.(trackSym, s);
+            if(Ndef.all[tnm].isNil) {
+                Ndef(tnm).fadeTime = 0.02;
+                Ndef(tnm).source = { |amt = 0| Ndef.ar(trackSym, 2) * amt };
+            };
         };
     };
 
-    // ensure specific tap exists and is playing then set level
     tn = ~fxTapName.(trackSym, sendSym);
-    if(Ndef.all[tn].isNil) { Ndef(tn) };
-    Ndef(tn).fadeTime = 0.02;
-    Ndef(tn).source = { |amt = 0| var src; src = Ndef.ar(trackSym, 2) * amt; src };
-    Ndef(tn).play;
-    Ndef(tn).set(\amt, amt);
-
-    // rebuild the sum for this send and keep it playing
-    sn = ~fxSendSumName.(sendSym);
-    if(Ndef.all[sn].isNil) { Ndef(sn) };
-    Ndef(sn).fadeTime = 0.02;
-    tapsForSend = ~fxState[\tracks].collect({ |tr| ~fxTapName.(tr, sendSym) });
-    Ndef(sn).source = { |amp = 1|
-        var items, mix;
-        items = tapsForSend.collect({ |tname| Ndef.ar(tname, 2) });
-        mix = if(items.isEmpty, { Silent.ar(2) }, { Mix(items) });
-        mix * amp
+    if(Ndef.all[tn].isNil) {
+        Ndef(tn).fadeTime = 0.02;
+        Ndef(tn).source = { |amt = 0| Ndef.ar(trackSym, 2) * amt };
     };
-    Ndef(sn).play;
+    Ndef(tn).set(\amt, amt);   // <- only this runs on repeat calls, no rebuild
+
+    sn = ~fxSendSumName.(sendSym);
+    if(isNewTrack or: { Ndef.all[sn].isNil }) {
+        if(Ndef.all[sn].isNil) { Ndef(sn).fadeTime = 0.02 };
+        tapsForSend = ~fxState[\tracks].collect({ |tr| ~fxTapName.(tr, sendSym) });
+        Ndef(sn).source = { |amp = 1|
+            var items = tapsForSend.collect({ |tname| Ndef.ar(tname, 2) });
+            (if(items.isEmpty, { Silent.ar(2) }, { Mix(items) })) * amp
+        };
+    };
     amt
 };
 
@@ -171,16 +159,14 @@
         if(Ndef.all[sn].isNil) { Ndef(sn) };
         Ndef(sn).fadeTime = 0.02;
         Ndef(sn).source = { Silent.ar(2) };
-        Ndef(sn).play;
 
-        // create and play taps for existing tracks
+        // create taps for existing tracks (wake through dry_mix/sum references)
         ~fxState[\tracks].do { |tr|
             var tn;
             tn = ~fxTapName.(tr, sendSym);
             if(Ndef.all[tn].isNil) { Ndef(tn) };
             Ndef(tn).fadeTime = 0.02;
             Ndef(tn).source = { |amt = 0| var src; src = Ndef.ar(tr, 2) * amt; src };
-            Ndef(tn).play;
         };
     };
     sendSym
@@ -190,7 +176,7 @@
 ~fxAddFX = { |fxSym|
     var fxPrefix, fxNames;
     fxPrefix = ~fxConf[\fxPrefix];
-    fxNames = Ndef.all.keys.asArray.select({ |k| k.asString.beginsWith(fxPrefix) });
+    fxNames = Ndef.dictFor(s).envir.keys.asArray.select({ |k| k.asString.beginsWith(fxPrefix) });
     Ndef(\wet_bus).fadeTime = 0.02;
     Ndef(\wet_bus).source = {
         var items, mix;
@@ -198,8 +184,6 @@
         mix = if(items.isEmpty, { Silent.ar(2) }, { Mix(items) });
         mix
     };
-    Ndef(fxSym).play;
-    Ndef(\wet_bus).play;
     fxSym
 };
 

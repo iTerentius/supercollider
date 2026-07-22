@@ -7,7 +7,14 @@
       "Bash(pdftotext:*)",
       "Bash(git:*)",
       "Bash(rm 0_startup:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(mdfind -name \"NodeProxy.sc\")",
+      "Read(//Applications/**)",
+      "Bash(sw_vers -productVersion)",
+      "Bash(/Applications/SuperCollider.app/Contents/MacOS/sclang -v)",
+      "Read(//Users/isaaclinder/.local/share/**)",
+      "Read(//Users/isaaclinder/Library/Application Support/SuperCollider/**)",
+      "Bash(python3 *)"
     ]
   }
 }

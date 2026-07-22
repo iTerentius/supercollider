@@ -183,9 +183,12 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
         // "_includes/_osc-ctrl/tosc-fx.scd".loadRelative;  // defines ~toscFXBind/~toscFXSync used by fx_defs ~fxSetup functions
 
         // --- Mixer channels (with conditional controller bindings)
-        "_includes/mixer-channel-16s.scd".loadRelative;
-        "_includes/mixer-channel-stem-record.scd".loadRelative;
-        "_includes/ndef2mixer-channel.scd".loadRelative;
+        // "_includes/mixer-channel-16s.scd".loadRelative;
+        // "_includes/mixer-channel-stem-record.scd".loadRelative;
+        // "_includes/ndef2mixer-channel.scd".loadRelative;  // routes Ndefs into ddwMixerChannel strips — depends on mixer-channel-16s.scd above, orphaned while that's disabled
+        "_includes/ndef-mixer.scd".loadRelative;
+        "_includes/ndef-channel-16s.scd".loadRelative;
+        "_includes/ndef-channel-apc.scd".loadRelative;   // optional, APC40 bindings
 
         // --- Helpers
         "_includes/_helpers/helpers.scd".loadRelative;
