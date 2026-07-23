@@ -91,6 +91,7 @@ Ndef(\kit)[1] = Pbind(
 Ndef(\kit)[2] = \filter -> {|in, delayTime=2.0, size=0.2, damp=0.1,  diff=0.5,  feedback=0.9, modDepth=0.5, modFreq=2.0 | Greyhole.ar(in, delayTime, size,  damp, diff, feedback, modDepth, modFreq)};
 // Ndef(\kit)[1] = nil;
 Ndef(\ins2)[0] = { |amp=1| Ndef.ar(\kit, 2) * amp };
+~apcBindParam.(\b0_ds1_k1, { |x| Ndef(\kit).set(\wet2,  x)});
 )
 
 // Greyhole.ar(in, delayTime: 2.0, damp: 0.0, size: 1.0, diff: 0.707, feedback: 0.9, modDepth: 0.1, modFreq: 2.0) ~
@@ -103,10 +104,93 @@ Ndef(\kit).map(\diff,  { Ndef.kr(\lfo)});
 Ndef(\kit)[2] = nil
 Ndef(\kit).set(\wet2, 0.5);
 
-~apcBindParam.(\b0_ds1_k1, { |x| Ndef(\kit).set(\wet2,  x)});
 Ndef(\kit).free;
 Ndef(\kit).clear;
 Ndef.clear;
 
 Ndef(\kit,  { SinOsc.ar([110,  111]) * 0.2 });
 Ndef(\test).free;
+(
+Ndef(\as, { | freq=410 ,  index=0.42, distance=1.00,  amp=0.2 |
+	var theta, beta, num, denom, son, env;
+	
+	// Two phasors which will ramp from zero to 2pi
+	theta = Phasor.ar(0, freq, 0, 2pi);
+	beta  = Phasor.ar(0, freq * distance, 0, 2pi);
+	
+	num = sin(theta) - (index * sin(theta - beta));
+	denom = 1 + index.squared - (2 * index * cos(beta));
+	
+	son = num / denom;
+	
+	Pan2.ar(son * amp);
+	
+});
+Ndef(\as)[1] = \pset -> Pbind(
+  \dur,  8, 
+  // \index,  Pwhite(0.42, 0.9,  inf), 
+  \distance,  Pseq((5..10), inf),  
+  \octave, Pstep(Pseq((-2..1), inf),4),   
+  \degree,  Pseq([0, 4,  2,  1], inf),  
+  \stretch,  Pseg([1/2, 2,   1/2], [4,  2],  \sin, inf), 
+);
+)
+Ndef(\ins1,  {|amp=0.75| Ndef(\as) * amp});
+Ndef(\as).free;
+Ndef(\as).map(\index, {Ndef.kr(\lfo).range(0.3, 0.9)});
+Ndef.all.free;
+
+(
+Ndef(\pmManual, {
+    |  freq = 220, ratio = 2, index = 3, amp = 0.3, mix = 1,  t_gate=1 |
+    var mod, phase, carrier, env, sig;
+
+    // modulator: oscillates at freq*ratio, scaled by index (the brightness amount)
+    mod = SinOsc.ar(freq * ratio) * index;
+
+    // manual phase ramp for the carrier: 0 -> 2pi, incrementing by
+    // (freq * SampleDur) each sample = correct radians-per-sample step
+    phase = Phasor.ar(0, freq * SampleDur.ir, 0, 2pi);
+
+    // carrier reads phase + mod directly as its phase input
+    carrier = SinOsc.ar(0, phase + mod);
+
+    env = EnvGen.kr(Env.perc(0.01, 2),  t_gate);
+    sig = carrier * env * amp;
+
+    Pan2.ar(sig, 0, mix);
+});
+// Ndef(\pmManual)[1] = \pset -> Pbind(
+//   \octave,  3,  
+//   \dur, 1/2,  
+//   \t_gate,   1, 
+//   \index, Pseq((3..5),  inf), 
+//   \ratio, Pwhite(1, 10,  inf), 
+//   \degree,   Pseq([0, 2,  0,  \,  4], inf), 
+// );
+)
+Ndef(\pmManual).play;
+Ndef(\pmManual).clear;
+Ndef(\pmManual).stop;
+
+(
+Ndef(\pmBell, {
+    |freq = 220, ratio = 1.4, indexMax = 8, amp = 0.3, t_trig = 1|
+    var trig, indexEnv, ampEnv, carrier;
+
+    trig = Trig1.kr(t_trig, 0); // or just use t_trig directly, both work with EnvGen
+
+    indexEnv = EnvGen.kr(Env.perc(0.001, 2, indexMax, -4), t_trig);
+    ampEnv   = EnvGen.kr(Env.perc(0.001, 3), t_trig); // no doneAction, no gate collision
+
+    carrier  = PMOsc.ar(freq, freq * ratio, indexEnv);
+    carrier * ampEnv * amp;
+    Pan2.ar(carrier,  0,  1);
+});
+)
+
+Ndef(\pmBell).play;
+Ndef(\pmBell).clear;
+Ndef(\pmBell).stop;
+Ndef(\pmBell).set(\t_trig, 0); // retriggers the perc envelope every time
+
