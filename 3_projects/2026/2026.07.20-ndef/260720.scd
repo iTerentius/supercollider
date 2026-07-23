@@ -1,4 +1,7 @@
-
+(
+SynthDef(\sKik, ~ufn[\808][\kik]).add;
+SynthDef(\sHh, ~ufn[\808][\hh]).add;
+)
 (
 Ndef.dictFor(s).clock = ~link;
 Ndef.dictFor(s).quant = 1;
@@ -23,12 +26,13 @@ Ndef(\v1, ~ufn[\thickPad]);
 Ndef(\v1)[1] = \pset -> Pbind(
   \octave,  3,  
   \degree,   Pslide([0, 0,  2,  4,  \], inf,  3,  4),  
-  \dur,  Pseq((1..4), inf), 
-  \freeze,  Pseq([0, 1], inf), 
-  \amp,  0.3, 
+  // \dur,  Pseq((1..4), inf), 
+  \dur, 1,
+  \freeze,  Pseq([1, 0], inf), 
+  // \amp,  Pseq([0.3, 0], inf), 
   \bits,   Pseg([6,  24],[16], \sin,   inf), 
   \rate,   Pslide([500, 3000, 12000], inf,  2,  3), 
-  \stretch, Pseg([2,  1/4], [16],  \sin,  inf),  
+  \stretch, Pseq([1/3!3,  1].flat,  inf),  
 );
 Ndef(\v1)[2] = \filter -> { |in|
         var sig = in;
@@ -57,15 +61,19 @@ Ndef(\v1)[4] = \filter -> { |in|
 Ndef(\ins3)[0] = {|amp = 1| Ndef.ar(\v1) * amp};
 )
 Ndef(\v1).map(\bits, { Ndef.kr(\lfo).range(4,  12) });
-Ndef(\v1).unmap(\freeze, Ndef(\freezeLFO));
+Ndef(\v1).map(\freeze, Ndef(\freezeLFO));
 Ndef(\v1).set(\smear, 0);
 Ndef(\v1).set(\freezeSmear, 0);
 Ndef(\v1).map(\wet4,  Ndef(\freezeLFO));
+Ndef(\v1).map(\amp,  { 1.5 * Ndef(\freezeLFO) });
 Ndef(\v1)[2] = nil;
 Ndef(\v1).free;
 Ndef(\v1).clear;
 
-Ndef(\freezeLFO, { LFPulse.kr(0.5) }).play;
+Tdef(\tempo).play;
+Tdef(\tempo).stop;
+
+Ndef(\freezeLFO, { LFPulse.kr(1) }).play;
 ~sTree[\bd];
 
 (
@@ -79,13 +87,13 @@ Ndef(\kit)[0] =  Pbind(
   \bufnum,  Pseq(~sTree[\bass_drums].values[0..3], inf),   
   \amp,  0.4, 
   \dur,   1,
-  \stretch, Pseg([1,   3],[8],  \lin,   inf), 
+  \stretch, Pseq([1/3!3,   3].flat,   inf), 
 );
 Ndef(\kit)[1] = Pbind(
   \instrument,  \pBs,  
-  \bufnum,  Pseq(~sTree[\hats].values[1..3], inf),   
+  \bufnum,  Pseq(~sTree[\hats].values[2..3], inf),   
   \amp,  0.4, 
-  \dur,   1/3,
+  \dur,   1,
   // \stretch, Pseg([1,   1/5],[8],  \sin,   inf), 
 );
 Ndef(\kit)[2] = \filter -> {|in, delayTime=2.0, size=0.2, damp=0.1,  diff=0.5,  feedback=0.9, modDepth=0.5, modFreq=2.0 | Greyhole.ar(in, delayTime, size,  damp, diff, feedback, modDepth, modFreq)};
@@ -106,10 +114,37 @@ Ndef(\kit).set(\wet2, 0.5);
 
 Ndef(\kit).free;
 Ndef(\kit).clear;
-Ndef.clear;
+Ndef.all.clear;
 
 Ndef(\kit,  { SinOsc.ar([110,  111]) * 0.2 });
-Ndef(\test).free;
+(
+Pdef(\kit, Pbind(
+  \instrument, ~ufn[\808][\kik],
+  \octave, 2,
+  \degree, 3,
+  \dur, 1/2,
+)).play;
+)
+Pdef(\kit).stop;
+(
+Ndef(\kit)[0] = Pbind(
+  \instrument, \sKik,
+  \octave, 2,
+  \degree, 3,
+  \rel, Pseq([0.5!3, 1.5].flat,inf),
+  \dur, 1,
+  \stretch, Pseq([1, 1/3], inf),
+);
+Ndef(\kit)[1] = Pbind(
+  \instrument, \sHh,
+  \octave, 2,
+  \degree, 3,
+  // \rel, Pseq([0.5!3, 1.5].flat,inf),
+  \dur, 1/2,
+  \stretch, Pseq([1, 1/3], inf),
+);
+)
+Ndef(\kit).clear;
 (
 Ndef(\as, { | freq=410 ,  index=0.42, distance=1.00,  amp=0.2 |
 	var theta, beta, num, denom, son, env;
@@ -141,8 +176,8 @@ Ndef(\as).map(\index, {Ndef.kr(\lfo).range(0.3, 0.9)});
 Ndef.all.free;
 
 (
-Ndef(\pmManual, {
-    |  freq = 220, ratio = 2, index = 3, amp = 0.3, mix = 1,  t_gate=1 |
+SynthDef(\pmManual, {
+    | out=0, freq = 220, ratio = 2, index = 3, amp = 0.3, mix = 1,  gate=1 |
     var mod, phase, carrier, env, sig;
 
     // modulator: oscillates at freq*ratio, scaled by index (the brightness amount)
@@ -155,19 +190,21 @@ Ndef(\pmManual, {
     // carrier reads phase + mod directly as its phase input
     carrier = SinOsc.ar(0, phase + mod);
 
-    env = EnvGen.kr(Env.perc(0.01, 2),  t_gate);
+    env = EnvGen.kr(Env.perc(0.01, 2),  gate);
     sig = carrier * env * amp;
 
-    Pan2.ar(sig, 0, mix);
-});
-// Ndef(\pmManual)[1] = \pset -> Pbind(
-//   \octave,  3,  
-//   \dur, 1/2,  
-//   \t_gate,   1, 
-//   \index, Pseq((3..5),  inf), 
-//   \ratio, Pwhite(1, 10,  inf), 
-//   \degree,   Pseq([0, 2,  0,  \,  4], inf), 
-// );
+    Out.ar(out, Pan2.ar(sig, 0, mix));
+}).add;
+Ndef(\pmManual)[0] = Pbind(
+  \instrument, \pmManual,
+  \octave,  3,  
+  \dur, 1,  
+  // \index, Pseq((1..5),  inf), 
+  \index, Pkey(\degree) + 5,
+  \ratio, Pkey(\degree) + 2, 
+  \degree,   Pseq([0, 2,  0,  4,], inf), 
+  \stretch, Pseq([1/3!3, 3].flat, inf),
+).play;
 )
 Ndef(\pmManual).play;
 Ndef(\pmManual).clear;

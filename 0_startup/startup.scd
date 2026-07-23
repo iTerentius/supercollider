@@ -224,6 +224,10 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
         // --- Cleanup any launchpad state if present
         if(~lpMini.notNil) { ~lpMini[\clearGrid].(); };
 
+        Ndef.dictFor(s).clock = ~link;
+        Ndef.dictFor(s).quant = 1;
+        Ndef.dictFor(s).fadeTime = 3;
+
         ("Setup done! (" ++ platform ++ " / " ++ hostname ++ ")").postln;
     };
 };
