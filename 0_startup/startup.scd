@@ -158,6 +158,12 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
 
     // waitForBoot handles the boot itself; a separate s.boot here double-triggers it
     // ("server 'localhost' already booting") and can leave the booting flag stuck → "not started".
+    // Deferred via AppClock, same as the zynthian/bass branches below and for the same
+    // reason (see their comment): calling waitForBoot synchronously during startup.scd's
+    // own special early execution can leave the booting flag stuck forever with scsynth
+    // never actually spawned. Confirmed hanging exactly this way on RaspPad3's "raspad"
+    // branch (2026-07-24) once it started reaching this shared block.
+    AppClock.sched(0.1, {
     s.waitForBoot {
         // --- Core synths + sample loader (always load)
         "_synthdefs/synths_common.scd".loadRelative;
@@ -233,6 +239,8 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
 
         ("Setup done! (" ++ platform ++ " / " ++ hostname ++ ")").postln;
     };
+    nil
+    });
 };
 
 // --- Raspberry Pi: lean control layer (host for norns + Maschine+/Deluge)
