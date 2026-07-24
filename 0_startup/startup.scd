@@ -2,7 +2,7 @@
 // Cross-platform startup.scd
 // Detects platform and configures audio/MIDI accordingly
 
-var platform, hostname, zynInstance, effectiveHost;
+var platform, hostname, zynInstance, effectiveHost, basePath;
 
 // ---- detect platform + host
 platform = Platform.case(
@@ -163,26 +163,30 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
     // own special early execution can leave the booting flag stuck forever with scsynth
     // never actually spawned. Confirmed hanging exactly this way on RaspPad3's "raspad"
     // branch (2026-07-24) once it started reaching this shared block.
+    // thisProcess.nowExecutingPath is only valid NOW, before deferring — capture it so
+    // the loadRelative calls below (rewritten as basePath-joined .load) still resolve
+    // correctly once actually running inside the deferred AppClock callback.
+    basePath = thisProcess.nowExecutingPath.dirname;
     AppClock.sched(0.1, {
     s.waitForBoot {
         // --- Core synths + sample loader (always load)
-        "_synthdefs/synths_common.scd".loadRelative;
-        "_synthdefs/ufn_defs.scd".loadRelative;
-        "_synthdefs/analog_synthdefs.scd".loadRelative;
-        "_synthdefs/neutron.scd".loadRelative;
-        "_synthdefs/model_d.scd".loadRelative;
-        "_synthdefs/biscuit.scd".loadRelative;
-        "_includes/sample_loader.scd".loadRelative;
-        "_synthdefs/fx_defs.scd".loadRelative;
+        (basePath +/+ "_synthdefs/synths_common.scd").load;
+        (basePath +/+ "_synthdefs/ufn_defs.scd").load;
+        (basePath +/+ "_synthdefs/analog_synthdefs.scd").load;
+        (basePath +/+ "_synthdefs/neutron.scd").load;
+        (basePath +/+ "_synthdefs/model_d.scd").load;
+        (basePath +/+ "_synthdefs/biscuit.scd").load;
+        (basePath +/+ "_includes/sample_loader.scd").load;
+        (basePath +/+ "_synthdefs/fx_defs.scd").load;
 
         // --- MIDI setup (cross-platform)
-        "_includes/midi-setup.scd".loadRelative;
+        (basePath +/+ "_includes/midi-setup.scd").load;
 
         // --- MIDI Controllers (auto-detect: APC40 mkII > Launch Control XL)
-        "_includes/_midi-ctrl/midi-device-loader.scd".loadRelative;
+        (basePath +/+ "_includes/_midi-ctrl/midi-device-loader.scd").load;
 
         // Launch Pad Mini - uncomment if you use it
-        "_includes/_midi-ctrl/launch-pad-mini/lp-param-router.scd".loadRelative;
+        (basePath +/+ "_includes/_midi-ctrl/launch-pad-mini/lp-param-router.scd").load;
 
         s.sync; // ensure all SynthDefs are registered on server before mixer init
 
@@ -195,13 +199,13 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
         // "_includes/mixer-channel-16s.scd".loadRelative;
         // "_includes/mixer-channel-stem-record.scd".loadRelative;
         // "_includes/ndef2mixer-channel.scd".loadRelative;  // routes Ndefs into ddwMixerChannel strips — depends on mixer-channel-16s.scd above, orphaned while that's disabled
-        "_includes/ndef-mixer.scd".loadRelative;
-        "_includes/ndef-channel-16s.scd".loadRelative;
-        "_includes/ndef-channel-apc.scd".loadRelative;   // optional, APC40 bindings
+        (basePath +/+ "_includes/ndef-mixer.scd").load;
+        (basePath +/+ "_includes/ndef-channel-16s.scd").load;
+        (basePath +/+ "_includes/ndef-channel-apc.scd").load;   // optional, APC40 bindings
 
         // --- Helpers
-        "_includes/_helpers/helpers.scd".loadRelative;
-        "_includes/cc-logger.scd".loadRelative;
+        (basePath +/+ "_includes/_helpers/helpers.scd").load;
+        (basePath +/+ "_includes/cc-logger.scd").load;
 
         // --- LinkClock setup
         // 1. CLEAR existing clocks to kill Zombies
@@ -228,7 +232,7 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
         });
 
         // --- Norns arcologies router (uncomment when using Norns + Deluge workflow)
-        "_includes/norns-router.scd".loadRelative;
+        (basePath +/+ "_includes/norns-router.scd").load;
 
         // --- Cleanup any launchpad state if present
         if(~lpMini.notNil) { ~lpMini[\clearGrid].(); };
