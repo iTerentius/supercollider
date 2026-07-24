@@ -254,7 +254,14 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
 // Flow: norns (arcologies) OSC → SC functions → MIDI out to Maschine+/Deluge.
 // Link syncs norns / Maschine+ / SC; Deluge is MIDI-slaved (~startDelugeClock).
 // SC-internal audio (synthdefs/samples/mixer) is intentionally NOT loaded here.
-if(hostname == "raspberrypi") {
+// Gated on effectiveHost, not raw hostname: RaspPad3 also reports hostname
+// "raspberrypi" post re-image, but effectiveHost resolves it to "raspad" (Scarlett
+// present) instead, correctly excluding it here. Without this, both this lean
+// block AND the full-stack block above would fire on RaspPad3, double-loading
+// midi-setup.scd and failing the second MIDIOut connect with "Device or resource
+// busy" (confirmed live, 2026-07-24) — only a hostname genuinely acting as the
+// lean norns/Maschine+/Deluge hub (no Scarlett) should reach this branch.
+if(effectiveHost == "raspberrypi") {
     // --- MIDI setup (cross-platform): ~mOut, ~lcxlSrcUid, ~reconnectMidi
     "/home/hypo/Music/supercollider/0_startup/_includes/midi-setup.scd".load;
 
