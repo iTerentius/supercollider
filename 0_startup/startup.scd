@@ -165,8 +165,11 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
     // branch (2026-07-24) once it started reaching this shared block.
     // thisProcess.nowExecutingPath is only valid NOW, before deferring — capture it so
     // the loadRelative calls below (rewritten as basePath-joined .load) still resolve
-    // correctly once actually running inside the deferred AppClock callback.
-    basePath = thisProcess.nowExecutingPath.dirname;
+    // correctly once actually running inside the deferred AppClock callback. Resolved
+    // through readlink -f since nowExecutingPath reports the ~/.config/SuperCollider/
+    // startup.scd SYMLINK's own directory, not the real workspace dir the symlink
+    // points at (confirmed live on RaspPad3 — a bare .dirname landed one level shallow).
+    basePath = ("readlink -f " ++ thisProcess.nowExecutingPath).unixCmdGetStdOut.stripWhiteSpace.dirname;
     AppClock.sched(0.1, {
     s.waitForBoot {
         // --- Core synths + sample loader (always load)
