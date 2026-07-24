@@ -84,6 +84,7 @@ Ndef(\fxsBitcrush)[0] = {
 Ndef(\fxsBitcrush).set(\rate, 1400,  \bits,  6,  \mix, 1);
 ~fxSetSend.(\ins1,  \s1,  0.0);
 ~fxSetSend.(\ins2,  \s1,  0.3);
+~fxSetSend.(\ins3,  \s1,  0.3);
 
 Ndef(\kit).free;
 Ndef(\kit).clear;

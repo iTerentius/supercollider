@@ -46,3 +46,17 @@ Ndef(\ins1)[0] = {|amp=0.75| Ndef(\v1) * amp };
 Ndef(\v1).set(\wet3,  0.5);
 Ndef(\v1).free;
 Scale.directory
+
+(
+Ndef(\b1)[0] = 
+  Pbind(
+    \instrument,   \bass8,  
+    \scale,  Scale.egyptian,  
+    \octave,  3,  
+    \degree,  Place([(0..7).scramble,  Rest()], inf), 
+    \dur, 1/4,  
+    \stretch,  Pseq([1/2!2, 1].flat, inf),  
+  );
+Ndef(\ins3)[0] = {|amp=0.75| Ndef(\b1) * amp };
+)
+
