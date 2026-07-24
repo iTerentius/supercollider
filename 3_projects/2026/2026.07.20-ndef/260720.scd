@@ -81,8 +81,8 @@ Ndef(\fxsBitcrush)[0] = {
 };
 ~fxAddFX.(\fxsBitcrush);
 )
-Ndef(\fxsBitcrush).set(\rate, 14000,  \bits,  8,  \mix, 1);
-~fxSetSend.(\ins1,  \s1,  0.3);
+Ndef(\fxsBitcrush).set(\rate, 1400,  \bits,  6,  \mix, 1);
+~fxSetSend.(\ins1,  \s1,  0.0);
 ~fxSetSend.(\ins2,  \s1,  0.3);
 
 Ndef(\kit).free;
@@ -300,4 +300,17 @@ Pbind(
 	\modInd2, Pfunc{rrand(0,0.5)},
 ).play; 
 )
-
+(
+Ndef(\pedestrian)[0] = { | freq=220 |
+	var sig;
+  sig = SinOsc.ar([freq, freq * 1.1], 0, 0.2) * LFPulse.ar([5,  5.1]);
+  sig 
+};
+Ndef(\pedestrian)[1] = \pset -> Pbind(
+  \degree,  Pslide((0..7).scramble, inf,  3,  4),  
+  \dur, 1/4
+);
+)
+Ndef(\pedestrian).play;
+Ndef(\pedestrian).clear;
+Ndef(\pedestrian).stop;
