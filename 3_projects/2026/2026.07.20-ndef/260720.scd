@@ -39,22 +39,31 @@ Ndef(\freezeLFO, { LFPulse.kr(1) }).play;
 ~loadSamps.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
 ~loadSamps.("~/Music/supercollider/_samples/goldbaby/Cassette808/");
 ~loadSamps.("~/Music/supercollider/_samples/_mono/");
+~loadSamps.("~/Music/supercollider/_samples/Ghosthack/");
 )
 (
 Ndef(\kit)[0] =  Pbind(
   \instrument,  \pBs,  
-  \bufnum,  Pseq(~sTree[\bass_drums].values[0..3], inf),   
+  \bufnum,  Pseq(~sTree[\impacts].values[0..8], inf),   
   \amp,  0.4, 
   \dur,   1,
   \stretch, Pseq([1/4!3,   2.25].flat,   inf), 
 );
 Ndef(\kit)[1] = Pbind(
   \instrument,  \pBs,  
-  \bufnum,  Pseq(~sTree[\hats].values[1..1], inf),   
+  \bufnum,  Pseq(~sTree[\hats].values[1..3], inf),   
   \amp,  0.4, 
-  \dur,   Pseq([1/4!3, Rest(1/4),  1/6!3, Rest(1/3)].flat, inf), 
+  \dur,   Pseq([1/4].flat, inf), 
   // \stretch, Pseg([1,   1/5],[8],  \sin,   inf), 
 );
+Ndef(\kit)[3] =  Pbind(
+  \instrument,  \pBs,  
+  \bufnum,  Pseq(~sTree[\bass_drums].values[0..4], inf),   
+  \amp,  0.4, 
+  \dur,   1/2,
+  \stretch, Pseq([1/4!3,   3.25].flat,   inf), 
+);
+Ndef(\kit)[4] = Pbind(\dur, 1, \rate,  Pseq([1,  2,  4], inf));
 Ndef(\kit)[2] = \filter ->  {|in| ~fxg[\bitcrush].(in)};
 Ndef(\kit)[7] = \filter -> {|in, delayTime=2.0, size=0.2, damp=0.1,  diff=0.5,  feedback=0.9, modDepth=0.5, modFreq=2.0 | Greyhole.ar(in, delayTime, size,  damp, diff, feedback, modDepth, modFreq)};
 Ndef(\ins2)[0] = { |amp=1| Ndef.ar(\kit, 2) * amp };
@@ -69,10 +78,11 @@ Ndef(\kit).map(\size,  Ndef(\lfo));
 Ndef(\kit).map(\diff,  Ndef(\lfo));
 
 // Greyhole.ar(in, delayTime: 2.0, damp: 0.0, size: 1.0, diff: 0.707, feedback: 0.9, modDepth: 0.1, modFreq: 2.0) ~
-Ndef(\kit).set(\rate, 5000); 
+Ndef(\kit).set(\rate, 1); 
+Ndef(\kit).map(\rate, Ndef.kr(\lfo)); 
 Ndef(\kit)[2] = nil;
 Ndef(\kit).set(\wet2, 0.8);
-Ndef(\kit).set(\wet7, 0.0);
+Ndef(\kit).set(\wet7, 0.4);
 
 (
 Ndef(\fxsBitcrush)[0] = { 
@@ -81,9 +91,9 @@ Ndef(\fxsBitcrush)[0] = {
 };
 ~fxAddFX.(\fxsBitcrush);
 )
-Ndef(\fxsBitcrush).set(\rate, 1400,  \bits,  6,  \mix, 1);
+Ndef(\fxsBitcrush).set(\rate, 14000,  \bits,  8,  \mix, 1);
 ~fxSetSend.(\ins1,  \s1,  0.0);
-~fxSetSend.(\ins2,  \s1,  0.3);
+~fxSetSend.(\ins2,  \s1,  1.0);
 ~fxSetSend.(\ins3,  \s1,  0.3);
 
 Ndef(\kit).free;
