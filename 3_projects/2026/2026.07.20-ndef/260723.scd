@@ -38,7 +38,7 @@ Ndef(\v1)[0] =
     \rel, Pkey(\stretch) * Pseq((0.2..1.4), inf), 
     // \stretch, Pseq([1/2!2,  1], inf), 
   );
-Ndef(\v1)[3] = \filter -> {|in| ~ilfxCores[\shimmer].(in)};
+Ndef(\v1)[3] = \filter -> {|in| ~fxg[\shimmer].(in)};
 Ndef(\ins1)[0] = {|amp=0.75| Ndef(\v1) * amp };
 ~apcBindParam.(\b0_ds1_k2, { |x| Ndef(\v1).set(\wet3,  x)});
 )

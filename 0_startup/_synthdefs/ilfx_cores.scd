@@ -9,7 +9,7 @@
 // reference of the same DSP with the chan/bus/.playfx/args-set boilerplate
 // stripped out, so it's usable in more than one context going forward.
 //
-// Each entry in ~ilfxCores (except \duck, see below) has the shape:
+// Each entry in ~fxg (except \duck, see below) has the shape:
 //   { |in, ...namedControls| ... ; finalSignal }
 // `in` is the ALREADY-READ 2-channel input — do not re-read it via In.ar.
 // The function returns the fully processed (dry/wet-blended, amp-scaled)
@@ -17,10 +17,10 @@
 // usable as-is in two different contexts:
 //
 //   1. ddwMixerChannel .playfx (matches the existing ~fxLib convention):
-//        ~t1.playfx({ |in| ~ilfxCores[\bitcrush].(in) });
+//        ~t1.playfx({ |in| ~fxg[\bitcrush].(in) });
 //
 //   2. NodeProxy \filter -> role (see ref_ndef_mixer.scd):
-//        Ndef(\x)[1] = \filter -> ~ilfxCores[\bitcrush];
+//        Ndef(\x)[1] = \filter -> ~fxg[\bitcrush];
 //
 // Caveat carried over from the ~ginCore/pmManual discussion: verified against
 // NodeProxy source that \filter -> requires exactly this in-then-return
@@ -28,13 +28,13 @@
 // this session — the existing project fx.scd examples always re-read via a
 // captured `bus` var instead of using the passed `in`, so if `in` turns out
 // not to carry the right content there, fall back to:
-//   ~t1.playfx({ |in| ~ilfxCores[\bitcrush].(In.ar(~t1.inbus.index, 2)) });
+//   ~t1.playfx({ |in| ~fxg[\bitcrush].(In.ar(~t1.inbus.index, 2)) });
 (
-~ilfxCores = ();
+~fxg = ();
 
 // Bitcrusher — reduce bit depth and/or sample rate
 // Params: \rate (100-44100), \bits (1-16), \mix (0-1), \mute (0/1), \amp
-~ilfxCores[\bitcrush] = { |in, rate=44100, bits=8, mix=1, mute=0, amp=1|
+~fxg[\bitcrush] = { |in, rate=44100, bits=8, mix=1, mute=0, amp=1|
     var sig = in;
     var wet = Decimator.ar(sig, rate, bits);
     var effectiveMix = mix * (1 - mute);
@@ -43,7 +43,7 @@
 
 // Ring modulator
 // Params: \freq (20-2000), \mix (0-1), \amp
-~ilfxCores[\ringmod] = { |in, freq=440, mix=1, amp=1|
+~fxg[\ringmod] = { |in, freq=440, mix=1, amp=1|
     var sig = in;
     var wet = sig * SinOsc.ar(freq);
     XFade2.ar(sig, wet, mix.linlin(0, 1, -1, 1)) * amp;
@@ -51,7 +51,7 @@
 
 // Wavefolder
 // Params: \gain (1-20), \mix (0-1), \amp
-~ilfxCores[\fold] = { |in, gain=4, mix=1, amp=0.5|
+~fxg[\fold] = { |in, gain=4, mix=1, amp=0.5|
     var sig = in;
     var wet = (sig * gain).fold2(1);
     XFade2.ar(sig, wet, mix.linlin(0, 1, -1, 1)) * amp;
@@ -62,7 +62,7 @@
 // Note: carried over verbatim from the original — `mod` is computed but not
 // actually used in `wet` there either. Left as-is since it's proven/liked;
 // flagging in case it's worth revisiting later.
-~ilfxCores[\glitch] = { |in, rate=1, mix=0.7, amp=0.8|
+~fxg[\glitch] = { |in, rate=1, mix=0.7, amp=0.8|
     var sig = in;
     var mod = LFTri.ar([rate, rate * 1.01], mul: SinOsc.ar([1, 2, 3]));
     var wet = Decimator.ar(
@@ -75,7 +75,7 @@
 
 // Pitch shimmer — pitch-shifted delay
 // Params: \shift (semitones, e.g. 12), \time (0.01-0.5), \mix (0-1), \amp
-~ilfxCores[\shimmer] = { |in, shift=12, time=0.1, mix=0.4, amp=1|
+~fxg[\shimmer] = { |in, shift=12, time=0.1, mix=0.4, amp=1|
     var sig = in;
     var wet = PitchShift.ar(sig,
         windowSize: 0.2,
@@ -88,7 +88,7 @@
 
 // Stutter — rolling-buffer grain repeat
 // Params: \rate (0.5-4 repeats/beat), \mix (0-1), \amp
-~ilfxCores[\stutter] = { |in, rate=2, mix=0.5, amp=1|
+~fxg[\stutter] = { |in, rate=2, mix=0.5, amp=1|
     var bufL = LocalBuf(SampleRate.ir * 2, 1);
     var bufR = LocalBuf(SampleRate.ir * 2, 1);
     var sig = in;
@@ -106,7 +106,7 @@
 // which took { |in, bus| ... In.ar(bus,2) ... } — adapted to use `in` directly.
 // Params: \chunk (FFT size), \freeze (0/1), \smear (0-1), \freezeSmear (0-1
 //   crossfade between freeze/smear results), \mix (0-1), \amp
-~ilfxCores[\spectral] = { |in, chunk=2048, freeze=0, smear=0, freezeSmear=0, mix=1, amp=0.4|
+~fxg[\spectral] = { |in, chunk=2048, freeze=0, smear=0, freezeSmear=0, mix=1, amp=0.4|
     var sig = in;
     var chains, wetFreeze, wetSmear, wet;
     chains = sig.collect({ |chan| FFT(LocalBuf(chunk), chan) });
@@ -121,7 +121,7 @@
 // Params: \speed (stutter/rhythm freq), \len (0-1 window length),
 //   \pStart/\pEnd (semitones), \width (gate duty cycle), \rate/\bits (crush
 //   layer), \crush (crush layer blend), \mix (0-1), \amp
-~ilfxCores[\pitchGate] = { |in, speed=2, len=0.5, pStart=0, pEnd=(-12), width=0.5,
+~fxg[\pitchGate] = { |in, speed=2, len=0.5, pStart=0, pEnd=(-12), width=0.5,
                             rate=44100, bits=8, crush=0.5, mix=0.5, amp=1|
     var sig, dry, wet, localBuf, recTrig, gate, pEnv, pitchRate, phase;
     sig = in;
@@ -152,7 +152,7 @@
 // signals (channel + sidechain), no mix crossfade, returns the ducked
 // channel signal directly.
 // Params: \thresh, \ratio, \attack, \release, \makeup
-~ilfxCores[\duck] = { |sig, sideSig, thresh=0.1, ratio=10, attack=0.01, release=0.1, makeup=1|
+~fxg[\duck] = { |sig, sideSig, thresh=0.1, ratio=10, attack=0.01, release=0.1, makeup=1|
     var sideMono = Mix(sideSig);
     var env = LagUD.kr(Amplitude.kr(sideMono, 0.01, 0.1), attack, release);
     var cond = env > thresh;
@@ -164,16 +164,16 @@
 // USAGE
 // =============================================================================
 // ddwMixerChannel insert (matches existing ~fxLib convention):
-//   ~t1.playfx({ |in| ~ilfxCores[\bitcrush].(in, 8000, 6, 0.8) });
+//   ~t1.playfx({ |in| ~fxg[\bitcrush].(in, 8000, 6, 0.8) });
 //   // or with named args via a wrapping function if you want .set() access —
 //   // same pattern as ~fxLib's own `s = chan.playfx({...}); if(args.notEmpty){s.set(*args)}`
 //
 // NodeProxy filter:
-//   Ndef(\x)[1] = \filter -> ~ilfxCores[\bitcrush];
+//   Ndef(\x)[1] = \filter -> ~fxg[\bitcrush];
 //   Ndef(\x).set(\rate, 8000, \bits, 6, \mix, 0.8);
 //
 // Sidechain duck (two-input shape — needs its own synth, not a filter slot):
 //   SynthDef(\duckIns, { |in=0, side=0, out=0 ...|
-//       ReplaceOut.ar(out, ~ilfxCores[\duck].(In.ar(in,2), In.ar(side,2), ...));
+//       ReplaceOut.ar(out, ~fxg[\duck].(In.ar(in,2), In.ar(side,2), ...));
 //   }).add;
 )

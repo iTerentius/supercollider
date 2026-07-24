@@ -181,6 +181,7 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
         (basePath +/+ "_synthdefs/biscuit.scd").load;
         (basePath +/+ "_includes/sample_loader.scd").load;
         (basePath +/+ "_synthdefs/fx_defs.scd").load;
+        (basePath +/+ "_synthdefs/ilfx_cores.scd").load;
 
         // --- MIDI setup (cross-platform)
         (basePath +/+ "_includes/midi-setup.scd").load;

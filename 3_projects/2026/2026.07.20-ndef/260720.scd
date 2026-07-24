@@ -33,7 +33,7 @@ Tdef(\tempo).play;
 Tdef(\tempo).stop;
 
 Ndef(\freezeLFO, { LFPulse.kr(1) }).play;
-~sTree[\bd];
+~sTree[\bass_drums];
 
 (
 ~loadSamps.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
@@ -55,7 +55,7 @@ Ndef(\kit)[1] = Pbind(
   \dur,   Pseq([1/4!3, Rest(1/4),  1/6!3, Rest(1/3)].flat, inf), 
   // \stretch, Pseg([1,   1/5],[8],  \sin,   inf), 
 );
-Ndef(\kit)[2] = \filter ->  {|in| ~ilfxCores[\bitcrush].(in)};
+Ndef(\kit)[2] = \filter ->  {|in| ~fxg[\bitcrush].(in)};
 Ndef(\kit)[7] = \filter -> {|in, delayTime=2.0, size=0.2, damp=0.1,  diff=0.5,  feedback=0.9, modDepth=0.5, modFreq=2.0 | Greyhole.ar(in, delayTime, size,  damp, diff, feedback, modDepth, modFreq)};
 Ndef(\ins2)[0] = { |amp=1| Ndef.ar(\kit, 2) * amp };
 ~apcBindParam.(\b0_ds1_k1, { |x| Ndef(\kit).set(\wet7,  x)});
@@ -77,7 +77,7 @@ Ndef(\kit).set(\wet7, 0.0);
 (
 Ndef(\fxsBitcrush)[0] = { 
   var sig = Ndef(\s1_sum, 2);
-  ~ilfxCores[\bitcrush].(sig);
+  ~fxg[\bitcrush].(sig);
 };
 ~fxAddFX.(\fxsBitcrush);
 )
