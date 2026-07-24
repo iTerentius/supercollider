@@ -12,15 +12,18 @@ platform = Platform.case(
     { \unknown }
 );
 hostname = "hostname".unixCmdGetStdOut.stripWhiteSpace;
-// RaspPad3 also reports hostname "zynthian" (never renamed from the Zynthian
-// OS default), colliding with the main Zynthian's own hostname == "zynthian"
-// branches below. It's a different physical box — Scarlett Solo 4th Gen over
-// JACK, no zynthian-ui SC engine wiring — so it needs the plain scsynth-boot
-// path (synthdefs/mixer/samples), not the MIDI-only/zynmixer-wired one.
-// Distinguish by actual sound card instead of hostname: the real Zynthian
-// has a HiFiBerry, RaspPad3 has a Scarlett.
+// RaspPad3 has reported hostname "zynthian" (its old Zynthian OS image, never
+// renamed from the default) and now "raspberrypi" (a plain Bookworm/trixie
+// re-image) at different times — either would otherwise collide with the
+// main Zynthian's own hostname == "zynthian" branches below, or fall through
+// to the generic Linux fallback. It's a different physical box — Scarlett
+// Solo 4th Gen over JACK, no zynthian-ui SC engine wiring — so it needs the
+// plain scsynth-boot path (synthdefs/mixer/samples), not the MIDI-only/
+// zynmixer-wired one. Distinguish by actual sound card instead of hostname:
+// the real Zynthian has a HiFiBerry, RaspPad3 has a Scarlett — this also
+// makes detection survive RaspPad3's own re-images/hostname changes.
 effectiveHost = if(
-    (hostname == "zynthian") and: { "aplay -l | grep -qi Scarlett".systemCmd == 0 }
+    "aplay -l | grep -qi Scarlett".systemCmd == 0
 ) { "raspad" } { hostname };
 // Distinguishes the two concurrent sclang processes on the zynthian host
 // itself (both run this SAME startup.scd, via the same ~/.config/
