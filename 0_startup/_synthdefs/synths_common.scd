@@ -397,7 +397,27 @@ SynthDef(\gin1r, { |out, trigRate = 40, grainDur = 0.08,
     ReplaceOut.ar(out, wet);
 }).add;
 );
+(
+SynthDef(\pm1, {
+    | out=0, freq = 220, ratio = 2, index = 3, amp = 0.3, mix = 1,  gate=1 |
+    var mod, phase, carrier, env, sig;
 
+    // modulator: oscillates at freq*ratio, scaled by index (the brightness amount)
+    mod = SinOsc.ar(freq * ratio) * index;
+
+    // manual phase ramp for the carrier: 0 -> 2pi, incrementing by
+    // (freq * SampleDur) each sample = correct radians-per-sample step
+    phase = Phasor.ar(0, freq * SampleDur.ir, 0, 2pi);
+
+    // carrier reads phase + mod directly as its phase input
+    carrier = SinOsc.ar(0, phase + mod);
+
+    env = EnvGen.kr(Env.perc(0.21, 2),  gate);
+    sig = carrier * env * amp;
+
+    Out.ar(out, Pan2.ar(sig, 0, mix));
+}).add;
+);
 (
 // 2025-11-12 sidechain ducking
 

@@ -15,47 +15,6 @@ Ndef(\pad).play;
 Ndef(\pad).stop;
 Ndef(\pad).clear;
 
-Ndef(\pad).source = ~ufn[\dk];
-Ndef(\pad).map(\freq,  Ndef(\lfo));
-
-Ndef(\lfo, {SinOsc.ar(0.5) + 3 * 2});
-
-(
-Ndef(\v1).fadeTime = 0;
-Ndef(\v1, ~ufn[\thickPad]);
-Ndef(\v1)[1] = \pset -> Pbind(
-  \octave,  3,  
-  \degree,   Pslide([0, 0,  2,  4,  \], inf,  3,  4),  
-  // \dur,  Pseq((1..4), inf), 
-  \dur, 1,
-  \freeze,  Pseq([1, 0], inf), 
-  // \amp,  Pseq([0.3, 0], inf), 
-  \bits,   Pseg([6,  24],[16], \sin,   inf), 
-  \rate,   Pslide([500, 3000, 12000], inf,  2,  3), 
-  \stretch, Pseq([1/3!3,  1].flat,  inf),  
-);
-Ndef(\v1)[2] = \filter -> { |in|
-        var sig = in;
-        var wet = Decimator.ar(sig, \rate.kr(44100), \bits.kr(8));
-        XFade2.ar(sig, wet, \mix.kr(1).linlin(0, 1, -1, 1)) * \amp.kr(1)
-    };
-Ndef(\v1)[3] = \mix ->  ~ufn[\dk];
-Ndef(\v1)[4] = \filter -> { |in|
-    var sig, chains, wetFreeze, wetSmear, wet, mix, amp, freeze, smear, freezeSmear, chunk;
-    sig = in;
-    mix = \mix.kr(1);
-    amp = \amp.kr(1);
-    chunk = \chunk.kr(2048);
-    freeze = \freeze.kr(0);
-    smear = \smear.kr(0);
-    freezeSmear = \freezeSmear.kr(0);
-
-    chains = sig.collect({ |chan| FFT(LocalBuf(chunk), chan) });
-    wetFreeze = IFFT(chains.collect({ |chain| PV_Freeze(chain, freeze) }));
-    wetSmear  = IFFT(chains.collect({ |chain| PV_MagSmear(chain, smear) }));
-
-    wet = XFade2.ar(wetFreeze, wetSmear, freezeSmear * 2 - 1);
-    XFade2.ar(sig, wet, mix * 2 - 1) * amp;
 };
 
 Ndef(\ins3)[0] = {|amp = 1| Ndef.ar(\v1) * amp};
@@ -87,30 +46,44 @@ Ndef(\kit)[0] =  Pbind(
   \bufnum,  Pseq(~sTree[\bass_drums].values[0..3], inf),   
   \amp,  0.4, 
   \dur,   1,
-  \stretch, Pseq([1/3!3,   3].flat,   inf), 
+  \stretch, Pseq([1/4!3,   2.25].flat,   inf), 
 );
 Ndef(\kit)[1] = Pbind(
   \instrument,  \pBs,  
-  \bufnum,  Pseq(~sTree[\hats].values[2..3], inf),   
+  \bufnum,  Pseq(~sTree[\hats].values[1..1], inf),   
   \amp,  0.4, 
-  \dur,   1,
+  \dur,   Pseq([1/4!3, Rest(1/4),  1/6!3, Rest(1/3)].flat, inf), 
   // \stretch, Pseg([1,   1/5],[8],  \sin,   inf), 
 );
-Ndef(\kit)[2] = \filter -> {|in, delayTime=2.0, size=0.2, damp=0.1,  diff=0.5,  feedback=0.9, modDepth=0.5, modFreq=2.0 | Greyhole.ar(in, delayTime, size,  damp, diff, feedback, modDepth, modFreq)};
-// Ndef(\kit)[1] = nil;
+Ndef(\kit)[2] = \filter ->  {|in| ~ilfxCores[\bitcrush].(in)};
+Ndef(\kit)[7] = \filter -> {|in, delayTime=2.0, size=0.2, damp=0.1,  diff=0.5,  feedback=0.9, modDepth=0.5, modFreq=2.0 | Greyhole.ar(in, delayTime, size,  damp, diff, feedback, modDepth, modFreq)};
 Ndef(\ins2)[0] = { |amp=1| Ndef.ar(\kit, 2) * amp };
-~apcBindParam.(\b0_ds1_k1, { |x| Ndef(\kit).set(\wet2,  x)});
+~apcBindParam.(\b0_ds1_k1, { |x| Ndef(\kit).set(\wet7,  x)});
+~apcBindParam.(\b0_ds1_k2, { |x| Ndef(\kit).set(\wet2,  x)});
 )
-
-// Greyhole.ar(in, delayTime: 2.0, damp: 0.0, size: 1.0, diff: 0.707, feedback: 0.9, modDepth: 0.1, modFreq: 2.0) ~
 Ndef(\lfo, {LFPulse.ar(1.5) + SinOsc.ar(1)});
 
 Ndef(\kit).set(\size,  0.8, \damp,  0.1,  \diff,  0.5,  \modDepth,  0.5);
 Ndef(\kit).map(\modFreq,  { 1/ Ndef(\lfo,  1).max(0.1) });
 Ndef(\kit).map(\size,  Ndef(\lfo));
-Ndef(\kit).map(\diff,  { Ndef.kr(\lfo)});
-Ndef(\kit)[2] = nil
-Ndef(\kit).set(\wet2, 0.5);
+Ndef(\kit).map(\diff,  Ndef(\lfo));
+
+// Greyhole.ar(in, delayTime: 2.0, damp: 0.0, size: 1.0, diff: 0.707, feedback: 0.9, modDepth: 0.1, modFreq: 2.0) ~
+Ndef(\kit).set(\rate, 5000); 
+Ndef(\kit)[2] = nil;
+Ndef(\kit).set(\wet2, 0.8);
+Ndef(\kit).set(\wet7, 0.0);
+
+(
+Ndef(\fxsBitcrush)[0] = { 
+  var sig = Ndef(\s1_sum, 2);
+  ~ilfxCores[\bitcrush].(sig);
+};
+~fxAddFX.(\fxsBitcrush);
+)
+Ndef(\fxsBitcrush).set(\rate, 14000,  \bits,  8,  \mix, 1);
+~fxSetSend.(\ins1,  \s1,  0.3);
+~fxSetSend.(\ins2,  \s1,  0.3);
 
 Ndef(\kit).free;
 Ndef(\kit).clear;
@@ -176,58 +149,155 @@ Ndef(\as).map(\index, {Ndef.kr(\lfo).range(0.3, 0.9)});
 Ndef.all.free;
 
 (
-SynthDef(\pmManual, {
-    | out=0, freq = 220, ratio = 2, index = 3, amp = 0.3, mix = 1,  gate=1 |
-    var mod, phase, carrier, env, sig;
-
-    // modulator: oscillates at freq*ratio, scaled by index (the brightness amount)
-    mod = SinOsc.ar(freq * ratio) * index;
-
-    // manual phase ramp for the carrier: 0 -> 2pi, incrementing by
-    // (freq * SampleDur) each sample = correct radians-per-sample step
-    phase = Phasor.ar(0, freq * SampleDur.ir, 0, 2pi);
-
-    // carrier reads phase + mod directly as its phase input
-    carrier = SinOsc.ar(0, phase + mod);
-
-    env = EnvGen.kr(Env.perc(0.01, 2),  gate);
-    sig = carrier * env * amp;
-
-    Out.ar(out, Pan2.ar(sig, 0, mix));
-}).add;
-Ndef(\pmManual)[0] = Pbind(
-  \instrument, \pmManual,
+Ndef(\pm1)[0] = Pbind(
+  \instrument, \pm1,
   \octave,  3,  
   \dur, 1,  
   // \index, Pseq((1..5),  inf), 
-  \index, Pkey(\degree) + 5,
-  \ratio, Pkey(\degree) + 2, 
+  \index, 5,
+  \ratio1, 2, 
   \degree,   Pseq([0, 2,  0,  4,], inf), 
   \stretch, Pseq([1/3!3, 3].flat, inf),
-).play;
+);
+Ndef(\ratio,   { SinOsc.kr(0.5) * 2pi });
+Ndef(\ins4, {|amp=0.75| Ndef(\pm1) * amp });
 )
-Ndef(\pmManual).play;
-Ndef(\pmManual).clear;
-Ndef(\pmManual).stop;
+Ndef(\pm1).map(\ratio, Ndef.ar(\ratio));
+Ndef(\pm1).set(\ratio, 3);
+Ndef(\ratio,   { LFPulse.ar(1) });
+Ndef(\pm1).play;
+Ndef(\pm1).clear;
+Ndef(\pm1).stop;
 
+FreqScope.new;
 (
-Ndef(\pmBell, {
-    |freq = 220, ratio = 1.4, indexMax = 8, amp = 0.3, t_trig = 1|
-    var trig, indexEnv, ampEnv, carrier;
+Ndef(\pmBell, {| vel=0.8 |
 
-    trig = Trig1.kr(t_trig, 0); // or just use t_trig directly, both work with EnvGen
+	var f,ff0,ff1,ff2,a,b,c,d,e, modInd,aa;
+	var osc,signal;
+	f = \freq.kr(100).lag(0.01);
 
-    indexEnv = EnvGen.kr(Env.perc(0.001, 2, indexMax, -4), t_trig);
-    ampEnv   = EnvGen.kr(Env.perc(0.001, 3), t_trig); // no doneAction, no gate collision
+	e = EnvGen.kr(Env.perc(
+		\att.kr(0.015) * Rand(0.9,1.1),
+		\rel.kr(1.02), 
+		curve: \curve.kr(-4)
+	),
+		gate: Impulse.kr(0.5),
+	) * vel;
 
-    carrier  = PMOsc.ar(freq, freq * ratio, indexEnv);
-    carrier * ampEnv * amp;
-    Pan2.ar(carrier,  0,  1);
+
+	ff0= f * \f0ratio.kr(2 * e.pow(0.8));
+	ff1= f * \f1ratio.kr(2 * e.pow(1.2));
+	
+
+
+	b = SinOsc.ar(ff1) * f * \modInd1.kr(1) * e;
+	c = SinOsc.ar(ff0) * f * \modInd0.kr(1) * e;
+	a = SinOsc.ar(f + [b,c].sum 
+	);
+
+	a = HPF.ar(a*e, f * 0.5);
+
+
+
+	osc = a * \pgain.kr(1);
+
 });
+Ndef(\pmBell)[1] = \filter -> { |in, trigRate = 40, grainDur = 0.08, pan = 0.0, amp = 0.3, envbufnum = 0|
+    var mono, wet;
+    mono = (in[0] + in[1]) * 0.5;
+    wet = GrainIn.ar(
+        numChannels: 2, trigger: Dust.kr(trigRate), dur: grainDur,
+        in: mono, pan: pan, envbufnum: envbufnum
+    ) * amp;
+    wet   // just return it — no In.ar/Out.ar/ReplaceOut.ar needed, NodeProxy handles both
+};
+Ndef(\pmBell)[5] = \pset -> Pbind(
+  \octave,  4,  
+  \degree,  Pseq((0..7).scramble,  inf),  
+  \dur, 1/4,  
+  \stretch, Pseq([1/3!3,  1].flat,  inf), 
+  \f0ratio,  Pwhite(1,  4,  inf), 
+  \f1ratio,  Pwhite(2,  5,  inf), 
+)
 )
 
+Ndef(\pmBell).set(\trigRate, 20);
+Ndef(\pmBell).set(\wet1, 0.0);
 Ndef(\pmBell).play;
 Ndef(\pmBell).clear;
 Ndef(\pmBell).stop;
 Ndef(\pmBell).set(\t_trig, 0); // retriggers the perc envelope every time
+(
+SynthDef(\fm3mc_perc,{| gate=1 vel=0.7 |
+
+	var f,ff0,ff1,ff2,a,b,c,d,e, modInd,t, aa;
+	var osc,signal;
+	
+	f = \freq.kr(100);
+	// f = f.clip(20,900);
+
+	e = EnvGen.kr(Env.perc(
+		Rand(0.8,1.2)* \att.kr(0.015),  
+		\rel.kr(4.02), 
+		curve: \curve.kr(-4)
+	),
+		gate: gate,
+		doneAction:2
+	) * vel;
+
+	e = e * PinkNoise.ar(1!2).range( 0.1, 1 ).lag(0.01);
+
+	ff0= f * \f0ratio.kr(2) 
+	+ { Rand(-3,3) }.dup 
+	;
+	ff1= f * \f1ratio.kr(2) 
+	+ { Rand(-3,3) }.dup 
+	;
+	ff2= f * \f2ratio.kr(4) 
+	+ { Rand(-3,3) }.dup 
+	;	
+
+
+	b = SinOsc.ar(ff0) * f * \modInd0.kr(1) * e.pow(0.8);
+	c = SinOsc.ar(ff1) * f * \modInd1.kr(0.6) * e.pow(1.4);
+	d = SinOsc.ar(ff2) * f * \modInd2.kr(0.3) * e.pow(2.5);
+	a = SinOsc.ar(
+		f 
+		+ LFTri.ar(e.pow(0.5) * LFNoise1.kr(0.3).range(1,5), Rand(0.0,2pi), mul: e.pow(0.2) *  f * 0.005)
+		+ [b,c,d].sum 
+		+ WhiteNoise.ar(f/8!2).lag(0.001) 
+	);
+
+	a = HPF.ar(a*e.pow(0.5), f);
+	a = MidEQ.ar(a, f*\midEQratio.kr(5), rq:e.pow(0.5)* \rq.kr(3.5) + 0.1, db: \boostAtten.kr(-32));
+
+
+
+	osc = a * \pgain.kr(0.1);
+	osc = OnePole.ar(osc, \onepole.kr(0.8));
+	Out.ar(0,osc);
+	
+
+}).add
+
+)
+
+
+( 
+Pbind(
+	\instrument, \fm3mc_perc,
+	\dur, Pseq( 2.pow((-4..1).scramble), inf ),
+	\legato, Pfunc({rrand(0.01,1)}),
+	\degree, Pseq([0,2,5,6,8,11].scramble, inf),
+	\octave, Pstutter(3, Pseq([3,4,5], inf) ),
+	\vel, Pstutter(6, Pseq([ 0.2, 1, 1.2 ].scramble, inf)),
+	\f0ratio, Pseq( (3..5).scramble, inf ),
+	\f1ratio, Pseq( (1..3).scramble, inf ),
+	\f2ratio, Pseq( (3..5) / (1..3).scramble, inf ),
+	\modInd0, Pfunc{rrand(0,2.0)},
+	\modInd1, Pfunc{rrand(0,1.0)},
+	\modInd2, Pfunc{rrand(0,0.5)},
+).play; 
+)
 
