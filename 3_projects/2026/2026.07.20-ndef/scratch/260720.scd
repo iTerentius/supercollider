@@ -36,36 +36,37 @@ Ndef(\freezeLFO, { LFPulse.kr(1) }).play;
 ~sTree[\bass_drums];
 
 (
-~loadSamps.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
-~loadSamps.("~/Music/supercollider/_samples/goldbaby/Cassette808/");
-~loadSamps.("~/Music/supercollider/_samples/_mono/");
 ~loadSamps.("~/Music/supercollider/_samples/Ghosthack/");
+~loadSamps.("~/Music/supercollider/_samples/808s_by_SHD/808_kit/");
+// ~loadSamps.("~/Music/supercollider/_samples/goldbaby/Cassette808/");
+~loadSamps.("~/Music/supercollider/_samples/_mono/");
 )
 (
 Ndef(\kit)[0] =  Pbind(
   \instrument,  \pBs,  
   \bufnum,  Pseq(~sTree[\impacts].values[0..8], inf),   
   \amp,  0.4, 
-  \dur,   1,
+  \dur,   4,
   \stretch, Pseq([1/4!3,   2.25].flat,   inf), 
 );
 Ndef(\kit)[1] = Pbind(
   \instrument,  \pBs,  
-  \bufnum,  Pseq(~sTree[\hats].values[1..3], inf),   
+  \bufnum,  Pseq(~sTree[\hats].values(1,  3), inf),   
+  \degree,  Pseq([0], inf),
   \amp,  0.4, 
-  \dur,   Pseq([1/4].flat, inf), 
+  \dur,   Pseq([1/2].flat, inf), 
   // \stretch, Pseg([1,   1/5],[8],  \sin,   inf), 
 );
 Ndef(\kit)[3] =  Pbind(
   \instrument,  \pBs,  
+  // \rate,  Pseq([1,  2,  4], inf), 
   \bufnum,  Pseq(~sTree[\bass_drums].values[0..4], inf),   
-  \amp,  0.4, 
+  \amp,  0.9, 
   \dur,   1/2,
   \stretch, Pseq([1/4!3,   3.25].flat,   inf), 
 );
-Ndef(\kit)[4] = Pbind(\dur, 1, \rate,  Pseq([1,  2,  4], inf));
-Ndef(\kit)[2] = \filter ->  {|in| ~fxg[\bitcrush].(in)};
-Ndef(\kit)[7] = \filter -> {|in, delayTime=2.0, size=0.2, damp=0.1,  diff=0.5,  feedback=0.9, modDepth=0.5, modFreq=2.0 | Greyhole.ar(in, delayTime, size,  damp, diff, feedback, modDepth, modFreq)};
+// Ndef(\kit)[2] = \filter ->  {|in| ~fxg[\bitcrush].(in)};
+Ndef(\kit)[7] = \filter -> {|in, delayTime=0.25, size=0.2, damp=0.1,  diff=0.5,  feedback=0.9, modDepth=0.5, modFreq=2.0 | Greyhole.ar(in, delayTime, size,  damp, diff, feedback, modDepth, modFreq)};
 Ndef(\ins2)[0] = { |amp=1| Ndef.ar(\kit, 2) * amp };
 ~apcBindParam.(\b0_ds1_k1, { |x| Ndef(\kit).set(\wet7,  x)});
 ~apcBindParam.(\b0_ds1_k2, { |x| Ndef(\kit).set(\wet2,  x)});
@@ -79,22 +80,24 @@ Ndef(\kit).map(\diff,  Ndef(\lfo));
 
 // Greyhole.ar(in, delayTime: 2.0, damp: 0.0, size: 1.0, diff: 0.707, feedback: 0.9, modDepth: 0.1, modFreq: 2.0) ~
 Ndef(\kit).set(\rate, 1); 
-Ndef(\kit).map(\rate, Ndef.kr(\lfo)); 
+Ndef(\kit).set(\delayTime, 0.25);
 Ndef(\kit)[2] = nil;
 Ndef(\kit).set(\wet2, 0.8);
-Ndef(\kit).set(\wet7, 0.4);
-
+Ndef(\kit).set(\wet7, 0.0);
+Ndef(\kit).set(\bits,  6,  \mix, 1);
 (
-Ndef(\fxsBitcrush)[0] = { 
-  var sig = Ndef(\s1_sum, 2);
-  ~fxg[\bitcrush].(sig);
+Ndef(\fxsBitcrush)[0] = { |brate=44100, bits=6, mix=1, mute=0, amp=1|
+    var sig = Ndef.ar(\s1_sum, 2);   // .ar, not Ndef(\s1_sum, 2) — that form sets its source to a literal scalar
+    ~fxg[\bitcrush].(sig, brate, bits, mix, mute, amp);
 };
+Ndef(\fxsBitcrush)[1] = \pset -> Pbind(\dur,  1/16, \brate,  Pseg([1000, 10000], [32], \lin, inf));
 ~fxAddFX.(\fxsBitcrush);
 )
-Ndef(\fxsBitcrush).set(\rate, 14000,  \bits,  8,  \mix, 1);
-~fxSetSend.(\ins1,  \s1,  0.0);
+Ndef(\fxsBitcrush).set(\brate, 1400, \bits, 8, \mix, 1);
+~fxSetSend.(\ins1,  \s1,  0.5);
 ~fxSetSend.(\ins2,  \s1,  1.0);
-~fxSetSend.(\ins3,  \s1,  0.3);
+~fxSetSend.(\ins3,  \s1,  0.9);
+Ndef(\brate,   { SinOsc.ar(1) });
 
 Ndef(\kit).free;
 Ndef(\kit).clear;
@@ -239,65 +242,11 @@ Ndef(\pmBell).play;
 Ndef(\pmBell).clear;
 Ndef(\pmBell).stop;
 Ndef(\pmBell).set(\t_trig, 0); // retriggers the perc envelope every time
-(
-SynthDef(\fm3mc_perc,{| gate=1 vel=0.7 |
-
-	var f,ff0,ff1,ff2,a,b,c,d,e, modInd,t, aa;
-	var osc,signal;
-	
-	f = \freq.kr(100);
-	// f = f.clip(20,900);
-
-	e = EnvGen.kr(Env.perc(
-		Rand(0.8,1.2)* \att.kr(0.015),  
-		\rel.kr(4.02), 
-		curve: \curve.kr(-4)
-	),
-		gate: gate,
-		doneAction:2
-	) * vel;
-
-	e = e * PinkNoise.ar(1!2).range( 0.1, 1 ).lag(0.01);
-
-	ff0= f * \f0ratio.kr(2) 
-	+ { Rand(-3,3) }.dup 
-	;
-	ff1= f * \f1ratio.kr(2) 
-	+ { Rand(-3,3) }.dup 
-	;
-	ff2= f * \f2ratio.kr(4) 
-	+ { Rand(-3,3) }.dup 
-	;	
-
-
-	b = SinOsc.ar(ff0) * f * \modInd0.kr(1) * e.pow(0.8);
-	c = SinOsc.ar(ff1) * f * \modInd1.kr(0.6) * e.pow(1.4);
-	d = SinOsc.ar(ff2) * f * \modInd2.kr(0.3) * e.pow(2.5);
-	a = SinOsc.ar(
-		f 
-		+ LFTri.ar(e.pow(0.5) * LFNoise1.kr(0.3).range(1,5), Rand(0.0,2pi), mul: e.pow(0.2) *  f * 0.005)
-		+ [b,c,d].sum 
-		+ WhiteNoise.ar(f/8!2).lag(0.001) 
-	);
-
-	a = HPF.ar(a*e.pow(0.5), f);
-	a = MidEQ.ar(a, f*\midEQratio.kr(5), rq:e.pow(0.5)* \rq.kr(3.5) + 0.1, db: \boostAtten.kr(-32));
-
-
-
-	osc = a * \pgain.kr(0.1);
-	osc = OnePole.ar(osc, \onepole.kr(0.8));
-	Out.ar(0,osc);
-	
-
-}).add
-
-)
 
 
 ( 
-Pbind(
-	\instrument, \fm3mc_perc,
+Ndef(\fm1)[0] = Pbind(
+	\instrument, \fm3,
 	\dur, Pseq( 2.pow((-4..1).scramble), inf ),
 	\legato, Pfunc({rrand(0.01,1)}),
 	\degree, Pseq([0,2,5,6,8,11].scramble, inf),
@@ -309,19 +258,24 @@ Pbind(
 	\modInd0, Pfunc{rrand(0,2.0)},
 	\modInd1, Pfunc{rrand(0,1.0)},
 	\modInd2, Pfunc{rrand(0,0.5)},
-).play; 
+); 
 )
+
 (
-Ndef(\pedestrian)[0] = { | freq=220 |
+Ndef(\pedestrian).fadeTime = 16;
+Ndef(\pedestrian)[0] = { | freq=220,   amp=0.2 |
 	var sig;
   sig = SinOsc.ar([freq, freq * 1.1], 0, 0.2) * LFPulse.ar([5,  5.1]);
-  sig 
+  sig * amp; 
 };
 Ndef(\pedestrian)[1] = \pset -> Pbind(
+  \amp, 0.5,  
+  // \octave,  Pseq([4,  5,  6], inf), 
   \degree,  Pslide((0..7).scramble, inf,  3,  4),  
-  \dur, 1/4
+  \dur, 1/8
 );
+Ndef(\ins1)[0] = {|amp=0.8| Ndef(\pedestrian) * amp };
 )
 Ndef(\pedestrian).play;
-Ndef(\pedestrian).clear;
+Ndef(\pedestrian).free;
 Ndef(\pedestrian).stop;

@@ -46,17 +46,23 @@ Ndef(\ins1)[0] = {|amp=0.75| Ndef(\v1) * amp };
 Ndef(\v1).set(\wet3,  0.5);
 Ndef(\v1).free;
 Scale.directory
-
+~startDelugeClock.();
+~link.tempo * 60
+~midiInMap.(6, \bass8,   out: Ndef(\ins3).index);
 (
 Ndef(\b1)[0] = 
   Pbind(
     \instrument,   \bass8,  
     \scale,  Scale.egyptian,  
+    \amp, 1,  
     \octave,  3,  
-    \degree,  Place([(0..7).scramble,  Rest()], inf), 
-    \dur, 1/4,  
-    \stretch,  Pseq([1/2!2, 1].flat, inf),  
+    \degree,  Place([(0..7).scramble], inf), 
+    \dur, 1/2,  
+    \stretch,  Pseq([1/4!4, 3].flat, inf),  
   );
 Ndef(\ins3)[0] = {|amp=0.75| Ndef(\b1) * amp };
 )
-
+Ndef(\b1).free;
+~midiInStopAll.();     // frees the current unfiltered MIDIdefs
+~midiInSrcID = MIDIClient.sources.detect { |ep| ep.device.containsi("Deluge") }.uid;
+~reconnectMidi.()
