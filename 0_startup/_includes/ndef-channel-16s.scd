@@ -15,16 +15,27 @@
 // would NOT retroactively update ~fxState[\sends]. Use ~fxAddSend for that.
 (
 // ---- channel strip constructor ----
-// Adds level (amp) + pan + HPF/LPF filter stages to a Ndef, in that order.
-// Safe to call before a source exists — forces the bus to stereo audio via
-// initBus first. Without this, a filter added to a still-neutral proxy gets
-// probed with a channel-less Silent.ar (defaults to mono) to infer its
-// output shape, locking the whole proxy to 1 channel — then Balance2.ar's
-// in[0]/in[1] blows up because `in` is a scalar, not a 2-element array.
+// Adds level (amp) + mute + pan + HPF/LPF filter stages to a Ndef, in that
+// order. Safe to call before a source exists — forces the bus to stereo
+// audio via initBus first. Without this, a filter added to a still-neutral
+// proxy gets probed with a channel-less Silent.ar (defaults to mono) to
+// infer its output shape, locking the whole proxy to 1 channel — then
+// Balance2.ar's in[0]/in[1] blows up because `in` is a scalar, not a
+// 2-element array.
+//
+// \amp and \mute are DELIBERATELY separate controls, not one. If \amp is
+// being driven by a pattern or LFO for musical effect (a hi-hat's rhythmic
+// gain pattern, a tremolo LFO via .map, etc.), calling .set(\amp, 0) to mute
+// gets silently overwritten by the very next pattern event/LFO cycle — the
+// mute doesn't stick, because the pattern still owns \amp. \mute is a
+// second, independent multiplier nothing else should ever touch, so
+// .set(\mute, 1) reliably silences the voice regardless of whatever \amp is
+// doing for musical reasons. Same convention as ~fxg[\bitcrush]'s own
+// mix/mute split in ilfx_cores.scd.
 ~ndefChanMk = { |name, hasPan = true|
     var nd = Ndef(name);
     nd.initBus(\audio, 2);
-    nd[1] = \filter -> { |in, amp = 1| in * amp };
+    nd[1] = \filter -> { |in, amp = 1, mute = 0| in * amp * (1 - mute) };
     if(hasPan) { nd[2] = \filter -> { |in, pan = 0| Balance2.ar(in[0], in[1], pan) } };
     nd[3] = \filter -> { |in, hpfreq = 40, lpfreq = 18000| HPF.ar(LPF.ar(in, lpfreq), hpfreq) };
     nd

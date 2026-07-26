@@ -201,11 +201,17 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
 
         // --- Mixer channels (with conditional controller bindings)
         // "_includes/mixer-channel-16s.scd".loadRelative;
-        // "_includes/mixer-channel-stem-record.scd".loadRelative;
         // "_includes/ndef2mixer-channel.scd".loadRelative;  // routes Ndefs into ddwMixerChannel strips — depends on mixer-channel-16s.scd above, orphaned while that's disabled
         (basePath +/+ "_includes/ndef-mixer.scd").load;
+        (basePath +/+ "_includes/ndef-fx-route.scd").load;      // fx-to-fx routing (~fxRoute), needs ~fxAddFX
         (basePath +/+ "_includes/ndef-channel-16s.scd").load;
         (basePath +/+ "_includes/ndef-channel-apc.scd").load;   // optional, APC40 bindings
+        (basePath +/+ "_includes/midi-in-play.scd").load;       // general MIDI-in -> synth router
+        // ~stemDiskStart is pure function definitions — no dependency on real
+        // MixerChannels existing, safe to load with mixer-channel-16s.scd off.
+        // Used with Ndefs via ~ndefAsChan (see ndef-stem-record.scd).
+        (basePath +/+ "_includes/mixer-channel-stem-record.scd").load;
+        (basePath +/+ "_includes/ndef-stem-record.scd").load;
 
         // --- Helpers
         (basePath +/+ "_includes/_helpers/helpers.scd").load;
@@ -277,6 +283,9 @@ if(effectiveHost == "raspberrypi") {
     ~link.tempo = 120/60;
     Pdef.defaultQuant = 4;
 
+    Ndef.dictFor(s).clock = ~link;
+    Ndef.dictFor(s).quant = 1;
+    Ndef.dictFor(s).fadeTime = 3;
     // --- Norns arcologies router
     // Defines ~song / ~play / ~toggle / ~oneshot and OSC handlers (/arc/trigger,
     // /arc/stop, /arc/start). Auto-loads midi-out-maschine.scd + midi-out-deluge.scd.

@@ -82,6 +82,44 @@ Ndef(\fxsVerb)[0] = {
 ~fxAddSend.(\s3);
 ~fxConf[\sends] = ~fxState[\sends];    // keep config in sync if you inspect it later
 
+// =============================================================================
+// FX-TO-FX ROUTING  (_includes/ndef-fx-route.scd — ~fxRoute)
+// =============================================================================
+// DAW-style "route one return into another" (reverb into delay, so you hear
+// delay repeats OF the reverb tail — genuine serial processing, not just two
+// returns coexisting in wet_bus). Matrix-capable: any number of sources into
+// any target, each independently live-adjustable, same LaunchPad-matrix-of-
+// toggles workflow as the ddwMixerChannel projects that used this pattern.
+//
+// Same tap+sum+live-\amt shape as ~fxSetSend, just retargeted fx->fx instead
+// of track->send. Repeat ~fxRoute calls on an existing connection are a plain
+// .set(\amt, val) — no rebuild, no glitch on other connections into the same
+// target, same efficiency lesson as ~fxSetSend.
+//
+// CONSTRAINT: a fx can only be a routing TARGET if it's defined via
+// ~fxRouteReg instead of a plain [0] = {...} — its [0] has to be rebuildable
+// ("normal input + whatever's currently routed in") whenever a connection
+// changes, so its core DSP and its normal input are registered separately.
+// Any EXISTING fx works fine as a routing SOURCE with zero changes — only
+// targets need ~fxRouteReg.
+Ndef(\fxsBitcrush)[0] = { |rate=8000, bits=6, mix=1|
+    var sig = Ndef.ar(\s1_sum, 2);
+    ~fxg[\bitcrush].(sig, rate, bits, mix)
+};
+~fxAddFX.(\fxsBitcrush);
+
+// \fxsDelay defined as a ROUTABLE TARGET instead of a plain [0] = {...}
+~fxRouteReg.(\fxsDelay, \s2_sum, { |sig| CombL.ar(sig, 0.4, \dt.kr(0.375), \dec.kr(1.5)) });
+
+~fxRoute.(\fxsVerb, \fxsDelay, 0.4);       // verb -> delay
+~fxRoute.(\fxsBitcrush, \fxsDelay, 0.2);   // ALSO bitcrush -> delay, same target, independent amt
+~fxRoute.(\fxsVerb, \fxsDelay, 0);         // dial to nothing without fully removing
+~fxUnroute.(\fxsVerb, \fxsDelay);          // fully remove — rebuilds delay without that tap
+//
+// For a LaunchPad/APC matrix of toggles: each pad is just
+// ~fxRoute.(rowFx, colFx, x) — same shape as any other
+// ~apcBindParam/~lpBind callback, no new controller-binding pattern needed.
+
 // --- Master dry/wet balance ---
 Ndef(\master).set(\dry, 1, \wet, 0.8, \amp, 1);
 
@@ -219,10 +257,31 @@ Ndef.dictFor(s).quant = 1;              // snap .play and .source= swaps to the 
 ~rec = ~ndefRecordStart.([\master], "~/recordings/ndef_master.wav".standardizePath);
 ~rec[\finalize].();
 
-// For beat-quantized start/stop, interleave-split via ffmpeg, MIDI/history
-// capture alongside the audio, reuse ~stemDiskStart's machinery instead of
-// this — it just needs bus indices, not MixerChannel objects specifically.
-// See ref_stem_recording.scd.
+// ~ndefRecordStart above is intentionally minimal: raw interleaved capture
+// only. It does NOT do beat-quantized start/stop, autoSplit into individual
+// stereo stems, captureHistory, or captureMidi — ~stemDiskStart
+// (ddwMixerChannel) has all of that already, and full feature parity with
+// Ndefs doesn't need a reimplementation — see _includes/ndef-stem-record.scd
+// (~ndefAsChan): a one-line adapter Event that answers `.inbus`/`.name`,
+// which is the ONLY thing ~stemDiskStart ever calls on a track/return. Lets
+// you pass Ndefs into the real, unmodified ~stemDiskStart directly:
+//   ~stemStop = ~stemDiskStart.(
+//       tracks:  [~ndefAsChan.(Ndef(\ins1)), ~ndefAsChan.(Ndef(\ins2))],
+//       returns: [~ndefAsChan.(Ndef(\fxsVerb))],
+//       clock: ~link, autoSplit: true, captureHistory: true, captureMidi: true
+//   );
+// Quantized start/stop, autoSplit, captureHistory all work identically to
+// ddwMixerChannel this way — none of that logic cares what supplied the bus
+// index. captureMidi has one real caveat, but it's orthogonal to Ndefs
+// entirely: it only captures ev[\type] nil/\note events, so a \type \grain
+// pattern (see the sustain/legato-race fix elsewhere in this codebase) won't
+// show up in the .mid file on EITHER system — see ndef-stem-record.scd for
+// the full explanation. Reach for ~ndefRecordStart only when you want a
+// quick raw capture and don't need any of the above. Full ~stemDiskStart
+// kwarg reference (splitCodec, dirPath defaults, etc.): ref_stem_recording.scd
+// — requires mixer-channel-stem-record.scd loaded (it's pure function
+// definitions, no dependency on real MixerChannels existing, so it's safe to
+// load standalone even with mixer-channel-16s.scd itself disabled).
 
 // =============================================================================
 // SUBMIX GROUPS (e.g. a drum kit)
@@ -232,24 +291,79 @@ Ndef.dictFor(s).quant = 1;              // snap .play and .source= swaps to the 
 // pointing several voices at a send with amt:1 duplicates them, it doesn't
 // group them.
 //
-// To get a real submix: name the individual voices WITHOUT the insPrefix, so
-// ~fxInit's auto-discovery never sees them as separate tracks (this also
-// matters for a single ROUTED voice, not just a multi-voice submix — see the
-// worked example below, where the voice is named \kit, not \inskit, for
-// exactly this reason). The submix/voice itself IS the "ins" track and gets
-// group processing + a normal send, in one place, exactly like ~perc -> ~t1
-// in the ddwMixerChannel world.
-Ndef(\voxKick)[0]  = { PlayBuf.ar(1, ~sTree[\808][\kick],  loop: 0) ! 2 };
-Ndef(\voxSnare)[0] = { PlayBuf.ar(1, ~sTree[\808][\snare], loop: 0) ! 2 };
+// The rule: name the individual voices WITHOUT the insPrefix, so ~fxInit's
+// auto-discovery never sees them as separate tracks — that's it, no special
+// "vox"-style naming convention required, any non-"ins" name works
+// identically (\a, \b, \kick, whatever you want). This applies to a single
+// ROUTED voice too, not just a multi-voice submix (e.g. \kit, not \inskit,
+// if you're routing one voice into a strip rather than building a kit).
+//
+// Two ways to actually get the group into the mix — pick based on whether
+// you're using the fixed ins1-12 strip boilerplate (ndef-channel-16s.scd):
 
-Ndef(\insDrums)[0] = {
-    var kit = Mix([Ndef.ar(\voxKick, 2), Ndef.ar(\voxSnare, 2)]);
-    Compander.ar(kit, kit, thresh: 0.5, slopeAbove: 0.4)   // group glue comp, EQ, etc.
+// ---- Option A (recommended if you're using the ins1-12 strips already) ----
+// Build the submix un-prefixed, then route it into an EXISTING strip exactly
+// like you would a single voice. The strip already has amp/mute/pan/HPF-LPF
+// from ~ndefChanMk AND an APC binding (if ndef-channel-apc.scd is loaded) —
+// nothing extra to build for the group level at all, it's already there.
+Ndef(\kick)[0] = { PlayBuf.ar(1, ~sTree[\808][\kick],  loop: 0) ! 2 };
+Ndef(\snare)[0] = { PlayBuf.ar(1, ~sTree[\808][\snare], loop: 0) ! 2 };
+~ndefChanMk.(\kick);    // independent per-voice amp/mute/pan/HPF-LPF (optional but recommended)
+~ndefChanMk.(\snare);
+
+Ndef(\kit)[0] = {
+    var mix = Mix([Ndef.ar(\kick, 2), Ndef.ar(\snare, 2)]);
+    Compander.ar(mix, mix, thresh: 0.5, slopeAbove: 0.4)   // optional group glue comp
 };
-~fxSetSend.(\insDrums, \s1, 0.3);      // whole kit sends to reverb like any other track
-// Trade-off: voices lose automatic PER-VOICE sends this way (only the group
-// as a whole has one). They're still independently tappable for stems via
-// ~ndefRecordStart, just addressed by their vox names instead of ins names.
+// No ~ndefChanMk on \kit itself — the strip it's about to feed already
+// provides amp/mute/pan/HPF-LPF at the group level, so adding another
+// identical stage here would just be redundant double-processing.
+
+Ndef(\ins1)[0] = { |amp = 1| Ndef.ar(\kit, 2) * amp };   // .ar(), not bare Ndef(\kit) — see gotcha below
+// \ins1 is already "ins"-prefixed (it's one of the pre-built 12 strips), so
+// its own fader/mute/pan AND sends work with zero extra setup:
+~fxSetSend.(\ins1, \s1, 0.3);     // whole kit -> reverb, same call as any single track
+
+// ---- Option B (standalone submix, not tied to a fixed strip) ----
+// Useful if you're not using ndef-channel-16s.scd, or want a submix that
+// isn't one of your 12 strips. The submix Ndef itself becomes the "ins"
+// track directly — give IT the ~ndefChanMk treatment since there's no strip
+// downstream to provide it:
+//   Ndef(\insDrums)[0] = { Mix([Ndef.ar(\kick, 2), Ndef.ar(\snare, 2)]) };
+//   ~ndefChanMk.(\insDrums, hasPan: false);
+//   ~fxSetSend.(\insDrums, \s1, 0.3);
+
+// Voices are independently tappable for stems via ~ndefRecordStart either
+// way, addressed by their own names (\kick, \snare) regardless of which
+// option routes them to the output.
+
+// --- Temporarily dropping ONE voice from the kit ---
+// Two different tools depending on what you actually want:
+//   Ndef(\kick).set(\mute, 1);   // silences JUST the kick, \kit/\ins1 stay
+//                                 // live for everything else. Nothing gets
+//                                 // freed, so re-evaluating something
+//                                 // downstream (\kit, \ins1, a send, an FX
+//                                 // return) can't "wake it back up" the way
+//                                 // .free would — see GOTCHAS below.
+//   Ndef(\kick).pause;            // if \kick is PATTERN-driven: actually
+//   Ndef(\kick).resume;           // stops new events from firing (not just
+//                                 // silences audio) — respects
+//                                 // Ndef(\kick).quant/.clock on resume.
+// \mute silences audio but a pattern keeps firing (still spawning nodes,
+// just quiet ones). .pause/.resume stops events firing at all, but is a
+// whole-proxy operation — fine here since each voice is its own Ndef, but
+// wouldn't selectively scope to "just one layer" if you ever put multiple
+// independently-controlled streams on different indices of the SAME Ndef
+// rather than as separate voices like this.
+// If instead you want a pattern to drive \amp for musical effect (a hi-hat
+// rhythm, a tremolo LFO via .map) while STILL being able to mute reliably,
+// that's exactly why \amp and \mute are separate controls — a pattern
+// owning \amp will silently overwrite a manual .set(\amp, 0), but never
+// touches \mute.
+//
+// Same amp-vs-mute reasoning applies at the \ins1 level for the whole kit
+// at once: Ndef(\ins1).set(\mute, 1) silences the entire group without
+// touching any individual voice's own mute state.
 
 // =============================================================================
 // CHANNEL STRIP BOILERPLATE
@@ -265,8 +379,12 @@ Ndef(\insDrums)[0] = {
 //   "_includes/ndef-channel-apc.scd".loadRelative;   // optional, APC40 only
 //
 // ndef-channel-16s.scd:
-//   ~ndefChanMk.(name, hasPan: true) — stamps a level/pan/HPF-LPF filter
-//   chain onto a Ndef (indices [1]/[2]/[3]), BEFORE any real source exists.
+//   ~ndefChanMk.(name, hasPan: true) — stamps an amp+mute / pan / HPF-LPF
+//   filter chain onto a Ndef (indices [1]/[2]/[3]), BEFORE any real source
+//   exists. \amp and \mute are separate multipliers (in * amp * (1 - mute))
+//   specifically so a pattern/LFO can own \amp for musical effect while
+//   \mute stays a reliable, nothing-else-touches-it manual override — see
+//   SUBMIX GROUPS above for the motivating case.
 //   Pre-builds \ins1.."\ins12" (plug a voice in later, see below) and two
 //   returns, \fxsVerb (reverb) / \fxsDelay (delay), using the same named
 //   controls as the ddwMixerChannel return FX (\mix/\room/\damp, \dt/\dec).

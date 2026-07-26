@@ -34,9 +34,9 @@
 
 // Bitcrusher — reduce bit depth and/or sample rate
 // Params: \rate (100-44100), \bits (1-16), \mix (0-1), \mute (0/1), \amp
-~fxg[\bitcrush] = { |in, rate=44100, bits=8, mix=1, mute=0, amp=1|
+~fxg[\bitcrush] = { |in, brate=44100, bits=8, mix=1, mute=0, amp=1|
     var sig = in;
-    var wet = Decimator.ar(sig, rate, bits);
+    var wet = Decimator.ar(sig, brate, bits);
     var effectiveMix = mix * (1 - mute);
     XFade2.ar(sig, wet, effectiveMix.linlin(0, 1, -1, 1)) * amp;
 };
@@ -163,17 +163,45 @@
 // =============================================================================
 // USAGE
 // =============================================================================
-// ddwMixerChannel insert (matches existing ~fxLib convention):
-//   ~t1.playfx({ |in| ~fxg[\bitcrush].(in, 8000, 6, 0.8) });
-//   // or with named args via a wrapping function if you want .set() access —
-//   // same pattern as ~fxLib's own `s = chan.playfx({...}); if(args.notEmpty){s.set(*args)}`
+// IMPORTANT: each ~fxg entry's params (rate, bits, mix, ...) are PLAIN
+// FUNCTION ARGUMENTS, not \name.kr(...) NamedControls. Calling
+// ~fxg[\bitcrush].(in) with only `in` supplied bakes every other arg in as a
+// fixed numeric CONSTANT at build time — .set() on that control will do
+// NOTHING, no error, just silently no-op. To get a live-settable control,
+// the OUTER function (the one actually assigned to the Ndef index / passed
+// to .playfx) must declare ITS OWN matching-named args and pass them
+// through explicitly — SynthDef.wrap only turns the outermost function's
+// own top-level args into real controls; a nested call's args don't bubble
+// up on their own. This bit a real debugging session — don't skip it.
 //
-// NodeProxy filter:
-//   Ndef(\x)[1] = \filter -> ~fxg[\bitcrush];
+// ddwMixerChannel insert (matches existing ~fxLib convention):
+//   ~t1.playfx({ |in, rate=8000, bits=6, mix=0.8, mute=0, amp=1|
+//       ~fxg[\bitcrush].(in, rate, bits, mix, mute, amp)
+//   });
+//   // now .set(\rate, ..., \bits, ...) on the returned synth actually works —
+//   // same idea as ~fxLib's own `s = chan.playfx({...}); if(args.notEmpty){s.set(*args)}`
+//
+// NodeProxy source (fully wet return, e.g. reading a send-sum):
+//   Ndef(\fxsBitcrush)[0] = { |rate=8000, bits=6, mix=0.8, mute=0, amp=1|
+//       var sig = Ndef.ar(\s1_sum, 2);
+//       ~fxg[\bitcrush].(sig, rate, bits, mix, mute, amp)
+//   };
+//   Ndef(\fxsBitcrush).set(\rate, 8000, \bits, 6, \mix, 0.8);
+//
+// NodeProxy \filter -> role (verified this one DOES pass its own args through
+// automatically, since \filter's build code wraps the function directly —
+// still list matching arg names on it for clarity, same shape either way):
+//   Ndef(\x)[1] = \filter -> { |in, rate=8000, bits=6, mix=0.8, mute=0, amp=1|
+//       ~fxg[\bitcrush].(in, rate, bits, mix, mute, amp)
+//   };
 //   Ndef(\x).set(\rate, 8000, \bits, 6, \mix, 0.8);
+//   // Caveat carried over from the ndef-mixer debugging session: \filter role
+//   // controls have been empirically flaky with .set() in practice even when
+//   // correctly declared — if this doesn't respond either, move the control
+//   // to a plain [0] source instead (see ref_ndef_mixer.scd GOTCHAS).
 //
 // Sidechain duck (two-input shape — needs its own synth, not a filter slot):
-//   SynthDef(\duckIns, { |in=0, side=0, out=0 ...|
-//       ReplaceOut.ar(out, ~fxg[\duck].(In.ar(in,2), In.ar(side,2), ...));
+//   SynthDef(\duckIns, { |in=0, side=0, out=0, thresh=0.1, ratio=10, attack=0.01, release=0.1, makeup=1|
+//       ReplaceOut.ar(out, ~fxg[\duck].(In.ar(in,2), In.ar(side,2), thresh, ratio, attack, release, makeup));
 //   }).add;
 )
