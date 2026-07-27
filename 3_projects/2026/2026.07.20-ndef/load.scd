@@ -18,6 +18,8 @@ var safeLoad = { |path|
     safeLoad.("lib/fxSends.scd");
     // --- parts (one per voice, in any order) ---
     safeLoad.("parts/kitA.scd");
+    safeLoad.("parts/synthsA.scd");
+    safeLoad.("parts/synthsB.scd");
     // --- bindings last (reads ~slots + ~autoSlots + ~phrFns populated by parts) ---
     // safeLoad.("lib/bindings.scd");
     // --- optional: stem recording (loads ~stemDiskStart, ~stemMidiWrite) ---

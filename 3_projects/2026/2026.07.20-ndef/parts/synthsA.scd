@@ -1,3 +1,4 @@
+
 (
 SynthDef(\v1, { |out=0,  amp=0.2, gate=1 | 
   var sig, f, ff0,  ff1, a, b, e;
@@ -25,44 +26,32 @@ SynthDef(\v1, { |out=0,  amp=0.2, gate=1 |
   Out.ar(out,  sig);
 
 }).add;
-)
+);
 (
 Ndef(\v1)[0] = 
   Pbind(
     \type,  \grain, 
     \instrument,  \v1,  
     \scale, Scale.egyptian,  
-    \dur, Pseq([1/4!3, Rest(0.25) ].flat, inf),  
+    \dur, Pseq([1/4!3, Pn(Rest(), 2) ].flat, inf),  
     \att, Pseg([0.015,  0.5,  0.015], [4],  \wel, inf),  
     \degree,  Pseq((-7..7).scramble,   inf),  
-    \rel, Pkey(\stretch) * Pseq((0.2..1.4), inf), 
-    // \stretch, Pseq([1/2!2,  1], inf), 
+    // \rel, Pkey(\stretch) * Pseq((0.2..1.4), inf), 
+    \rel, 2,      // \stretch, Pseq([1/2!2,  1], inf), 
   );
 Ndef(\v1)[3] = \filter -> {|in| ~fxg[\shimmer].(in)};
-Ndef(\ins2[0] = {|amp=0.75| Ndef(\v1) * amp };
 ~apcBindParam.(\b0_ds1_k2, { |x| Ndef(\v1).set(\wet3,  x)});
-)
-)
-Ndef(\v1).set(\wet3,  0.5);
-Ndef(\v1).free;
-Scale.directory
-~startDelugeClock.();
-~link.tempo * 60
-~midiInMap.(6, \bass8,   out: Ndef(\ins3).index);
+);
+
 (
 Ndef(\b1)[0] = 
   Pbind(
     \instrument,   \bass8,  
     \scale,  Scale.egyptian,  
-    \amp, 1,  
-    \octave,  3,  
-    \degree,  Place([(0..7).scramble], inf), 
+    \amp, 0.5,  
+    \octave,  4,  
+    \degree,  Place([[0,  1,  2,  4].scramble], inf), 
     \dur, 1/2,  
     \stretch,  Pseq([1/4!4, 3].flat, inf),  
   );
-Ndef(\ins3)[0] = {|amp=0.75| Ndef(\b1) * amp };
-)
-Ndef(\b1).free;
-~midiInStopAll.();     // frees the current unfiltered MIDIdefs
-~midiInSrcID = MIDIClient.sources.detect { |ep| ep.device.containsi("Deluge") }.uid;
-~reconnectMidi.()
+);
