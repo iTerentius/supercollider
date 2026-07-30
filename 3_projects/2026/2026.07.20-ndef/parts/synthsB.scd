@@ -1,17 +1,54 @@
+
+(
+SynthDef(\pm1, {
+    | out=0, freq = 220, ratio = 2, index = 3, atk=0.1, rel=2, amp = 0.3, mix = 1,  gate=1 |
+    var mod, phase, carrier, env, sig;
+
+    // modulator: oscillates at freq*ratio, scaled by index (the brightness amount)
+    env = EnvGen.kr(Env.asr(atk, 1,  rel),  gate,  doneAction: 2);
+    mod = SinOsc.ar(freq * ratio) * freq/8 * index * env * 1/amp;
+    index = index * (freq.sqrt + env.pow(0.5)) * LFTri.ar(0.1, Rand(-0.1, 0.1), mul: env.pow(0.1)).range(0.01,  0.2);
+    // mod = SinOsc.ar(freq * ratio)* index;
+    env = env * PinkNoise.ar(1!2).range( 0.1, 1 ).lag(0.01);
+
+    // manual phase ramp for the carrier: 0 -> 2pi, incrementing by
+    // (freq * SampleDur) each sample = correct radians-per-sample step
+    phase = Phasor.ar(0, freq * env.pow(0.3) * SampleDur.ir, 0, 2pi);
+
+    // carrier reads phase + mod directly as its phase input
+    carrier = SinOsc.ar(
+      freq + LFSaw.ar(freq + LFNoise1.kr(0.8).range(1, 3), phase + mod, mul: env.pow(0.8)) +
+      LFTri.ar(env.pow(0.5) * LFNoise1.kr(0.3).range(1,5), Rand(0.0,2pi), mul: env.pow(0.2) * freq * 0.005) + 
+      WhiteNoise.ar(freq/8!2).lag(0.001), phase + mod);
+
+    sig = carrier * env * amp;
+    // sig = LPF.ar(sig, 1400);
+    sig = HPF.ar(sig, freq);
+    // sig = HPF.ar(sig, 200);
+    Out.ar(out, Pan2.ar(sig, 0, mix));
+}).add;
+);
 (
 Ndef(\pm1)[0] = Pbind(
   \instrument, \pm1,
-  \octave,  3,  
+  \scale,  Scale.egyptian,  
+  \octave,  4,  
   \dur, 1,  
-  // \index, Pseq((1..5),  inf), 
-  \index, 5,
-  \ratio1, 2, 
-  \degree,   Pseq([0, 2,  0,  4,], inf), 
-  \stretch, Pseq([1/3!3, 3].flat, inf),
+  \rel, 4, 
+  \atk, Prand((0.1..0.5),  inf), 
+  \index, 3,  
+  // \shift,  Pseq([12,  5], inf), 
+  \shift,  12,  
+  \ratio, Pxrand([0,  1,  2,  4], inf), 
+  \degree,   Pseq([[0, 2],  [1,  4], -2].scramble, inf), 
+  \stretch, Pseq([1/8!3, 3].flat, inf),
 );
+Ndef(\pm1)[1] = \filter -> { |in, shift | ~fxg[\shimmer].(in, shift:shift,   mix: 1 );  };
+Ndef(\pm1)[4] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\kitA), 0.3, ratio:4, release:0.3,  makeup:1.3 );  };
+Ndef(\pm1)[6] = \pset -> Pbind(\dur, 2,  \shift,  Pseq([12,5], inf));
 Ndef(\ratio,   { SinOsc.kr(0.5) * 2pi });
 );
-
+FreqScope.new;
 // (
 // SynthDef(\pmBell, {| out, vel=0.8 |
 //

@@ -4,11 +4,14 @@
 ~fxAddSend.(\s5);
 ~fxAddSend.(\s6);
 Ndef(\fxsBitcrush)[0] = { |brate=44100, bits=8, mix=1, mute=0, amp=1|
-    var sig = Ndef.ar(\s1_sum, 2);   // .ar, not Ndef(\s1_sum, 2) — that form sets its source to a literal scalar
+    var sig = Ndef.ar(\s2_sum, 2);   // .ar, not Ndef(\s1_sum, 2) — that form sets its source to a literal scalar
     ~fxg[\bitcrush].(sig, brate, bits, mix, mute, amp);
 };
 ~fxAddFX.(\fxsBitcrush);
-
+Ndef(\fxsGreyhole)[0] = {|delayTime=0.25, size=0.2, damp=0.1,  diff=0.5,  feedback=0.9, modDepth=0.5, modFreq=2.0 | 
+  var sig = Ndef.ar(\s1_sum, 2);
+  Greyhole.ar(sig, delayTime, size,  damp, diff, feedback, modDepth, modFreq)};
+~fxAddFX.(\fxsGreyhole);
 // Biscuit
 // in=0, out=0,
 // drive=1.0,
@@ -33,7 +36,7 @@ Ndef(\fxsBiscuit)[0] = { |
     stepRate=4.0, sf0=200, sf1=400, sf2=800, sf3=1600,
     filterType=0, filterFreq=15000, filterQ=0.1,
     naked=1.0, dressed=1.0 |
-    var sig = Ndef.ar(\s2_sum, 2);   // .ar, not Ndef(\s1_sum, 2) — that form sets its source to a literal scalar
+    var sig = Ndef.ar(\s3_sum, 2);   // .ar, not Ndef(\s1_sum, 2) — that form sets its source to a literal scalar
     ~fxg[\biscuit].(
       sig,
       drive,

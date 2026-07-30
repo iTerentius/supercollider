@@ -12,6 +12,8 @@ Ndef(\b1).pause;
 Ndef(\b1).resume;
 Ndef(\fm1).pause;
 Ndef(\fm1).resume;
+Ndef(\pm1).pause;
+Ndef(\pm1).resume;
 Ndef(\pedestrian).pause;
 Ndef(\pedestrian).resume;
 ~midiInStopAll.();     // frees the current unfiltered MIDIdefs
@@ -30,14 +32,15 @@ Ndef(\lfo1, {LFPulse.ar(1.5) + SinOsc.ar(1)});
 
 // Greyhole.ar(in, delayTime: 2.0, damp: 0.0, size: 1.0, diff: 0.707, feedback: 0.9, modDepth: 0.1, modFreq: 2.0) ~
 (
-Ndef(\kitA).set(
+Ndef(\fxsGreyhole).set(
   \delayTime,  0.25, 
   \size,  0.8, 
   \damp,  0.1,  
   \diff,  0.7,  
   \feedback, 0.5,  
   \modDepth,  0.5,  
-  \modFreq, 2.0
+  \modFreq, 4.0,  
+  \mix, 0.8,  
 );
 )
 
@@ -87,12 +90,15 @@ Ndef(\pmBell).set(\t_trig, 0); // retriggers the perc envelope every time
 Ndef(\fxsBitcrush).set(\brate, 14000, \bits, 8, \mix, 1);
 Ndef(\fxsBiscuit).set(\clock, 8000, \bits,  6,  \fxMode,  1,  \shape, 3);
 Ndef(\fxsBiscuit)[1] = \pset -> Pbind(\dur, 1/8,  \bits,  Pseg((4..8), [4], \lin, inf));
-~fxSetSend.(\ins1,  \s1,  0.0);
+Ndef(\fxsBiscuit)[1] = nil;
+~fxSetSend.(\ins1,  \s1,  1.0);
 ~fxSetSend.(\ins2,  \s1,  1.0);
 ~fxSetSend.(\ins3,  \s1,  0.9);
-~fxSetSend.(\ins1,  \s2,  1.0);
-~fxSetSend.(\ins2,  \s2,  1.0);
+~fxSetSend.(\ins4,  \s1,  0.5);
+~fxSetSend.(\ins1,  \s2,  0.0);
+~fxSetSend.(\ins2,  \s2,  0.0);
 ~fxSetSend.(\ins3,  \s2,  0.0);
+~fxSetSend.(\ins4,  \s2,  0.0);
 Ndef(\brate,   { SinOsc.ar(0.5) });
 Ndef(\fxsBitcrush).unmap(\brate, { Ndef.kr(\brate, 1).range(10, 100) });
 (

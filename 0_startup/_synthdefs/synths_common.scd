@@ -114,7 +114,7 @@ SynthDef(\bass8, {
 );
 
 (
-SynthDef(\fmSaw,{| gate=1,  vel=0.7 |
+SynthDef(\fmSaw,{| out=0, gate=1,  vel=0.7 |
 
 	var f,ff0,ff1,ff2,a,b,c,d,e, modInd,t, aa;
 	var osc,signal;
@@ -158,12 +158,12 @@ SynthDef(\fmSaw,{| gate=1,  vel=0.7 |
 
 	osc = a * \pgain.kr(0.1);
 	osc = OnePole.ar(osc, \onepole.kr(0.8));
-	Out.ar(0,osc);
+	Out.ar(out,osc);
 
 }).add;
 );
 (
-SynthDef(\fm3,{| gate=1,  vel=0.7 |
+SynthDef(\fm3,{| out=0,  gate=1,  vel=0.7 |
 
 	var f,ff0,ff1,ff2,a,b,c,d,e, modInd,t, aa;
 	var osc,signal;
@@ -207,7 +207,7 @@ SynthDef(\fm3,{| gate=1,  vel=0.7 |
 
 	osc = a * \pgain.kr(0.1);
 	osc = OnePole.ar(osc, \onepole.kr(0.8));
-	Out.ar(0,osc);
+	Out.ar(out,osc);
 
 }).add;
 );
@@ -546,8 +546,8 @@ SynthDef(\duck, { |in=0, side=0, out=0, thresh=0.1, ratio=10, attack=0.01, relea
             (env / thresh).reciprocal.pow(ratio)   // above threshold
         ]
     );
-
-    ReplaceOut.ar(out, sig * gain * makeup);
+    Out.ar(out,  sig * gain * makeup);
+    // ReplaceOut.ar(out, sig * gain * makeup);
 }).add;
 );
 
