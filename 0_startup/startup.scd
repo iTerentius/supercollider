@@ -98,6 +98,28 @@ case
 }
 { platform == \linux } {
     case
+    { hostname == "yazl-NucBox-K6" } {
+        // Zwift-box NUC repurposed for SC work: Scarlett Solo 4th Gen over
+        // PipeWire, not raw jackd (confirmed via `ldd scsynth` linking the
+        // real jackd2 libjack.so.0, not PipeWire's shim - exec of a real
+        // jackd binary then fails since none exists on this box). Checked by
+        // exact hostname, ahead of the aplay/Scarlett-based "raspad" branch
+        // below: aplay can't enumerate the card at all over a bare
+        // (non-seat) SSH session on this box, and even where it can, this
+        // box still needs the pw-scsynth wrapper, not raw JACK.
+        Server.default.addr = NetAddr("127.0.0.1", 57110);  // localhost -> ::1 gotcha, same as raspberrypi/zynthian
+        s.options.numOutputBusChannels = 2;
+        s.options.numInputBusChannels  = 2;
+        s.options.sampleRate = 48000;
+        s.options.memSize = 65536;
+        s.options.numBuffers = 1024;
+        s.options.maxNodes = 1024;
+        s.options.blockSize = 64;
+        s.options.hardwareBufferSize = 1024;  // matches this box's PipeWire default clock.quantum
+        // Route scsynth through PipeWire's JACK layer (pw-jack), same trick as raspberrypi below
+        Server.program = "/home/yazl/.local/bin/pw-scsynth";
+        "Audio config: nuc / Scarlett Solo via PipeWire".postln;
+    }
     { effectiveHost == "zynthian" } {
         // Zynthian: MIDI-only host, scsynth will not be booted
         "Audio config: Zynthian (MIDI only, no scsynth)".postln;
