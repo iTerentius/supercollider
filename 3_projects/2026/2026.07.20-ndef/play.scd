@@ -34,12 +34,12 @@ Ndef(\lfo1, {LFPulse.ar(1.5) + SinOsc.ar(1)});
 (
 Ndef(\fxsGreyhole).set(
   \delayTime,  0.25, 
-  \size,  0.8, 
+  \size,  0.1, 
   \damp,  0.1,  
-  \diff,  0.7,  
+  \diff,  0.8,  
   \feedback, 0.5,  
   \modDepth,  0.5,  
-  \modFreq, 4.0,  
+  \modFreq, 1.0,  
   \mix, 0.8,  
 );
 )
@@ -95,10 +95,10 @@ Ndef(\fxsBiscuit)[1] = nil;
 ~fxSetSend.(\ins2,  \s1,  1.0);
 ~fxSetSend.(\ins3,  \s1,  0.9);
 ~fxSetSend.(\ins4,  \s1,  0.5);
-~fxSetSend.(\ins1,  \s2,  0.0);
+~fxSetSend.(\ins1,  \s2,  0.4);
 ~fxSetSend.(\ins2,  \s2,  0.0);
 ~fxSetSend.(\ins3,  \s2,  0.0);
-~fxSetSend.(\ins4,  \s2,  0.0);
+~fxSetSend.(\ins4,  \s2,  1.0);
 Ndef(\brate,   { SinOsc.ar(0.5) });
 Ndef(\fxsBitcrush).unmap(\brate, { Ndef.kr(\brate, 1).range(10, 100) });
 (
