@@ -44,7 +44,7 @@ Ndef(\fxsGreyhole).set(
 );
 )
 
-~apcBindParam.(\b0_ds1_k1, { |x| Ndef(\fxsBitcrush).set(\wet4,  x)});
+~apcBindParam.(\b3_s1_f, { |x| ~fxSetSend.(\ins1,  \s1,  x)});
 Ndef(\kitA).map(\modFreq,  { 1/ Ndef(\lfo1,  1).max(0.1) });
 Ndef(\kitA).map(\size,  Ndef(\lfo1));
 Ndef(\kitA).map(\diff,  Ndef(\lfo1));
@@ -88,14 +88,20 @@ Ndef(\pmBell).stop;
 Ndef(\pmBell).set(\t_trig, 0); // retriggers the perc envelope every time
 
 Ndef(\fxsBitcrush).set(\brate, 14000, \bits, 8, \mix, 1);
+Pdefn(\slow,  4);
+Ndef(\fxsBitcrush)[1] = \pset -> Pbind(\dur,  1/32,  \bits,  Pseq([4,  6,  8,  16],  inf),  \stretch, Pdefn(\slow));
 Ndef(\fxsBiscuit).set(\clock, 8000, \bits,  6,  \fxMode,  1,  \shape, 3);
 Ndef(\fxsBiscuit)[1] = \pset -> Pbind(\dur, 1/8,  \bits,  Pseg((4..8), [4], \lin, inf));
 Ndef(\fxsBiscuit)[1] = nil;
-~fxSetSend.(\ins1,  \s1,  1.0);
+~fxState[\tracks];
+~fxUnroute.(\fxsGreyhole,  \fxsBitcrush,  0.7);
+~fxSetSend.(\ins1,  \s1,  0.5);
+~apcBindParam.(\b3_s1_f, { |x| ~fxSetSend.(\ins1,  \s1,  x)});
 ~fxSetSend.(\ins2,  \s1,  1.0);
 ~fxSetSend.(\ins3,  \s1,  0.9);
-~fxSetSend.(\ins4,  \s1,  0.5);
-~fxSetSend.(\ins1,  \s2,  0.4);
+~fxSetSend.(\ins4,  \s1,  1.0);
+~fxSetSend.(\ins1,  \s2,  0.9);
+~apcBindParam.(\b3_s2_f, { |x| ~fxSetSend.(\ins1,  \s2,  x)});
 ~fxSetSend.(\ins2,  \s2,  0.0);
 ~fxSetSend.(\ins3,  \s2,  0.0);
 ~fxSetSend.(\ins4,  \s2,  1.0);

@@ -3,11 +3,24 @@
 ~fxAddSend.(\s4);
 ~fxAddSend.(\s5);
 ~fxAddSend.(\s6);
-Ndef(\fxsBitcrush)[0] = { |brate=44100, bits=8, mix=1, mute=0, amp=1|
-    var sig = Ndef.ar(\s2_sum, 2);   // .ar, not Ndef(\s1_sum, 2) — that form sets its source to a literal scalar
-    ~fxg[\bitcrush].(sig, brate, bits, mix, mute, amp);
-};
-~fxAddFX.(\fxsBitcrush);
+// Ndef(\fxsDistortion)[0] = {
+//   var chain = Mix([
+//     Ndef.ar(\)
+//   ])
+// };
+// ~fxRouteReg instead of a plain [0]= — makes \fxsBitcrush a valid ~fxRoute
+// TARGET (also restores the "fxs" prefix — was accidentally renamed to plain
+// \bitcrush, which meant ~fxAddFX's name-prefix scan could never find it at
+// all, regardless of what argument was passed to ~fxAddFX). Note core only
+// ever gets called with `sig` (~fxRouteRebuild calls core.value(sig),
+// nothing else) — so brate/bits/mix/mute/amp are exposed as inline
+// \name.kr(default) NamedControls, NOT plain declared function args, or
+// .set() on them would silently do nothing (same bug class as the
+// ~fxg[\biscuit] positional-arg mixup). ~fxRouteReg already calls ~fxAddFX
+// internally, no separate call needed.
+~fxRouteReg.(\fxsBitcrush, \s2_sum, { |sig|
+    ~fxg[\bitcrush].(sig, \brate.kr(44100), \bits.kr(8), \mix.kr(1), \mute.kr(0), \amp.kr(1))
+});
 Ndef(\fxsGreyhole)[0] = {|delayTime=0.25, size=0.2, damp=0.1,  diff=0.5,  feedback=0.9, modDepth=0.5, modFreq=2.0 | 
   var sig = Ndef.ar(\s1_sum, 2);
   Greyhole.ar(sig, delayTime, size,  damp, diff, feedback, modDepth, modFreq)};
@@ -53,5 +66,4 @@ Ndef(\fxsBiscuit)[0] = { |
 };
 ~fxAddFX.(\fxsBiscuit);
 
-Ndef(\fxs)
 );

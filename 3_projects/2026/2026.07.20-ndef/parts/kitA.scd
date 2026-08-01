@@ -1,5 +1,5 @@
 (
-~slow = 4;
+Pdefn(\slow,  2);
 Ndef(\impact)[0] =  Pbind(
   \instrument,  Pseq([
     \slice_s, 
@@ -11,7 +11,7 @@ Ndef(\impact)[0] =  Pbind(
   // \nSlices, 8,  
   \sliceDur,   0.5,  
   \spread,  Pseq([0.2, -0.2], inf),   
-  \dur,  2 * ~slow,
+  \dur,  2 * Pdefn(\slow),
   \stretch, Pseq([1/4!3,   2.25].flat,   inf), 
 );
 Ndef(\hh1)[0] = Pbind(
@@ -19,14 +19,14 @@ Ndef(\hh1)[0] = Pbind(
   \bufnum,  Pseq(~sTree[\hats].values(1,  3), inf),   
   \degree,  Pseq([0], inf),
   \amp,  0.4, 
-  \dur,   Pseq([1/4].flat * ~slow, inf), 
-  // \stretch, Pseg([1,   1/5],[8],  \sin,   inf), 
+  \dur,   Pseq([1/4].flat * Pdefn(\slow), inf), 
+  \stretch, Pseg([1,   1/5],[8],  \sin,   inf), 
 );
 Ndef(\kk1)[0] =  Pbind(
   \instrument,  \pBs,  
   \bufnum,  Pseq(~sTree[\bass_drums].values[0..4], inf),   
   \amp,  0.9, 
-  \dur,   Pseq([1, 1/2] * ~slow,  inf), 
+  \dur,   Pseq([1, 1/2] * Pdefn(\slow),  inf), 
   \stretch, Pseq([1/4!3,   3.25].flat,   inf), 
 );
 Ndef(\kitA)[0] = {
@@ -40,7 +40,7 @@ Ndef(\kitA)[0] = {
 };
 );
 // Ndef(\kitA)[4] = \filter -> {|in, delayTime=0.25, size=0.2, damp=0.1,  diff=0.5,  feedback=0.9, modDepth=0.5, modFreq=2.0 | Greyhole.ar(in, delayTime, size,  damp, diff, feedback, modDepth, modFreq)};
-~apcBindParam.(\b0_ds1_k1, { |x| Ndef(\kitA).set(\wet4,  x)});
+~apcBindParam.(\b0_ds1_k1, { |x| Ndef(\fxsGreyhole).set(\mix,  x)});
 ~apcBindToggleFn.(32, { Ndef(\impact).resume }, { Ndef(\impact).pause }, \green, \blue);
 ~apcBindToggleFn.(33, { Ndef(\hh1).resume }, { Ndef(\hh1).pause }, \green, \blue);
 ~apcBindToggleFn.(34, { Ndef(\kk1).resume }, { Ndef(\kk1).pause }, \green, \blue);
