@@ -100,13 +100,25 @@ case
     case
     { hostname == "yazl-NucBox-K6" } {
         // Zwift-box NUC repurposed for SC work: Scarlett Solo 4th Gen over
-        // PipeWire, not raw jackd (confirmed via `ldd scsynth` linking the
-        // real jackd2 libjack.so.0, not PipeWire's shim - exec of a real
-        // jackd binary then fails since none exists on this box). Checked by
-        // exact hostname, ahead of the aplay/Scarlett-based "raspad" branch
-        // below: aplay can't enumerate the card at all over a bare
-        // (non-seat) SSH session on this box, and even where it can, this
-        // box still needs the pw-scsynth wrapper, not raw JACK.
+        // REAL jackd, not PipeWire's pw-jack shim. Extensively confirmed live
+        // (2026-07-31/08-01): with pw-jack, even a single heavy Ndef voice or
+        // two together (pm1+fm1) sustained 90%+ busy time and hundreds of
+        // climbing xruns/sec, regardless of CPU governor, EPP, thermal
+        // headroom, kernel (tried linux-lowlatency), or buffer size up to
+        // 4096 samples/85ms - none of it closed the gap. The exact same
+        // patches on real jackd (period 1024, 2 periods, ~21ms) run at
+        // 32% avg / 49% peak CPU with zero xruns. The bottleneck was
+        // PipeWire's JACK translation layer itself, not the hardware.
+        //
+        // Real jackd needs exclusive access to the Scarlett, so it can't run
+        // alongside PipeWire (which handles the rest of this box's desktop
+        // audio - Zwift, notifications, etc). Run `sc-audio-on` before
+        // booting SC (stops PipeWire, starts jackd) and `sc-audio-off` when
+        // done (kills jackd, restarts PipeWire). Checked by exact hostname,
+        // ahead of the aplay/Scarlett-based "raspad" branch below.
+        if("pgrep -f 'jackd -R'".systemCmd != 0) {
+            "WARNING: jackd not running - run 'sc-audio-on' in a terminal first, then reboot the server (server will fail to boot otherwise).".warn;
+        };
         Server.default.addr = NetAddr("127.0.0.1", 57110);  // localhost -> ::1 gotcha, same as raspberrypi/zynthian
         s.options.numOutputBusChannels = 2;
         s.options.numInputBusChannels  = 2;
@@ -115,15 +127,12 @@ case
         s.options.numBuffers = 1024;
         s.options.maxNodes = 1024;
         s.options.blockSize = 64;
-        s.options.hardwareBufferSize = 2048;  // 42ms quantum - headroom for complex Ndef graphs
+        s.options.hardwareBufferSize = 1024;  // matches jackd's period (sc-audio-on: -p 1024 -n 2)
         s.latency = 0.3;  // scheduling headroom for timestamped OSC bundles - 0.1 was too
-        // tight for this box's language-side scheduling jitter: late bundles bunched up into
-        // bursts of near-simultaneous note-triggers instead of the pattern's intended spread,
-        // spiking CPU per callback (confirmed live: pm1+fm1 together went from ~90% busy/
-        // climbing xruns at 0.1 to 0/0 at 0.3). Default is 0.2; this box needs more margin.
-        // Route scsynth through PipeWire's JACK layer (pw-jack), same trick as raspberrypi below
-        Server.program = "/home/yazl/.local/bin/pw-scsynth";
-        "Audio config: nuc / Scarlett Solo via PipeWire".postln;
+        // tight for this box's language-side scheduling jitter under the old PipeWire path;
+        // kept at 0.3 as a safe margin under real jackd too. Default is 0.2.
+        Server.program = "/usr/local/bin/scsynth";  // real jackd - no pw-jack wrapper needed
+        "Audio config: nuc / Scarlett Solo via real JACK".postln;
     }
     { effectiveHost == "zynthian" } {
         // Zynthian: MIDI-only host, scsynth will not be booted
