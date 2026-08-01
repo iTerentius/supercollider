@@ -115,7 +115,12 @@ case
         s.options.numBuffers = 1024;
         s.options.maxNodes = 1024;
         s.options.blockSize = 64;
-        s.options.hardwareBufferSize = 1024;  // matches this box's PipeWire default clock.quantum
+        s.options.hardwareBufferSize = 2048;  // 42ms quantum - headroom for complex Ndef graphs
+        s.latency = 0.3;  // scheduling headroom for timestamped OSC bundles - 0.1 was too
+        // tight for this box's language-side scheduling jitter: late bundles bunched up into
+        // bursts of near-simultaneous note-triggers instead of the pattern's intended spread,
+        // spiking CPU per callback (confirmed live: pm1+fm1 together went from ~90% busy/
+        // climbing xruns at 0.1 to 0/0 at 0.3). Default is 0.2; this box needs more margin.
         // Route scsynth through PipeWire's JACK layer (pw-jack), same trick as raspberrypi below
         Server.program = "/home/yazl/.local/bin/pw-scsynth";
         "Audio config: nuc / Scarlett Solo via PipeWire".postln;
@@ -245,7 +250,11 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
         LinkClock.all.do({ |c| c.clear }); // Scorched earth policy: clear ALL LinkClocks
 
         // 2. CREATE the new clock
-        ~link = LinkClock(1).latency_(Server.default.latency - 0.567);
+        // Was Server.default.latency - 0.567: a stale offset from an old macOS setup
+        // that explicitly set s.latency ~= 0.767 - nothing in this file sets s.latency
+        // that high anymore on any platform, so this was computing a NEGATIVE clock
+        // latency (0.2 - 0.567 = -0.367) everywhere, causing pattern scheduling jitter.
+        ~link = LinkClock(1).latency_(s.latency);
         ~link.permanent = true;
 
         TempoClock.default = ~link;
