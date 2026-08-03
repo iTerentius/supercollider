@@ -1,9 +1,10 @@
+// ~sTree[\bass_drums].values[0..4];
 (
-Pdefn(\slow,  2);
+Pdefn(\slow,  Pseq([1,  2,  4], inf));
 Ndef(\impact)[0] =  Pbind(
   \instrument,  Pseq([
     \slice_s, 
-    // \pBs
+    \pBs
   ],  inf),  
   \bufnum,  Pseq(~sTree[\impacts].values[0..8], inf),   
   \amp,  0.4, 
@@ -11,22 +12,22 @@ Ndef(\impact)[0] =  Pbind(
   // \nSlices, 8,  
   \sliceDur,   0.5,  
   \spread,  Pseq([0.2, -0.2], inf),   
-  \dur,  2 * Pdefn(\slow),
-  \stretch, Pseq([1/4!3,   2.25].flat,   inf), 
+  \dur,  2 * Pn(Pdefn(\slow)),
+  // \stretch, Pseq([1/4!3,   2.25].flat,   inf), 
 );
 Ndef(\hh1)[0] = Pbind(
   \instrument,  \pBs,  
   \bufnum,  Pseq(~sTree[\hats].values(1,  3), inf),   
   \degree,  Pseq([0], inf),
   \amp,  0.4, 
-  \dur,   Pseq([1/4].flat * Pdefn(\slow), inf), 
-  \stretch, Pseg([1,   1/5],[8],  \sin,   inf), 
+  \dur,   Pseq([1/4].flat, inf) * Pn(Pdefn(\slow)), 
+  // \stretch, Pseg([1,   1/8],[16],  \sin,   inf), 
 );
 Ndef(\kk1)[0] =  Pbind(
   \instrument,  \pBs,  
   \bufnum,  Pseq(~sTree[\bass_drums].values[0..4], inf),   
   \amp,  0.9, 
-  \dur,   Pseq([1, 1/2] * Pdefn(\slow),  inf), 
+  \dur,   Pseq([1, 1/2],  inf) * Pn(Pdefn(\slow)), 
   \stretch, Pseq([1/4!3,   3.25].flat,   inf), 
 );
 Ndef(\kitA)[0] = {

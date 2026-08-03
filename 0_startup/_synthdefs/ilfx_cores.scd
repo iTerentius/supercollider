@@ -102,6 +102,14 @@
     XFade2.ar(sig, wet, mix.linlin(0, 1, -1, 1)) * amp;
 };
 
+// Stereo chorus: LFO-modulated short delay, offset 90deg per channel for width
+~fxg[\chorus] = { |in, rate=0.4,  depth=0.004 |
+    var sig  = in;
+    var lfo  = SinOsc.kr(\rate.kr(0.4), [0, 0.5pi]) * \depth.kr(0.004) + 0.005;
+    var wet  = DelayC.ar(sig, 0.05, lfo);
+    XFade2.ar(sig, wet, \mix.kr(0.5).linlin(0, 1, -1, 1)) * \amp.kr(1)
+};
+
 // Spectral freeze/smear (FFT) — pulled from fx_defs.scd's ~fxDefs[\spectral],
 // which took { |in, bus| ... In.ar(bus,2) ... } — adapted to use `in` directly.
 // Params: \chunk (FFT size), \freeze (0/1), \smear (0-1), \freezeSmear (0-1

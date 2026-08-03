@@ -1,26 +1,58 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-"load.scd".load;
+"load.scd".loadRelative;
 Ndef(\ins1)[0] = { | amp=1 | Ndef.ar(\kitA, 2) * amp };
 Ndef(\ins2)[0] = {|amp=0.75| Ndef(\v1) * amp };
 Ndef(\ins3)[0] = {|amp=0.75| Ndef(\b1) * amp };
 Ndef(\ins4)[0] = {|amp=0.75| Ndef(\pm1) * amp };
-Ndef(\ins4)[1] = {|amp=0.8| Ndef(\pedestrian) * amp };
-Ndef(\ins4)[2] = {|amp=0.8| Ndef(\fm1) * amp };
+Ndef(\ins4)[1] = {|amp=0.6| Ndef(\pedestrian) * amp };
+Ndef(\ins4)[2] = {|amp=0.6| Ndef(\fm1) * amp };
 
-Ndef(\b1).pause;
+~fxSetSend.(\ins1,  \s1,  0.8);
+~fxSetSend.(\ins2,  \s1,  1.0);
+~fxSetSend.(\ins3,  \s1,  0.9);
+~fxSetSend.(\ins4,  \s1,  0.4);
+
+~fxSetSend.(\ins1,  \s2,  1.0);
+~fxSetSend.(\ins2,  \s2,  0.5);
+~fxSetSend.(\ins3,  \s2,  0.3);
+~fxSetSend.(\ins4,  \s2,  1.0);
+
+~fxSetSend.(\ins1,  \s3,  0.9);
+~fxSetSend.(\ins2,  \s3,  0.5);
+~fxSetSend.(\ins3,  \s3,  0.0);
+~fxSetSend.(\ins4,  \s3,  0.0);
+
+~fxSetSend.(\ins1,  \s4,  1.0);
+~fxSetSend.(\ins2,  \s4,  0.5);
+~fxSetSend.(\ins3,  \s4,  1.5);
+~fxSetSend.(\ins4,  \s4,  1.0);
+~fxRoute.(\fxsDistort, \fxsGreyhole,  1.0);
+~fxUnroute.(\fxsDistort, \fxsGreyhole,  0.7);
+
+Ndef(\lfo2, { LFPulse.ar(0.025)});
+
+Ndef(\fxsMod).set(\rate,  0.25,  \depth, 0.005);
+Ndef(\fxsGlitch).set(\rate, 8,  \mix, 1,   \amp,  2);
+Ndef(\fxsGlitch).map(\freeze, Ndef(\lfo2));
+Ndef(\b1).pause(3);
 Ndef(\b1).resume;
-Ndef(\fm1).pause;
+Ndef(\fm1).pause(3);
 Ndef(\fm1).resume;
+Ndef(\v1).pause(3);
+Ndef(\v1).resume;
 Ndef(\pm1).pause;
 Ndef(\pm1).resume;
-Ndef(\pedestrian).pause;
+Ndef(\pedestrian).pause(3);
 Ndef(\pedestrian).resume;
 ~midiInStopAll.();     // frees the current unfiltered MIDIdefs
 ~midiInSrcID = MIDIClient.sources.detect { |ep| ep.device.containsi("Deluge") }.uid;
 ~reconnectMidi.()
 
-Ndef(\v1).set(\wet3,  0.5);
+Ndef(\v1).set(\wet3,  1.0,  \shift, 12, \time,  0.5,  \mix, 1,  \rmfreq,  800);
+Ndef(\v1)[5] = \pset -> Pbind(\dur, 1,  \rmfreq,  Pseq([110,  220,  440], inf));
+Ndef(\v1)[3] = nil;
+Ndef(\v1).clear;
 Ndef(\v1).pause;
 Ndef(\v1).resume;
 Scale.directory
@@ -28,14 +60,14 @@ Scale.directory
 ~link.tempo * 60
 ~midiInMap.(6, \bass8,   out: Ndef(\ins3).index);
 
-Ndef(\lfo1, {LFPulse.ar(1.5) + SinOsc.ar(1)});
+Ndef(\lfo1, {LFSaw.ar(0.25)});
 
 // Greyhole.ar(in, delayTime: 2.0, damp: 0.0, size: 1.0, diff: 0.707, feedback: 0.9, modDepth: 0.1, modFreq: 2.0) ~
 (
 Ndef(\fxsGreyhole).set(
   \delayTime,  0.25, 
-  \size,  0.1, 
-  \damp,  0.1,  
+  \size,  0.8, 
+  \damp,  0.5,  
   \diff,  0.8,  
   \feedback, 0.5,  
   \modDepth,  0.5,  
@@ -43,24 +75,30 @@ Ndef(\fxsGreyhole).set(
   \mix, 0.8,  
 );
 )
+Ndef(\fxsGreyhole).clear;
 
-~apcBindParam.(\b3_s1_f, { |x| ~fxSetSend.(\ins1,  \s1,  x)});
-Ndef(\kitA).map(\modFreq,  { 1/ Ndef(\lfo1,  1).max(0.1) });
-Ndef(\kitA).map(\size,  Ndef(\lfo1));
-Ndef(\kitA).map(\diff,  Ndef(\lfo1));
+Ndef(\fxsGreyhole).map(\modFreq,  { Ndef.kr(\lfo1).range(0.01,  2.0)});
+Ndef(\fxsGreyhole).map(\size,  Ndef(\lfo1));
+Ndef(\fxsGreyhold).map(\diff,  1/Ndef(\lfo1));
 
 Ndef(\impact).set(\rate, 1); 
-Ndef(\hh1).set(\rate, 8); 
+Ndef(\hh1).xset(\rate, 8); 
 Ndef(\kk1).set(\rate, 1); 
 Ndef(\kk1).unmap(\rate, { Ndef.ar(\brate,  1) });
 (
 Ndef(\kk1)[1] = \pset -> Pbind(
-  \dur,  1/2, 
+  \dur,  1, 
   \rate,  Pseq((-2..2),  inf), 
-  \stretch, Pseq([1/4!3,   3.25].flat,   inf),  
+  // \stretch, Pseq([1/4!3,   3.25].flat,   inf),  
+);
+Ndef(\impact)[1] = \pset -> Pbind(
+  \dur,  1, 
+  \rate,  Pseq((-2..2),  inf), 
+  // \stretch, Pseq([1/4!3,   3.25].flat,   inf),  
 );
 )
 Ndef(\kk1)[1] = nil;
+Ndef(\impact)[1] = nil;
 
 Ndef(\kitA).set(\wet7, 0.0);
 
@@ -87,26 +125,12 @@ Ndef(\pmBell).clear;
 Ndef(\pmBell).stop;
 Ndef(\pmBell).set(\t_trig, 0); // retriggers the perc envelope every time
 
-Ndef(\fxsBitcrush).set(\brate, 14000, \bits, 8, \mix, 1);
-Pdefn(\slow,  4);
-Ndef(\fxsBitcrush)[1] = \pset -> Pbind(\dur,  1/32,  \bits,  Pseq([4,  6,  8,  16],  inf),  \stretch, Pdefn(\slow));
-Ndef(\fxsBiscuit).set(\clock, 8000, \bits,  6,  \fxMode,  1,  \shape, 3);
-Ndef(\fxsBiscuit)[1] = \pset -> Pbind(\dur, 1/8,  \bits,  Pseg((4..8), [4], \lin, inf));
-Ndef(\fxsBiscuit)[1] = nil;
+Ndef(\fxsDistort).set(\brate, 1400, \bbits, 6, \bits, 6, \clock,  10000, \bmix, 0.0,  \wfmix, 1.0,  \gain,  2,  \naked, 1,   \dressed,  1);
+Pdefn(\slow,  2);
+Ndef(\fxsDistort).set(\clock, 8000, \bits,  6,  \fxMode,  1,  \shape, 3);
+Ndef(\fxsDistort).clear;
+~fxInit.();
 ~fxState[\tracks];
-~fxUnroute.(\fxsGreyhole,  \fxsBitcrush,  0.7);
-~fxSetSend.(\ins1,  \s1,  0.5);
-~apcBindParam.(\b3_s1_f, { |x| ~fxSetSend.(\ins1,  \s1,  x)});
-~fxSetSend.(\ins2,  \s1,  1.0);
-~fxSetSend.(\ins3,  \s1,  0.9);
-~fxSetSend.(\ins4,  \s1,  1.0);
-~fxSetSend.(\ins1,  \s2,  0.9);
-~apcBindParam.(\b3_s2_f, { |x| ~fxSetSend.(\ins1,  \s2,  x)});
-~fxSetSend.(\ins2,  \s2,  0.0);
-~fxSetSend.(\ins3,  \s2,  0.0);
-~fxSetSend.(\ins4,  \s2,  1.0);
-Ndef(\brate,   { SinOsc.ar(0.5) });
-Ndef(\fxsBitcrush).unmap(\brate, { Ndef.kr(\brate, 1).range(10, 100) });
 (
 ~stemStop = ~stemDiskStart.(
     tracks:  [

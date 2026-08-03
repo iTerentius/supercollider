@@ -33,15 +33,18 @@ Ndef(\v1)[0] =
     \type,  \grain, 
     \instrument,  \v1,  
     \scale, Scale.egyptian,  
+    \octave,  5,  
     \dur, Pseq([1/4!3, Pn(Rest(), 2) ].flat, inf),  
     \att, Pseg([0.015,  0.5,  0.015], [4],  \wel, inf),  
     \degree,  Pseq((-7..7).scramble,   inf),  
     // \rel, Pkey(\stretch) * Pseq((0.2..1.4), inf), 
-    \rel, 2,      // \stretch, Pseq([1/2!2,  1], inf), 
+    \rel, Pn(Pdefn(\slow)),      
+    \stretch, Pseq([1/2!2,  1].flat, inf) * Pn(Pdefn(\slow)), 
   );
-Ndef(\v1)[3] = \filter -> {|in| ~fxg[\shimmer].(in)};
-~apcBindParam.(\b0_ds1_k2, { |x| Ndef(\v1).set(\wet3,  x)});
+  Ndef(\v1)[3] = \filter -> {|in| ~fxg[\ringmod].(in, \mix.kr(1.5), \freq.kr(110))};
+  Ndef(\v1)[2] = \filter -> {|in| ~fxg[\shimmer].(in, \shift.kr(12), \time.kr(0.1),  \mix.kr(1),  \amp.kr(1))};
 );
+~apcBindParam.(\b0_ds1_k2, { |x| Ndef(\v1).set(\wet3,  x)});
 
 (
 Ndef(\b1)[0] = 
@@ -52,6 +55,6 @@ Ndef(\b1)[0] =
     \octave,  4,  
     \degree,  Place([[0,  1,  2,  4].scramble], inf), 
     \dur, 1/2,  
-    \stretch,  Pseq([1/4!4, 3].flat, inf),  
+    \stretch,  Pseq([1/4!4, 3].flat, inf) * Pn(Pdefn(\slow)),  
   );
 );

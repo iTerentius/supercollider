@@ -48,7 +48,6 @@ Ndef(\pm1)[4] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\kitA), 0.3, ratio:4
 Ndef(\pm1)[6] = \pset -> Pbind(\dur, 2,  \shift,  Pseq([12,5], inf));
 Ndef(\ratio,   { SinOsc.kr(0.5) * 2pi });
 );
-FreqScope.new;
 // (
 // SynthDef(\pmBell, {| out, vel=0.8 |
 //
@@ -124,6 +123,6 @@ Ndef(\pedestrian)[1] = \pset -> Pbind(
   \amp, 0.8,  
   // \octave,  Pseq([4,  5,  6], inf), 
   \degree,  Pslide((0..7).scramble, inf,  3,  4),  
-  \dur, 1/2
+  \dur, 1
 );
 );
