@@ -98,27 +98,15 @@ case
 }
 { platform == \linux } {
     case
-    { hostname == "yazl-NucBox-K6" } {
-        // Zwift-box NUC repurposed for SC work: Scarlett Solo 4th Gen over
-        // REAL jackd, not PipeWire's pw-jack shim. Extensively confirmed live
-        // (2026-07-31/08-01): with pw-jack, even a single heavy Ndef voice or
-        // two together (pm1+fm1) sustained 90%+ busy time and hundreds of
-        // climbing xruns/sec, regardless of CPU governor, EPP, thermal
-        // headroom, kernel (tried linux-lowlatency), or buffer size up to
-        // 4096 samples/85ms - none of it closed the gap. The exact same
-        // patches on real jackd (period 1024, 2 periods, ~21ms) run at
-        // 32% avg / 49% peak CPU with zero xruns. The bottleneck was
-        // PipeWire's JACK translation layer itself, not the hardware.
-        //
-        // Real jackd needs exclusive access to the Scarlett, so it can't run
-        // alongside PipeWire (which handles the rest of this box's desktop
-        // audio - Zwift, notifications, etc). Run `sc-audio-on` before
-        // booting SC (stops PipeWire, starts jackd) and `sc-audio-off` when
-        // done (kills jackd, restarts PipeWire). Checked by exact hostname,
-        // ahead of the aplay/Scarlett-based "raspad" branch below.
-        if("pgrep -f 'jackd -R'".systemCmd != 0) {
-            "WARNING: jackd not running - run 'sc-audio-on' in a terminal first, then reboot the server (server will fail to boot otherwise).".warn;
-        };
+    { hostname == "yazl-nuc" } {
+        // Manjaro Cinnamon migration of the old yazl-NucBox-K6 Zwift-box
+        // (same physical Scarlett Solo 4th Gen, new OS/hostname - Ubuntu
+        // install retired 2026-08-03). Starting point per the migration
+        // plan: plain PipeWire (pipewire-jack shim), matching oryxpro's
+        // proven-working config, rather than assuming the Ubuntu
+        // real-jackd fix is needed here too - validate empirically first.
+        // If this turns out to xrun under load the way the Ubuntu/Wayland
+        // box did, revisit with a real-jackd branch like raspad's below.
         Server.default.addr = NetAddr("127.0.0.1", 57110);  // localhost -> ::1 gotcha, same as raspberrypi/zynthian
         s.options.numOutputBusChannels = 2;
         s.options.numInputBusChannels  = 2;
@@ -127,12 +115,9 @@ case
         s.options.numBuffers = 1024;
         s.options.maxNodes = 1024;
         s.options.blockSize = 64;
-        s.options.hardwareBufferSize = 1024;  // matches jackd's period (sc-audio-on: -p 1024 -n 2)
-        s.latency = 0.3;  // scheduling headroom for timestamped OSC bundles - 0.1 was too
-        // tight for this box's language-side scheduling jitter under the old PipeWire path;
-        // kept at 0.3 as a safe margin under real jackd too. Default is 0.2.
-        Server.program = "/usr/local/bin/scsynth";  // real jackd - no pw-jack wrapper needed
-        "Audio config: nuc / Scarlett Solo via real JACK".postln;
+        s.options.hardwareBufferSize = 128;
+        s.options.device = "JACK";  // routes through PipeWire's pipewire-jack shim
+        "Audio config: yazl-nuc / Scarlett Solo via PipeWire (JACK shim)".postln;
     }
     { effectiveHost == "zynthian" } {
         // Zynthian: MIDI-only host, scsynth will not be booted
