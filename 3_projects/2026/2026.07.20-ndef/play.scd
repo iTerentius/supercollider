@@ -8,15 +8,20 @@ Ndef(\ins4)[0] = {|amp=0.75| Ndef(\pm1) * amp };
 Ndef(\ins4)[1] = {|amp=0.6| Ndef(\pedestrian) * amp };
 Ndef(\ins4)[2] = {|amp=0.6| Ndef(\fm1) * amp };
 
-~fxSetSend.(\ins1,  \s1,  0.8);
+~startDelugeClock.();
+~link.tempo * 60
+~midiInMap.(2, \bass8,   out: Ndef(\ins3).index);
+~midiInMap.(3, \t1002,   out: Ndef(\ins4).index);
+
+~fxSetSend.(\ins1,  \s1,  0.0);
 ~fxSetSend.(\ins2,  \s1,  1.0);
 ~fxSetSend.(\ins3,  \s1,  0.9);
-~fxSetSend.(\ins4,  \s1,  0.4);
+~fxSetSend.(\ins4,  \s1,  0.8);
 
 ~fxSetSend.(\ins1,  \s2,  1.0);
 ~fxSetSend.(\ins2,  \s2,  0.5);
 ~fxSetSend.(\ins3,  \s2,  0.3);
-~fxSetSend.(\ins4,  \s2,  1.0);
+~fxSetSend.(\ins4,  \s2,  0.0);
 
 ~fxSetSend.(\ins1,  \s3,  0.9);
 ~fxSetSend.(\ins2,  \s3,  0.5);

@@ -21,7 +21,7 @@ Ndef(\hh1)[0] = Pbind(
   \degree,  Pseq([0], inf),
   \amp,  0.4, 
   \dur,   Pseq([1/4].flat, inf) * Pn(Pdefn(\slow)), 
-  // \stretch, Pseg([1,   1/8],[16],  \sin,   inf), 
+  // \stretch, Pseg([1,   1/8],[16],  \lin,   inf), 
 );
 Ndef(\kk1)[0] =  Pbind(
   \instrument,  \pBs,  
