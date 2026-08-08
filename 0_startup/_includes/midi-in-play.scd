@@ -19,7 +19,8 @@
 // Deluge/hardware), NOT SC's native 0-15 MIDIdef convention — the conversion
 // happens internally. Don't pass 0.
 //
-// Globals: ~midiInMap, ~midiInUnmap, ~midiInStopAll, ~midiInVoices, ~midiInCC
+// Globals: ~midiInMap, ~midiInUnmap, ~midiInStopAll, ~midiInVoices, ~midiInCC,
+//          ~midiInPset, ~midiInPsetStop
 //
 // Usage:
 //   ~midiInMap.(1, \bass8,     out: Ndef(\ins3).index);
@@ -37,6 +38,22 @@
 // ~midiInCC keeps the latest 0-1 value of every CC# per channel, so a freshly
 // triggered voice can read current knob state even if it wasn't sounding
 // when the CC last moved: ~midiInCC[chan-1][ccNum]
+//
+// PATTERN CONTROL: these voices are raw Synths, not NodeProxy sources, so
+// Ndef's `\pset ->` role can't reach them (it only broadcasts across indices
+// of ITS OWN proxy's nodeMap). ~midiInPset is the equivalent for this file —
+// same "loop over currently-sounding voices and .set()" mechanism as the CC
+// handler above, just driven by a pattern instead of incoming CC:
+//   ~midiInPset.(3, [\stretch, \time], Pbind(
+//       \stretch, Pseg([1, 4], [32], \sin, inf),
+//       \time,    Pseq((4..1), inf),
+//       \dur,     1/32
+//   ));
+//   ~midiInPsetStop.(3);   // stop just that channel's pattern control(s)
+// `keys` must be listed explicitly — Pbind's stream fills in the rest of
+// Event.default (\freq, \amp, \instrument, ...) on every step regardless of
+// what you actually wrote in the Pbind, so there's no way to infer "only the
+// keys this Pbind sets" from the event alone.
 
 (
 ~midiInChanMap = Array.newClear(16);                       // [0..15] -> (synth:, out:, args:) or nil
@@ -44,6 +61,7 @@
 ~midiInCC      = Array.fill(16, { Array.fill(128, 0.0) }); // [chan][ccNum] -> normalized 0-1
 ~midiInSrcID   = nil;   // nil = any device. Set before mapping to scope to one source.
 ~midiInInited  = false;
+~midiInPsetTasks = Array.fill(16, { [] });  // [chan] -> array of running Routines
 
 // ---- SCOPING TO ONE DEVICE ----
 // ~midiInSrcID = MIDIClient.sources.detect { |ep| ep.device.containsi("Deluge") }.uid;
@@ -95,6 +113,7 @@
 
 ~midiInUnmap = { |chan1based|
     var ch = chan1based - 1;
+    ~midiInPsetStop.(chan1based);
     ~midiInVoices[ch].do { |s| s !? { s.set(\gate, 0) } };
     ~midiInVoices[ch] = Array.newClear(128);
     ~midiInChanMap[ch] = nil;
@@ -105,10 +124,36 @@
     MIDIdef(\midiIn_on).free;
     MIDIdef(\midiIn_off).free;
     MIDIdef(\midiIn_cc).free;
+    ~midiInPsetTasks.do { |tasks| tasks.do(_.stop) };
+    ~midiInPsetTasks = Array.fill(16, { [] });
     ~midiInVoices.do { |chanVoices| chanVoices.do { |s| s !? { s.set(\gate, 0) } } };
     ~midiInVoices  = Array.fill(16, { Array.newClear(128) });
     ~midiInChanMap = Array.newClear(16);
     ~midiInInited  = false;
     "[midiInPlay] stopped, all channels unmapped".postln;
+};
+
+// ---- PATTERN-DRIVEN CONTROLS (~midiInPset) ----
+// Broadcasts pattern-driven values as live .set() calls onto every
+// currently-sounding voice on a channel. See header comment for usage.
+~midiInPset = { |chan1based, keys, pattern|
+    var ch = chan1based - 1;
+    var task = Routine {
+        var stream = pattern.asStream;
+        var ev = stream.next(Event.default);
+        while { ev.notNil } {
+            ~midiInVoices[ch].do { |s| s !? { keys.do { |k| s.set(k, ev[k]) } } };
+            ev[\dur].wait;
+            ev = stream.next(Event.default);
+        };
+    }.play(~link);
+    ~midiInPsetTasks[ch] = ~midiInPsetTasks[ch].add(task);
+    task;
+};
+
+~midiInPsetStop = { |chan1based|
+    var ch = chan1based - 1;
+    ~midiInPsetTasks[ch].do(_.stop);
+    ~midiInPsetTasks[ch] = [];
 };
 )

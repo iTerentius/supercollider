@@ -95,7 +95,10 @@ Ndef(\ratio,   { SinOsc.kr(0.5) * 2pi });
 // );
 ( 
 Ndef(\fm1)[0] = Pbind(
-	\instrument, Pseq([\fmSaw, \fm3], inf), 
+	\instrument, Pseq([
+    // \fmSaw, 
+    \fm3
+  ], inf), 
   \scale,  Scale.egyptian,  
 	\dur, Pseq( 2.pow((-4..2).scramble), inf ),
   // \dur, 4,  

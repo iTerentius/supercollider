@@ -7,26 +7,47 @@ Ndef(\ins3)[0] = {|amp=0.75| Ndef(\b1) * amp };
 Ndef(\ins4)[0] = {|amp=0.75| Ndef(\pm1) * amp };
 Ndef(\ins4)[1] = {|amp=0.6| Ndef(\pedestrian) * amp };
 Ndef(\ins4)[2] = {|amp=0.6| Ndef(\fm1) * amp };
+Ndef(\ins5)[0] = {|amp=0.6| Ndef(\midiV3) * amp };
 
 ~startDelugeClock.();
+~stopDelugeClock.();
 ~link.tempo * 60
+~link.tempo = 100/60;
 ~midiInMap.(2, \bass8,   out: Ndef(\ins3).index);
-~midiInMap.(3, \t1002,   out: Ndef(\ins4).index);
 
-~fxSetSend.(\ins1,  \s1,  0.0);
+~midiBus3 = Bus.audio(s,  2);
+~midiInMap.(3, \stretchedFragments,   out: ~midiBus3.index,  );
+Ndef(\midiV3)[0] = { In.ar(~midiBus3.index, 2)};
+Ndef(\midiV3)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\kitA), 0.1, ratio:2, release:0.3,  makeup:1.3 );  };
+Ndef(\midiV3)[2] = \filter -> { |in | ~fxg[\shimmer].(in, Ndef.ar(\kitA) );  };
+Ndef(\midiV3)[2] = nil;
+(
+~midiInPset.(3, [\buf,  \stret, \time], Pbind(
+  \buf, Pseq(~sTree[\whoosh_impacts].values[0..6], inf), 
+  \stret, Pseq([2,  1,  4].scramble, inf),
+  // \stretch, 4,  
+  \time,    Pseq([4,  2,  1].scramble, inf),
+  // \time,  4,  
+  \dur,     1/2,  
+));
+)
+~sTree[\hoarder_mono]
+
+~fxSetSend.(\ins1,  \s1,  0.9);
 ~fxSetSend.(\ins2,  \s1,  1.0);
 ~fxSetSend.(\ins3,  \s1,  0.9);
 ~fxSetSend.(\ins4,  \s1,  0.8);
 
 ~fxSetSend.(\ins1,  \s2,  1.0);
 ~fxSetSend.(\ins2,  \s2,  0.5);
-~fxSetSend.(\ins3,  \s2,  0.3);
-~fxSetSend.(\ins4,  \s2,  0.0);
+~fxSetSend.(\ins3,  \s2,  0.9);
+~fxSetSend.(\ins4,  \s2,  0.5);
+~fxSetSend.(\ins5,  \s2,  0.5);
 
 ~fxSetSend.(\ins1,  \s3,  0.9);
 ~fxSetSend.(\ins2,  \s3,  0.5);
-~fxSetSend.(\ins3,  \s3,  0.0);
-~fxSetSend.(\ins4,  \s3,  0.0);
+~fxSetSend.(\ins3,  \s3,  0.9);
+~fxSetSend.(\ins4,  \s3,  1.0);
 
 ~fxSetSend.(\ins1,  \s4,  1.0);
 ~fxSetSend.(\ins2,  \s4,  0.5);
@@ -34,6 +55,10 @@ Ndef(\ins4)[2] = {|amp=0.6| Ndef(\fm1) * amp };
 ~fxSetSend.(\ins4,  \s4,  1.0);
 ~fxRoute.(\fxsDistort, \fxsGreyhole,  1.0);
 ~fxUnroute.(\fxsDistort, \fxsGreyhole,  0.7);
+
+Pbindef(\impact,  \dur, 1,  \nSlices, 32);
+Pbindef(\hh1,  \dur, 1/4* Pdefn(\slow), \stretch, 1);
+Pbindef(\kk1,  \dur, 1/2 * Pdefn(\slow), \stretch, 1);
 
 Ndef(\lfo2, { LFPulse.ar(0.025)});
 
@@ -65,7 +90,6 @@ Scale.directory
 ~link.tempo * 60
 ~midiInMap.(6, \bass8,   out: Ndef(\ins3).index);
 
-Ndef(\lfo1, {LFSaw.ar(0.25)});
 
 // Greyhole.ar(in, delayTime: 2.0, damp: 0.0, size: 1.0, diff: 0.707, feedback: 0.9, modDepth: 0.1, modFreq: 2.0) ~
 (
@@ -80,26 +104,29 @@ Ndef(\fxsGreyhole).set(
   \mix, 0.8,  
 );
 )
-Ndef(\fxsGreyhole).clear;
+Ndef(\lfo1, {LFSaw.ar(0.25)});
+Ndef(\lfoRate, {LFSaw.ar(0.25,  2)});
 
 Ndef(\fxsGreyhole).map(\modFreq,  { Ndef.kr(\lfo1).range(0.01,  2.0)});
 Ndef(\fxsGreyhole).map(\size,  Ndef(\lfo1));
 Ndef(\fxsGreyhold).map(\diff,  1/Ndef(\lfo1));
 
 Ndef(\impact).set(\rate, 1); 
-Ndef(\hh1).xset(\rate, 8); 
+Ndef(\hh1).unmap(\rate,  Ndef(\lfoRate)); 
+Ndef(\hh1).xset(\rate,  3); 
 Ndef(\kk1).set(\rate, 1); 
 Ndef(\kk1).unmap(\rate, { Ndef.ar(\brate,  1) });
 (
-Ndef(\kk1)[1] = \pset -> Pbind(
+Ndef(\kk1)[1] = \pset -> Pbindef(\kk1,  
   \dur,  1, 
   \rate,  Pseq((-2..2),  inf), 
-  // \stretch, Pseq([1/4!3,   3.25].flat,   inf),  
+  \stretch, Pseq([1/4!3,   3.25].flat,   inf),  
 );
-Ndef(\impact)[1] = \pset -> Pbind(
+Ndef(\impact)[1] = \pset -> Pbindef(\impact,  
   \dur,  1, 
   \rate,  Pseq((-2..2),  inf), 
   // \stretch, Pseq([1/4!3,   3.25].flat,   inf),  
+  \stretch, 4,  
 );
 )
 Ndef(\kk1)[1] = nil;
@@ -131,7 +158,7 @@ Ndef(\pmBell).stop;
 Ndef(\pmBell).set(\t_trig, 0); // retriggers the perc envelope every time
 
 Ndef(\fxsDistort).set(\brate, 1400, \bbits, 6, \bits, 6, \clock,  10000, \bmix, 0.0,  \wfmix, 1.0,  \gain,  2,  \naked, 1,   \dressed,  1);
-Pdefn(\slow,  2);
+Pdefn(\slow,  4);
 Ndef(\fxsDistort).set(\clock, 8000, \bits,  6,  \fxMode,  1,  \shape, 3);
 Ndef(\fxsDistort).clear;
 ~fxInit.();

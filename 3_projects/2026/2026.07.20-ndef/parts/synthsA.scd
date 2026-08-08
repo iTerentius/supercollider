@@ -51,7 +51,7 @@ Ndef(\b1)[0] =
   Pbind(
     \instrument,   \bass8,  
     \scale,  Scale.egyptian,  
-    \amp, 0.5,  
+    \amp, 0.2,  
     \octave,  4,  
     \degree,  Place([[0,  1,  2,  4].scramble], inf), 
     \dur, 1/2,  

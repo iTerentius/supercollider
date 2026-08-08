@@ -219,7 +219,7 @@ SynthDef(\fm3,{| out=0,  gate=1,  vel=0.7 |
 		arg 
 		out = 0, 
 		sustain=0.5, 
-		amp = 0.6, 
+		amp = 0.2, 
 		begin=0,end=1, 
 		gate = 1, 
 		pan = 0, 
@@ -246,7 +246,7 @@ SynthDef(\fm3,{| out=0,  gate=1,  vel=0.7 |
 		sig = VarSaw.ar(freq+ SinOsc.ar(6,mul:Line.kr(0.0, 1, dur,doneAction:2)), width:width);
 		sig = RLPF.ar(sig, freq*1, rq);
 		sig = Decimator.ar(sig, 22050,2);
-		sig = sig *env* amp;
+		sig = sig *env* amp * 0.2;
 		Out.ar(out, Pan2.ar(sig, pan));
 		// Out.araux, sig*auxsend;
 	}).add;
@@ -552,11 +552,11 @@ SynthDef(\duck, { |in=0, side=0, out=0, thresh=0.1, ratio=10, attack=0.01, relea
 );
 
 (
-SynthDef(\stretchedFragments, { |out, buf, start, time = 1, stretch = 1, amp = 1, attack = 0.01, decay = 0.05|
-    var sig = PlayBuf.ar(1, buf, rate: stretch.reciprocal, startPos: start), eg;
-    sig = PitchShift.ar(sig, pitchRatio: stretch);
-    eg = EnvGen.kr(Env.linen(attack, time, decay), sig.abs > 0, doneAction: Done.freeSelf);
-    Out.ar(out, (sig * eg) ! 2)
+SynthDef(\stretchedFragments, { |out, buf, start, time = 1, stret = 1, amp = 0.1, attack = 0.01, decay = 0.05|
+    var sig = PlayBuf.ar(1, buf, rate: stret.reciprocal, startPos: start), eg;
+    sig = PitchShift.ar(sig, pitchRatio: stret);
+    eg = EnvGen.kr(Env.linen(attack, time, decay), sig.abs > 0, doneAction: Done.freeSelf) * amp;
+    Out.ar(out, (sig * eg * 0.2) ! 2)
 }).add; // note add! Without this, arguments won't work
 );
 /* slice_fx for ddwMixerChannel .playfx stereo 2025-10-08 */
