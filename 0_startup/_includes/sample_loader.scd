@@ -130,52 +130,58 @@ if(~fbufs.isNil) { ~fbufs = IdentityDictionary.new };
     ("[sample_loader] root, " ++ root ++ " ").postln;
 
     addBuf = { |fpath|
-        var parts, len, fname, folderName, base, nameParts, folderSym, fileSym, lower, ok;
+        var parts, len, fname, folderName, base, nameParts, folderSym, fileSym, lower, ok, valid;
 
         parts = fpath.split($/);
         len = parts.size;
-        if(len < 1) { ^nil };
+        valid = len >= 1;
 
-        fname = parts.last;
-        folderName = (len >= 2).if({ parts[len-2] }, { "root" });
+        if(valid) {
+            fname = parts.last;
+            folderName = (len >= 2).if({ parts[len-2] }, { "root" });
 
-        lower = fpath.toLower;
-        ok = lower.endsWith(".wav") or: { lower.endsWith(".aif") } or: { lower.endsWith(".aiff") } or: { lower.endsWith(".flac") };
-        if(ok.not) { ^nil };
-
-        // strip extension by splitting on dot and rejoining everything except final segment
-        nameParts = fname.split($.);
-        base = (nameParts.size > 1).if({
-            nameParts.copyRange(0, nameParts.size - 2).join(".")
-        },{
-            fname
-        });
-
-        folderSym = canonSym.(folderName);
-        base = base.replace($ , $_).replace($-, $_).replace($., $_);
-        fileSym = base.asSymbol;
-
-        if(~sTree[folderSym].isNil) {
-            ~sTree[folderSym] = IdentityDictionary.new;
+            lower = fpath.toLower;
+            ok = lower.endsWith(".wav") or: { lower.endsWith(".aif") } or: { lower.endsWith(".aiff") } or: { lower.endsWith(".flac") };
+            valid = ok;
         };
 
-        // Skip if already loaded — prevents duplicate buffers on re-eval
-        if(~sTree[folderSym][fileSym].notNil) { ^nil };
+        if(valid) {
+            // strip extension by splitting on dot and rejoining everything except final segment
+            nameParts = fname.split($.);
+            base = (nameParts.size > 1).if({
+                nameParts.copyRange(0, nameParts.size - 2).join(".")
+            },{
+                fname
+            });
 
-        Buffer.read(s, fpath, action: { |b|
-            var sub, ch;
-            sub = ~sTree[folderSym];
-            sub[fileSym] = b;
-            ~sTree[folderSym] = sub;
+            folderSym = canonSym.(folderName);
+            base = base.replace($ , $_).replace($-, $_).replace($., $_);
+            fileSym = base.asSymbol;
 
-            ch = if(b.numChannels.isNil) { 2 } { b.numChannels };
-            ~bufMeta[b.bufnum] = ch;
+            if(~sTree[folderSym].isNil) {
+                ~sTree[folderSym] = IdentityDictionary.new;
+            };
 
-            ("[[ready], " ++ folderSym ++ " , " ++ fileSym ++ "]").postln;
-        });
+            // Skip if already loaded — prevents duplicate buffers on re-eval
+            valid = ~sTree[folderSym][fileSym].isNil;
+        };
 
-        count = count + 1;
-        ("[[add], " ++ folderSym ++ " , " ++ fileSym ++ "]").postln;
+        if(valid) {
+            Buffer.read(s, fpath, action: { |b|
+                var sub, ch;
+                sub = ~sTree[folderSym];
+                sub[fileSym] = b;
+                ~sTree[folderSym] = sub;
+
+                ch = if(b.numChannels.isNil) { 2 } { b.numChannels };
+                ~bufMeta[b.bufnum] = ch;
+
+                ("[[ready], " ++ folderSym ++ " , " ++ fileSym ++ "]").postln;
+            });
+
+            count = count + 1;
+            ("[[add], " ++ folderSym ++ " , " ++ fileSym ++ "]").postln;
+        };
     };
 
     walk = { |path|
@@ -183,16 +189,16 @@ if(~fbufs.isNil) { ~fbufs = IdentityDictionary.new };
         dir = PathName.new(path);
         if(dir.isFolder.not) {
             "[sample_loader] not a folder".warn;
-            ^nil
+        } {
+            entries = dir.entries;
+            entries.do({ |child|
+                if(child.isFolder) {
+                    walk.(child.fullPath);
+                }{
+                    addBuf.(child.fullPath);
+                };
+            });
         };
-        entries = dir.entries;
-        entries.do({ |child|
-            if(child.isFolder) {
-                walk.(child.fullPath);
-            }{
-                addBuf.(child.fullPath);
-            };
-        });
     };
 
     walk.(root);
