@@ -127,6 +127,17 @@ case
     };
     if(virMidiOutEp.notNil) {
         ~mOut = MIDIOut.newByName(virMidiOutEp.device, virMidiOutEp.name);
+        // Linux/ALSA only: MIDIOut#connect (this build's SCClassLibrary/
+        // Platform/linux/SystemOverwrites/extMIDIOut.sc) must be called or
+        // an unsubscribed destination port silently drops everything sent
+        // to it — same gap found and fixed for ~delugeOut/~delugeCtrl in
+        // midi-out-deluge.scd. Wrapped in try since re-eval on an
+        // already-connected port throws ALSA "busy", not a real failure.
+        try {
+            ~mOut.connect(virMidiOutEp.uid);
+        } { |err|
+            ("MIDIOut connect skipped (already connected) → " ++ virMidiOutEp.device ++ " / " ++ virMidiOutEp.name).postln;
+        };
         ("MIDIOut set to: " ++ virMidiOutEp.device ++ " / " ++ virMidiOutEp.name).postln;
     } {
         "WARNING: Virtual MIDI destination not found. Trying index 0...".warn;
