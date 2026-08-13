@@ -54,7 +54,23 @@ Ndef(\b1)[0] =
     \amp, 0.2,  
     \octave,  4,  
     \degree,  Place([[0,  1,  2,  4].scramble], inf), 
-    \dur, 1/2,  
-    \stretch,  Pseq([1/4!4, 3].flat, inf) * Pn(Pdefn(\slow)),  
+    \dur, 1,  
+    \stretch,  Pseq([1/4!4, 3].flat.scramble, inf) * Pn(Pdefn(\slow)),  
   );
+);
+
+~midiBus3 = Bus.audio(s,  2);
+~midiInMap.(3, \stretchedFragments,   out: ~midiBus3.index );
+Ndef(\midiV3)[0] = { In.ar(~midiBus3.index, 2)};
+Ndef(\midiV3)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\kitA), 0.1, ratio:2, release:0.3,  makeup:1.3 );  };
+Ndef(\midiV3)[2] = \filter -> { |in | ~fxg[\shimmer].(in, Ndef.ar(\kitA) );  };
+(
+~midiInPset.(3, [\buf,  \stret, \time], Pbind(
+  \buf, Pseq(~sTree[\hoarder_mono].values[0..20], inf), 
+  \stret, Pseq([2,  1,  4].scramble, inf),
+  // \stretch, 4,  
+  \time,    Pseq([4,  2,  1].scramble, inf),
+  // \time,  4,  
+  \dur,     1,  
+));
 );

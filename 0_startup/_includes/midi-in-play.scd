@@ -75,11 +75,23 @@
             if(map.notNil) {
                 var synth;
                 ~midiInVoices[ch][num] !? { |s| s.set(\gate, 0) };
-                synth = Synth(map[\synth],
-                    [\freq, num.midicps, \amp, vel / 127, \gate, 1,
-                     \out, map[\out], \pan, 0] ++ map[\args]
-                );
-                ~midiInVoices[ch][num] = synth;
+                // Note On with velocity 0 is the standard MIDI running-status
+                // convention for note-off (confirmed: the Deluge uses this) —
+                // treat it as a release only, don't spawn a new voice. Without
+                // this check, every "released" note left behind a permanent
+                // silent gate=1 ghost synth (freed only if that same note
+                // number happened to be retriggered later) — a real, unbounded
+                // node leak confirmed live via s.numSynths climbing forever
+                // during Deluge clip-mode playback (2026-08-10).
+                if(vel > 0) {
+                    synth = Synth(map[\synth],
+                        [\freq, num.midicps, \amp, vel / 127, \gate, 1,
+                         \out, map[\out], \pan, 0] ++ map[\args]
+                    );
+                    ~midiInVoices[ch][num] = synth;
+                } {
+                    ~midiInVoices[ch][num] = nil;
+                };
             };
         }, nil, nil, ~midiInSrcID).permanent_(true);
 

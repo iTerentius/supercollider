@@ -113,7 +113,12 @@ case
         s.options.sampleRate = 48000;
         s.options.memSize = 65536;
         s.options.numBuffers = 1024;
-        s.options.maxNodes = 1024;
+        // Was 1024 (matching the small-Pi hosts below) — too low for this
+        // desktop-class box. Confirmed live 2026-08-10: a dense MIDI note
+        // burst (Deluge clip-mode playback) blew through 1024 nodes and threw
+        // "/s_new too many nodes" + real audio-thread xruns. Matches the
+        // Scarlett 18i20 desktop branch's headroom instead.
+        s.options.maxNodes = 4096;
         s.options.blockSize = 64;
         s.options.hardwareBufferSize = 128;
         s.options.device = "JACK";  // routes through PipeWire's pipewire-jack shim

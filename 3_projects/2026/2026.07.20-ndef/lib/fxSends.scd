@@ -35,6 +35,12 @@ Ndef(\fxsGreyhole)[0] = {|delayTime=0.25, size=0.2, damp=0.1,  diff=0.5,  feedba
 Ndef(\fxsMod,  {  var sig = Ndef.ar(\s2_sum, 2); sig });   // .ar, not Ndef(\s1_sum, 2) — that form sets its source to a literal scalar
 Ndef(\fxsMod)[1] = \filter -> {|in| ~fxg[\chorus].(in,  \rate,  0.4,  \depth, 0.004)}; 
 
+Ndef(\lfo2, { LFPulse.ar(0.025)});
+
+Ndef(\fxsMod).set(\rate,  0.25,  \depth, 0.005);
+Ndef(\fxsGlitch).set(\rate, 8,  \mix, 1,   \amp,  2);
+Ndef(\fxsGlitch).map(\freeze, Ndef(\lfo2));
+
 Ndef(\fxsDistort,  {  var sig = Ndef.ar(\s3_sum, 2); sig });   // .ar, not Ndef(\s1_sum, 2) — that form sets its source to a literal scalar
 Ndef(\fxsDistort)[1] = \filter -> { | in,  
     drive=1.0,
@@ -72,6 +78,24 @@ Ndef(\fxsGlitch)[4] = \filter -> {|in| ~fxg[\spectral].(in, \chunk.kr(2048),  \f
 ~fxAddFX.(\fxsDistort);
 ~fxAddFX.(\fxsMod);
 ~fxAddFX.(\fxsGlitch);
+
+(
+Ndef(\fxsGreyhole).set(
+  \delayTime,  0.25, 
+  \size,  0.8, 
+  \damp,  0.5,  
+  \diff,  0.8,  
+  \feedback, 0.5,  
+  \modDepth,  0.5,  
+  \modFreq, 1.0,  
+  \mix, 0.8,  
+);
+);
+Ndef(\lfo1, {LFSaw.ar(0.25)});
+
+Ndef(\fxsGreyhole).map(\modFreq,  { Ndef.kr(\lfo1).range(0.01,  2.0)});
+Ndef(\fxsGreyhole).map(\size,  Ndef(\lfo1));
+Ndef(\fxsGreyhold).map(\diff,  1/Ndef(\lfo1));
 ~apcBindParam.(\b3_s1_f, { |x| ~fxSetSend.(\ins1,  \s1,  x)});
 ~apcBindParam.(\b3_s2_f, { |x| ~fxSetSend.(\ins2,  \s1,  x)});
 ~apcBindParam.(\b3_s3_f, { |x| ~fxSetSend.(\ins3,  \s1,  x)});

@@ -3,7 +3,7 @@
 "load.scd".loadRelative;
 Ndef(\ins1)[0] = { | amp=1 | Ndef.ar(\kitA, 2) * amp };
 Ndef(\ins2)[0] = {|amp=0.75| Ndef(\v1) * amp };
-Ndef(\ins3)[0] = {|amp=0.75| Ndef(\b1) * amp };
+Ndef(\ins3)[0] = {|amp=0.45| Ndef(\b1) * amp };
 Ndef(\ins4)[0] = {|amp=0.75| Ndef(\pm1) * amp };
 Ndef(\ins4)[1] = {|amp=0.6| Ndef(\pedestrian) * amp };
 Ndef(\ins4)[2] = {|amp=0.6| Ndef(\fm1) * amp };
@@ -13,7 +13,9 @@ Ndef(\ins5)[0] = {|amp=0.6| Ndef(\midiV3) * amp };
 ~stopDelugeClock.();
 ~link.tempo * 60
 ~link.tempo = 100/60;
-~midiInMap.(2, \bass8,   out: Ndef(\ins3).index);
+~midiInMap.(2, \bass8,   out: Ndef(\ins3).index,  args:[\amp, 0.45]);
+~midiInMap.(4, \fmSaw,   out: Ndef(\ins4).index);
+~midiInMap.(5, \v1,   out: Ndef(\ins2).index);
 
 ~midiBus3 = Bus.audio(s,  2);
 ~midiInMap.(3, \stretchedFragments,   out: ~midiBus3.index,  );
@@ -23,7 +25,7 @@ Ndef(\midiV3)[2] = \filter -> { |in | ~fxg[\shimmer].(in, Ndef.ar(\kitA) );  };
 Ndef(\midiV3)[2] = nil;
 (
 ~midiInPset.(3, [\buf,  \stret, \time], Pbind(
-  \buf, Pseq(~sTree[\whoosh_impacts].values[0..6], inf), 
+  \buf, Pseq(~sTree[\jttcot].values[0..6], inf), 
   \stret, Pseq([2,  1,  4].scramble, inf),
   // \stretch, 4,  
   \time,    Pseq([4,  2,  1].scramble, inf),

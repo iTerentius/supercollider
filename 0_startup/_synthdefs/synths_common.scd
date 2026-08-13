@@ -122,9 +122,19 @@ SynthDef(\fmSaw,{| out=0, gate=1,  vel=0.7 |
 	f = \freq.kr(100);
 	// f = f.clip(20,900);
 
-	e = EnvGen.kr(Env.perc(
-		Rand(0.8,1.2)* \att.kr(0.015),  
-		\rel.kr(4.02), 
+	// Was Env.perc: no release node, so `gate` had no effect on note-off — every
+	// voice held its node for the full fixed att+rel (~4s) regardless of when
+	// note-off arrived. Fine for pattern-triggered use (fm1/synthsA.scd), but
+	// this SynthDef is also driven directly by ~midiInMap's note-on/note-off
+	// gate protocol (0_startup/_includes/midi-in-play.scd), where dense note
+	// bursts (e.g. Deluge clip-mode playback) would pile up faster than the 4s
+	// tail could free them — exhausted s.options.maxNodes and threw real
+	// audio-thread xruns once node count got high enough. Env.asr responds to
+	// gate like \pm1 already does, so note-off releases the voice promptly.
+	e = EnvGen.kr(Env.asr(
+		Rand(0.8,1.2)* \att.kr(0.015),
+		1,
+		\rel.kr(4.02),
 		curve: \curve.kr(-4)
 	),
 		gate: gate,
@@ -133,24 +143,24 @@ SynthDef(\fmSaw,{| out=0, gate=1,  vel=0.7 |
 
 	e = e * PinkNoise.ar(1!2).range( 0.1, 1 ).lag(0.01);
 
-	ff0= f * \f0ratio.kr(2) 
-	+ { Rand(-3,3) }.dup 
+	ff0= f * \f0ratio.kr(2)
+	+ { Rand(-3,3) }.dup
 	;
-	ff1= f * \f1ratio.kr(2) 
-	+ { Rand(-3,3) }.dup 
+	ff1= f * \f1ratio.kr(2)
+	+ { Rand(-3,3) }.dup
 	;
-	ff2= f * \f2ratio.kr(4) 
-	+ { Rand(-3,3) }.dup 
-	;	
+	ff2= f * \f2ratio.kr(4)
+	+ { Rand(-3,3) }.dup
+	;
 
 	b = SinOsc.ar(ff0) * f * \modInd0.kr(1) * e.pow(0.8);
 	c = SinOsc.ar(ff1) * f * \modInd1.kr(0.6) * e.pow(1.4);
 	d = SinOsc.ar(ff2) * f * \modInd2.kr(0.3) * e.pow(2.5);
 	a = LFSaw.ar(
-		f 
+		f
 		+ LFPulse.ar(e.pow(0.5) * LFNoise1.kr(0.3).range(1,5), Rand(0.0,2pi), mul: e.pow(0.2) *  f * 0.005)
-		+ [b,c,d].sum 
-		+ WhiteNoise.ar(f/8!2).lag(0.001) 
+		+ [b,c,d].sum
+		+ WhiteNoise.ar(f/8!2).lag(0.001)
 	);
 
 	a = HPF.ar(a*e.pow(0.5), f);
