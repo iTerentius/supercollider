@@ -2,28 +2,32 @@
 ///////////////////////////////////////////////////////////////////////////////////////////
 "load.scd".loadRelative;
 Ndef(\ins1)[0] = { | amp=1 | Ndef.ar(\kitA, 2) * amp };
+Ndef(\ins1)[0] = nil;
 Ndef(\ins2)[0] = {|amp=0.75| Ndef(\v1) * amp };
 Ndef(\ins3)[0] = {|amp=0.45| Ndef(\b1) * amp };
 Ndef(\ins4)[0] = {|amp=0.75| Ndef(\pm1) * amp };
 Ndef(\ins4)[1] = {|amp=0.6| Ndef(\pedestrian) * amp };
 Ndef(\ins4)[2] = {|amp=0.6| Ndef(\fm1) * amp };
-Ndef(\ins5)[0] = {|amp=0.6| Ndef(\midiV3) * amp };
+Ndef(\ins5)[0] = {|amp=1.9| Ndef(\midiV3) * amp };
 
 ~startDelugeClock.();
 ~stopDelugeClock.();
 ~link.tempo * 60
-~link.tempo = 100/60;
+~link.tempo = 120/60;
 ~midiInMap.(2, \bass8,   out: Ndef(\ins3).index,  args:[\amp, 0.45]);
 ~midiInMap.(4, \fmSaw,   out: Ndef(\ins4).index);
 ~midiInMap.(5, \v1,   out: Ndef(\ins2).index);
 
 ~midiBus3 = Bus.audio(s,  2);
-~midiInMap.(3, \stretchedFragments,   out: ~midiBus3.index,  );
-Ndef(\midiV3)[0] = { In.ar(~midiBus3.index, 2)};
-Ndef(\midiV3)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\kitA), 0.1, ratio:2, release:0.3,  makeup:1.3 );  };
-Ndef(\midiV3)[2] = \filter -> { |in | ~fxg[\shimmer].(in, Ndef.ar(\kitA) );  };
-Ndef(\midiV3)[2] = nil;
+~midiInMap.(3, \stretchedFragments,   out: ~midiBus3.index);
+Ndef(\midiV3)[0] = { | amp=1.5 | In.ar(~midiBus3.index, 2) * amp };
+// Ndef(\midiV3)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\kitA), 0.1, ratio:2, release:0.3,  makeup:1.3 );  };
+Ndef(\midiV3)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\ins1), threshold: 0.3, ratio:2, release:0.3,  makeup:1.3 );  };
+Ndef(\midiV3)[2] = \filter -> { |in | ~fxg[\shimmer].(in, \shift.kr(12));  };
+Ndef(\midiV3)[1] = nil;
+
 (
+~midiInPsetStop.(3);
 ~midiInPset.(3, [\buf,  \stret, \time], Pbind(
   \buf, Pseq(~sTree[\jttcot].values[0..6], inf), 
   \stret, Pseq([2,  1,  4].scramble, inf),
@@ -33,12 +37,13 @@ Ndef(\midiV3)[2] = nil;
   \dur,     1/2,  
 ));
 )
-~sTree[\hoarder_mono]
+~sTree[\jttcot]
 
 ~fxSetSend.(\ins1,  \s1,  0.9);
 ~fxSetSend.(\ins2,  \s1,  1.0);
 ~fxSetSend.(\ins3,  \s1,  0.9);
 ~fxSetSend.(\ins4,  \s1,  0.8);
+~fxSetSend.(\ins5,  \s1,  0.5);
 
 ~fxSetSend.(\ins1,  \s2,  1.0);
 ~fxSetSend.(\ins2,  \s2,  0.5);
@@ -48,13 +53,14 @@ Ndef(\midiV3)[2] = nil;
 
 ~fxSetSend.(\ins1,  \s3,  0.9);
 ~fxSetSend.(\ins2,  \s3,  0.5);
-~fxSetSend.(\ins3,  \s3,  0.9);
+~fxSetSend.(\ins3,  \s3,  0.3);
 ~fxSetSend.(\ins4,  \s3,  1.0);
 
 ~fxSetSend.(\ins1,  \s4,  1.0);
 ~fxSetSend.(\ins2,  \s4,  0.5);
 ~fxSetSend.(\ins3,  \s4,  1.5);
 ~fxSetSend.(\ins4,  \s4,  1.0);
+~fxSetSend.(\ins5,  \s4,  1.0);
 ~fxRoute.(\fxsDistort, \fxsGreyhole,  1.0);
 ~fxUnroute.(\fxsDistort, \fxsGreyhole,  0.7);
 
@@ -67,6 +73,7 @@ Ndef(\lfo2, { LFPulse.ar(0.025)});
 Ndef(\fxsMod).set(\rate,  0.25,  \depth, 0.005);
 Ndef(\fxsGlitch).set(\rate, 8,  \mix, 1,   \amp,  2);
 Ndef(\fxsGlitch).map(\freeze, Ndef(\lfo2));
+
 Ndef(\b1).pause(3);
 Ndef(\b1).resume;
 Ndef(\fm1).pause(3);
@@ -111,7 +118,7 @@ Ndef(\lfoRate, {LFSaw.ar(0.25,  2)});
 
 Ndef(\fxsGreyhole).map(\modFreq,  { Ndef.kr(\lfo1).range(0.01,  2.0)});
 Ndef(\fxsGreyhole).map(\size,  Ndef(\lfo1));
-Ndef(\fxsGreyhold).map(\diff,  1/Ndef(\lfo1));
+Ndef(\fxsGreyhole).map(\diff,  1/Ndef(\lfo1));
 
 Ndef(\impact).set(\rate, 1); 
 Ndef(\hh1).unmap(\rate,  Ndef(\lfoRate)); 
@@ -160,7 +167,7 @@ Ndef(\pmBell).stop;
 Ndef(\pmBell).set(\t_trig, 0); // retriggers the perc envelope every time
 
 Ndef(\fxsDistort).set(\brate, 1400, \bbits, 6, \bits, 6, \clock,  10000, \bmix, 0.0,  \wfmix, 1.0,  \gain,  2,  \naked, 1,   \dressed,  1);
-Pdefn(\slow,  4);
+Pdefn(\slow,  2);
 Ndef(\fxsDistort).set(\clock, 8000, \bits,  6,  \fxMode,  1,  \shape, 3);
 Ndef(\fxsDistort).clear;
 ~fxInit.();
@@ -172,11 +179,19 @@ Ndef(\fxsDistort).clear;
       ~ndefAsChan.(Ndef(\hh1)),  
       ~ndefAsChan.(Ndef(\kk1)),  
       ~ndefAsChan.(Ndef(\ins1)),  
+      ~ndefAsChan.(Ndef(\ins2)),  
+      ~ndefAsChan.(Ndef(\ins3)),  
+      ~ndefAsChan.(Ndef(\ins4)),  
+      ~ndefAsChan.(Ndef(\ins5)),  
     ],    // MixerChannels to record
     returns: [
       ~ndefAsChan.(Ndef(\fxsBitcrush)),  
+      ~ndefAsChan.(Ndef(\fxsDistort)),  
+      ~ndefAsChan.(Ndef(\fxsGreyhole)),  
+      ~ndefAsChan.(Ndef(\fxsMod)),  
+      ~ndefAsChan.(Ndef(\fxsGlitch)),  
     ],               // return channels
-    fileBase: "2026.07.20",                   // filename prefix
+    fileBase: "2026.07.20-b",                   // filename prefix
     dirPath: "~/Music/recordings",     // output directory (auto-created)
     clock: ~link,                      // for beat-synced start (nil = default)
     autoSplit: true,                   // auto-split interleaved WAV into stems via ffmpeg

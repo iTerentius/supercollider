@@ -48,7 +48,7 @@ Ndef(\kitA)[0] = {
 ~apcBindToggleFn.(32, { Ndef(\impact).resume }, { Ndef(\impact).pause }, \green, \blue);
 ~apcBindToggleFn.(33, { Ndef(\hh1).resume }, { Ndef(\hh1).pause }, \green, \blue);
 ~apcBindToggleFn.(34, { Ndef(\kk1).resume }, { Ndef(\kk1).pause }, \green, \blue);
-
+Pdefn(\slow,  2);
 
 // Ndef(\impact).pause;
 // Ndef(\impact).resume;
