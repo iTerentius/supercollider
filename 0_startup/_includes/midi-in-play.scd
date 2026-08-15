@@ -88,6 +88,12 @@
                         [\freq, num.midicps, \amp, vel / 127, \gate, 1,
                          \out, map[\out], \pan, 0] ++ map[\args]
                     );
+                    // one-shot voices (e.g. \pBs) free themselves via doneAction
+                    // with no note-off ever arriving — clear the stale reference
+                    // here so later CC broadcasts don't /n_set a dead node.
+                    synth.onFree({
+                        if(~midiInVoices[ch][num] === synth) { ~midiInVoices[ch][num] = nil };
+                    });
                     ~midiInVoices[ch][num] = synth;
                 } {
                     ~midiInVoices[ch][num] = nil;

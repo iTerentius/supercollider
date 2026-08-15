@@ -565,7 +565,7 @@ SynthDef(\duck, { |in=0, side=0, out=0, thresh=0.1, ratio=10, attack=0.01, relea
 SynthDef(\stretchedFragments, { |out, buf, start, time = 1, stret = 1, amp = 0.1, attack = 0.01, decay = 0.05|
     var sig = PlayBuf.ar(1, buf, rate: stret.reciprocal, startPos: start), eg;
     sig = PitchShift.ar(sig, pitchRatio: stret);
-    eg = EnvGen.kr(Env.linen(attack, time, decay), sig.abs > 0, doneAction: Done.freeSelf) * amp;
+    eg = EnvGen.kr(Env.linen(attack, time, decay), doneAction: Done.freeSelf) * amp;
     Out.ar(out, (sig * eg * 0.2) ! 2)
 }).add; // note add! Without this, arguments won't work
 );

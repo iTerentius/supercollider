@@ -153,8 +153,18 @@
     names = (tracks.collect({ |mc| var n; n = { mc.name }.try({ nil }); (n ?? { mc.asString }).asString }))
           ++ (returns.collect({ |mc| var n; n = { mc.name }.try({ nil }); (n ?? { mc.asString }).asString }));
 
-    tIdx = tracks.collect({ |mc| { mc.inbus.index }.try({ nil }) }).reject(_.isNil);
-    rIdx = returns.collect({ |mc| { mc.inbus.index }.try({ nil }) }).reject(_.isNil);
+    tIdx = tracks.collect({ |mc, i|
+        { mc.inbus.index }.try({ |err|
+            ("[stemRec] track '" ++ names[i] ++ "' failed to resolve inbus.index — DROPPED from recording: " ++ err.errorString).warn;
+            nil
+        })
+    }).reject(_.isNil);
+    rIdx = returns.collect({ |mc, i|
+        { mc.inbus.index }.try({ |err|
+            ("[stemRec] return '" ++ names[tracks.size + i] ++ "' failed to resolve inbus.index — DROPPED from recording: " ++ err.errorString).warn;
+            nil
+        })
+    }).reject(_.isNil);
     idxs = tIdx ++ rIdx;
 
     if(idxs.isEmpty) {
@@ -220,8 +230,27 @@
 
         probeCmd = ffprobePath ++ " -v error -select_streams a:0 -show_entries stream=channels -of default=nw=1:nk=1 " ++ fullPath.escapeChar($ );
         if(debug) { ("[split] probeCmd: " ++ probeCmd).postln; };
-        chCountStr = probeCmd.unixCmdGetStdOut.tryPerform(\trim) ?? { "" };
-        if(chCountStr.isEmpty) { "[split] could not read channel count; skipped".warn; ^nil };
+        // Large recordings can still be settling (disk/OS contention right after
+        // b_close on a multi-GB file) — a single immediate probe can race that.
+        // Retry with backoff before giving up.
+        block { |break|
+            var tries = 0, delay = 0.3;
+            while { tries < 6 } {
+                chCountStr = probeCmd.unixCmdGetStdOut.tryPerform(\trim) ?? { "" };
+                if(chCountStr.notEmpty) { break.value(nil) };
+                tries = tries + 1;
+                if(tries < 6) {
+                    ("[split] probe attempt " ++ tries ++ " empty, retrying in " ++ delay ++ "s").postln;
+                    delay.wait;
+                    delay = delay * 2;
+                };
+            };
+        };
+        if(chCountStr.isEmpty) {
+            "[split] could not read channel count after retries; skipped".warn;
+            ("[split] check manually: " ++ probeCmd).postln;
+            ^nil
+        };
         chCount = chCountStr.asInteger;
         if(chCount.odd) { ("[split] odd channel count " ++ chCount ++ " last channel ignored").warn };
         pairs = chCount div: 2;
