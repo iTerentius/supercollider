@@ -117,7 +117,7 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
 
 /* ---------- MIDI Out + Generic Mode ---------- */
 ~apcForceAPCOut = {
-    var out, dev, nam, apcSrc, apcInport;
+    var out, outEp, dev, nam, apcSrc, apcInport;
     if(MIDIClient.initialized.not) { MIDIClient.init; };
 
     if(~apcMidiInDone.isNil) { ~apcMidiInDone = false; };
@@ -145,11 +145,13 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
     };
 
     out = nil;
+    outEp = nil;
     MIDIClient.destinations.do { |ep|
         dev = ep.device !? { ep.device.asString } ?? "";
         nam = ep.name !? { ep.name.asString } ?? "";
         if(out.isNil and: { (dev == "APC40 mkII") and: { nam == "APC40 mkII" } }) {
             out = MIDIOut.newByName(ep.device, ep.name);
+            outEp = ep;
         };
     };
     if(out.isNil) {
@@ -158,7 +160,19 @@ ensureArray.(\apcBankBtnChans, (0..7).asArray);
             nam = ep.name !? { ep.name.asString } ?? "";
             if(out.isNil and: { dev.contains("APC") or: { nam.contains("APC") } }) {
                 out = MIDIOut.newByName(ep.device, ep.name);
+                outEp = ep;
             };
+        };
+    };
+    // Linux/ALSA only: MIDIOut#connect must be called or an unsubscribed
+    // destination port silently drops everything sent to it — same gap
+    // found and fixed for ~mOut/~delugeOut in midi-setup.scd. Wrapped in
+    // try since re-eval on an already-connected port throws ALSA "busy".
+    if(out.notNil and: { Platform.case(\osx, { false }, { true }) }) {
+        try {
+            out.connect(outEp.uid);
+        } { |err|
+            ("[APC] MIDIOut connect skipped (already connected) -> " ++ outEp.device ++ " / " ++ outEp.name).postln;
         };
     };
     if(out.isNil) { "[APC] could not open APC out".warn; ~apcOut = nil; } { ~apcOut = out };
