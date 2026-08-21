@@ -21,16 +21,31 @@ sig = [sig, sig * 1.03] * 0.4;
 // Splay.ar(sig);
 Out.ar(out,  Splay.ar(sig) * amp);
 }).add;
-)
+);
 ~midiInMap.(1, \scratch,   out: Ndef(\ins5).index);
 
 (
-~midiInMap.(7,  \pBs, out: Ndef(\ins1).index,  args:[
-  \bufnum,  ~sTree[\bass_drums].values[0..1],   
+~midiInMap.(6,  \pBs, out: Ndef(\ins1).index,  args:[
+  \bufnum,  ~sTree[\impacts].values.choose,   
+  \nSlices,  8, 
+  \sliceDur,  0.5, 
+  \amp, 0.4,  
 ]);
-)
+);
+(
+~midiInMap.(7,  \pBs, out: Ndef(\ins1).index,  args:[
+  \bufnum,  ~sTree[\bass_drums].values[1],   
+]);
+);
 (
 ~midiInMap.(8,  \pBs, out: Ndef(\ins1).index,  args:[
-  \bufnum,  ~sTree[\hats].values[0],   
+  \bufnum,  ~sTree[\hats].values[3],   
 ]);
-)
+);
+(
+~midiInPsetStop.(7);
+~midiInPset.(7, [\bufnum],   Pbind(
+  \bufnum,   Pseq(~sTree[\bass_drums].values[0..3],  inf),  
+  \dur, 2,  
+));
+);

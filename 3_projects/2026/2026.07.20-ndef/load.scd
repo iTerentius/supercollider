@@ -20,6 +20,7 @@ var safeLoad = { |path|
     safeLoad.("parts/kitA.scd");
     safeLoad.("parts/synthsA.scd");
     safeLoad.("parts/synthsB.scd");
+    safeLoad.("parts/midiA.scd");
     // --- bindings last (reads ~slots + ~autoSlots + ~phrFns populated by parts) ---
     // safeLoad.("lib/bindings.scd");
     // --- optional: stem recording (loads ~stemDiskStart, ~stemMidiWrite) ---

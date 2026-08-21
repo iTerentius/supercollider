@@ -28,13 +28,14 @@ Ndef(\midiV3)[1] = nil;
 
 (
 ~midiInPsetStop.(3);
-~midiInPset.(3, [\buf,  \stret, \time], Pbind(
-  \buf, Pseq(~sTree[\jttcot].values[0..6], inf), 
+~midiInPset.(3, [\buf,  \stret, \time,  \amp], Pbind(
+  \buf, Pseq(~sTree[\jttcot].values, inf), 
   \stret, Pseq([2,  1,  4].scramble, inf),
   // \stretch, 4,  
   \time,    Pseq([4,  2,  1].scramble, inf),
   // \time,  4,  
   \dur,     1/2,  
+  \amp, 2.5,  
 ));
 )
 ~sTree[\jttcot]
@@ -51,10 +52,11 @@ Ndef(\midiV3)[1] = nil;
 ~fxSetSend.(\ins4,  \s2,  0.5);
 ~fxSetSend.(\ins5,  \s2,  0.5);
 
-~fxSetSend.(\ins1,  \s3,  0.9);
+~fxSetSend.(\ins1,  \s3,  0.0);
 ~fxSetSend.(\ins2,  \s3,  0.5);
-~fxSetSend.(\ins3,  \s3,  0.3);
+~fxSetSend.(\ins3,  \s3,  0.5);
 ~fxSetSend.(\ins4,  \s3,  1.0);
+~fxSetSend.(\ins5,  \s3,  0.0);
 
 ~fxSetSend.(\ins1,  \s4,  1.0);
 ~fxSetSend.(\ins2,  \s4,  0.5);
@@ -114,7 +116,7 @@ Ndef(\fxsGreyhole).set(
 );
 )
 Ndef(\lfo1, {LFSaw.ar(0.25)});
-Ndef(\lfoRate, {LFSaw.ar(0.25,  2)});
+Ndef(\lfoRate, {LFSaw.ar(5,  2)});
 
 Ndef(\fxsGreyhole).map(\modFreq,  { Ndef.kr(\lfo1).range(0.01,  2.0)});
 Ndef(\fxsGreyhole).map(\size,  Ndef(\lfo1));
@@ -122,7 +124,7 @@ Ndef(\fxsGreyhole).map(\diff,  1/Ndef(\lfo1));
 
 Ndef(\impact).set(\rate, 1); 
 Ndef(\hh1).unmap(\rate,  Ndef(\lfoRate)); 
-Ndef(\hh1).xset(\rate,  3); 
+Ndef(\hh1).set(\rate,  3); 
 Ndef(\kk1).set(\rate, 1); 
 Ndef(\kk1).unmap(\rate, { Ndef.ar(\brate,  1) });
 (
