@@ -124,6 +124,40 @@ case
         s.options.device = "JACK";  // routes through PipeWire's pipewire-jack shim
         "Audio config: yazl-nuc / Scarlett Solo via PipeWire (JACK shim)".postln;
     }
+    { hostname == "hypo-fm" } {
+        // Framework desktop, Scarlett 2i2 USB, PipeWire (pipewire-jack shim).
+        // hostname is checked FIRST, ahead of the Scarlett-grep-based
+        // effectiveHost == "raspad" branch below — that grep only tests for
+        // *any* Scarlett interface, which also matches this box's 2i2 (not
+        // RaspPad3's Solo). Before this branch existed, hypo-fm silently fell
+        // into effectiveHost == "raspad" and shared RaspPad3's exact audio
+        // config - any change made there for this box would have also
+        // altered RaspPad3's real hardware config. Found + fixed 2026-08-22
+        // while wiring up internet-radio input (see ~radioInChans below).
+        Server.default.addr = NetAddr("127.0.0.1", 57110);  // localhost -> ::1 gotcha, same as raspad/raspberrypi/zynthian
+        s.options.numOutputBusChannels = 2;
+        // 4, not 2: channels 0-1 are the Scarlett's hardware mic in
+        // (PipeWire auto-connects them to JACK:in_1/in_2); channels 2-3
+        // are a dedicated pair for streamed audio (internet radio via
+        // mpv --ao=jack, patched to JACK:in_3/in_4 - see ~/.local/bin/
+        // sc-radio and 0_startup/_includes/ndef-radio-in.scd), kept
+        // separate so radio never mixes into or fights over the live mic
+        // input.
+        s.options.numInputBusChannels = 4;
+        s.options.sampleRate = 48000;
+        s.options.memSize = 65536;
+        s.options.numBuffers = 1024;
+        s.options.maxNodes = 4096;
+        s.options.blockSize = 64;
+        s.options.hardwareBufferSize = 128;
+        s.options.device = "JACK";  // routes through PipeWire's pipewire-jack shim; JACK client name literally becomes "JACK" (see zynthian branch's device-name comment below)
+        // Consumed by _includes/ndef-radio-in.scd - nil on every other host,
+        // which is how that file knows to skip itself rather than reading
+        // out-of-range (or hardware-meaningful, on hosts with more real
+        // inputs) SoundIn channels.
+        ~radioInChans = [2, 3];
+        "Audio config: hypo-fm / Scarlett 2i2 via PipeWire (JACK shim), dedicated radio-in on ch 2-3".postln;
+    }
     { effectiveHost == "zynthian" } {
         // Zynthian: MIDI-only host, scsynth will not be booted
         "Audio config: Zynthian (MIDI only, no scsynth)".postln;
@@ -232,6 +266,11 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
         (basePath +/+ "_includes/ndef-fx-route.scd").load;      // fx-to-fx routing (~fxRoute), needs ~fxAddFX
         (basePath +/+ "_includes/ndef-channel-16s.scd").load;
         (basePath +/+ "_includes/ndef-channel-apc.scd").load;   // optional, APC40 bindings
+        // Internet-radio input strip (Ndef \insRadio). Needs ~ndefChanMk/
+        // ~fxSetSend from the two files above, so must load after them.
+        // Self-guards on ~radioInChans (set only in the hostname=="hypo-fm"
+        // branch above) - a no-op everywhere else, so safe to load unconditionally.
+        (basePath +/+ "_includes/ndef-radio-in.scd").load;
         (basePath +/+ "_includes/midi-in-play.scd").load;       // general MIDI-in -> synth router
         // ~stemDiskStart is pure function definitions — no dependency on real
         // MixerChannels existing, safe to load with mixer-channel-16s.scd off.
