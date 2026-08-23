@@ -133,7 +133,7 @@
                     encodeMp3=true, deleteMixWav=true|
 
     var tIdx, rIdx, idxs, numChans, buf, defName, d, dstr, fullPath, baseName, sessionDir, baseDir, c, startBeat, synth;
-    var names, sidecarPath, stemsDir, midiDir, ffmpegPath, ffprobePath, ccLogPath;
+    var names, sidecarPath, stemsDir, midiDir, ffmpegPath, ccLogPath;
     var sanitize, writeSidecar, doSplit, mkDirIfNeeded, findBin, debug, makeFinalize, finalize, didFinalize;
     // MIDI capture state
     var midiLog, midiStartBeat, bpmAtStart, ppqn, midiActive, midiCbOrig, midiCbCount;
@@ -218,40 +218,28 @@
     };
 
     ffmpegPath  = findBin.([ "/opt/homebrew/bin/ffmpeg",  "/usr/local/bin/ffmpeg",  "/usr/bin/ffmpeg",  "ffmpeg" ]);
-    ffprobePath = findBin.([ "/opt/homebrew/bin/ffprobe", "/usr/local/bin/ffprobe", "/usr/bin/ffprobe", "ffprobe" ]);
 
     doSplit = {
-        var probeCmd, chCountStr, chCount, pairs, key, keySafe, lch, rch, outName, mp3Name, gainStr, evenChans, oddChans, mixFilter, codec, scriptLines, scriptPath, scriptStr, i;
-        if(ffmpegPath.isNil or: { ffprobePath.isNil }) {
-            "autoSplit: ffmpeg or ffprobe not found on PATH; skipped".warn;
-            ("ffmpeg: " ++ ffmpegPath.asString ++ "  ffprobe: " ++ ffprobePath.asString).postln;
+        var chCount, pairs, key, keySafe, lch, rch, outName, mp3Name, gainStr, evenChans, oddChans, mixFilter, codec, scriptLines, scriptPath, scriptStr, i;
+        if(ffmpegPath.isNil) {
+            "autoSplit: ffmpeg not found on PATH; skipped".warn;
             ^nil
         };
 
-        probeCmd = ffprobePath ++ " -v error -select_streams a:0 -show_entries stream=channels -of default=nw=1:nk=1 " ++ fullPath.escapeChar($ );
-        if(debug) { ("[split] probeCmd: " ++ probeCmd).postln; };
-        // Large recordings can still be settling (disk/OS contention right after
-        // b_close on a multi-GB file) — a single immediate probe can race that.
-        // Retry with backoff before giving up.
-        block { |break|
-            var tries = 0, delay = 0.3;
-            while { tries < 6 } {
-                chCountStr = probeCmd.unixCmdGetStdOut.tryPerform(\trim) ?? { "" };
-                if(chCountStr.notEmpty) { break.value(nil) };
-                tries = tries + 1;
-                if(tries < 6) {
-                    ("[split] probe attempt " ++ tries ++ " empty, retrying in " ++ delay ++ "s").postln;
-                    delay.wait;
-                    delay = delay * 2;
-                };
-            };
-        };
-        if(chCountStr.isEmpty) {
-            "[split] could not read channel count after retries; skipped".warn;
-            ("[split] check manually: " ++ probeCmd).postln;
+        // Channel count is already known from the recording setup (numChans,
+        // set when the buffer/synth were created) — no need to re-derive it by
+        // probing the finished file. Probing was a race: even after the b_close
+        // /done reply confirms the file is closed server-side, ffprobe could
+        // still fail against a multi-GB file for a stretch afterward for
+        // reasons unrelated to our own bookkeeping (e.g. filesystem writeback
+        // settling), and there is nothing to gain by re-deriving a value we
+        // already have with certainty.
+        if(File.exists(fullPath).not) {
+            ("[split] wav not found on disk, skipped: " ++ fullPath).warn;
+            ("[split] rescue: run doSplit again later via ~stemRec[\\rescueSplit].()").postln;
             ^nil
         };
-        chCount = chCountStr.asInteger;
+        chCount = numChans;
         if(chCount.odd) { ("[split] odd channel count " ++ chCount ++ " last channel ignored").warn };
         pairs = chCount div: 2;
 
@@ -327,7 +315,34 @@
                 s.sync;
 
                 ("[finalize] closing buffer").postln;
-                if(buf.notNil) { buf.close };
+                // s.sync after buf.close is NOT sufficient: /b_close is an async
+                // command whose actual sf_close()/fclose() runs on the server's
+                // NRT thread — /sync only confirms the command was dispatched,
+                // not that the disk-thread finished closing the file. Wait for
+                // the specific /done, /b_close, <bufnum> reply instead, which the
+                // server sends only once the close (incl. header rewrite) is done.
+                if(buf.notNil) {
+                    var closeCond = Condition.new;
+                    var closed = false;
+                    var closeWatcher = OSCFunc({ |msg|
+                        if(msg[1] == '/b_close' and: { msg[2] == buf.bufnum }) {
+                            closed = true;
+                            closeCond.test = true;
+                            closeCond.signal;
+                        };
+                    }, '/done', s.addr);
+                    buf.close;
+                    Routine({
+                        10.wait;
+                        if(closed.not) {
+                            "[finalize] /done reply for b_close not received within 10s — proceeding anyway".warn;
+                            closeCond.test = true;
+                            closeCond.signal;
+                        };
+                    }).play(AppClock);
+                    closeCond.wait;
+                    closeWatcher.free;
+                };
                 s.sync;
 
                 // --- History save ---
@@ -495,7 +510,11 @@
             midiDir:     midiDir,
             sidecarPath: sidecarPath,
             midiPath:    midiPath,
-            finalize:    { finalize.() }
+            finalize:    { finalize.() },
+            // Manual rescue if autoSplit failed (e.g. ffprobe raced a huge file
+            // and exhausted retries) — re-runs the split against the .wav that's
+            // already on disk. Safe to call any time after the recording stopped.
+            rescueSplit: { Routine({ doSplit.() }).play(AppClock) }
         );
         nil
     });

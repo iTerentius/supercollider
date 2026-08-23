@@ -22,6 +22,16 @@
 // Globals: ~midiInMap, ~midiInUnmap, ~midiInStopAll, ~midiInVoices, ~midiInCC,
 //          ~midiInPset, ~midiInPsetStop
 //
+// HISTORY INTEGRATION: while History.started (see mixer-channel-stem-record's
+// captureHistory / manual History.start), every note this file spawns/releases
+// also injects a `~delugeCtrl.noteOn/noteOff(...)` line into History (tagged
+// \deluge) — since these notes arrive as raw MIDI, never through Event/Pbind,
+// History can't otherwise see them. On History.play, that mirrors the note
+// back OUT to the Deluge, which retriggers the same SC voice via the normal
+// path above. Requires midi-out-deluge.scd's ~delugeCtrl to be connected at
+// replay time (no-ops harmlessly if not); fidelity otherwise depends on the
+// Deluge's session/patch state being unchanged since capture.
+//
 // Usage:
 //   ~midiInMap.(1, \bass8,     out: Ndef(\ins3).index);
 //   ~midiInMap.(2, \ks_string, out: Ndef(\ins4).index, args: [\delayTime, 0.3]);
@@ -95,8 +105,27 @@
                         if(~midiInVoices[ch][num] === synth) { ~midiInVoices[ch][num] = nil };
                     });
                     ~midiInVoices[ch][num] = synth;
+                    // Deluge-driven notes never touch Event/Pbind, so History
+                    // (which only captures typed-code evaluation) can't see
+                    // them on its own. Inject a synthetic entry — on replay
+                    // this mirrors the same note back OUT to the Deluge, which
+                    // regenerates the same SC voice via the normal MIDI-in
+                    // path above. Fidelity depends on the Deluge's session
+                    // state being unchanged since capture — accepted tradeoff.
+                    if(History.started) {
+                        History.enter(
+                            "~delugeCtrl !? { ~delugeCtrl.noteOn(" ++ ch ++ ", " ++ num ++ ", " ++ vel ++ ") };",
+                            \deluge
+                        );
+                    };
                 } {
                     ~midiInVoices[ch][num] = nil;
+                    if(History.started) {
+                        History.enter(
+                            "~delugeCtrl !? { ~delugeCtrl.noteOff(" ++ ch ++ ", " ++ num ++ ", " ++ vel ++ ") };",
+                            \deluge
+                        );
+                    };
                 };
             };
         }, nil, nil, ~midiInSrcID).permanent_(true);
@@ -105,6 +134,12 @@
             ~midiInVoices[ch][num] !? { |s|
                 s.set(\gate, 0);
                 ~midiInVoices[ch][num] = nil;
+                if(History.started) {
+                    History.enter(
+                        "~delugeCtrl !? { ~delugeCtrl.noteOff(" ++ ch ++ ", " ++ num ++ ", " ++ vel ++ ") };",
+                        \deluge
+                    );
+                };
             };
         }, nil, nil, ~midiInSrcID).permanent_(true);
 

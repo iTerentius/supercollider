@@ -135,7 +135,7 @@ case
         // altered RaspPad3's real hardware config. Found + fixed 2026-08-22
         // while wiring up internet-radio input (see ~radioInChans below).
         Server.default.addr = NetAddr("127.0.0.1", 57110);  // localhost -> ::1 gotcha, same as raspad/raspberrypi/zynthian
-        s.options.numOutputBusChannels = 2;
+        s.options.numOutputBusChannels = 32;
         // 4, not 2: channels 0-1 are the Scarlett's hardware mic in
         // (PipeWire auto-connects them to JACK:in_1/in_2); channels 2-3
         // are a dedicated pair for streamed audio (internet radio via

@@ -4,10 +4,20 @@
 // channel strip - full amp/mute/pan/HPF/LPF controls, FX sends and all,
 // same as ins1-12.
 //
-// Named \insRadio rather than reusing one of the ins1-12 slots so it never
+// Named \iRadio rather than reusing one of the ins1-12 slots so it never
 // collides with whatever's plugged into those during a live session -
-// still "ins"-prefixed, so ~fxInit's insPrefix scan picks it up like any
-// other track.
+// deliberately NOT "ins"-prefixed, so ~fxInit's insPrefix scan never
+// auto-discovers it and no boot-time ~fxSetSend call is needed either (see
+// below) - it only ever becomes an FX-routed track when a project calls
+// ~fxSetSend.(\iRadio, ...) itself, live, same as any track it adds on
+// the fly. Confirmed live 2026-08-22: calling ~fxSetSend on a *new* track
+// name at boot - cold, moments after ndef-channel-16s.scd's own ~fxInit()
+// just built the whole ins1-12/dry_mix/master chain - corrupted
+// Ndef(\dry_mix)'s rebuild and silently broke ALL ins1-12 routing to
+// master for the rest of the session, not just the radio strip. That
+// rebuild path is only ever exercised live, mid-session, from project
+// code elsewhere in this codebase - never at cold boot - so it stays
+// that way here too now.
 //
 // ~radioInChans is set only by the hostname == "hypo-fm" branch in
 // startup.scd (the only host currently wired with dedicated radio-in
@@ -23,7 +33,7 @@ if(~radioInChans.notNil) {
     // alsa_output...Scarlett...sink:monitor_FL/FR the moment scsynth first
     // booted with numInputBusChannels=4, with nothing else involved yet.
     // That's a closed digital loop (master out -> hardware -> its own
-    // monitor -> back into these input channels -> \insRadio/whatever it
+    // monitor -> back into these input channels -> \iRadio/whatever it
     // feeds -> FX -> master...) entirely independent of the mic - same
     // class of problem the Zynthian branch above already works around via
     // jack_disconnect after boot. Torn down here, generically (by parsing
@@ -38,15 +48,16 @@ if(~radioInChans.notNil) {
             ++ "\" 2>/dev/null; done; rm -f /tmp/.pwl_$$").unixCmd;
     };
 
-    Ndef(\insRadio, { SoundIn.ar(~radioInChans) });
-    ~ndefChanMk.(\insRadio);
-    ~fxSetSend.(\insRadio, \s1, 0);
-    ~fxSetSend.(\insRadio, \s2, 0);
+    Ndef(\iRadio, { SoundIn.ar(~radioInChans) });
+    ~ndefChanMk.(\iRadio);
+    // No boot-time ~fxSetSend here - see header comment. Route it to FX
+    // sends from project code (e.g. play.scd), live, when actually needed:
+    //   ~fxSetSend.(\iRadio, \s1, 0.5);
     // Muted by default at boot - unmute with the nvim <leader>ir keymap
     // (toggles both ~/.local/bin/sc-radio and this mute state together),
-    // or by hand by evaluating: Ndef(\insRadio).set(\mute, 0);
-    Ndef(\insRadio).set(\amp, 1, \mute, 1, \pan, 0, \hpfreq, 20, \lpfreq, 18000);
-    ("Radio input ready: Ndef(\\insRadio) <- JACK:in_"
+    // or by hand by evaluating: Ndef(\iRadio).set(\mute, 0);
+    Ndef(\iRadio).set(\amp, 1, \mute, 1, \pan, 0, \hpfreq, 20, \lpfreq, 18000);
+    ("Radio input ready: Ndef(\\iRadio) <- JACK:in_"
         ++ (~radioInChans[0] + 1) ++ "/in_" ++ (~radioInChans[1] + 1)
         ++ " (muted by default).").postln;
 } {
