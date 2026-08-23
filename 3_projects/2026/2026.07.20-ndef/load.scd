@@ -16,6 +16,7 @@ var safeLoad = { |path|
     s.sync;  // wait for Buffer.read /done callbacks
     // --- automation Pdefs (FX control, tempo, etc.) ---
     safeLoad.("lib/fxSends.scd");
+    safeLoad.("lib/insSlots.scd");
     // --- parts (one per voice, in any order) ---
     safeLoad.("parts/kitA.scd");
     safeLoad.("parts/synthsA.scd");
