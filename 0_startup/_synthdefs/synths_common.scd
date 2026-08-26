@@ -289,7 +289,7 @@ SynthDef(\pBm, { |out=0, freq=440, rootNote=60, bufnum=0, amp=0.2, rate=1, pan=0
         doneAction: 2
     );
     sig = Pan2.ar(sig, pan, amp);
-    Out.ar(out, sig);
+    Out.ar(out, sig); 
 }).add;
 );
 

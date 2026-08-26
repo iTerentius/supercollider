@@ -57,6 +57,36 @@ if(~radioInChans.notNil) {
     // (toggles both ~/.local/bin/sc-radio and this mute state together),
     // or by hand by evaluating: Ndef(\iRadio).set(\mute, 0);
     Ndef(\iRadio).set(\amp, 1, \mute, 1, \pan, 0, \hpfreq, 20, \lpfreq, 18000);
+
+    // ---- SWAP FROM SC, WITHOUT LEAVING THE EDITOR ----
+    // <leader>ir (see nvim keymaps) is a pure toggle - it only prompts for a
+    // URL when nothing's playing; pressing it again while live just stops.
+    // These are for swapping straight from a .scd buffer instead, since
+    // sc-radio itself now supports an in-place source swap (kill old ->
+    // wait for its JACK client to release -> start new) rather than
+    // requiring a separate stop.
+    // ~radioSwap.("http://..." or "bbc_radio_four") - starts or hot-swaps
+    // the stream, unmuting \iRadio only once sc-radio confirms the new
+    // source actually patched in - never unmutes into dead air on a
+    // failed/broken URL. sc-radio's own stdout (which source, or the
+    // failure reason) posts automatically via unixCmd's default postOutput.
+    ~radioSwap = { |urlOrStationId|
+        var quoted = "'" ++ urlOrStationId.asString.replace("'", "'\\''") ++ "'";
+        ("sc-radio " ++ quoted).unixCmd({ |exitCode|
+            if(exitCode == 0) {
+                Ndef(\iRadio).set(\mute, 0);
+            } {
+                ("~radioSwap: sc-radio failed (exit " ++ exitCode ++ ") - check: tmux attach -t sc-radio").warn;
+            };
+        });
+    };
+
+    // ~radioStop.() - stops + mutes.
+    ~radioStop = {
+        "sc-radio".unixCmd;
+        Ndef(\iRadio).set(\mute, 1);
+    };
+
     ("Radio input ready: Ndef(\\iRadio) <- JACK:in_"
         ++ (~radioInChans[0] + 1) ++ "/in_" ++ (~radioInChans[1] + 1)
         ++ " (muted by default).").postln;
