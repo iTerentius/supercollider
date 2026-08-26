@@ -33,9 +33,7 @@ Ndef(\fxsGreyhole)[0] = {|delayTime=0.25, size=0.2, damp=0.1,  diff=0.5,  feedba
 // naked=1.0, dressed=1.0 |
 
 Ndef(\fxsMod,  {  var sig = Ndef.ar(\s2_sum, 2); sig });   // .ar, not Ndef(\s1_sum, 2) — that form sets its source to a literal scalar
-Ndef(\fxsMod)[1] = \filter -> {|in| ~fxg[\chorus].(in,  \rate,  0.4,  \depth, 0.004)}; 
-
-Ndef(\lfo2, { LFPulse.ar(0.025)});
+Ndef(\fxsMod)[1] = \filter -> {|in| ~fxg[\chorus].(in,  \rate,  0.25,  \depth, 0.004)}; Ndef(\lfo2, { LFPulse.ar(0.025)});
 
 Ndef(\fxsMod).set(\rate,  0.25,  \depth, 0.005);
 Ndef(\fxsGlitch).set(\rate, 8,  \mix, 1,   \amp,  2);

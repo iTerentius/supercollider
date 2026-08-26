@@ -7,32 +7,41 @@ Ndef(\ins3)[0] = {|amp=0.45| Ndef(\b1) * amp };
 Ndef(\ins4)[0] = {|amp=0.75| Ndef(\pm1) * amp };
 Ndef(\ins4)[1] = {|amp=0.6| Ndef(\pedestrian) * amp };
 Ndef(\ins4)[2] = {|amp=0.6| Ndef.ar(\fm1, 2) * amp };
-Ndef(\ins4)[3] = {|amp=0.2| Ndef.ar(\iRadio, 2) * amp };
+Ndef(\ins4)[3] = {|amp=0.1| Ndef.ar(\iRadio, 2) * amp };
 Ndef(\ins5)[0] = {|amp=1.9| Ndef(\midiV3) * amp };
 ~insSlotsClear.();
+~insSlotsCheck.();
 
-Ndef(\iRadio).play(0, 2);
-Ndef(\iRadio).stop;
-Ndef(\iRadio).set(\amp, 0.3,  \mute,  0);
-Ndef(\iRadio)[2] = \filter -> {|in| ~fxg[\glitch].(in,  5)};
-Ndef(\iRadio)[1] = \filter -> {|in| ~fxg[\shimmer].(in, 2)};
-Ndef(\iRadio)[3] = \filter -> {|in| ~fxg[\stutter].(in, 20, 0.7,  1)};
-Ndef(\iRadio)[4] = \filter -> {|in| In.ar(in) * SinOsc.ar(1,  add:2pi)};
+(
+Ndef(\iRadio).set(\amp, 0.1,  \mute,  0);
+Ndef(\iRadio)[4] = \filter -> {|in| ~fxg[\glitch].(in,  5)};
+Ndef(\iRadio)[5] = \filter -> {|in| ~fxg[\shimmer].(in, 2)};
+// Ndef(\iRadio)[6] = \filter -> {|in| ~fxg[\stutter].(in, 2, 0.7,  1)};
 Ndef(\iRadio)[4] = nil;
+// Ndef(\iRadio)[4] = \filter -> {|in| In.ar(in) * SinOsc.ar(1,  add:2pi)};
+Ndef(\iRadio)[7] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\ins1), threshold: 0.7, ratio:2, release:0.3,  makeup:1.3 );  };
+)
+~radioSwap.("http://npr-ice.streamguys1.com/live.mp3")
+~radioSwap.("https://www.youtube.com/watch?v=Vfpas9Fn24Q&t=1s")
+Ndef(\iRadio)[4] = nil;
+Ndef(\kitA)[0] = nil;
 Ndef(\iRadio).set(\wet1,  1);
+
 ~startDelugeClock.();
 ~stopDelugeClock.();
 ~link.tempo * 60
-~link.tempo = 120/60;
+~link.tempo = 100/60;
 ~midiInMap.(2, \bass8,   out: Ndef(\ins3).index,  args:[\amp, 0.45]);
-~midiInMap.(4, \fmSaw,   out: Ndef(\ins4).index);
+~midiInMap.(4, \fmSaw,   out: Ndef(\ins4).index); 
+~midiInMap.(5, \pm1,   out: Ndef(\ins4).index); 
+~midiInMap.(5, \fm3,   out: Ndef(\ins4).index); 
 ~midiInMap.(5, \v1,   out: Ndef(\ins2).index);
-
-~midiBus3 = Bus.audio(s,  2);
-~midiInMap.(3, \stretchedFragments,   out: ~midiBus3.index);
+~midiBus3 = Bus.audio(s,  2); 
+~midiInMap.(3, \stretchedFragments,   out: ~midiBus3.index); 
 Ndef(\midiV3)[0] = { | amp=1.5 | In.ar(~midiBus3.index, 2) * amp };
 // Ndef(\midiV3)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\kitA), 0.1, ratio:2, release:0.3,  makeup:1.3 );  };
-Ndef(\midiV3)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\ins1), threshold: 0.3, ratio:2, release:0.3,  makeup:1.3 );  };
+Ndef(\midiV3)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\ins1), threshold: 0.5, ratio:2, release:0.3,  makeup:1.3 );  };
+Ndef(\ins5)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\ins1), threshold: 0.4, ratio:3, release:0.1,  makeup:2.3 );  };
 Ndef(\midiV3)[2] = \filter -> { |in | ~fxg[\shimmer].(in, \shift.kr(12));  };
 Ndef(\midiV3)[1] = nil;
 
@@ -45,10 +54,9 @@ Ndef(\midiV3)[1] = nil;
   \time,    Pseq([4,  2,  1].scramble, inf),
   // \time,  4,  
   \dur,     1/2,  
-  \amp, 2.5,  
+  \amp, 1.5,  
 ));
 )
-~sTree[\jttcot]
 
 ~fxSetSend.(\ins1,  \s1,  0.9);
 ~fxSetSend.(\ins2,  \s1,  1.0);
@@ -56,16 +64,16 @@ Ndef(\midiV3)[1] = nil;
 ~fxSetSend.(\ins4,  \s1,  0.8);
 ~fxSetSend.(\ins5,  \s1,  0.8);
 
-~fxSetSend.(\ins1,  \s2,  1.0);
+~fxSetSend.(\ins1,  \s2,  0.9);
 ~fxSetSend.(\ins2,  \s2,  0.5);
 ~fxSetSend.(\ins3,  \s2,  0.9);
-~fxSetSend.(\ins4,  \s2,  0.5);
-~fxSetSend.(\ins5,  \s2,  0.5);
+~fxSetSend.(\ins4,  \s2,  0.9);
+~fxSetSend.(\ins5,  \s2,  0.9);
 
-~fxSetSend.(\ins1,  \s3,  0.0);
+~fxSetSend.(\ins1,  \s3,  0.9);
 ~fxSetSend.(\ins2,  \s3,  0.5);
 ~fxSetSend.(\ins3,  \s3,  0.0);
-~fxSetSend.(\ins4,  \s3,  1.0);
+~fxSetSend.(\ins4,  \s3,  0.0);
 ~fxSetSend.(\ins5,  \s3,  1.0);
 
 ~fxSetSend.(\ins1,  \s4,  1.0);
@@ -79,6 +87,30 @@ Ndef(\midiV3)[1] = nil;
 Pbindef(\impact,  \dur, 1,  \nSlices, 32);
 Pbindef(\hh1,  \dur, 1/4* Pdefn(\slow), \stretch, 1);
 Pbindef(\kk1,  \dur, 1/2 * Pdefn(\slow), \stretch, 1);
+
+// Greyhole.ar(in, delayTime: 2.0, damp: 0.0, size: 1.0, diff: 0.707, feedback: 0.9, modDepth: 0.1, modFreq: 2.0) ~
+(
+Ndef(\fxsGreyhole).set(
+  \delayTime,  0.25, 
+  \size,  0.8, 
+  \damp,  0.5,  
+  \diff,  0.8,  
+  \feedback, 0.5,  
+  \modDepth,  0.5,  
+  \modFreq, 1.0,  
+  \mix, 0.8,  
+);
+)
+Ndef(\lfo1, {LFSaw.ar(0.25)});
+Ndef(\fxsGreyhole).map(\modFreq,  { Ndef.kr(\lfo1).range(0.01,  2.0)});
+Ndef(\fxsGreyhole).map(\size,  Ndef(\lfo1));
+Ndef(\fxsGreyhole).map(\diff,  Ndef(\lfo1));
+
+(
+Ndef(\lfoRate, {
+  LFPulse.ar(1/16 + SinOsc.ar(8, 0.5),  2)
+});
+)
 
 Ndef(\lfo2, { LFPulse.ar(0.025)});
 
@@ -118,29 +150,6 @@ Scale.directory
 ~midiInMap.(6, \bass8,   out: Ndef(\ins3).index);
 
 
-// Greyhole.ar(in, delayTime: 2.0, damp: 0.0, size: 1.0, diff: 0.707, feedback: 0.9, modDepth: 0.1, modFreq: 2.0) ~
-(
-Ndef(\fxsGreyhole).set(
-  \delayTime,  0.25, 
-  \size,  0.8, 
-  \damp,  0.5,  
-  \diff,  0.8,  
-  \feedback, 0.5,  
-  \modDepth,  0.5,  
-  \modFreq, 1.0,  
-  \mix, 0.8,  
-);
-)
-Ndef(\lfo1, {LFSaw.ar(0.25)});
-(
-Ndef(\lfoRate, {
-  LFPulse.ar(1/16 + SinOsc.ar(8, 0.5),  2)
-});
-)
-
-Ndef(\fxsGreyhole).map(\modFreq,  { Ndef.kr(\lfo1).range(0.01,  2.0)});
-Ndef(\fxsGreyhole).map(\size,  Ndef(\lfo1));
-Ndef(\fxsGreyhole).map(\diff,  1/Ndef(\lfo1));
 
 Ndef(\impact).set(\rate, 1); 
 Ndef(\hh1).map(\rate,  Ndef(\lfoRate)); 

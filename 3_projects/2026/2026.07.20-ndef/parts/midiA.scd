@@ -5,7 +5,8 @@
 
 (
 ~midiInMap.(6,  \pBm, out: Ndef(\ins1).index,  args:[
-  \bufnum,  ~sTree[\whoosh_impacts].values.choose,   
+  // \bufnum,  ~sTree[\whoosh_impacts].values.choose,   
+  \bufnum,  ~sTree[\hoarder_mono].values.choose,   
   \nSlices,  4, 
   \rate,  2,  
   \sliceDur,  1, 
@@ -14,18 +15,27 @@
 );
 (
 ~midiInMap.(7,  \pBs, out: Ndef(\ins1).index,  args:[
-  \bufnum,  ~sTree[\bass_drums].values.choose,   
+  \bufnum,  ~sTree.[\bass_drums].values[1],   
 ]);
 );
 (
 ~midiInMap.(8,  \pBs, out: Ndef(\ins1).index,  args:[
-  \bufnum,  ~sTree[\hats].values.choose,     
+  \bufnum,  ~sTree[\hats].values[7],     
 ]);
 );
 (
-~midiInPsetStop.(7);
-// ~midiInPset.(7, [\bufnum],   Pbind(
-//   \bufnum,   Pseq(~sTree[\bass_drums].values[0..3],  inf),  
-//   \dur, 2,  
-// ));
+~midiInMap.(4,  \fm3, out: Ndef(\ins4).index);
 );
+(
+);
+// (
+// ~midiInPsetStop.(7);
+// ~bds = ~sTree.at(\bass_drums).asArray[0..8];
+// ~midiInPset.(7, [\rate], Pbind(
+//   // \buf, Pseq(~sTree[\bass_drums].values[5..10],  inf),
+//   \buf, Pseq(~bds,  inf),
+//   \bufnum, Pkey(\buf),  
+//   // \rate,  Pwhite(-2,  2,  inf),
+//   \dur, 1, 
+// ));
+// );

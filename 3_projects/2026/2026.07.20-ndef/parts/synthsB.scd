@@ -129,6 +129,14 @@ Ndef(\pedestrian)[1] = \pset -> Pbind(
   \dur, 1
 );
 );
+// (
+// SynthDef(\scr2, {
+//   | out=0,  freq=100, amp=0.4,  gate=1 |
+//   var sig, f, e1;
+//   e1 
+//
+// });
+// );
 (
 SynthDef(\scratch,  {
 | out=0,  freq=110, amp=0.4,  gate=1 |
