@@ -15,7 +15,7 @@
 );
 (
 ~midiInMap.(7,  \pBs, out: Ndef(\ins1).index,  args:[
-  \bufnum,  ~sTree.[\bass_drums].values[1],   
+  \bufnum,  ~sTree.[\bass_drums].values[0],   
 ]);
 );
 (

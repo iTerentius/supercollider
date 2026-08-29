@@ -40,11 +40,14 @@ Ndef(\iRadio).set(\wet1,  1);
 ~midiInMap.(3, \stretchedFragments,   out: ~midiBus3.index); 
 Ndef(\midiV3)[0] = { | amp=1.5 | In.ar(~midiBus3.index, 2) * amp };
 // Ndef(\midiV3)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\kitA), 0.1, ratio:2, release:0.3,  makeup:1.3 );  };
-Ndef(\midiV3)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\ins1), threshold: 0.5, ratio:2, release:0.3,  makeup:1.3 );  };
-Ndef(\ins5)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\ins1), threshold: 0.4, ratio:3, release:0.1,  makeup:2.3 );  };
+Ndef(\midiV3)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\ins1), threshold: 0.4, ratio:3, release:0.1,  makeup:1.3 );  };
+Ndef(\ins5)[1] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\ins1), threshold: 0.7, ratio:2, release:0.3,  makeup:1.3 );  };
 Ndef(\midiV3)[2] = \filter -> { |in | ~fxg[\shimmer].(in, \shift.kr(12));  };
+Ndef(\midiV3).set(\wet2,  0.3);
 Ndef(\midiV3)[1] = nil;
-
+Ndef(\ins5)[1] = nil;
+Ndef.gui(s);
+NdefMixer(s).front;
 (
 ~midiInPsetStop.(3);
 ~midiInPset.(3, [\buf,  \stret, \time,  \amp], Pbind(
@@ -53,12 +56,12 @@ Ndef(\midiV3)[1] = nil;
   // \stretch, 4,  
   \time,    Pseq([4,  2,  1].scramble, inf),
   // \time,  4,  
-  \dur,     1/2,  
+  \dur,     1/4,  
   \amp, 1.5,  
 ));
 )
 
-~fxSetSend.(\ins1,  \s1,  0.9);
+~fxSetSend.(\ins1,  \s1,  0.4);
 ~fxSetSend.(\ins2,  \s1,  1.0);
 ~fxSetSend.(\ins3,  \s1,  0.9);
 ~fxSetSend.(\ins4,  \s1,  0.8);
@@ -66,14 +69,14 @@ Ndef(\midiV3)[1] = nil;
 
 ~fxSetSend.(\ins1,  \s2,  0.9);
 ~fxSetSend.(\ins2,  \s2,  0.5);
-~fxSetSend.(\ins3,  \s2,  0.9);
+~fxSetSend.(\ins3,  \s2,  0.3);
 ~fxSetSend.(\ins4,  \s2,  0.9);
 ~fxSetSend.(\ins5,  \s2,  0.9);
 
-~fxSetSend.(\ins1,  \s3,  0.9);
+~fxSetSend.(\ins1,  \s3,  0.0);
 ~fxSetSend.(\ins2,  \s3,  0.5);
 ~fxSetSend.(\ins3,  \s3,  0.0);
-~fxSetSend.(\ins4,  \s3,  0.0);
+~fxSetSend.(\ins4,  \s3,  0.3);
 ~fxSetSend.(\ins5,  \s3,  1.0);
 
 ~fxSetSend.(\ins1,  \s4,  1.0);
@@ -81,8 +84,10 @@ Ndef(\midiV3)[1] = nil;
 ~fxSetSend.(\ins3,  \s4,  1.5);
 ~fxSetSend.(\ins4,  \s4,  1.0);
 ~fxSetSend.(\ins5,  \s4,  1.0);
+~fxUnsetSend.(\kk1,  \s3,  0.2);
 ~fxRoute.(\fxsDistort, \fxsGreyhole,  1.0);
 ~fxUnroute.(\fxsDistort, \fxsGreyhole,  0.7);
+
 
 Pbindef(\impact,  \dur, 1,  \nSlices, 32);
 Pbindef(\hh1,  \dur, 1/4* Pdefn(\slow), \stretch, 1);
@@ -91,14 +96,14 @@ Pbindef(\kk1,  \dur, 1/2 * Pdefn(\slow), \stretch, 1);
 // Greyhole.ar(in, delayTime: 2.0, damp: 0.0, size: 1.0, diff: 0.707, feedback: 0.9, modDepth: 0.1, modFreq: 2.0) ~
 (
 Ndef(\fxsGreyhole).set(
-  \delayTime,  0.25, 
-  \size,  0.8, 
-  \damp,  0.5,  
-  \diff,  0.8,  
+  \delayTime,  0.5, 
+  \size,  0.4, 
+  \damp,  0.0,  
+  \diff,  0.2,  
   \feedback, 0.5,  
-  \modDepth,  0.5,  
-  \modFreq, 1.0,  
-  \mix, 0.8,  
+  \modDepth,  0.8,  
+  \modFreq, 0.5,  
+  \mix, 1.0,  
 );
 )
 Ndef(\lfo1, {LFSaw.ar(0.25)});
@@ -120,8 +125,8 @@ Ndef(\fxsGlitch).set(\rate, 8,  \mix, 1,   \amp,  2);
 Ndef(\fxsGlitch).map(\freeze, Ndef(\lfo2));
 )
 
-Ndef(\fxsDistort).set(\brate, 1400, \bbits, 6, \bits, 6, \clock,  10000, \bmix, 0.0,  \wfmix, 1.0,  \gain,  2,  \naked, 1,   \dressed,  1);
-Ndef(\fxsDistort).set(\clock, 8000, \bits,  6,  \fxMode,  1,  \shape, 3);
+Ndef(\fxsDistort).xset(\brate, 11400, \bbits, 8, \bits, 6, \clock,  18000, \bmix, 0.8,  \wfmix, 1.0,  \shape,  3, \fxMode, 2,   \gain,  2,  \naked, 1,   \dressed,  1);
+Ndef(\fxsDistort).xset(\clock, 8000, \bits,  6,  \fxMode,  1,  \shape, 3);
 Ndef(\fxsDistort).clear;
 
 Ndef(\b1).pause(3);
