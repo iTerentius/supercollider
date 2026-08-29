@@ -88,12 +88,31 @@ case
     s.options.numOutputBusChannels = 36;
     s.options.numInputBusChannels = 0;
     s.options.sampleRate = 48000;
-    s.options.memSize = 131072;
+    // 262144 (65536*4), not 131072 - Greyhole (sc3-plugins) requires this
+    // per its own docs to work correctly; added 2026-08-29 for
+    // sc-web-modular's Greyhole Reverb module.
+    s.options.memSize = 65536 * 4;
     s.options.numBuffers = 1024;
     s.options.maxNodes = 4096;
     s.options.blockSize = 64;
+    // maxLogins partitions the audio/control bus space evenly across
+    // that many potential clients - 32 was way more than needed (only
+    // sclang itself + the sc-web-modular bridge ever connect) and left
+    // each client only ~1/32 of the bus space, which broke the Ndef
+    // mixer setup's own bus allocations (2026-08-28). 2 is enough for
+    // both real clients; numAudioBusChannels is bumped below so each
+    // still gets more headroom than the single-client default did.
+    s.options.maxLogins = 2;
+    s.options.numAudioBusChannels = 4096;
     // CoreAudio uses device name directly, or nil for default
     // s.options.device = "Scarlett 2i2 USB";
+    // Same self-guarding convention as the yazl-nuc/hypo-fm branches below
+    // (set here, nil on hosts that don't want it; the guarded load itself
+    // File.exists-checks it, so this is harmless even before/unless the
+    // repo is actually cloned on this machine). Platform.userHomeDir rather
+    // than a hardcoded /home/hypo-style path, since the macOS username here
+    // is unconfirmed/likely different.
+    ~scWebModularCompanion = Platform.userHomeDir +/+ "code/sc-web-modular/bridge/sclang/companion.scd";
     "Audio config: macOS / Scarlett 2i2".postln;
 }
 { platform == \linux } {
@@ -111,7 +130,10 @@ case
         s.options.numOutputBusChannels = 2;
         s.options.numInputBusChannels  = 2;
         s.options.sampleRate = 48000;
-        s.options.memSize = 65536;
+        // 262144 (65536*4), not 65536 - Greyhole (sc3-plugins) requires this
+        // per its own docs to work correctly; added 2026-08-29 for
+        // sc-web-modular's Greyhole Reverb module.
+        s.options.memSize = 65536 * 4;
         s.options.numBuffers = 1024;
         // Was 1024 (matching the small-Pi hosts below) — too low for this
         // desktop-class box. Confirmed live 2026-08-10: a dense MIDI note
@@ -122,6 +144,20 @@ case
         s.options.blockSize = 64;
         s.options.hardwareBufferSize = 128;
         s.options.device = "JACK";  // routes through PipeWire's pipewire-jack shim
+        // maxLogins partitions the audio/control bus space evenly across
+        // that many potential clients - 32 was way more than needed (only
+        // sclang itself + the sc-web-modular bridge ever connect) and left
+        // each client only ~1/32 of the bus space, which broke the Ndef
+        // mixer setup's own bus allocations (2026-08-28). 2 is enough for
+        // both real clients; numAudioBusChannels is bumped below so each
+        // still gets more headroom than the single-client default did.
+        s.options.maxLogins = 2;
+        s.options.numAudioBusChannels = 4096;
+        // Consumed by the sc-web-modular companion load below - nil on every
+        // other host (Rpi/Zynthian devices don't need this), which is how
+        // that guarded load knows to skip itself. macOS to follow once the
+        // repo is cloned there too.
+        ~scWebModularCompanion = "/home/hypo/code/sc-web-modular/bridge/sclang/companion.scd";
         "Audio config: yazl-nuc / Scarlett Solo via PipeWire (JACK shim)".postln;
     }
     { hostname == "hypo-fm" } {
@@ -145,17 +181,32 @@ case
         // input.
         s.options.numInputBusChannels = 4;
         s.options.sampleRate = 48000;
-        s.options.memSize = 65536;
+        // 262144 (65536*4), not 65536 - Greyhole (sc3-plugins) requires this
+        // per its own docs to work correctly; added 2026-08-29 for
+        // sc-web-modular's Greyhole Reverb module.
+        s.options.memSize = 65536 * 4;
         s.options.numBuffers = 1024;
         s.options.maxNodes = 4096;
         s.options.blockSize = 64;
         s.options.hardwareBufferSize = 128;
         s.options.device = "JACK";  // routes through PipeWire's pipewire-jack shim; JACK client name literally becomes "JACK" (see zynthian branch's device-name comment below)
+        // maxLogins partitions the audio/control bus space evenly across
+        // that many potential clients - 32 was way more than needed (only
+        // sclang itself + the sc-web-modular bridge ever connect) and left
+        // each client only ~1/32 of the bus space, which broke the Ndef
+        // mixer setup's own bus allocations (2026-08-28). 2 is enough for
+        // both real clients; numAudioBusChannels is bumped below so each
+        // still gets more headroom than the single-client default did.
+        s.options.maxLogins = 2;
+        s.options.numAudioBusChannels = 4096;
         // Consumed by _includes/ndef-radio-in.scd - nil on every other host,
         // which is how that file knows to skip itself rather than reading
         // out-of-range (or hardware-meaningful, on hosts with more real
         // inputs) SoundIn channels.
         ~radioInChans = [2, 3];
+        // See yazl-nuc branch above for why this is set here (and nil
+        // elsewhere) rather than loaded unconditionally.
+        ~scWebModularCompanion = "/home/hypo/code/sc-web-modular/bridge/sclang/companion.scd";
         "Audio config: hypo-fm / Scarlett 2i2 via PipeWire (JACK shim), dedicated radio-in on ch 2-3".postln;
     }
     { effectiveHost == "zynthian" } {
@@ -277,6 +328,22 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
         // Used with Ndefs via ~ndefAsChan (see ndef-stem-record.scd).
         (basePath +/+ "_includes/mixer-channel-stem-record.scd").load;
         (basePath +/+ "_includes/ndef-stem-record.scd").load;
+
+        // --- sc-web-modular bridge companion (OSCdefs for bus/sample
+        // allocation, which also auto-loads that project's own SynthDefs -
+        // see its own file for detail). Only set on hosts where it's wanted
+        // (yazl-nuc/hypo-fm above; not Zynthian/Rpi devices, not macOS yet).
+        // File.exists guards against the repo not actually being present on
+        // whatever host runs this file - .load on a missing path would
+        // otherwise abort the rest of this waitForBoot block (LinkClock/Ndef
+        // setup below included), not just skip harmlessly.
+        if(~scWebModularCompanion.notNil) {
+            if(File.exists(~scWebModularCompanion)) {
+                ~scWebModularCompanion.load;
+            } {
+                ("sc-web-modular: companion.scd not found at " ++ ~scWebModularCompanion ++ " - skipping.").warn;
+            };
+        };
 
         // --- Helpers
         (basePath +/+ "_includes/_helpers/helpers.scd").load;
