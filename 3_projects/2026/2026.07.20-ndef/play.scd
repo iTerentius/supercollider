@@ -7,7 +7,7 @@ Ndef(\ins3)[0] = {|amp=0.45| Ndef(\b1) * amp };
 Ndef(\ins4)[0] = {|amp=0.75| Ndef(\pm1) * amp };
 Ndef(\ins4)[1] = {|amp=0.6| Ndef(\pedestrian) * amp };
 Ndef(\ins4)[2] = {|amp=0.6| Ndef.ar(\fm1, 2) * amp };
-Ndef(\ins4)[3] = {|amp=0.1| Ndef.ar(\iRadio, 2) * amp };
+Ndef(\ins4)[3] = {|amp=0.8| Ndef.ar(\iRadio, 2) * amp };
 Ndef(\ins5)[0] = {|amp=1.9| Ndef(\midiV3) * amp };
 ~insSlotsClear.();
 ~insSlotsCheck.();
@@ -17,7 +17,7 @@ Ndef(\iRadio).set(\amp, 0.1,  \mute,  0);
 Ndef(\iRadio)[4] = \filter -> {|in| ~fxg[\glitch].(in,  5)};
 Ndef(\iRadio)[5] = \filter -> {|in| ~fxg[\shimmer].(in, 2)};
 // Ndef(\iRadio)[6] = \filter -> {|in| ~fxg[\stutter].(in, 2, 0.7,  1)};
-Ndef(\iRadio)[4] = nil;
+Ndef(\iRadio)[7] = nil;
 // Ndef(\iRadio)[4] = \filter -> {|in| In.ar(in) * SinOsc.ar(1,  add:2pi)};
 Ndef(\iRadio)[7] = \filter -> { |in | ~fxg[\duck].(in, Ndef.ar(\ins1), threshold: 0.7, ratio:2, release:0.3,  makeup:1.3 );  };
 )
@@ -73,7 +73,7 @@ NdefMixer(s).front;
 ~fxSetSend.(\ins4,  \s2,  0.9);
 ~fxSetSend.(\ins5,  \s2,  0.9);
 
-~fxSetSend.(\ins1,  \s3,  0.0);
+~fxSetSend.(\ins1,  \s3,  0.9);
 ~fxSetSend.(\ins2,  \s3,  0.5);
 ~fxSetSend.(\ins3,  \s3,  0.0);
 ~fxSetSend.(\ins4,  \s3,  0.3);
