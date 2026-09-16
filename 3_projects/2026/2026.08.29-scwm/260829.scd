@@ -61,14 +61,22 @@ Pdef(\b_control).stop;
 ~extAudio.index.postln;  // <- this number never changes regardless of Ndef edits
 (
 
-SynthDef(\myVoice, { |out,  freq=440|
-    var sig = SinOsc.ar(freq) * 0.2;
+SynthDef(\myVoice, { |out,  freq=440, amp=0.4 |
+    var sig = SinOsc.ar(freq) * amp;
     var e = EnvGen.ar(Env.perc(doneAction:2));
     sig = sig * e;
     Out.ar(~extAudio.index, sig);
 }).add;
 )
-Pdef(\myVoice,  Pbind(\instrument,  \myVoice, \degree,  Pseq((0..7),  inf),  \octave, 2), \dur, 1).play;
+(
+Pdef(\myVoice,  Pbind(
+  \instrument,  \myVoice, 
+  \degree,  Pseq((0..7),  inf),  
+  \octave, 3, 
+  \dur, 1/4,  
+  \amp, 1));
+)
+Pdef(\myVoice).play;
 Pdef(\myVoice).stop;
 x = Synth(\myVoice);
   x.free; // stop when done
@@ -78,3 +86,12 @@ Ndef(\myVoice).play;  // starts it running (also monitors to hardware out by def
 )
 Ndef(\myVoice).clear;
 Ndef(\myVoice).bus.index.postln;  // <- plug this into External Audio In's sourceBus
+Bus.new(\control, 12, 1, s).get({ |val| val.postln });
+Pdef(\myPattern).isPlaying;
+
+~link.tempo * 60;
+
+~startDelugeClock.();
+MIDIdef.trace(true);
+MIDIdef.trace(false);
+

@@ -1,0 +1,28 @@
+// Personal pattern library / custom functions.
+//
+// Load with :StrudelLoadPrelude (after :StrudelConnect) - once per session,
+// or again any time you edit this file.
+//
+// IMPORTANT: assign to globalThis, not `const`/`let`. Each :StrudelEval
+// (and each StrudelLoadPrelude) runs as its own separate, isolated
+// function scope, so a plain `const` here would NOT be visible from
+// test.strudel or any other pattern file - only globalThis persists
+// across those separate eval() calls.
+
+globalThis.kick4 = (bank) => s("bd*4").bank(bank);
+
+globalThis.riser = (pat) => pat.iter(4).slow(2);
+
+globalThis.arange = (a, b) => Array.from({length: b - a + 1}, (_, i) => a + i);
+
+globalThis.registerControls = (...names) => names.forEach(n => { globalThis[n] = registerControl(n)[n]; });
+
+registerControls('f0ratio', 'f1ratio', 'modInd0', 'modInd1', 'att', 'rel');
+
+// Strudel's evaluate() always expects the last expression to be a Pattern
+// (its REPL model treats every eval as "this is what's now playing") - a
+// file of nothing but assignments ends in an implicit `undefined`, which it
+// rejects with "got 'undefined' instead of pattern". `silence` is a real,
+// empty Pattern that satisfies the check without making any sound - keep
+// this as the last line whenever you add more to this file.
+silence

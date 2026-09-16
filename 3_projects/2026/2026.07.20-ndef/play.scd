@@ -12,6 +12,13 @@ Ndef(\ins5)[0] = {|amp=1.9| Ndef(\midiV3) * amp };
 ~insSlotsClear.();
 ~insSlotsCheck.();
 
+Ndef(\ins1)[0] = {|amp=0.8| Ndef(\iStrudel1,  2) * amp };
+~strudelBuses[0].scope;        // is SuperDirt still writing real audio to the orbit bus after cycle 1?
+  Ndef(\iStrudel1).isPlaying;    // is the bus-reader proxy itself still alive?
+  Ndef(\ins1).isPlaying;         // and the channel strip you routed it into?
+  Ndef(\iStrudel1).play(0, 2);
+  Ndef(\ins1).get(\amp, { |v| ("ins1 amp: " ++ v).postln });
+  Ndef(\ins1).get(\mute, { |v| ("ins1 mute: " ++ v).postln });
 (
 Ndef(\iRadio).set(\amp, 0.1,  \mute,  0);
 Ndef(\iRadio)[4] = \filter -> {|in| ~fxg[\glitch].(in,  5)};
@@ -48,6 +55,11 @@ Ndef(\midiV3)[1] = nil;
 Ndef(\ins5)[1] = nil;
 Ndef.gui(s);
 NdefMixer(s).front;
+( 
+    SynthDef(\m1, {
+    |out, sustain=1, freq=440, note=60,  pan, accelerate, speed=1, begin=0, end=1|
+}).add; 
+)
 (
 ~midiInPsetStop.(3);
 ~midiInPset.(3, [\buf,  \stret, \time,  \amp], Pbind(
@@ -61,29 +73,33 @@ NdefMixer(s).front;
 ));
 )
 
-~fxSetSend.(\ins1,  \s1,  0.4);
-~fxSetSend.(\ins2,  \s1,  1.0);
-~fxSetSend.(\ins3,  \s1,  0.9);
+~fxSetSend.(\ins1,  \s1,  0.0);
+~fxSetSend.(\ins2,  \s1,  0.0);
+~fxSetSend.(\ins3,  \s1,  0.0);
 ~fxSetSend.(\ins4,  \s1,  0.8);
 ~fxSetSend.(\ins5,  \s1,  0.8);
+~fxSetSend.(\ins9,  \s1,  0.0);
 
-~fxSetSend.(\ins1,  \s2,  0.9);
-~fxSetSend.(\ins2,  \s2,  0.5);
-~fxSetSend.(\ins3,  \s2,  0.3);
+~fxSetSend.(\ins1,  \s2,  0.0);
+~fxSetSend.(\ins2,  \s2,  0.0);
+~fxSetSend.(\ins3,  \s2,  0.0);
 ~fxSetSend.(\ins4,  \s2,  0.9);
 ~fxSetSend.(\ins5,  \s2,  0.9);
+~fxSetSend.(\ins9,  \s2,  0.0);
 
 ~fxSetSend.(\ins1,  \s3,  0.9);
-~fxSetSend.(\ins2,  \s3,  0.5);
+~fxSetSend.(\ins2,  \s3,  0.0);
 ~fxSetSend.(\ins3,  \s3,  0.0);
 ~fxSetSend.(\ins4,  \s3,  0.3);
 ~fxSetSend.(\ins5,  \s3,  1.0);
+~fxSetSend.(\ins9,  \s3,  1.0);
 
 ~fxSetSend.(\ins1,  \s4,  1.0);
 ~fxSetSend.(\ins2,  \s4,  0.5);
 ~fxSetSend.(\ins3,  \s4,  1.5);
 ~fxSetSend.(\ins4,  \s4,  1.0);
 ~fxSetSend.(\ins5,  \s4,  1.0);
+~fxSetSend.(\ins9,  \s4,  1.0);
 ~fxUnsetSend.(\kk1,  \s3,  0.2);
 ~fxRoute.(\fxsDistort, \fxsGreyhole,  1.0);
 ~fxUnroute.(\fxsDistort, \fxsGreyhole,  0.7);
@@ -155,6 +171,8 @@ Scale.directory
 ~midiInMap.(6, \bass8,   out: Ndef(\ins3).index);
 
 
+// or, in one line, on the main out:
+Insight.open;
 
 Ndef(\impact).set(\rate, 1); 
 Ndef(\hh1).map(\rate,  Ndef(\lfoRate)); 

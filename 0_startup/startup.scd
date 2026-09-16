@@ -207,6 +207,14 @@ case
         // See yazl-nuc branch above for why this is set here (and nil
         // elsewhere) rather than loaded unconditionally.
         ~scWebModularCompanion = "/home/hypo/code/sc-web-modular/bridge/sclang/companion.scd";
+        // Extra interconnect buffers: StrudelDirt's per-orbit synth chain
+        // (dirt_gate -> lpf -> bpf -> hpf -> shape -> crush -> coarse ->
+        // phaser -> compressor -> chorus -> distort -> envelope -> postgain
+        // -> vowel -> pshift -> grenvelo -> tremolo) exceeds the default 64
+        // wire buffers and fails with "exceeded number of interconnect
+        // buffers" at synthdef-load time otherwise. Harmless to leave set
+        // even on nights you're not using Strudel/SuperDirt at all.
+        s.options.numWireBufs = 128;
         "Audio config: hypo-fm / Scarlett 2i2 via PipeWire (JACK shim), dedicated radio-in on ch 2-3".postln;
     }
     { effectiveHost == "zynthian" } {
@@ -293,6 +301,7 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
         (basePath +/+ "_includes/sample_loader.scd").load;
         (basePath +/+ "_synthdefs/fx_defs.scd").load;
         (basePath +/+ "_synthdefs/ilfx_cores.scd").load;
+        (basePath +/+ "_synthdefs/strudel_synthdefs.scd").load;
 
         // --- MIDI setup (cross-platform)
         (basePath +/+ "_includes/midi-setup.scd").load;
@@ -386,6 +395,14 @@ if((effectiveHost != "zynthian") && (effectiveHost != "raspberrypi")) {
         Ndef.dictFor(s).clock = ~link;
         Ndef.dictFor(s).quant = 1;
         Ndef.dictFor(s).fadeTime = 3;
+
+        // --- Strudel/SuperDirt bridge (OSC output backend for nvim-strudel) ---
+        // Comment out this .load line to disable entirely — nothing else in
+        // this file depends on it. Attaches SuperDirt to the already-booted
+        // `s` in place; does not reboot the server, run Server.killAll, or
+        // touch any existing mixer/synth/sample setup (unlike nvim-strudel's
+        // own auto_superdirt launcher, which does all of that).
+        (basePath +/+ "_includes/strudel-superdirt.scd").load;
 
         ("Setup done! (" ++ platform ++ " / " ++ hostname ++ ")").postln;
     };
