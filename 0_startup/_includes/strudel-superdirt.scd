@@ -228,6 +228,76 @@ fork {
         ~dirt.orbits.do { |orbit| orbit.freeSynths };
     }, '/strudel/hush');
 
+    // Feeds Strudel events into your EXISTING ~stemDiskStart MIDI capture
+    // (mixer-channel-stem-record.scd's captureMidi:true option), which only
+    // ever sees events from SC's own Pbind/Event system otherwise - Strudel
+    // never touches that at all, it arrives as raw OSC handled entirely
+    // inside StrudelDirt's own DirtEvent.play. A no-op whenever a recording
+    // isn't active: Event.parentEvents[\default][\callback] is only ever
+    // set while ~stemDiskStart's captureMidi is actually running.
+    //
+    // Bucketed into the same per-voice .mid file ~stemDiskStart already
+    // writes, using the SAME bus-index convention as ~ndefAsChan
+    // (Ndef(name).index, its own output bus - NOT ~strudelBuses, which
+    // feeds INTO the Ndef, a different bus entirely). So: include your
+    // Strudel ins1-12 channels in ~stemDiskStart's tracks: (wrapped with
+    // ~ndefAsChan.(Ndef(\ins1)) same as any other Ndef track) and they'll
+    // get real per-voice MIDI alongside the audio stems, no pattern changes
+    // needed - added 2026-09-17.
+    //
+    // Real pitch (~freq, or a numeric ~note - see the note->MIDI fix in the
+    // forked nvim-strudel) is used when present. Otherwise - a plain
+    // unpitched sample hit, e.g. s("bd sd hh") with no .note()/.freq() at
+    // all - falls back to a note derived from the sample-name symbol itself
+    // (~s), so different sounds still land as consistently separated notes
+    // in the captured MIDI, purely for this side-channel: it's computed only
+    // for the synthetic event below, never touches dirtEvent or ~freq, so
+    // actual playback pitch is completely unaffected either way. Same
+    // sample name always hashes to the same note within a session - a
+    // de-facto auto drum map, not meant to be musically meaningful, just
+    // consistently distinguishable per sound. Spread across ~4 octaves
+    // (36-83) to stay in a practical range.
+    // The module callback runs under Environment:use with the EVENT ITSELF
+    // swapped in as currentEnvironment (that's how ~instrument/~s/etc above
+    // correctly read event data) - so any ~name that ISN'T an actual event
+    // key silently resolves to nil in there, not an error by itself, but
+    // ~strudelVoiceNames[i] on nil then crashed with "Message 'at' not
+    // understood" (confirmed live, 2026-09-17). ~link had a ?? fallback so
+    // it didn't crash, but would've silently used the wrong clock. Fix:
+    // capture both as real lexical vars in a genuinely fresh scope, outside
+    // the callback - closures capture lexical vars properly regardless of
+    // the dynamic ~ environment swap; only ~-prefixed lookups are affected.
+    // NOTE: bare (...) parens do NOT create a new scope in SC - they're
+    // just grouping syntax, so `var` inside them is still scoped to (and
+    // must be first in) this enclosing fork block, which already has many
+    // statements before this point. Only an actual {...} Function literal
+    // creates a real scope - {}.value below is that, immediately invoked.
+    {
+    var midiVoiceNames = ~strudelVoiceNames;
+    var midiClock = ~link ?? { TempoClock.default };
+    ~dirt.addModule('strudel_midi_capture', { |dirtEvent|
+        var cb = Event.parentEvents[\default][\callback];
+        if(cb.notNil) {
+            var freqVal = if(~freq.notNil) {
+                ~freq
+            } {
+                if(~note.notNil and: { ~note.isKindOf(Number) }) {
+                    ~note.midicps
+                } {
+                    if(~s.notNil) { (36 + (~s.asSymbol.hash.abs % 48)).midicps } { nil }
+                }
+            };
+            if(freqVal.notNil) {
+                var voiceName = midiVoiceNames[~orbit.asInteger];
+                var outBus = if(voiceName.notNil) { Ndef(voiceName).index } { -1 };
+                var beatsPerSec = midiClock.tempo;
+                var durBeats = (~sustain ? 1) * beatsPerSec;
+                cb.value((type: nil, out: outBus, freq: freqVal, amp: (~gain ? ~amp ? 0.8), dur: durBeats));
+            };
+        };
+    }, { true });
+    }.value;
+
     ("[strudel] SuperDirt ready on port 57120, % orbits -> %."
         .format(~strudelVoiceNames.size, ~strudelVoiceNames)).postln;
 };

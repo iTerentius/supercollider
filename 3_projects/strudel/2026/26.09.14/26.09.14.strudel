@@ -1,24 +1,38 @@
 const mels1 = arange(0,7);
 const mels2 = "0 2 4 7 ~@4";
-$: 
-n("0@3 1").s("Hats").euclid(7,8).fast(1).delay("1:0.125").orbit(1)
+const bdR = [
+  [4, "0 1 [4 3]"],
+  [2, "2@3 ~"]
+]
+setcpm(100/4);
+_$: 
+s("Hats".n("0, <1 3>".early(.25))).euclid("<3 5 7>",8).fast(1).delay("1:0.125").orbit(1)
 
 $: 
-n("8 1 [4 3] 2 0 2 [~ 3] 4").sound("Bass_Drums")
+arrange(
+  [4,"8 1 [4 3] 2 0 2 [~ 3] 4"],
+  [2, "5*4 1 [4 3] ~ ~"],
+  [.5, "[[2 1] 0] 3".fast(2)]
+).n()
+.sound("Bass_Drums")
+// n("8 1 [4 3] 2 0 2 [~ 3] 4").s("Bass_Drums")
+// .legato(2)
 // n("0 <{1 4 [3 ~]}%2 2> <0 2 [~ 3]> 4").sound("Bass_Drums")
-.delay(jux(rev))
-  // .room(1).size(sine.range(0,1).fadeTime(saw.range(1,4)))
-// .crush("{8 4}%4")
+// .jux(rev)
+// .room(1).size(sine.range(0,1).fadeTime(saw.range(1,4)))
+.crush("{8 4}%4")
 .orbit(0).color("cyan")
 
 _$: s("Hoarder").slice(128, "0 1 <2 2*2> 3 [4 0] 5 6 7".every(3, rev)).mask("0 0 1").room(0.6).size(1).orbit(2)
 
-$: 
+_$: 
 note("d a2 <{a4 e2 c}%2 {e2 c4 g}%4> ~")
 // .n(mels2)
-.sound("Impacts:3")
+.sound("Impacts".n(run(30))).jux(iter(4))
 .shuffle("4 2")
-.orbit(2).color("magenta")
+// .crush("4 6 8 12".slow(2))
+.orbit(2)
+.color("magenta blue yellow")
 
 _$:
 n(sequence(mels2))

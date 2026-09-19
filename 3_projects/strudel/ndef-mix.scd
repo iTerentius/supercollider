@@ -5,17 +5,17 @@
 ~dirt.loadSoundFiles("~/Music/supercollider/_samples/808s_by_SHD/808_kit/*");  // -> 808_kit, Classic, Layered, ...
 ~dirt.loadSoundFiles("~/Music/supercollider/_samples/Ghosthack/*");      // -> hoarder
 ~dirt.loadSoundFiles("~/Music/supercollider/_samples/Hoarder/");      // -> hoarder
-~dirt.loadSoundFiles("~/Music/supercollider/_samples/Cat-Water/");      // -> hoarder
+~dirt.loadSoundFiles("~/Music/supercollider/_samples/_mono/jttcot/");      // -> hoarder
 )
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 "load.scd".loadRelative;
 
-~fxSetSend.(\ins1,  \s1,  0.0);
+~fxSetSend.(\ins1,  \s1,  0.7);
 ~fxSetSend.(\ins2,  \s1,  0.0);
-~fxSetSend.(\ins3,  \s1,  0.0);
+~fxSetSend.(\ins3,  \s1,  0.7);
 ~fxSetSend.(\ins4,  \s1,  0.8);
-~fxSetSend.(\ins5,  \s1,  0.8);
+~fxUnsetSend.(\ins5,  \s1,  0.0);
 ~fxSetSend.(\ins9,  \s1,  0.0);
 
 ~fxSetSend.(\ins1,  \s2,  0.0);
@@ -27,7 +27,7 @@
 
 ~fxSetSend.(\ins1,  \s3,  0.0);
 ~fxSetSend.(\ins2,  \s3,  0.0);
-~fxUnsetSend.(\ins3,  \s3,  0.0);
+~fxsetSend.(\ins3,  \s3,  0.0);
 ~fxSetSend.(\ins4,  \s3,  0.3);
 ~fxSetSend.(\ins5,  \s3,  1.0);
 ~fxSetSend.(\ins9,  \s3,  1.0);
@@ -85,20 +85,20 @@ Ndef(\fxsDistort).clear;
 ~insSlotsCheck.();
 ~stemStop = ~stemDiskStart.(
     tracks:  [
-      ~ndefAsChan.(Ndef(\ins1)),  
-      ~ndefAsChan.(Ndef(\ins2)),  
-      ~ndefAsChan.(Ndef(\ins3)),  
+      // ~ndefAsChan.(Ndef(\ins1)),  
+      // ~ndefAsChan.(Ndef(\ins2)),  
+      // ~ndefAsChan.(Ndef(\ins3)),  
       ~ndefAsChan.(Ndef(\ins4)),  
       ~ndefAsChan.(Ndef(\ins5)),  
     ],    // MixerChannels to record
-    returns: [
-      ~ndefAsChan.(Ndef(\fxsBitcrush)),  
-      ~ndefAsChan.(Ndef(\fxsDistort)),  
-      ~ndefAsChan.(Ndef(\fxsGreyhole)),  
-      ~ndefAsChan.(Ndef(\fxsMod)),  
-      ~ndefAsChan.(Ndef(\fxsGlitch)),  
-    ],               // return channels
-    fileBase: "2026.07.20-b",                   // filename prefix
+    // returns: [
+    //   ~ndefAsChan.(Ndef(\fxsBitcrush)),  
+    //   ~ndefAsChan.(Ndef(\fxsDistort)),  
+    //   ~ndefAsChan.(Ndef(\fxsGreyhole)),  
+    //   ~ndefAsChan.(Ndef(\fxsMod)),  
+    //   ~ndefAsChan.(Ndef(\fxsGlitch)),  
+    // ],               // return channels
+    fileBase: "2026.09.17-strudel",                   // filename prefix
     dirPath: "~/Music/recordings",     // output directory (auto-created)
     clock: ~link,                      // for beat-synced start (nil = default)
     autoSplit: true,                   // auto-split interleaved WAV into stems via ffmpeg
